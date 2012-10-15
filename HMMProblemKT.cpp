@@ -19,7 +19,7 @@
 
 HMMProblemKT::HMMProblemKT(struct param *param) {
     for(NPAR i=0; i<3; i++) this->sizes[i] = param->nK;
-    this->n_params = param->nK * 4 + param->nK*param->nK;
+    this->n_params = param->nK * 4 + param->nK*param->nK + param->nK;
     init(param);
 }
 
@@ -140,16 +140,15 @@ void HMMProblemKT::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred
 NUMBER HMMProblemKT::GradientDescentKT1() {
 	NCAT k;
     NUMBER loglik = 0;
+    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
     
 	NUMBER *PI = NULL; // just pointer
 	NUMBER **A = NULL; //
 	NUMBER **B = NULL; //
-	NUMBER *PI_m1 = init1DNumber(this->p->nS);			// value on previous iteration
-	NUMBER **A_m1 = init2DNumber(this->p->nS,this->p->nS);
-	NUMBER **B_m1 = init2DNumber(this->p->nS,this->p->nO);
-	NUMBER *a_gradPI = init1DNumber(this->p->nS);
-	NUMBER **a_gradA = init2DNumber(this->p->nS,this->p->nS);
-	NUMBER **a_gradB = init2DNumber(this->p->nS,this->p->nS);
+    NUMBER *PI_m1, ** A_m1, ** B_m1;
+    init3Params(PI_m1, A_m1, B_m1, nS, nO);
+    NUMBER *a_gradPI, ** a_gradA, ** a_gradB;
+    init3Params(a_gradPI, a_gradA, a_gradB, nS, nO);
 	
 	int conv;
 	int iter; // iteration count
@@ -160,42 +159,44 @@ NUMBER HMMProblemKT::GradientDescentKT1() {
 	// fit all as 1 skill first
 	//
 	if(this->p->single_skill==1) {
+        NUMBER *a_gradPI_sum, ** a_gradA_sum, ** a_gradB_sum;
+        init3Params(a_gradPI_sum, a_gradA_sum, a_gradB_sum, nS, nO);
 		iter = 1;
 		pO0 = 0.0;
 		conv = 0; // converged
 		while( !conv && iter<=this->p->maxiter ) {
 			if(iter>1) {
-				toZero1DNumber(a_gradPI, this->p->nS);
-				toZero2DNumber(a_gradA,  this->p->nS, this->p->nS);
-				toZero2DNumber(a_gradB,  this->p->nS, this->p->nO);
+				toZero1DNumber(a_gradPI, nS);
+				toZero2DNumber(a_gradA,  nS, nS);
+				toZero2DNumber(a_gradB,  nS, nO);
+				toZero1DNumber(a_gradPI_sum, nS);
+				toZero2DNumber(a_gradA_sum,  nS, nS);
+				toZero2DNumber(a_gradB_sum,  nS, nO);
 			}
 			// add gradients
-			for(k=0; k<this->p->nK; k++) {
-                HMMProblem::computeGradients(this->p->k_numg[k], this->p->k_g_data[k], a_gradPI, a_gradA, a_gradB, this->p);
+			for(k=0; k<nK; k++) {
+                computeGradients(this->p->k_numg[k], this->p->k_g_data[k], a_gradPI, a_gradA, a_gradB);
                 if(iter==1)
                     pO0 += HMMProblem::getSumLogPOPara(this->p->k_numg[k], this->p->k_g_data[k]);
-				add1DNumbersWeighted(this->gradPI, a_gradPI, this->p->nS, 1.0);
-				add2DNumbersWeighted(this->gradA,  a_gradA,  this->p->nS, this->p->nS, 1.0);
-				add2DNumbersWeighted(this->gradB,  a_gradB,  this->p->nS, this->p->nO, 1.0);
+				add1DNumbersWeighted(a_gradPI, a_gradPI_sum, nS, 1.0);
+				add2DNumbersWeighted(a_gradA,  a_gradA_sum,  nS, nS, 1.0);
+				add2DNumbersWeighted(a_gradB,  a_gradB_sum,  nS, nO, 1.0);
 			}
 			// copy old SAVED! values for params, just for skill #0 is enough
-			cpy1DNumber(HMMProblem::getPI(0), PI_m1, this->p->nS);
-			cpy2DNumber(HMMProblem::getA(0),  A_m1,  this->p->nS, this->p->nS);
-			cpy2DNumber(HMMProblem::getB(0),  B_m1,  this->p->nS, this->p->nO);
+			cpy1DNumber(HMMProblem::getPI(0), PI_m1, nS);
+			cpy2DNumber(HMMProblem::getA(0),  A_m1,  nS, nS);
+			cpy2DNumber(HMMProblem::getB(0),  B_m1,  nS, nO);
 			
 			// make step
-			for(k=0; k<this->p->nK; k++) {
-                //				doLevinsonRabinerSondhi1982Step(hmm->getPI(k), hmm->getA(k), hmm->getB(k), gradPI, gradA, gradB, param);
-                doLinearStep(this->p->k_numg[k], this->p->k_g_data[k], PI, A, B, a_gradPI, a_gradA, a_gradB);
+			for(k=0; k<nK; k++) {
+                doLinearStep(this->p->k_numg[k], this->p->k_g_data[k], PI, A, B, a_gradPI_sum, a_gradA_sum, a_gradB_sum);
             }
 			// check convergence, on any skill, e.g. #0
 			conv = checkConvergence(HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), PI_m1, A_m1, B_m1, conv_flags);
 			
 			if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (conv || iter==this->p->maxiter) )) {
                 NUMBER pO = 0.0;
-                for(k=0; k<this->p->nK; k++) {
-                    //                    HMMProblem::computeAlphaAndPOParam(this->p->k_numg[k], this->p->k_g_data[k], PI, A, B, this->p->nS);
-                    //                    pO += HMMProblem::getSumLogPOPara(this->p->k_numg[k], this->p->k_g_data[k]);
+                for(k=0; k<nK; k++) {
                     HMMProblem::computeAlphaAndPOParam(this->p->k_numg[k], this->p->k_g_data[k]);
                     pO += HMMProblem::getSumLogPOPara(this->p->k_numg[k], this->p->k_g_data[k]);
                 }
@@ -203,11 +204,17 @@ NUMBER HMMProblemKT::GradientDescentKT1() {
 			}
 			iter ++;
 		}// single skill loop
+        free(a_gradPI_sum);
+        free2DNumber(a_gradA_sum, nS);
+        free2DNumber(a_gradB_sum, nS);
+        toZero1DNumber(a_gradPI, nS);
+        toZero2DNumber(a_gradA,  nS, nS);
+        toZero2DNumber(a_gradB,  nS, nO);
 	}
 	//
 	// Main fit
 	//
-	for(k=0; k<this->p->nK; k++) {  // for(k=218; k<219; k++) { //
+	for(k=0; k<nK; k++) {  // for(k=218; k<219; k++) { //
         NCAT xndat = this->p->k_numg[k];
         struct data** x_data = this->p->k_g_data[k];
 		
@@ -221,15 +228,18 @@ NUMBER HMMProblemKT::GradientDescentKT1() {
 		B  = HMMProblem::getB(k);
 		
 		while( !conv && iter<=this->p->maxiter ) {
-			computeGradients(xndat, x_data, a_gradPI, a_gradA, a_gradB, this->p);
+			computeGradients(xndat, x_data, a_gradPI, a_gradA, a_gradB);
 			if(iter==1) {
+				toZero1DNumber(a_gradPI, nS);
+				toZero2DNumber(a_gradA,  nS, nS);
+				toZero2DNumber(a_gradB,  nS, nO);
 				pO0 = HMMProblem::getSumLogPOPara(xndat, x_data);
 			}
 			
 			// copy old SAVED! values for params
-			cpy1DNumber(PI, PI_m1, this->p->nS);
-			cpy2DNumber(A,  A_m1,  this->p->nS, this->p->nS);
-			cpy2DNumber(B,  B_m1,  this->p->nS, this->p->nO);
+			cpy1DNumber(PI, PI_m1, nS);
+			cpy2DNumber(A,  A_m1,  nS, nS);
+			cpy2DNumber(B,  B_m1,  nS, nO);
             
 			doLinearStep(xndat, x_data, PI, A, B, a_gradPI, a_gradA, a_gradB);
             
@@ -237,7 +247,7 @@ NUMBER HMMProblemKT::GradientDescentKT1() {
 			conv = checkConvergence(PI, A, B, PI_m1, A_m1, B_m1, conv_flags);
 			
 			if( ( /*(!conv && iter<this->p->maxiter) ||*/ (conv || iter==this->p->maxiter) )) {
-                //                HMMProblem::computeAlphaAndPOParam(xndat, x_data, PI, A, B, this->p->nS);
+                //                HMMProblem::computeAlphaAndPOParam(xndat, x_data, PI, A, B, nS);
                 computeAlphaAndPOParam(xndat, x_data);
                 pO = HMMProblem::getSumLogPOPara(xndat, x_data);
                 //                pO = HMMProblem::getSumLogPOPara(xndat, x_data);
@@ -251,17 +261,17 @@ NUMBER HMMProblemKT::GradientDescentKT1() {
 		// recycle
 	} // for all skills
 	free(PI_m1);
-	free2DNumber(A_m1, this->p->nS);
-	free2DNumber(B_m1, this->p->nS);
+	free2DNumber(A_m1, nS);
+	free2DNumber(B_m1, nS);
 	free(a_gradPI);
-	free2DNumber(a_gradA, this->p->nS);
-	free2DNumber(a_gradB, this->p->nS);
+	free2DNumber(a_gradA, nS);
+	free2DNumber(a_gradB, nS);
     //
     // fit Transfer weights
     //
     
-    for(NCAT k=0; k<(this->p->nK); k++) {
-        NDAT idx = (NDAT)k*(((NDAT)this->p->nK)+1) + (NDAT)k;
+    for(NCAT k=0; k<(nK); k++) {
+        NDAT idx = (NDAT)k*(((NDAT)nK)+1) + (NDAT)k;
         this->liblinear_weights[idx] = 1;
     }
     
@@ -275,21 +285,21 @@ NUMBER HMMProblemKT::GradientDescentKT1() {
     fprintf(stdout,"Grab memory\n");
 	ll_prob.y = Malloc(double,l);
 	ll_prob.x = Malloc(struct feature_node *,l);
-    long long elements = (long long)l * ((long long)this->p->nK + 1); // +1 more is for ?, but it's there
+    long long elements = (long long)l * ((long long)nK + 1); // +1 more is for ?, but it's there
 	ll_x_space = Malloc(struct feature_node,elements+l); // here's the '+prob.l' grab for bias, what the hell is 'elemets++' earlier
     
     fprintf(stdout,"Create problem\n");
     createLiblinearProblem(ll_prob, ll_param, ll_x_space);
     fprintf(stdout,"Train model\n");
     struct model* model_=train(&ll_prob, &ll_param);
-    if(model_->nr_feature != ((long long)this->p->nK*this->p->nK)) {
+    if(model_->nr_feature != ((long long)nK*nK)) {
         fprintf(stderr,"Number of features in Logistic Regression is not correct\n");
         exit(1);
     }
     NUMBER multiplier = 1;
     if(model_->label[0] != 1) // inverse coefficients if first class label is not 1 (documented in LL)
         multiplier = -1;
-    for(NDAT r=0; r<((long long)this->p->nK*this->p->nK + 1); r++)
+    for(NDAT r=0; r<((long long)nK*nK + 1); r++)
         if(model_->w[r] != 0) {
             this->liblinear_weights[r] = multiplier * model_->w[r];
         }
@@ -304,13 +314,13 @@ NUMBER HMMProblemKT::GradientDescentKT1() {
     //
     /**/
     // report pO per group
-//    for(NCAT g=0; g<this->p->nG; g++) {
-//        //        computeAlphaAndPOParamG(g);
-//        computeAlphaAndPOParam(this->p->k_numg[k], this->p->k_g_data[k]);   
-//        pO = HMMProblem::getSumLogPOPara(this->p->g_numk[g], this->p->g_k_data[g]);
-//        //        pO = HMMProblem::getSumLogPOPara(this->p->g_numk[g], this->p->g_k_data[g]);
-//        printf("group %3d p(O|param)= %15.7f\n",g,pO);
-//    }
+    //    for(NCAT g=0; g<nG; g++) {
+    //        //        computeAlphaAndPOParamG(g);
+    //        computeAlphaAndPOParam(this->p->k_numg[k], this->p->k_g_data[k]);
+    //        pO = HMMProblem::getSumLogPOPara(this->p->g_numk[g], this->p->g_k_data[g]);
+    //        //        pO = HMMProblem::getSumLogPOPara(this->p->g_numk[g], this->p->g_k_data[g]);
+    //        printf("group %3d p(O|param)= %15.7f\n",g,pO);
+    //    }
     
     return loglik;
 }
@@ -318,16 +328,15 @@ NUMBER HMMProblemKT::GradientDescentKT1() {
 NUMBER HMMProblemKT::GradientDescentKT2() {
 	NCAT k;
     NUMBER loglik = 0;
+    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
     
 	NUMBER *PI = NULL; // just pointer
 	NUMBER **A = NULL; //
 	NUMBER **B = NULL; //
-	NUMBER *PI_m1 = init1DNumber(this->p->nS);			// value on previous iteration
-	NUMBER **A_m1 = init2DNumber(this->p->nS,this->p->nS);
-	NUMBER **B_m1 = init2DNumber(this->p->nS,this->p->nO);
-	NUMBER *a_gradPI = init1DNumber(this->p->nS);
-	NUMBER **a_gradA = init2DNumber(this->p->nS,this->p->nS);
-	NUMBER **a_gradB = init2DNumber(this->p->nS,this->p->nS);
+    NUMBER *PI_m1, ** A_m1, ** B_m1;
+    init3Params(PI_m1, A_m1, B_m1, nS, nO);    
+    NUMBER *a_gradPI, ** a_gradA, ** a_gradB;
+    init3Params(a_gradPI, a_gradA, a_gradB, nS, nO);
 	
 	int conv;
 	int iter; // iteration count
@@ -338,41 +347,46 @@ NUMBER HMMProblemKT::GradientDescentKT2() {
 	// fit all as 1 skill first
 	//
 	if(this->p->single_skill==1) {
+        NUMBER *a_gradPI_sum, ** a_gradA_sum, ** a_gradB_sum;
+        init3Params(a_gradPI_sum, a_gradA_sum, a_gradB_sum, nS, nO);
 		iter = 1;
 		pO0 = 0.0;
 		conv = 0; // converged
 		while( !conv && iter<=this->p->maxiter ) {
 			if(iter>1) {
-				toZero1DNumber(a_gradPI, this->p->nS);
-				toZero2DNumber(a_gradA,  this->p->nS, this->p->nS);
-				toZero2DNumber(a_gradB,  this->p->nS, this->p->nO);
+				toZero1DNumber(a_gradPI, nS);
+				toZero2DNumber(a_gradA,  nS, nS);
+				toZero2DNumber(a_gradB,  nS, nO);
+				toZero1DNumber(a_gradPI_sum, nS);
+				toZero2DNumber(a_gradA_sum,  nS, nS);
+				toZero2DNumber(a_gradB_sum,  nS, nO);
 			}
 			// add gradients
-			for(k=0; k<this->p->nK; k++) {
-                HMMProblem::computeGradients(this->p->k_numg[k], this->p->k_g_data[k], a_gradPI, a_gradA, a_gradB, this->p);
+			for(k=0; k<nK; k++) {
+                computeGradients(this->p->k_numg[k], this->p->k_g_data[k], a_gradPI, a_gradA, a_gradB);
                 if(iter==1)
                     pO0 += HMMProblem::getSumLogPOPara(this->p->k_numg[k], this->p->k_g_data[k]);
-				add1DNumbersWeighted(this->gradPI, a_gradPI, this->p->nS, 1.0);
-				add2DNumbersWeighted(this->gradA,  a_gradA,  this->p->nS, this->p->nS, 1.0);
-				add2DNumbersWeighted(this->gradB,  a_gradB,  this->p->nS, this->p->nO, 1.0);
+				add1DNumbersWeighted(a_gradPI, a_gradPI_sum, nS, 1.0);
+				add2DNumbersWeighted(a_gradA,  a_gradA_sum,  nS, nS, 1.0);
+				add2DNumbersWeighted(a_gradB,  a_gradB_sum,  nS, nO, 1.0);
 			}
 			// copy old SAVED! values for params, just for skill #0 is enough
-			cpy1DNumber(HMMProblem::getPI(0), PI_m1, this->p->nS);
-			cpy2DNumber(HMMProblem::getA(0),  A_m1,  this->p->nS, this->p->nS);
-			cpy2DNumber(HMMProblem::getB(0),  B_m1,  this->p->nS, this->p->nO);
+			cpy1DNumber(HMMProblem::getPI(0), PI_m1, nS);
+			cpy2DNumber(HMMProblem::getA(0),  A_m1,  nS, nS);
+			cpy2DNumber(HMMProblem::getB(0),  B_m1,  nS, nO);
 			
 			// make step
-			for(k=0; k<this->p->nK; k++) {
+			for(k=0; k<nK; k++) {
                 //				doLevinsonRabinerSondhi1982Step(hmm->getPI(k), hmm->getA(k), hmm->getB(k), gradPI, gradA, gradB, param);
-                doLinearStep(this->p->k_numg[k], this->p->k_g_data[k], PI, A, B, a_gradPI, a_gradA, a_gradB);
+                doLinearStep(this->p->k_numg[k], this->p->k_g_data[k], PI, A, B, a_gradPI_sum, a_gradA_sum, a_gradB_sum);
             }
 			// check convergence, on any skill, e.g. #0
 			conv = checkConvergence(HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), PI_m1, A_m1, B_m1, conv_flags);
 			
 			if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (conv || iter==this->p->maxiter) )) {
                 NUMBER pO = 0.0;
-                for(k=0; k<this->p->nK; k++) {
-                    //                    HMMProblem::computeAlphaAndPOParam(this->p->k_numg[k], this->p->k_g_data[k], PI, A, B, this->p->nS);
+                for(k=0; k<nK; k++) {
+                    //                    HMMProblem::computeAlphaAndPOParam(this->p->k_numg[k], this->p->k_g_data[k], PI, A, B, nS);
                     //                    pO += HMMProblem::getSumLogPOPara(this->p->k_numg[k], this->p->k_g_data[k]);
                     HMMProblem::computeAlphaAndPOParam(this->p->k_numg[k], this->p->k_g_data[k]);
                     pO += HMMProblem::getSumLogPOPara(this->p->k_numg[k], this->p->k_g_data[k]);
@@ -381,11 +395,14 @@ NUMBER HMMProblemKT::GradientDescentKT2() {
 			}
 			iter ++;
 		}// single skill loop
+        free(a_gradPI_sum);
+        free2DNumber(a_gradA_sum, nS);
+        free2DNumber(a_gradB_sum, nS);
 	}
 	//
 	// Main fit
 	//
-	for(k=0; k<this->p->nK; k++) {  // for(k=218; k<219; k++) { //
+	for(k=0; k<nK; k++) {  // for(k=218; k<219; k++) { //
         NCAT xndat = this->p->k_numg[k];
         struct data** x_data = this->p->k_g_data[k];
 		
@@ -399,15 +416,15 @@ NUMBER HMMProblemKT::GradientDescentKT2() {
 		B  = HMMProblem::getB(k);
 		
 		while( !conv && iter<=this->p->maxiter ) {
-			computeGradients(xndat, x_data, a_gradPI, a_gradA, a_gradB, this->p);
+			computeGradients(xndat, x_data, a_gradPI, a_gradA, a_gradB);
 			if(iter==1) {
 				pO0 = HMMProblem::getSumLogPOPara(xndat, x_data);
 			}
 			
 			// copy old SAVED! values for params
-			cpy1DNumber(PI, PI_m1, this->p->nS);
-			cpy2DNumber(A,  A_m1,  this->p->nS, this->p->nS);
-			cpy2DNumber(B,  B_m1,  this->p->nS, this->p->nO);
+			cpy1DNumber(PI, PI_m1, nS);
+			cpy2DNumber(A,  A_m1,  nS, nS);
+			cpy2DNumber(B,  B_m1,  nS, nO);
             
 			doLinearStep(xndat, x_data, PI, A, B, a_gradPI, a_gradA, a_gradB);
             
@@ -415,7 +432,7 @@ NUMBER HMMProblemKT::GradientDescentKT2() {
 			conv = checkConvergence(PI, A, B, PI_m1, A_m1, B_m1, conv_flags);
 			
 			if( ( /*(!conv && iter<this->p->maxiter) ||*/ (conv || iter==this->p->maxiter) )) {
-                //                HMMProblem::computeAlphaAndPOParam(xndat, x_data, PI, A, B, this->p->nS);
+                //                HMMProblem::computeAlphaAndPOParam(xndat, x_data, PI, A, B, nS);
                 computeAlphaAndPOParam(xndat, x_data);
                 pO = HMMProblem::getSumLogPOPara(xndat, x_data);
                 //                pO = HMMProblem::getSumLogPOPara(xndat, x_data);
@@ -429,18 +446,18 @@ NUMBER HMMProblemKT::GradientDescentKT2() {
 		// recycle
 	} // for all skills
 	free(PI_m1);
-	free2DNumber(A_m1, this->p->nS);
-	free2DNumber(B_m1, this->p->nS);
+	free2DNumber(A_m1, nS);
+	free2DNumber(B_m1, nS);
 	free(a_gradPI);
-	free2DNumber(a_gradA, this->p->nS);
-	free2DNumber(a_gradB, this->p->nS);
-
+	free2DNumber(a_gradA, nS);
+	free2DNumber(a_gradB, nS);
+    
     //
     // fit Transfer weights
     //
-    for(NCAT k=0; k<(this->p->nK); k++) {
-        NDAT idx = (NDAT)k*(((NDAT)this->p->nK)+1) + (NDAT)k;
-        //        fprintf(stdout, "t.idx=%5d / %d (nK=%d)\n",idx,((NDAT)this->p->nK)*((NDAT)this->p->nK)+(NDAT)this->p->nK,this->p->nK);
+    for(NCAT k=0; k<(nK); k++) {
+        NDAT idx = (NDAT)k*(((NDAT)nK)+1) + (NDAT)k;
+        //        fprintf(stdout, "t.idx=%5d / %d (nK=%d)\n",idx,((NDAT)nK)*((NDAT)nK)+(NDAT)nK,nK);
         this->liblinear_weights[idx] = 1;
     }
     
@@ -449,35 +466,35 @@ NUMBER HMMProblemKT::GradientDescentKT2() {
     struct feature_node *ll_x_space;
     
     // vvvv for all skils
-    NDAT counts[this->p->nK];
-    for(NCAT k=0; k<this->p->nK; k++) {
+    NDAT counts[nK];
+    for(NCAT k=0; k<nK; k++) {
         counts[k] = 0;
         for(NCAT gidx=0; gidx<this->p->k_numg[k]; gidx++)
             counts[k] += this->p->k_g_data[k][gidx]->ndat;
     }
     NDAT n_max = 0;
-    for(NCAT k=0; k<this->p->nK; k++)
+    for(NCAT k=0; k<nK; k++)
         n_max = (n_max<counts[k])?counts[k]:n_max;
     // grab max mem beforehand
 	ll_prob.y = Malloc(double,n_max);
 	ll_prob.x = Malloc(struct feature_node *,n_max);
-    long long elements = (long long)n_max * ((long long)this->p->nK + 1); // +1 more is for ?, but it's there
+    long long elements = (long long)n_max * ((long long)nK + 1); // +1 more is for ?, but it's there
 	ll_x_space = Malloc(struct feature_node,elements+n_max); // here's the '+prob.l' grab for bias, what the hell is 'elemets++' earlier
     
-    for(NCAT k=0; k<this->p->nK; k++) { //
+    for(NCAT k=0; k<nK; k++) { //
         ll_prob.l = counts[k];
         createLiblinearProblem(ll_prob, ll_param, ll_x_space, k);
         struct model* model_=train(&ll_prob, &ll_param);
-        if(model_->nr_feature != (this->p->nK)) {
+        if(model_->nr_feature != (nK)) {
             fprintf(stderr,"Number of features in Logistic Regression is not correct\n");
             exit(1);
         }
         NUMBER multiplier = 1;
         if(model_->label[0] != 1) // inverse coefficients if first class label is not 1 (documented in LL)
             multiplier = -1;
-        for(NCAT r=0; r<(this->p->nK + 1); r++)
+        for(NCAT r=0; r<(nK + 1); r++)
             if(model_->w[r] != 0) {
-                this->liblinear_weights[ (NDAT)k*((NDAT)this->p->nK+(NDAT)1) + (NDAT)r ] = multiplier * model_->w[r];
+                this->liblinear_weights[ (NDAT)k*((NDAT)nK+(NDAT)1) + (NDAT)r ] = multiplier * model_->w[r];
             }
         free_and_destroy_model(&model_);
     }
@@ -488,7 +505,7 @@ NUMBER HMMProblemKT::GradientDescentKT2() {
     //
     /**/
     // report pO per group
-    //    for(NCAT g=0; g<this->p->nG; g++) {
+    //    for(NCAT g=0; g<nG; g++) {
     //        //        computeAlphaAndPOParamG(g);
     //        computeAlphaAndPOParam(this->p->k_numg[k], this->p->k_g_data[k]);
     //        pO = HMMProblem::getSumLogPOPara(this->p->g_numk[g], this->p->g_k_data[g]);

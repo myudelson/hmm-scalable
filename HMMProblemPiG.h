@@ -30,6 +30,7 @@ public:
 //	NUMBER** getA(NCAT k);
 //	NUMBER** getB(NCAT k);
 	HMMProblemPiG(struct param *param); // sizes=={nK, nK, nK} by default
+    virtual ~HMMProblemPiG();
     // writing
 	void toFile(const char *filename);
     // predicting

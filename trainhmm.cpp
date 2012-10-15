@@ -9,11 +9,11 @@
 #include <list>
 #include "utils.h"
 #include "HMMProblem.h"
-#include "HMMProblemPiG.h"
-#include "HMMProblemPiGK.h"
-#include "HMMProblemAGK.h"
-#include "HMMProblemPiAGK.h"
-#include "HMMProblemKT.h"
+//#include "HMMProblemPiG.h"
+//#include "HMMProblemPiGK.h"
+//#include "HMMProblemAGK.h"
+//#include "HMMProblemPiAGK.h"
+//#include "HMMProblemKT.h"
 #include "StripedArray.h"
 using namespace std;
 
@@ -68,21 +68,21 @@ int main (int argc, char ** argv) {
             case BKT_GD_G: // Gradient Descent by group
                 hmm = new HMMProblem(&param);
                 break;
-            case BKT_GD_PIg: // Gradient Descent: PI by group, A,B by skill
-                hmm = new HMMProblemPiG(&param);
-                break;
-            case BKT_GD_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-                hmm = new HMMProblemPiGK(&param);
-                break;
-            case BKT_GD_APIgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-                hmm = new HMMProblemPiAGK(&param);
-                break;
-            case BKT_GD_Agk: // Gradient Descent, pT=f(K,G), other by K
-                hmm = new HMMProblemAGK(&param);
-                break;
-            case BKT_GD_T: // Gradient Descent with Transfer
-                hmm = new HMMProblemKT(&param);
-                break;
+//            case BKT_GD_PIg: // Gradient Descent: PI by group, A,B by skill
+//                hmm = new HMMProblemPiG(&param);
+//                break;
+//            case BKT_GD_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+//                hmm = new HMMProblemPiGK(&param);
+//                break;
+//            case BKT_GD_APIgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+//                hmm = new HMMProblemPiAGK(&param);
+//                break;
+//            case BKT_GD_Agk: // Gradient Descent, pT=f(K,G), other by K
+//                hmm = new HMMProblemAGK(&param);
+//                break;
+//            case BKT_GD_T: // Gradient Descent with Transfer
+//                hmm = new HMMProblemKT(&param);
+//                break;
         }
         
         tm = clock();
@@ -444,14 +444,18 @@ void read_train_data(const char *filename) {
             }
         }
 	}
+    for(k=0; k<param.nK; k++) param.ndata += param.k_numg[k];
+    param.all_data = Calloc(struct data, param.ndata);
 		
 	// Section B
 	param.k_g_data = Malloc(struct data **, param.nK);
-	for(k=0; k<param.nK; k++)
-		param.k_g_data[k] = Calloc(struct data*, param.k_numg[k]);
+	param.k_data = Malloc(struct data *, param.ndata);
+//	for(k=0; k<param.nK; k++)
+//		param.k_g_data[k] = Calloc(struct data*, param.k_numg[k]);
 	param.g_k_data = Calloc(struct data **, param.nG);
-	for(g=0; g<param.nG; g++)
-		param.g_k_data[g] = Calloc(struct data*, param.g_numk[g]);
+	param.g_data = Malloc(struct data *, param.ndata);
+//	for(g=0; g<param.nG; g++)
+//		param.g_k_data[g] = Calloc(struct data*, param.g_numk[g]);
 	param.null_skills = Malloc(struct data, param.n_null_skill_group);
     // index compressed array of null-skill-BY-group
     NCAT idx = 0;
@@ -459,8 +463,22 @@ void read_train_data(const char *filename) {
         if( count_null_skill_group[g] >0 ) index_null_skill_group[g] = idx++;
     
 	// Pass C
-	NCAT *k_countg = Calloc(NCAT, param.nK); // track current group in skill
-	NCAT *g_countk = Calloc(NCAT, param.nG); // track current skill in group
+	NDAT *k_countg = Calloc(NDAT, param.nK); // track current group in skill
+	NDAT *g_countk = Calloc(NDAT, param.nG); // track current skill in group
+    // set k_countg and g_countk pointers to relative positions
+    NDAT sumk=0, sumg=0;
+    for(k=0; k<param.nK; k++) {
+        k_countg[k] = sumk;
+        param.k_g_data[k] = &param.k_data[sumk];
+        sumk += param.k_numg[k];
+    }
+    for(g=0; g<param.nG; g++) {
+        g_countk[g] = sumg;
+        param.g_k_data[g] = &param.g_data[sumg];
+        sumg += param.g_numk[g];
+    }
+    
+    NDAT n_all_data = 0;
 	for(t=0; t<param.N; t++) {
         NCAT *ar;
         int n;
@@ -494,30 +512,49 @@ void read_train_data(const char *filename) {
             }
             if( skill_group_map[k][g]==0)
                 printf("ERROR! position [%d,%d] in skill_group_map in should have been 1\n",k,g);
-            else if( skill_group_map[k][g]==1 ) { // insert uniques and grab new data
-                param.k_g_data[k][ k_countg[k] ] = Calloc(struct data, 1); // grab
-                param.g_k_data[g][ g_countk[g] ] = param.k_g_data[k][ k_countg[k] ]; // relink
-                param.k_g_data[k][ k_countg[k] ]->ndat = 1; // init data << VV
-                param.k_g_data[k][ k_countg[k] ]->k = k; // init k
-                param.k_g_data[k][ k_countg[k] ]->g = g; // init g
-                param.k_g_data[k][ k_countg[k] ]->cnt = 0;
-                param.k_g_data[k][ k_countg[k] ]->obs = NULL;
-                param.k_g_data[k][ k_countg[k] ]->alpha = NULL;
-                param.k_g_data[k][ k_countg[k] ]->beta = NULL;
-                param.k_g_data[k][ k_countg[k] ]->gamma = NULL;
-                param.k_g_data[k][ k_countg[k] ]->xi = NULL;
-                param.k_g_data[k][ k_countg[k] ]->c = NULL;
-                param.k_g_data[k][ k_countg[k] ]->p_O_param = 0.0;
-                param.k_g_data[k][ k_countg[k] ]->loglik = 0.0;
+            else if( skill_group_map[k][g]==1 ) { // insert new sequence and grab new data
+                // link
+                param.k_data[ k_countg[k] ] = &param.all_data[n_all_data]; // in linear array
+                param.g_data[ g_countk[g] ] = &param.all_data[n_all_data]; // in linear array
+                // param.k_g_data[k] and param.g_k_data[g] are already linked
+//                param.k_g_data[k][ k_countg[k] ] = Calloc(struct data, 1); // grab
+//                param.g_k_data[g][ g_countk[g] ] = param.k_g_data[k][ k_countg[k] ]; // relink
+//                param.k_g_data[k][ k_countg[k] ]->ndat = 1; // init data << VV
+//                param.k_g_data[k][ k_countg[k] ]->k = k; // init k
+//                param.k_g_data[k][ k_countg[k] ]->g = g; // init g
+//                param.k_g_data[k][ k_countg[k] ]->cnt = 0;
+//                param.k_g_data[k][ k_countg[k] ]->obs = NULL;
+//                param.k_g_data[k][ k_countg[k] ]->alpha = NULL;
+//                param.k_g_data[k][ k_countg[k] ]->beta = NULL;
+//                param.k_g_data[k][ k_countg[k] ]->gamma = NULL;
+//                param.k_g_data[k][ k_countg[k] ]->xi = NULL;
+//                param.k_g_data[k][ k_countg[k] ]->c = NULL;
+//                param.k_g_data[k][ k_countg[k] ]->p_O_param = 0.0;
+//                param.k_g_data[k][ k_countg[k] ]->loglik = 0.0;
+                param.all_data[n_all_data].ndat = 1; // init data << VV
+                param.all_data[n_all_data].k = k; // init k
+                param.all_data[n_all_data].g = g; // init g
+                param.all_data[n_all_data].cnt = 0;
+                param.all_data[n_all_data].obs = NULL;
+                param.all_data[n_all_data].alpha = NULL;
+                param.all_data[n_all_data].beta = NULL;
+                param.all_data[n_all_data].gamma = NULL;
+                param.all_data[n_all_data].xi = NULL;
+                param.all_data[n_all_data].c = NULL;
+                param.all_data[n_all_data].p_O_param = 0.0;
+                param.all_data[n_all_data].loglik = 0.0;
                 k_countg[k]++; // count
                 g_countk[g]++; // count
                 skill_group_map[k][g] = 2; // mark
+                n_all_data++;
             } else if( skill_group_map[k][g]== 2) { // update data count, LINEAR SEARCH :(
-                NCAT gidx;
-                for(gidx=(k_countg[k]-(NCAT)1); gidx>=0 && param.k_g_data[k][gidx]->g!=g; gidx--)
+                NDAT gidx;
+//                for(gidx=(k_countg[k]-(NCAT)1); gidx>=0 && param.k_g_data[k][gidx]->g!=g; gidx--)
+//                    ;
+                for(gidx=(k_countg[k]-(NDAT)1); gidx>=0 && param.k_data[gidx]->g!=g; gidx--)
                     ;
-                if( param.k_g_data[k][gidx]->g==g)
-                    param.k_g_data[k][gidx]->ndat++;
+                if( param.k_data[gidx]->g==g)
+                    param.k_data[gidx]->ndat++;
                 else
                     printf("ERROR! position of group %d in skill %d not found\n",g,k);
             }
@@ -532,8 +569,8 @@ void read_train_data(const char *filename) {
 //		pass A
 //			fill k_g_data.data (g_k_data is already linked)
 //				using skill_group_map as marker, 3 - data grabbed	
-	k_countg = Calloc(NCAT, param.nK); // track current group in skill
-	g_countk = Calloc(NCAT, param.nG); // track current skill in group
+	k_countg = Calloc(NDAT, param.nK); // track current group in skill
+	g_countk = Calloc(NDAT, param.nG); // track current skill in group
 	for(t=0; t<param.N; t++) {
 		g = param.dat_group->get(t);//[t];
 		o = param.dat_obs->get(t);//[t];
@@ -616,32 +653,38 @@ void destroy_input_data() {
 	if(param.dat_skill != NULL) free(param.dat_skill);
 	if(param.dat_multiskill != NULL) free(param.dat_multiskill);
 
-	NCAT k,g;
-	NDAT t;
-	for(k=0; k<param.nK; k++) {
-		for(g=0; g<param.k_numg[k]; g++) {
-			free(param.k_g_data[k][g]->obs); // only free data here
-			if( param.k_g_data[k][g]->c != NULL )
-				free(param.k_g_data[k][g]->c);  // only free data here
-			if( param.k_g_data[k][g]->alpha != NULL )
-				free2DNumber(param.k_g_data[k][g]->alpha,  param.k_g_data[k][g]->ndat);  // only free data here
-			if( param.k_g_data[k][g]->beta != NULL )
-				free2DNumber(param.k_g_data[k][g]->beta,  param.k_g_data[k][g]->ndat); // only free data here
-			if( param.k_g_data[k][g]->gamma != NULL )
-				free2DNumber(param.k_g_data[k][g]->gamma,  param.k_g_data[k][g]->ndat); // only free data here
-			if( param.k_g_data[k][g]->xi != NULL )
-				for(t=0;t<param.k_g_data[k][g]->ndat; t++)
-					free2DNumber(param.k_g_data[k][g]->xi[t],  param.nS); // only free data here
-			free(param.k_g_data[k][g]);
-		}
-		free(param.k_g_data[k]);
-	}
+    free(param.all_data); // ndat of them
+    free(param.k_data); // ndat of them (reordered by k)
+    free(param.g_data); // ndat of them (reordered by g)
+    free(param.k_g_data); // nK of them
+    free(param.g_k_data); // nG of them
+//	NCAT k,g;
+//	NDAT t;
+//	for(k=0; k<param.nK; k++) {
+//		for(g=0; g<param.k_numg[k]; g++) {
+//			free(param.k_g_data[k][g]->obs); // only free data here
+//			if( param.k_g_data[k][g]->c != NULL )
+//				free(param.k_g_data[k][g]->c);  // only free data here
+//			if( param.k_g_data[k][g]->alpha != NULL )
+//				free2DNumber(param.k_g_data[k][g]->alpha,  param.k_g_data[k][g]->ndat);  // only free data here
+//			if( param.k_g_data[k][g]->beta != NULL )
+//				free2DNumber(param.k_g_data[k][g]->beta,  param.k_g_data[k][g]->ndat); // only free data here
+//			if( param.k_g_data[k][g]->gamma != NULL )
+//				free2DNumber(param.k_g_data[k][g]->gamma,  param.k_g_data[k][g]->ndat); // only free data here
+//			if( param.k_g_data[k][g]->xi != NULL )
+//				for(t=0;t<param.k_g_data[k][g]->ndat; t++)
+//					free2DNumber(param.k_g_data[k][g]->xi[t],  param.nS); // only free data here
+//			free(param.k_g_data[k][g]);
+//		}
+//		free(param.k_g_data[k]);
+//	}
+//	for(g=0; g<param.nG; g++)
+//		free(param.g_k_data[g]);
+    
 	free(param.k_numg);
-	for(g=0; g<param.nG; g++)
-		free(param.g_k_data[g]);
 	free(param.g_numk);
     // null skills
-    for(g=0;g<param.n_null_skill_group; g++)
+    for(NCAT g=0;g<param.n_null_skill_group; g++)
         free(param.null_skills[g].obs);
     free(param.null_skills);
     // vocabularies
@@ -873,21 +916,21 @@ void cross_validate(NUMBER* metrics, const char *filename) {
             case BKT_GD_G: // Gradient Descent by group
                 hmms[f] = new HMMProblem(&param);
                 break;
-            case BKT_GD_PIg: // Gradient Descent: PI by group, A,B by skill
-                hmms[f] = new HMMProblemPiG(&param);
-                break;
-            case BKT_GD_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-                hmms[f] = new HMMProblemPiGK(&param);
-                break;
-            case BKT_GD_APIgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-                hmms[f] = new HMMProblemPiAGK(&param);
-                break;
-            case BKT_GD_Agk: // Gradient Descent, pT=f(K,G), other by K
-                hmms[f] = new HMMProblemAGK(&param);
-                break;
-            case BKT_GD_T: // Gradient Descent with Transfer
-                hmms[f] = new HMMProblemKT(&param);
-                break;
+//            case BKT_GD_PIg: // Gradient Descent: PI by group, A,B by skill
+//                hmms[f] = new HMMProblemPiG(&param);
+//                break;
+//            case BKT_GD_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+//                hmms[f] = new HMMProblemPiGK(&param);
+//                break;
+//            case BKT_GD_APIgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+//                hmms[f] = new HMMProblemPiAGK(&param);
+//                break;
+//            case BKT_GD_Agk: // Gradient Descent, pT=f(K,G), other by K
+//                hmms[f] = new HMMProblemAGK(&param);
+//                break;
+//            case BKT_GD_T: // Gradient Descent with Transfer
+//                hmms[f] = new HMMProblemKT(&param);
+//                break;
         }
         // block respective data
         for(g=0; g<param.nG; g++) // for all groups

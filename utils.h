@@ -103,10 +103,14 @@ struct param {
     struct data *null_skills;
     NCAT n_null_skill_group; // self explanatory
 	// data arrays, by skill
+    NDAT ndata; // number of all data sequence
 	NCAT *k_numg; // num groups for skill
+	struct data *all_data; // all skill-group data pointers in one array
+	struct data **k_data; // all skill-group data pointers in one array
 	struct data ***k_g_data; // skill-group data pointer, it is a pointer itself
 	// data arrays, by group
 	NCAT *g_numk; // num skills for group
+	struct data **g_data; // all group-skill data pointers in one array
 	struct data ***g_k_data; // group_skill data pointer, it is a pointer itself
 	char multiskill; // multiskill per observation flag, 0 - single skill, [separator character] otherwise
     // vocabilaries

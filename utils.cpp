@@ -531,9 +531,13 @@ void set_param_defaults(struct param *param) {
     param->map_skill_fwd = NULL;
     param->map_skill_bwd = NULL;
 	// data
+    param->all_data = NULL;
+    param->ndata = NULL;
 	param->k_numg = NULL;
+	param->k_data = NULL;
 	param->k_g_data = NULL;
 	param->g_numk = NULL;
+	param->g_data = NULL;
 	param->g_k_data = NULL;
     param->N_null = 0;
     param->n_null_skill_group = 0;

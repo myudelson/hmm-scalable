@@ -17,18 +17,19 @@
 #include <map>
 
 HMMProblemPiG::HMMProblemPiG(struct param *param) {
-    switch (param->solver) {
-        case BKT_GD_PIg: // Gradient Descent: PI by group, A,B by skill
-            this->sizes[0] = param->nG;
-            this->sizes[1] = param->nK;
-            this->sizes[2] = param->nK;
-            this->n_params = param->nG + 3 * param->nK;
-            break;
-        default:
-            fprintf(stderr,"Method specified is not supported and should have been caught earlier\n");
-            break;
+    if( param->solver != BKT_GD_PIg) {
+        fprintf(stderr,"Method specified is not supported and should have been caught earlier\n");
+        exit(1);
     }
+    this->sizes[0] = param->nG;
+    this->sizes[1] = param->nK;
+    this->sizes[2] = param->nK;
+    this->n_params = param->nG + 3 * param->nK;
     init(param);
+}
+
+HMMProblemPiG::~HMMProblemPiG() {
+    destroy();
 }
 
 // getters for computing alpha, beta, gamma
@@ -170,21 +171,19 @@ void HMMProblemPiG::fit() {
 NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
 	NCAT k, g;
     NUMBER loglik;
+    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
     //    this->p->fitparam[0]=0;
     //    this->p->fitparam[1]=0;
     
 	NUMBER *PI = NULL; // just pointer
 	NUMBER **A = NULL; //
 	NUMBER **B = NULL; //
-	NUMBER *PI_m1 = init1DNumber(this->p->nS);			// value on previous iteration
-	NUMBER **A_m1 = init2DNumber(this->p->nS,this->p->nS);
-	NUMBER **B_m1 = init2DNumber(this->p->nS,this->p->nO);
-	NUMBER *gradPI = init1DNumber(this->p->nS);
-	NUMBER **gradA = init2DNumber(this->p->nS,this->p->nS);
-	NUMBER **gradB = init2DNumber(this->p->nS,this->p->nS);
-	NUMBER *gradPI_m1 = init1DNumber(this->p->nS);
-	NUMBER **gradA_m1 = init2DNumber(this->p->nS,this->p->nS);
-	NUMBER **gradB_m1 = init2DNumber(this->p->nS,this->p->nS);
+    NUMBER *PI_m1, ** A_m1, ** B_m1;
+    init3Params(PI_m1, A_m1, B_m1, nS, nO);
+    NUMBER *gradPI, ** gradA, ** gradB;
+    init3Params(gradPI, gradA, gradB, nS, nO);
+    NUMBER *gradPI_m1, ** gradA_m1, ** gradB_m1;
+    init3Params(gradPI_m1, gradA_m1, gradB_m1, nS, nO);
 	
 	int conv;
 	int iter; // iteration count
@@ -196,34 +195,34 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
     //	// fit all as 1 skill first
     //	//
     //	if(this->p->single_skill==1) {
-    //		for(k=0; k<this->p->nK; k++) this->p->mask_skill[k] = true; // mask with k'th==true to be computed
+    //		for(k=0; k<nK; k++) this->p->mask_skill[k] = true; // mask with k'th==true to be computed
     //		iter = 1;
     //		pO0 = 0.0;
     //		conv = 0; // converged
     //		while( !conv && iter<=this->p->maxiter ) {
     //			if(iter>1) {
-    //				toZero1DNumber(gradPI, this->p->nS);
-    //				toZero2DNumber(gradA,  this->p->nS, this->p->nS);
-    //				toZero2DNumber(gradB,  this->p->nS, this->p->nO);
+    //				toZero1DNumber(gradPI, nS);
+    //				toZero2DNumber(gradA,  nS, nS);
+    //				toZero2DNumber(gradB,  nS, nO);
     //			}
     //			hmm->computeGradients();
     //			if(iter==1)
     //				pO0 = HMMProblem::getSumLogPOPara(param);
     //			// add gradients
-    //			for(g=0; g<this->p->nG; g++)
-    //				add1DNumbersWeighted(hmm->getGradPI(g), gradPI, this->p->nS, 1.0);
-    //			for(k=0; k<this->p->nK; k++) {
-    //				add2DNumbersWeighted(hmm->getGradA(k),  gradA,  this->p->nS, this->p->nS, 1.0);
-    //				add2DNumbersWeighted(hmm->getGradB(k),  gradB,  this->p->nS, this->p->nO, 1.0);
+    //			for(g=0; g<nG; g++)
+    //				add1DNumbersWeighted(hmm->getGradPI(g), gradPI, nS, 1.0);
+    //			for(k=0; k<nK; k++) {
+    //				add2DNumbersWeighted(hmm->getGradA(k),  gradA,  nS, nS, 1.0);
+    //				add2DNumbersWeighted(hmm->getGradB(k),  gradB,  nS, nO, 1.0);
     //			}
     //			// copy old SAVED! values for params, just for skill #0 is enough
     //            // no selectivity here, these should change
-    //			cpy1DNumber(hmm->getPI(0), PI_m1, this->p->nS);
-    //			cpy2DNumber(hmm->getA(0),  A_m1,  this->p->nS, this->p->nS);
-    //			cpy2DNumber(hmm->getB(0),  B_m1,  this->p->nS, this->p->nO);
+    //			cpy1DNumber(hmm->getPI(0), PI_m1, nS);
+    //			cpy2DNumber(hmm->getA(0),  A_m1,  nS, nS);
+    //			cpy2DNumber(hmm->getB(0),  B_m1,  nS, nO);
     //
     //			// make step
-    //			for(k=0; k<this->p->nK; k++) {
+    //			for(k=0; k<nK; k++) {
     //                //				doLevinsonRabinerSondhi1982Step(hmm->getPI(k), hmm->getA(k), hmm->getB(k), gradPI, gradA, gradB, param);
     //                doLinearStepPLoGroupOther(this->p->k_numg[k], this->p->k_g_data[k], PI, A, B, gradPI, gradA, gradB, param, hmm);
     //            }
@@ -244,8 +243,8 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
 	// Main fit
 	//
     // this is a loop of repeated fits of PI(user), and A,B(skill)
-    NPAR* mask_skill = Calloc(NPAR, this->p->nK);
-    NPAR* mask_group = Calloc(NPAR, this->p->nG);
+    NPAR* mask_skill = Calloc(NPAR, nK);
+    NPAR* mask_group = Calloc(NPAR, nG);
     int first_iteration_qualify = 0; // at what iteration, qualification for skill/group convergence should start
     int iterations_to_qualify = 2; // how many concecutive iterations necessary for skill/group to qualify as converged
     int skip_k = 0, skip_g = 0;
@@ -253,7 +252,7 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
         //
         // PI first
         //
-        for(g=0; g<this->p->nG && skip_k<this->p->nK && skip_g<this->p->nG; g++) { // for all PI-by-user
+        for(g=0; g<nG && skip_k<nK && skip_g<nG; g++) { // for all PI-by-user
             if(mask_group[g]==iterations_to_qualify)
                 continue;
             NCAT xndat = this->p->g_numk[g];
@@ -263,12 +262,12 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
             pO0 = 0.0;
             pO = 0.0;
             PI = HMMProblem::getPI(g); // pointer stays same through fitting
-            toZero1DNumber(gradPI_m1, this->p->nS); // zero these, for the sake of selective fitting
+            toZero1DNumber(gradPI_m1, nS); // zero these, for the sake of selective fitting
             //
             // *** FINISHED HERE
             //
             while( !conv && iter<=this->p->maxiter ) {
-                if(iter>1) cpy1DNumber(gradPI, gradPI_m1, this->p->nS);
+                if(iter>1) cpy1DNumber(gradPI, gradPI_m1, nS);
                 
                 computeGradientsPI(xndat,x_data, gradPI);
                 if(iter==1) {
@@ -277,7 +276,7 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
                 
                 // copy old SAVED! values for params
                 // no selectivity here, these should change
-                cpy1DNumber(PI, PI_m1, this->p->nS);
+                cpy1DNumber(PI, PI_m1, nS);
                 
                 doLinearStepPLoGroupOtherPI(xndat, x_data, PI, gradPI);
                 
@@ -311,7 +310,7 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
         //
         // A,B next
         //
-        for(k=0; k<this->p->nK; k++) { // for all A,B-by-skill
+        for(k=0; k<nK; k++) { // for all A,B-by-skill
             if(mask_skill[k]==iterations_to_qualify)
                 continue;
             NCAT xndat = this->p->k_numg[k];
@@ -322,15 +321,15 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
             pO = 0.0;
             A = HMMProblem::getA(k); // pointer stays same through fitting
             B = HMMProblem::getB(k); // pointer stays same through fitting
-            toZero2DNumber(gradA_m1,  this->p->nS, this->p->nS);
-            toZero2DNumber(gradB_m1,  this->p->nS, this->p->nO);
+            toZero2DNumber(gradA_m1,  nS, nS);
+            toZero2DNumber(gradB_m1,  nS, nO);
             //
             // *** FINISHED HERE
             //
             while( !conv && iter<=this->p->maxiter ) {
                 if(iter>1) {
-                    cpy2DNumber(gradA,  gradA_m1,  this->p->nS, this->p->nS);
-                    cpy2DNumber(gradB,  gradB_m1,  this->p->nS, this->p->nO);
+                    cpy2DNumber(gradA,  gradA_m1,  nS, nS);
+                    cpy2DNumber(gradB,  gradB_m1,  nS, nO);
                 }
                 
                 computeGradientsAB(xndat, x_data, gradA, gradB);
@@ -340,8 +339,8 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
                 
                 // copy old SAVED! values for params
                 // no selectivity here, these should change
-                cpy2DNumber(A,  A_m1,  this->p->nS, this->p->nS);
-                cpy2DNumber(B,  B_m1,  this->p->nS, this->p->nO);
+                cpy2DNumber(A,  A_m1,  nS, nS);
+                cpy2DNumber(B,  B_m1,  nS, nO);
                 
                 doLinearStepPLoGroupOtherAB(xndat, x_data,  A, B, gradA, gradB);
                 
@@ -375,7 +374,7 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
     }// external loop for alternating PI and A,B
     
     // compute loglik
-    for(k=0; k<this->p->nK; k++) { // for all A,B-by-skill
+    for(k=0; k<nK; k++) { // for all A,B-by-skill
         pO = HMMProblemPiG::getSumLogPOPara(this->p->k_numg[k], this->p->k_g_data[k]);
         loglik +=pO*(pO>0);
     }
@@ -383,44 +382,45 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
     free(mask_skill);
     free(mask_group);
 	free(PI_m1);
-	free2DNumber(A_m1, this->p->nS);
-	free2DNumber(B_m1, this->p->nS);
+	free2DNumber(A_m1, nS);
+	free2DNumber(B_m1, nS);
 	free(gradPI_m1);
-	free2DNumber(gradA_m1, this->p->nS);
-	free2DNumber(gradB_m1, this->p->nS);
+	free2DNumber(gradA_m1, nS);
+	free2DNumber(gradB_m1, nS);
     return loglik;
 }
 
 NUMBER HMMProblemPiG::doLinearStepPLoGroupOtherPI(NCAT xndat, struct data** x_data, NUMBER *a_PI,
-                                                 NUMBER *a_gradPI) {
+                                                  NUMBER *a_gradPI) {
 	NPAR i;
+    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
 	// first scale down gradients
-	/*if(this->p->fitparam[0]>0) */doLog10Scale1D(a_gradPI, this->p->nS);
+	/*if(this->p->fitparam[0]>0) */doLog10Scale1D(a_gradPI, nS);
 	
-	NUMBER *PI_cpy = init1DNumber(this->p->nS); // safe copy
+	NUMBER *PI_cpy = init1DNumber(nS); // safe copy
 	NUMBER e = this->p->ArmijoSeed; // step seed
 	bool compliesArmijo = false;
 	NUMBER f_xk = HMMProblem::getSumLogPOPara(xndat, x_data);
 	NUMBER f_xkplus1;
 	
-	cpy1DNumber(a_PI, PI_cpy, this->p->nS); // save copy
+	cpy1DNumber(a_PI, PI_cpy, nS); // save copy
 	// compute p_k * -p_k
 	NUMBER p_k_by_neg_p_k = 0;
-	for(i=0; i<this->p->nS; i++)
+	for(i=0; i<nS; i++)
 	{
 		p_k_by_neg_p_k -= a_gradPI[i]*a_gradPI[i];
 	}
 	int iter = 0; // limit iter steps to 20
 	while( !compliesArmijo && e > this->p->ArmijoMinStep) {
 		// update
-		for(i=0; i<this->p->nS; i++) {
+		for(i=0; i<nS; i++) {
 			/*if(this->p->fitparam[0]>0) */a_PI[i] = PI_cpy[i] - e * a_gradPI[i];
 		}
 		// scale
 		if( !this->hasNon01Constraints() ) {
-			/*if(this->p->fitparam[0]>0) */projectsimplex(a_PI, this->p->nS);
+			/*if(this->p->fitparam[0]>0) */projectsimplex(a_PI, nS);
 		} else {
-			/*if(this->p->fitparam[0]>0) */projectsimplexbounded(a_PI, this->getLbPI(), this->getUbPI(), this->p->nS);
+			/*if(this->p->fitparam[0]>0) */projectsimplexbounded(a_PI, this->getLbPI(), this->getUbPI(), nS);
 		}
 		// recompute alpha and p(O|param)
         //		zeroLabels(xndat, x_data); // THIS IS NOT DONE HERE
@@ -434,7 +434,7 @@ NUMBER HMMProblemPiG::doLinearStepPLoGroupOtherPI(NCAT xndat, struct data** x_da
 	} // armijo loop
     if(!compliesArmijo) {
         e = 0;
-        cpy1DNumber(PI_cpy, a_PI, this->p->nS); // save copy
+        cpy1DNumber(PI_cpy, a_PI, nS); // save copy
     }
 	free(PI_cpy);
     RecycleFitData(xndat, x_data, this->p);
@@ -442,47 +442,48 @@ NUMBER HMMProblemPiG::doLinearStepPLoGroupOtherPI(NCAT xndat, struct data** x_da
 } // doLinearStep
 
 NUMBER HMMProblemPiG::doLinearStepPLoGroupOtherAB(NCAT xndat, struct data** x_data, NUMBER **a_A, NUMBER **a_B,
-                                                 NUMBER **a_gradA, NUMBER **a_gradB) {
+                                                  NUMBER **a_gradA, NUMBER **a_gradB) {
 	NPAR i,j,m;
+    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
 	// first scale down gradients
-	doLog10Scale2D(a_gradA, this->p->nS, this->p->nS);
-	doLog10Scale2D(a_gradB, this->p->nS, this->p->nO);
+	doLog10Scale2D(a_gradA, nS, nS);
+	doLog10Scale2D(a_gradB, nS, nO);
 	
-	NUMBER **A_cpy = init2DNumber(this->p->nS, this->p->nS); // safe copy
-	NUMBER **B_cpy = init2DNumber(this->p->nS, this->p->nO); // safe copy
+	NUMBER **A_cpy = init2DNumber(nS, nS); // safe copy
+	NUMBER **B_cpy = init2DNumber(nS, nO); // safe copy
 	NUMBER e = this->p->ArmijoSeed; // step seed
 	bool compliesArmijo = false;
 	NUMBER f_xk = HMMProblem::getSumLogPOPara(xndat, x_data);
 	NUMBER f_xkplus1;
 	
-	cpy2DNumber(a_A,  A_cpy,  this->p->nS, this->p->nS); // save copy
-	cpy2DNumber(a_B,  B_cpy,  this->p->nS, this->p->nO); // save copy
+	cpy2DNumber(a_A,  A_cpy,  nS, nS); // save copy
+	cpy2DNumber(a_B,  B_cpy,  nS, nO); // save copy
 	// compute p_k * -p_k
 	NUMBER p_k_by_neg_p_k = 0;
-	for(i=0; i<this->p->nS; i++)
+	for(i=0; i<nS; i++)
 	{
-		for(j=0; j<this->p->nS; j++) p_k_by_neg_p_k -= a_gradA[i][j]*a_gradA[i][j];
-		for(m=0; m<this->p->nO; m++) p_k_by_neg_p_k -= a_gradB[i][m]*a_gradB[i][m];
+		for(j=0; j<nS; j++) p_k_by_neg_p_k -= a_gradA[i][j]*a_gradA[i][j];
+		for(m=0; m<nO; m++) p_k_by_neg_p_k -= a_gradB[i][m]*a_gradB[i][m];
 	}
 	int iter = 0; // limit iter steps to 20
 	while( !compliesArmijo && e > this->p->ArmijoMinStep) {
 		// update
-		for(i=0; i<this->p->nS; i++) {
-			for(j=0; j<this->p->nS /*&& (this->p->fitparam[1]>0)*/ ; j++)
+		for(i=0; i<nS; i++) {
+			for(j=0; j<nS /*&& (this->p->fitparam[1]>0)*/ ; j++)
 				a_A[i][j] = A_cpy[i][j] - e * a_gradA[i][j];
-			for(m=0; m<this->p->nO /*&& (this->p->fitparam[2]>0)*/ ; m++)
+			for(m=0; m<nO /*&& (this->p->fitparam[2]>0)*/ ; m++)
 				a_B[i][m] = B_cpy[i][m] - e * a_gradB[i][m];
 		}
 		// scale
 		if( !this->hasNon01Constraints() ) {
-			for(i=0; i<this->p->nS /*&& ( (this->p->fitparam[1]>0) || (this->p->fitparam[2]>0) )*/; i++) {
-				/*if(this->p->fitparam[1]>0) */projectsimplex(a_A[i], this->p->nS);
-				/*if(this->p->fitparam[2]>0) */projectsimplex(a_B[i], this->p->nS);
+			for(i=0; i<nS /*&& ( (this->p->fitparam[1]>0) || (this->p->fitparam[2]>0) )*/; i++) {
+				/*if(this->p->fitparam[1]>0) */projectsimplex(a_A[i], nS);
+				/*if(this->p->fitparam[2]>0) */projectsimplex(a_B[i], nS);
 			}
 		} else {
-			for(i=0; i<this->p->nS /*&& ( (this->p->fitparam[1]>0) || (this->p->fitparam[2]>0) )*/; i++) {
-				/*if(this->p->fitparam[1]>0) */projectsimplexbounded(a_A[i], this->getLbA()[i], this->getUbA()[i], this->p->nS);
-				/*if(this->p->fitparam[2]>0) */projectsimplexbounded(a_B[i], this->getLbB()[i], this->getUbB()[i], this->p->nS);
+			for(i=0; i<nS /*&& ( (this->p->fitparam[1]>0) || (this->p->fitparam[2]>0) )*/; i++) {
+				/*if(this->p->fitparam[1]>0) */projectsimplexbounded(a_A[i], this->getLbA()[i], this->getUbA()[i], nS);
+				/*if(this->p->fitparam[2]>0) */projectsimplexbounded(a_B[i], this->getLbB()[i], this->getUbB()[i], nS);
 			}
 		}
 		// recompute alpha and p(O|param)
@@ -497,11 +498,11 @@ NUMBER HMMProblemPiG::doLinearStepPLoGroupOtherAB(NCAT xndat, struct data** x_da
 	} // armijo loop
     if(!compliesArmijo) {
         e = 0;
-        cpy2DNumber(A_cpy,  a_A,  this->p->nS, this->p->nS); // save copy
-        cpy2DNumber(B_cpy,  a_B,  this->p->nS, this->p->nO); // save copy
+        cpy2DNumber(A_cpy,  a_A,  nS, nS); // save copy
+        cpy2DNumber(B_cpy,  a_B,  nS, nO); // save copy
     }
-	free2DNumber(A_cpy, this->p->nS);
-	free2DNumber(B_cpy, this->p->nS);
+	free2DNumber(A_cpy, nS);
+	free2DNumber(B_cpy, nS);
     RecycleFitData(xndat, x_data, this->p);
     return e;
 } // doLinearStep

@@ -19,6 +19,7 @@
 class HMMProblemPiAGK : public HMMProblem {
 public:
 	HMMProblemPiAGK(struct param *param); // sizes=={nK, nK, nK} by default
+    virtual ~HMMProblemPiAGK();
 	NUMBER** getPI();
 	NUMBER** getPIk();
 	NUMBER** getPIg();
@@ -48,20 +49,20 @@ protected:
 	//
 	// Derived
 	//
-	NUMBER** gradPIk; // MULTIPLE gradients of initial state probabilities
-	NUMBER** gradPIg; // MULTIPLE gradients of initial state probabilities
-	NUMBER*** gradAk; // MULTIPLE gradients of transition matrix
-	NUMBER*** gradAg; // MULTIPLE gradients of transition matrix
-	NUMBER*** gradB; // MULTIPLE gradients of observation matrix
+//	NUMBER** gradPI; // MULTIPLE gradients of initial state probabilities
+//	NUMBER** gradPIg; // MULTIPLE gradients of initial state probabilities
+//	NUMBER*** gradA; // MULTIPLE gradients of transition matrix
+//	NUMBER*** gradAg; // MULTIPLE gradients of transition matrix
+//	NUMBER*** gradB; // MULTIPLE gradients of observation matrix
     bool* fitK; // flags for enabling the fittig of a skill
     bool* fitG; // flags for enabling the fittig of a group
     NCAT* fitK_countG; // number of groups per skill that have a raised fitG flag
 	
-	void init(struct param *param); // non-fit specific initialization
-	void destroy(); // non-fit specific destroy
+	virtual void init(struct param *param); // non-fit specific initialization
+    virtual void destroy();
 	void initGrad();
 private:
-	void computeGradients();
+//	void computeGradients();
 	void computeGradientsK(NCAT k, NUMBER* a_gradPI, NUMBER** a_gradA, NUMBER** a_gradB);
 	void computeGradientsG(NCAT g, NUMBER* a_gradPI, NUMBER** a_gradA);
     // fitting methods (hidden)

@@ -10,6 +10,9 @@ using namespace std;
 
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
+void createByRef(double** &val, int sz1, int sz2);
+void destroyByRef(double** &val, int sz1);
+
 int main (int argc, char ** argv) {
 	clock_t tm0 = clock();
 
@@ -217,34 +220,53 @@ int main (int argc, char ** argv) {
 ////        printf("logit(%8.6f)=%8.6f, logit(%8.6f)=%8.6f\n",(NUMBER)i/n,logit((NUMBER)i/n),(NUMBER)i/n,logit((NUMBER)i/n));
 //        printf("sigmoid(%8.6f)=%8.6f, sigmoid(%8.6f)=%8.6f\n",(NUMBER)i/n,sigmoid((NUMBER)i/n),(NUMBER)i/n,sigmoid((NUMBER)i/n));
 //    }
-	for(int i=1;i<argc;i++)
-	{
-		if(argv[i][0] != '-') break; // end of options stop parsing
-		if(++i>=argc)
-			exit(1);
-		switch(argv[i-1][1])
-		{
-			case 'g':
-                char *ch;
-                int j=0;
-                int n = 0;
-                bool start = true;
-                ch = strtok(argv[i],",-\n\t\r");
-                while( ch != NULL) {
-                    if(start) n++;
-                    fprintf(stdout,"%s %d\n",(start)?"start":"finish",atoi(ch));
-                    ch = strtok(NULL,",-\n\t\r");
-                    j++;
-                    start = !start;
-                }
-                fprintf(stdout,"%d groups\n",n);
-                break;
-		}
-	}
-    
+//	for(int i=1;i<argc;i++)
+//	{
+//		if(argv[i][0] != '-') break; // end of options stop parsing
+//		if(++i>=argc)
+//			exit(1);
+//		switch(argv[i-1][1])
+//		{
+//			case 'g':
+//                char *ch;
+//                int j=0;
+//                int n = 0;
+//                bool start = true;
+//                ch = strtok(argv[i],",-\n\t\r");
+//                while( ch != NULL) {
+//                    if(start) n++;
+//                    fprintf(stdout,"%s %d\n",(start)?"start":"finish",atoi(ch));
+//                    ch = strtok(NULL,",-\n\t\r");
+//                    j++;
+//                    start = !start;
+//                }
+//                fprintf(stdout,"%d groups\n",n);
+//                break;
+//		}
+//	}
+    int sz1 = 3, sz2 = 4;
+    double** val;
+    createByRef(val, sz1, sz2);
+    destroyByRef(val, sz1);
     
     
     printf("done in %8.6f seconds\n",(double)(clock()-tm0)/CLOCKS_PER_SEC);
     return 0;
 }
 
+void createByRef(double** &val, int sz1, int sz2) {
+    val = Malloc(double*, sz1);
+    for(int i=0; i<sz1; i++)
+        val[i] = Malloc(double, sz2);
+        
+    for(int i=0; i<sz1; i++)
+        for(int j=0; j<sz1; j++)
+            val[i][j] = 1.0;
+}
+
+void destroyByRef(double** &val, int sz1) {
+    for(int i=0; i<sz1; i++)
+        free(val[i]);
+    free(val);
+    val = NULL;
+}

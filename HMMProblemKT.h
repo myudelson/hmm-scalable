@@ -21,7 +21,7 @@
 class HMMProblemKT : public HMMProblem {
 public:
 	HMMProblemKT(struct param *param); // sizes=={nK, nK, nK} by default
-	~HMMProblemKT();
+	virtual ~HMMProblemKT();
 //	NUMBER** getPI();
 //	NUMBER*** getA();
 //	NUMBER*** getB();
@@ -49,7 +49,8 @@ protected:
 	//
 	// Derived
 	//
-	void init(struct param *param); // non-fit specific initialization
+	virtual void init(struct param *param); // non-fit specific initialization
+//	virtual void destroy(); // non-fit specific descruction
 private:
     // fitting methods (hidden)
     NUMBER GradientDescentKT1(); // return -LL for the model
