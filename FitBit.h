@@ -17,9 +17,8 @@ enum FIT_BIT_SLOT {
     FBS_PARm1     = 2, // e.g. PIm1
     FBS_GRAD      = 3, // e.g. gradPI
     FBS_GRADm1    = 4, // e.g. gradPIm1
-    FBS_GRADsum   = 5, // e.g. gradPIsum
-    FBS_GRADsumm1 = 6, // e.g. gradPIsumm1
-    FBS_DIRm1     = 7  // e.g. gradPIdirm1
+    FBS_PARcopy   = 5, // e.g. PIcopy
+    FBS_DIRm1     = 6  // e.g. gradPIdirm1
 };
 
 enum FIT_BIT_VAR {
@@ -42,13 +41,10 @@ public:
     NUMBER *gradPIm1; // previous gradient #4
     NUMBER **gradAm1; // previous gradient
     NUMBER **gradBm1; // previous gradient
-    NUMBER *gradPIsum; // superposition of gradient #5
-    NUMBER **gradAsum; // superposition of gradient
-    NUMBER **gradBsum; // superposition of gradient
-    NUMBER *gradPIsumm1; // previous superposition of gradient #6
-    NUMBER **gradAsumm1; // previous superposition of gradient
-    NUMBER **gradBsumm1; // previous superposition of gradient
-    NUMBER *dirPIm1; // previous step direction #7
+    NUMBER *PIcopy; // previous value #5
+    NUMBER **Acopy; // previous value
+    NUMBER **Bcopy; // previous value
+    NUMBER *dirPIm1; // previous step direction #6
     NUMBER **dirAm1; // previous step direction
     NUMBER **dirBm1; // previous step direction
     
@@ -60,10 +56,12 @@ public:
     void destroy(enum FIT_BIT_SLOT fbs);
     void copy(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs);
     void add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs);
-    bool checkConvergence(struct param *p, bool flags[3]);
+    bool checkConvergence();
+    void doLog10ScaleGentle(enum FIT_BIT_SLOT fbs);
 private:
     NPAR nO, nS;
     NCAT nG, nK; // copies
+    NUMBER tol;
 
     void init(NUMBER* &PI, NUMBER** &A, NUMBER** &B);
     void toZero(NUMBER *PI, NUMBER **A, NUMBER **B);

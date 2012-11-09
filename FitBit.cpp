@@ -13,6 +13,7 @@ FitBit::FitBit(struct param *p) {
     this->nO = p->nS;
     this->nG = p->nG;
     this->nK = p->nK;
+    this->tol = p->tol;
     this->PI = NULL;
     this->A = NULL;
     this->B = NULL;
@@ -25,12 +26,9 @@ FitBit::FitBit(struct param *p) {
     this->gradPIm1 = NULL;
     this->gradAm1 = NULL;
     this->gradBm1 = NULL;
-    this->gradPIsum = NULL;
-    this->gradAsum = NULL;
-    this->gradBsum = NULL;
-    this->gradPIsumm1 = NULL;
-    this->gradAsumm1 = NULL;
-    this->gradBsumm1 = NULL;
+    this->PIcopy = NULL;
+    this->Acopy = NULL;
+    this->Bcopy = NULL;
     this->dirPIm1 = NULL;
     this->dirAm1 = NULL;
     this->dirBm1 = NULL;
@@ -49,21 +47,33 @@ FitBit::~FitBit() {
     if(this->gradPIm1 != NULL) free(this->gradPIm1);
     if(this->gradAm1 != NULL) free2DNumber(this->gradAm1, this->nS);
     if(this->gradBm1 != NULL) free2DNumber(this->gradBm1, this->nS);
-    if(this->gradPIsum != NULL) free(this->gradPIsum);
-    if(this->gradAsum != NULL) free2DNumber(this->gradAsum, this->nS);
-    if(this->gradBsum != NULL) free2DNumber(this->gradBsum, this->nS);
-    if(this->gradPIsumm1 != NULL) free(this->gradPIsumm1);
-    if(this->gradAsumm1 != NULL) free2DNumber(this->gradAsumm1, this->nS);
-    if(this->gradBsumm1 != NULL) free2DNumber(this->gradBsumm1, this->nS);
+    if(this->PIcopy != NULL) free(this->PIcopy);
+    if(this->Acopy != NULL) free2DNumber(this->Acopy, this->nS);
+    if(this->Bcopy != NULL) free2DNumber(this->Bcopy, this->nS);
     if(this->dirPIm1 != NULL) free(this->dirPIm1);
     if(this->dirAm1 != NULL) free2DNumber(this->dirAm1, this->nS);
     if(this->dirBm1 != NULL) free2DNumber(this->dirBm1, this->nS);
 }
 
 void FitBit::init(NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B) {
-    a_PI = init1DNumber(this->nS);
-    a_A  = init2DNumber(this->nS, this->nS);
-    a_B  = init2DNumber(this->nS, this->nO);
+//    if(this->PI != NULL) {
+        if(a_PI == NULL)
+            a_PI = init1DNumber(this->nS);
+        else
+            toZero1DNumber(a_PI, this->nS);
+//    }
+//    if(this->A  != NULL) {
+        if(a_A == NULL)
+            a_A  = init2DNumber(this->nS, this->nS);
+        else
+            toZero2DNumber(a_A,  this->nS, this->nS);
+//    }
+//    if(this->B  != NULL) {
+        if(a_B == NULL)
+            a_B  = init2DNumber(this->nS, this->nO);
+        else
+            toZero2DNumber(a_B,  this->nS, this->nO);
+//    }
 }
 
 void FitBit::linkPar(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B) {
@@ -73,30 +83,30 @@ void FitBit::linkPar(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B) {
 }
 
 void FitBit::toZero(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B) {
-    toZero1DNumber(a_PI, this->nS);
-    toZero2DNumber(a_A,  this->nS, this->nS);
-    toZero2DNumber(a_B,  this->nS, this->nO);
+    if(this->PI != NULL) toZero1DNumber(a_PI, this->nS);
+    if(this->A  != NULL) toZero2DNumber(a_A,  this->nS, this->nS);
+    if(this->B  != NULL) toZero2DNumber(a_B,  this->nS, this->nO);
 }
 
 void FitBit::copy(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB){
-    cpy1DNumber(soursePI, targetPI, this->nS);
-    cpy2DNumber(sourseA,  targetA,  this->nS, this->nS);
-    cpy2DNumber(sourseB,  targetB,  this->nS, this->nO);
+    if(this->PI != NULL) cpy1DNumber(soursePI, targetPI, this->nS);
+    if(this->A  != NULL) cpy2DNumber(sourseA,  targetA,  this->nS, this->nS);
+    if(this->B  != NULL) cpy2DNumber(sourseB,  targetB,  this->nS, this->nO);
 }
 
 void FitBit::add(NUMBER *soursePI, NUMBER **sourseA, NUMBER **sourseB, NUMBER *targetPI, NUMBER **targetA, NUMBER **targetB){
-    add1DNumbersWeighted(soursePI, targetPI, this->nS, 1.0);
-    add2DNumbersWeighted(sourseA,  targetA,  this->nS, this->nS, 1.0);
-    add2DNumbersWeighted(sourseB,  targetB,  this->nS, this->nO, 1.0);
+    if(this->PI != NULL) add1DNumbersWeighted(soursePI, targetPI, this->nS, 1.0);
+    if(this->A  != NULL) add2DNumbersWeighted(sourseA,  targetA,  this->nS, this->nS, 1.0);
+    if(this->B  != NULL) add2DNumbersWeighted(sourseB,  targetB,  this->nS, this->nO, 1.0);
 }
 
 void FitBit::destroy(NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B) {
-    free(PI);
-    free2DNumber(A, this->nS);
-    free2DNumber(B, this->nS);
-    PI = NULL;
-    A  = NULL;
-    B  = NULL;
+    if(this->PI != NULL) free(a_PI);
+    if(this->A  != NULL) free2DNumber(a_A, this->nS);
+    if(this->B  != NULL) free2DNumber(a_B, this->nS);
+    a_PI = NULL;
+    a_A  = NULL;
+    a_B  = NULL;
 }
 
 void FitBit::init(enum FIT_BIT_SLOT fbs){
@@ -113,11 +123,8 @@ void FitBit::init(enum FIT_BIT_SLOT fbs){
         case FBS_GRADm1:
             init(this->gradPIm1, this->gradAm1, this->gradBm1);
             break;
-        case FBS_GRADsum:
-            init(this->gradPIsum, this->gradAsum, this->gradBsum);
-            break;
-        case FBS_GRADsumm1:
-            init(this->gradPIsumm1, this->gradAsumm1, this->gradBsumm1);
+        case FBS_PARcopy:
+            init(this->PIcopy, this->Acopy, this->Bcopy);
             break;
         case FBS_DIRm1:
             init(this->dirPIm1, this->dirAm1, this->dirBm1);
@@ -141,11 +148,8 @@ void FitBit::toZero(enum FIT_BIT_SLOT fbs){
         case FBS_GRADm1:
             toZero(this->gradPIm1, this->gradAm1, this->gradBm1);
             break;
-        case FBS_GRADsum:
-            toZero(this->gradPIsum, this->gradAsum, this->gradBsum);
-            break;
-        case FBS_GRADsumm1:
-            toZero(this->gradPIsumm1, this->gradAsumm1, this->gradBsumm1);
+        case FBS_PARcopy:
+            toZero(this->PIcopy, this->Acopy, this->Bcopy);
             break;
         case FBS_DIRm1:
             toZero(this->dirPIm1, this->dirAm1, this->dirBm1);
@@ -169,11 +173,8 @@ void FitBit::destroy(enum FIT_BIT_SLOT fbs){
         case FBS_GRADm1:
             destroy(this->gradPIm1, this->gradAm1, this->gradBm1);
             break;
-        case FBS_GRADsum:
-            destroy(this->gradPIsum, this->gradAsum, this->gradBsum);
-            break;
-        case FBS_GRADsumm1:
-            destroy(this->gradPIsumm1, this->gradAsumm1, this->gradBsumm1);
+        case FBS_PARcopy:
+            destroy(this->PIcopy, this->Acopy, this->Bcopy);
             break;
         case FBS_DIRm1:
             destroy(this->dirPIm1, this->dirAm1, this->dirBm1);
@@ -205,15 +206,10 @@ void FitBit::get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &
             a_A  = this->gradAm1;
             a_B  = this->gradBm1;
             break;
-        case FBS_GRADsum:
-            a_PI = this->gradPIsum;
-            a_A  = this->gradAsum;
-            a_B  = this->gradBsum;
-            break;
-        case FBS_GRADsumm1:
-            a_PI = this->gradPIsumm1;
-            a_A  = this->gradAsumm1;
-            a_B  = this->gradBsumm1;
+        case FBS_PARcopy:
+            a_PI = this->PIcopy;
+            a_A  = this->Acopy;
+            a_B  = this->Bcopy;
             break;
         case FBS_DIRm1:
             a_PI = this->dirPIm1;
@@ -251,19 +247,29 @@ void FitBit::add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
     add(soursePI, sourseA, sourseB, targetPI, targetA, targetB);
 }
 
-bool FitBit::checkConvergence(struct param *p, bool flags[3]) {
+bool FitBit::checkConvergence() {
 	NUMBER critetion = 0;
 	for(NPAR i=0; i<this->nS; i++)
 	{
-		if(flags[0]) critetion += pow( this->PI[i]-this->PIm1[i], 2 )/*:0*/;
-		for(NPAR j=0; flags[1] && j<this->nS; j++) {
+		if(this->PI != NULL) critetion += pow( this->PI[i]-this->PIm1[i], 2 )/*:0*/;
+		for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
 			critetion += pow(this->A[i][j] - this->Am1[i][j],2);
 		}
-		for(NPAR k=0; flags[2] && k<this->nO; k++) {
+		for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
 			critetion += pow(this->B[i][k] - this->Bm1[i][k],2);
 		}
 	}
-	return sqrt(critetion) < p->tol;
+	return sqrt(critetion) < this->tol;
 }
 
+void FitBit::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
+    // fbs - gradient or direction
+    NUMBER *a_PI;
+    NUMBER **a_A;
+    NUMBER **a_B;
+    get(fbs, a_PI, a_A, a_B);
+	if(this->PI != NULL) doLog10Scale1DGentle(a_PI, this->PI, this->nS);
+	if(this->A  != NULL) doLog10Scale2DGentle(a_A,  this->A,  this->nS, this->nS);
+	if(this->B  != NULL) doLog10Scale2DGentle(a_B,  this->B,  this->nS, this->nO);
+}
 

@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <string>
 
-#include "liblinear/linear.h"
+//#include "liblinear/linear.h"
 
 //#include <Accelerate/Accelerate.h>
 
@@ -40,8 +40,12 @@ public:
     virtual NUMBER getPI(struct data* dt, NPAR i);
     virtual NUMBER getA (struct data* dt, NPAR i, NPAR j);
     virtual NUMBER getB (struct data* dt, NPAR i, NPAR m);
+    // getters for computing gradients of alpha, beta, gamma
+    virtual void setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag);
+    virtual void setGradA (struct data* dt, FitBit *fb, NPAR kg_flag);
+    virtual void setGradB (struct data* dt, FitBit *fb, NPAR kg_flag);
 	virtual void toFile(const char *filename);
-	static NUMBER getSumLogPOPara(NCAT xndat, struct data **x_data); // generic per k/g-slice
+	NUMBER getSumLogPOPara(NCAT xndat, struct data **x_data); // generic per k/g-slice
 	bool hasNon01Constraints();
     NUMBER getLogLik(); // get log likelihood of the fitted model
     NCAT getNparams(); // get log likelihood of the fitted model
@@ -104,22 +108,25 @@ protected:
     // predicting
 	virtual void computeLogLikRMSENullSkill(NUMBER* loglik_rmse, bool keep_SE);
 	virtual void computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat, struct data** x_data);
-	void computeGradients(NCAT xndat, struct data** x_data, FitBit *fb);// NUMBER *a_gradPI, NUMBER** a_gradA, NUMBER **a_gradB);
-    NUMBER doLinearStep(NCAT xndat, struct data** x_data, FitBit *fb, NCAT copy);//NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB);
+	virtual void computeGradients(NCAT xndat, struct data** x_data, FitBit *fb, NPAR kg_flag);// NUMBER *a_gradPI, NUMBER** a_gradA, NUMBER **a_gradB);
+    virtual NUMBER doLinearStep(NCAT xndat, struct data** x_data, FitBit *fb, NCAT copy);//NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB);
     NUMBER doConjugateLinearStep(NCAT xndat, struct data** x_data, FitBit *fb, NCAT copy);//NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1);
     NUMBER doBarzalaiBorweinStep(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1);
-    bool checkConvergence(NUMBER* PI, NUMBER** A, NUMBER** B, NUMBER* PI_m1, NUMBER** A_m1, NUMBER** B_m1, bool flags[3]);
+//    bool checkConvergence(NUMBER* PI, NUMBER** A, NUMBER** B, NUMBER* PI_m1, NUMBER** A_m1, NUMBER** B_m1, bool flags[3]);
     // bridge to Liblinear - all objects are liblinear objects
-    void createLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space);
-    void createLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space, NCAT k); // multiple KC's separately
-    void recycleLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space);
+//    void createLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space);
+//    void createLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space, NCAT k); // multiple KC's separately
+//    void recycleLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space);
+    void GradientDescent1Skill(FitBit *fb); // return -LL for the model
+    void GradientConjugateDescent1Skill(FitBit *fb); // return -LL for the model
+
 private:
 	bool checkPIABConstraints(NUMBER* a_PI, NUMBER** a_A, NUMBER** a_B); // all constraints, inc row sums
     
     // fitting methods - helpers (hidden)
     // fitting methods (hidden)
-    NUMBER GradientDescent(bool bySkill); // return -LL for the model
-    NUMBER ConjugateGradientDescent(bool bySkill); // return -LL for the model
+    NUMBER GradientDescent(NPAR kg_flag); // return -LL for the model
+    NUMBER ConjugateGradientDescent(NPAR kg_flag); // return -LL for the model
     NUMBER BaumWelchSkill();
     void doBaumWelchStep(NCAT xndat, struct data** x_data, FitBit *fb);//, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B);
 //    void predictMetricsGroup(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill);

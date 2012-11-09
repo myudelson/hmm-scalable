@@ -10,8 +10,8 @@
 #include "utils.h"
 #include "HMMProblem.h"
 //#include "HMMProblemPiG.h"
-//#include "HMMProblemPiGK.h"
-//#include "HMMProblemAGK.h"
+#include "HMMProblemPiGK.h"
+#include "HMMProblemAGK.h"
 //#include "HMMProblemPiAGK.h"
 //#include "HMMProblemKT.h"
 #include "StripedArray.h"
@@ -71,15 +71,15 @@ int main (int argc, char ** argv) {
 //            case BKT_GD_PIg: // Gradient Descent: PI by group, A,B by skill
 //                hmm = new HMMProblemPiG(&param);
 //                break;
-//            case BKT_GD_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-//                hmm = new HMMProblemPiGK(&param);
-//                break;
+            case BKT_GD_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+                hmm = new HMMProblemPiGK(&param);
+                break;
 //            case BKT_GD_APIgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
 //                hmm = new HMMProblemPiAGK(&param);
 //                break;
-//            case BKT_GD_Agk: // Gradient Descent, pT=f(K,G), other by K
-//                hmm = new HMMProblemAGK(&param);
-//                break;
+            case BKT_GD_Agk: // Gradient Descent, pT=f(K,G), other by K
+                hmm = new HMMProblemAGK(&param);
+                break;
 //            case BKT_GD_T: // Gradient Descent with Transfer
 //                hmm = new HMMProblemKT(&param);
 //                break;
@@ -548,10 +548,10 @@ void read_train_data(const char *filename) {
                 skill_group_map[k][g] = 2; // mark
                 n_all_data++;
             } else if( skill_group_map[k][g]== 2) { // update data count, LINEAR SEARCH :(
-                NDAT gidx;
+                int gidx;
 //                for(gidx=(k_countg[k]-(NCAT)1); gidx>=0 && param.k_g_data[k][gidx]->g!=g; gidx--)
 //                    ;
-                for(gidx=(k_countg[k]-(NDAT)1); gidx>=0 && param.k_data[gidx]->g!=g; gidx--)
+                for(gidx=(k_countg[k]-1); gidx>=0 && param.k_data[gidx]->g!=g; gidx--)
                     ;
                 if( param.k_data[gidx]->g==g)
                     param.k_data[gidx]->ndat++;

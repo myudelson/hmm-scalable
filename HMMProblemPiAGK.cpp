@@ -265,93 +265,6 @@ NUMBER HMMProblemPiAGK::getB(struct data* dt, NPAR i, NPAR m) {
     return this->B[dt->k][i][m];
 }
 
-//NUMBER time_a9 = 0;
-
-//void HMMProblemPiAGK::initGrad() {
-//    // fitK,G - masks
-//    // PIk
-//    if( this->gradPI == NULL )
-//        this->gradPI = init2DNumber(this->p->nK, this->p->nS);
-//    else
-//        toZero2DNumber(this->gradPI, this->p->nK, this->p->nS);
-//    // PIg
-//    if( this->gradPIg == NULL )
-//        this->gradPIg = init2DNumber(this->p->nG, this->p->nS);
-//    else
-//        toZero2DNumber(this->gradPIg, this->p->nG, this->p->nS);
-//    // Ak
-//    if( this->gradA == NULL ) {
-//        this->gradA  = init3DNumber(this->p->nK, this->p->nS, this->p->nS);
-//    }
-//    else
-//        toZero3DNumber(this->gradA, this->p->nK, this->p->nS, this->p->nS);
-//    // Ag
-//    if( this->gradAg == NULL ) {
-//        this->gradAg  = init3DNumber(this->p->nG, this->p->nS, this->p->nS);
-//    }
-//    else
-//        toZero3DNumber(this->gradAg, this->p->nG, this->p->nS, this->p->nS);
-//    // B
-//    if( this->gradB == NULL ) {
-//        this->gradB  = init3DNumber(this->p->nK, this->p->nS, this->p->nO);
-//    }
-//    else
-//        toZero3DNumber(this->gradB, this->p->nK, this->p->nS, this->p->nO);
-//}
-//
-//void HMMProblemPiAGK::computeGradients() {
-//	initGrad();
-//	NCAT x, k, g;
-//	NDAT t, xndat;
-//	NPAR i, j, o;
-//    struct data ** x_data = NULL;
-//    NUMBER update, combined_pLo;
-//    for(k=0; k<this->p->nK; k++) { // for all sKills
-//        xndat  = this->p->k_numg[k];
-//        x_data = this->p->k_g_data[k];
-//        if( !this->fitK[k] && this->fitK_countG[k]==0) // if fitK flag NOT raised, and ALL of relevant fitG flags are NOT raised
-//            continue;
-//        computeAlphaAndPOParam(xndat, x_data);
-//        computeBeta(xndat, x_data);
-//        for(x=0; x<xndat; x++) { // for all Groups within this sKill
-//            if( x_data[x]->cnt!=0 ) continue; // this is an older superceding mechanism
-//            t = 0;
-//            o = x_data[x]->obs[t];
-//            g = x_data[x]->g;
-//            if(this->fitK[k] || this->fitG[g]) { // if fitK or fitG are raised
-//                for(i=0; i<this->p->nS; i++) {
-//                    // logit combination
-//                    combined_pLo = sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
-//                    update =  combined_pLo * (1-combined_pLo) * x_data[x]->beta[t][i] * B[k][i][o] / safe0num(x_data[x]->p_O_param);
-//                    this->gradPI[k][i] -= update * this->fitK[k];
-//                    this->gradPIg[g][i] -= update * this->fitG[g];
-//                    // Corbett combination - todo
-//                }
-//            }
-//            // if fitK not raised - continue
-//            if( !this->fitK[k] )
-//                continue;
-//            for(t=0; t<x_data[x]->ndat; t++) {
-//                o = x_data[x]->obs[t];
-//                // Gradient with respect to A
-//                // \frac{\partial J}{\partial a_{ij}} = - \frac{1}{L_{tot}} \sum_{t=2}^T \beta_t(j) b_j(o_t) \alpha_{t-1}(i)
-//                if( t>0 ) {
-//                    for(i=0; i<this->p->nS /*&& param->fitparam[1]>0*/; i++)
-//                        for(j=0; j<this->p->nS; j++) {
-//                            this->gradA[k][i][j] -= x_data[x]->beta[t][j] * this->B[k][j][o] * x_data[x]->alpha[t-1][i] / safe0num(x_data[x]->p_O_param);
-//                            this->gradAg[g][i][j] -= x_data[x]->beta[t][j] * this->B[k][j][o] * x_data[x]->alpha[t-1][i] / safe0num(x_data[x]->p_O_param);
-//                        }
-//                }// if not first obs in sequence
-//                // Gradient with respect to B
-//                for(i=0; i<this->p->nS /*&& param->fitparam[2]>0*/; i++)
-//                    this->gradB[k][i][o] -= x_data[g]->alpha[t][i] * x_data[g]->beta[t][i] / safe0num(x_data[g]->p_O_param * B[k][i][o]);
-//            } // for all observations within skill-group
-//        } // for all Groups
-//        RecycleFitData(xndat, x_data, this->p);
-//    }// for all sKills
-//    
-//} // computeGradients()
-//
 void HMMProblemPiAGK::computeGradientsK(NCAT k, NUMBER* a_gradPI, NUMBER** a_gradA, NUMBER** a_gradB) {
 	toZero1DNumber(a_gradPI, this->p->nS);
 	toZero2DNumber(a_gradA , this->p->nS, this->p->nS);
@@ -361,7 +274,7 @@ void HMMProblemPiAGK::computeGradientsK(NCAT k, NUMBER* a_gradPI, NUMBER** a_gra
 	NDAT t, xndat;
 	NPAR i, j, o;
     struct data ** x_data = NULL;
-    NUMBER update, combined_PI, combined_A;
+    NUMBER update, combined_PI, combined_A, deriv_logit_K;
     xndat  = this->p->k_numg[k];
     x_data = this->p->k_g_data[k];
     
@@ -375,7 +288,8 @@ void HMMProblemPiAGK::computeGradientsK(NCAT k, NUMBER* a_gradPI, NUMBER** a_gra
         for(i=0; i<this->p->nS; i++) {
             // logit combination
             combined_PI = sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
-            update =  combined_PI * (1-combined_PI) * x_data[x]->beta[t][i] * this->B[k][i][o] / safe0num(x_data[x]->p_O_param);
+            deriv_logit_K = 1 / safe0num( this->PI[k][i] * (1-this-> PI[k][i]) );
+            update =  combined_PI * (1-combined_PI) * deriv_logit_K * x_data[x]->beta[t][i] * this->B[k][i][o] / safe0num(x_data[x]->p_O_param);
             a_gradPI[i] -= update;
             //this->gradPIg[gidx][i] -= update * this->fitG[g];
             // Corbett combination - todo
@@ -388,7 +302,8 @@ void HMMProblemPiAGK::computeGradientsK(NCAT k, NUMBER* a_gradPI, NUMBER** a_gra
                 for(i=0; i<this->p->nS /*&& param->fitparam[1]>0*/; i++)
                     for(j=0; j<this->p->nS; j++) {
                         combined_A = sigmoid( logit(this->A[k][i][j] + logit(this->Ag[g][i][j] ) ) );
-                        update =  combined_A * (1-combined_A) * x_data[x]->beta[t][j] * this->B[k][j][o] * x_data[x]->alpha[t-1][i] / safe0num(x_data[x]->p_O_param);
+                        deriv_logit_K = 1 / safe0num( this->A[k][i][j] * (1-this->A[k][i][j]) );
+                        update =  combined_A * (1-combined_A) * deriv_logit_K * x_data[x]->beta[t][j] * this->B[k][j][o] * x_data[x]->alpha[t-1][i] / safe0num(x_data[x]->p_O_param);
                         a_gradA[i][j] -= update;
                     }
             }// if not first obs in sequence
@@ -408,7 +323,7 @@ void HMMProblemPiAGK::computeGradientsG(NCAT g, NUMBER* a_gradPI, NUMBER** a_gra
 	NDAT t, xndat;
 	NPAR i, j, o;
     struct data ** x_data = NULL;
-    NUMBER update, combined_PI, combined_A;
+    NUMBER update, combined_PI, combined_A, deriv_logit_G;
     xndat  = this->p->g_numk[g];
     x_data = this->p->g_k_data[g];
     computeAlphaAndPOParam(xndat, x_data);
@@ -421,7 +336,8 @@ void HMMProblemPiAGK::computeGradientsG(NCAT g, NUMBER* a_gradPI, NUMBER** a_gra
         for(i=0; i<this->p->nS; i++) {
             // logit combination
             combined_PI = sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
-            update =  combined_PI * (1-combined_PI) * x_data[x]->beta[t][i] * B[k][i][o] / safe0num(x_data[x]->p_O_param);
+            deriv_logit_G = 1 / safe0num( this->PIg[g][i] * (1-this-> PIg[g][i]) );
+            update =  combined_PI * (1-combined_PI) * deriv_logit_G * x_data[x]->beta[t][i] * B[k][i][o] / safe0num(x_data[x]->p_O_param);
             a_gradPI[i] -= update;
             // Corbett combination - todo
         }
@@ -433,7 +349,8 @@ void HMMProblemPiAGK::computeGradientsG(NCAT g, NUMBER* a_gradPI, NUMBER** a_gra
                 for(i=0; i<this->p->nS /*&& param->fitparam[1]>0*/; i++)
                     for(j=0; j<this->p->nS; j++) {
                         combined_A = sigmoid( logit(this->Ag[g][i][j] ) + logit(this->A[k][i][j]) );
-                        update =  combined_A * (1-combined_A) * x_data[x]->beta[t][j] * this->B[k][j][o] * x_data[x]->alpha[t-1][i] / safe0num(x_data[x]->p_O_param);
+                        deriv_logit_G = 1 / safe0num( this->Ag[g][i][j] * (1-this->Ag[g][i][j]) );
+                        update =  combined_A * (1-combined_A) * deriv_logit_G * x_data[x]->beta[t][j] * this->B[k][j][o] * x_data[x]->alpha[t-1][i] / safe0num(x_data[x]->p_O_param);
                         a_gradA[i][j] -= update;
                     }
             }// if not first obs in sequence

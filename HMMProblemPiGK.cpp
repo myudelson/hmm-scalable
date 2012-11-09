@@ -23,8 +23,8 @@ HMMProblemPiGK::HMMProblemPiGK(struct param *param) {
 }
 
 void HMMProblemPiGK::init(struct param *param) {
-    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
 	this->p = param;
+    NPAR nS = this->p->nS, nO = this->p->nO; //NCAT nK = this->p->nK, nG = this->p->nG;
 	this->non01constraints = true;
     this->null_obs_ratio = Calloc(NUMBER, this->p->nO);
     this->neg_log_lik = 0;
@@ -218,157 +218,25 @@ NUMBER HMMProblemPiGK::getB(struct data* dt, NPAR i, NPAR m) {
     return this->B[dt->k][i][m];
 }
 
-//void HMMProblemPiGK::initGrad() {
-//    // fitK,G - masks
-//    // PIk
-//    if( this->gradPI == NULL )
-//        this->gradPI = init2DNumber(this->p->nK, this->p->nS);
-//    else
-//        toZero2DNumber(this->gradPI, this->p->nK, this->p->nS);
-//    // PIg
-//    if( this->gradPIg == NULL )
-//        this->gradPIg = init2DNumber(this->p->nG, this->p->nS);
-//    else
-//        toZero2DNumber(this->gradPIg, this->p->nG, this->p->nS);
-//    // A
-//    if( this->gradA == NULL ) {
-//        this->gradA  = init3DNumber(this->p->nK, this->p->nS, this->p->nS);
-//    }
-//    else
-//        toZero3DNumber(this->gradA, this->p->nK, this->p->nS, this->p->nS);
-//    // B
-//    if( this->gradB == NULL ) {
-//        this->gradB  = init3DNumber(this->p->nK, this->p->nS, this->p->nO);
-//    }
-//    else
-//        toZero3DNumber(this->gradB, this->p->nK, this->p->nS, this->p->nO);
-//}
-
-//void HMMProblemPiGK::computeGradients() {
-//	initGrad();
-//	NCAT k, x, g;
-//	NDAT t, xndat;
-//	NPAR i, j, o;
-//    struct data ** x_data = NULL;
-//    NUMBER update, combined_pLo;
-//    for(k=0; k<this->p->nK; k++) { // for all sKills
-//        xndat  = this->p->k_numg[k];
-//        x_data = this->p->k_g_data[k];
-//        if( !this->fitK[k] && this->fitK_countG[k]==0) // if fitK flag NOT raised, and ALL of relevant fitG flags are NOT raised
-//            continue;
-//        computeAlphaAndPOParam(xndat, x_data);
-//        computeBeta(xndat, x_data);
-//        for(x=0; x<xndat; x++) { // for all Groups within this sKill
-//            if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
-//            t = 0;
-//            o = x_data[x]->obs[t];
-//            g = this->p->k_g_data[k][x]->g;
-//            if(this->fitK[k] || this->fitG[x]) { // if fitK or fitG are raised
-//                for(i=0; i<this->p->nS; i++) {
-//                    // logit combination
-//                    combined_pLo = getPI(x_data[x], i); // sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
-//                    update =  combined_pLo * (1-combined_pLo) * x_data[x]->beta[t][i] * B[k][i][o] / safe0num(x_data[x]->p_O_param);
-//                    this->gradPI[k   ][i] -= update * this->fitK[k];
-//                    this->gradPIg[g][i] -= update * this->fitG[x];
-//                    // Corbett combination - todo
-//                }
-//            }
-//            // if fitK not raised - continue
-//            if( !this->fitK[k] )
-//                continue;
-//            for(t=0; t<x_data[x]->ndat; t++) {
-//                o = x_data[x]->obs[t];
-//                // Gradient with respect to A
-//                // \frac{\partial J}{\partial a_{ij}} = - \frac{1}{L_{tot}} \sum_{t=2}^T \beta_t(j) b_j(o_t) \alpha_{t-1}(i)
-//                if( t>0 ) {
-//                    for(i=0; i<this->p->nS /*&& param->fitparam[1]>0*/; i++)
-//                        for(j=0; j<this->p->nS; j++)
-//                            this->gradA[k][i][j] -= x_data[x]->beta[t][j] * this->B[k][j][o] * x_data[x]->alpha[t-1][i] / safe0num(x_data[x]->p_O_param);
-//                }// if not first obs in sequence
-//                // Gradient with respect to B
-//                for(i=0; i<this->p->nS /*&& param->fitparam[2]>0*/; i++)
-//                    this->gradB[k][i][o] -= x_data[x]->alpha[t][i] * x_data[x]->beta[t][i] / safe0num(x_data[x]->p_O_param * B[k][i][o]);
-//            } // for all observations within skill-group
-//        } // for all Groups
-//        RecycleFitData(xndat, x_data, this->p);
-//    }// for all sKills
-//    	
-//} // computeGradients()
-//
-void HMMProblemPiGK::computeGradientsK(NCAT k, NUMBER* a_gradPI, NUMBER** a_gradA, NUMBER** a_gradB) {
-	toZero1DNumber(a_gradPI, this->p->nS);
-	toZero2DNumber(a_gradA , this->p->nS, this->p->nS);
-	toZero2DNumber(a_gradB , this->p->nS, this->p->nO);
-
-	NCAT x, g;
-	NDAT t, xndat;
-	NPAR i, j, o;
-    struct data ** x_data = NULL;
-    NUMBER update, combined_pLo;
-    xndat  = this->p->k_numg[k];
-    x_data = this->p->k_g_data[k];
-
-    computeAlphaAndPOParam(xndat, x_data);
-    computeBeta(xndat, x_data);
-    for(x=0; x<xndat; x++) { // for all Groups within this sKill
-		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
-        t = 0;
-        o = x_data[x]->obs[t];
-        g = x_data[x]->g;
+void HMMProblemPiGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
+    NDAT t = 0;
+    NPAR i, o;
+    NUMBER combined, deriv_logit;
+    o = dt->obs[t];
+    if(kg_flag == 0) { // k
         for(i=0; i<this->p->nS; i++) {
-            // logit combination
-            combined_pLo = getPI(x_data[x],i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
-            update =  combined_pLo * (1-combined_pLo) * x_data[x]->beta[t][i] * getB(x_data[x],i,o)/*B[k][i][o]*/ / safe0num(x_data[x]->p_O_param);
-            a_gradPI[i] -= update;
-            //this->gradPIg[gidx][i] -= update * this->fitG[g];
-            // Corbett combination - todo
+            combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
+            deriv_logit = 1 / safe0num( this->PI[ dt->k ][i] * (1-this->PI[ dt->k ][i]) );
+			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * getB(dt,i,o) / safe0num(dt->p_O_param);
         }
-        for(t=0; t<x_data[x]->ndat; t++) {
-            o = x_data[x]->obs[t];
-            // Gradient with respect to A
-            // \frac{\partial J}{\partial a_{ij}} = - \frac{1}{L_{tot}} \sum_{t=2}^T \beta_t(j) b_j(o_t) \alpha_{t-1}(i)
-            if( t>0 ) {
-                for(i=0; i<this->p->nS /*&& param->fitparam[1]>0*/; i++)
-                    for(j=0; j<this->p->nS; j++)
-                        a_gradA[i][j] -= x_data[x]->beta[t][j] * getB(x_data[x],j,o)/*this->B[k][j][o]*/ * x_data[x]->alpha[t-1][i] / safe0num(x_data[x]->p_O_param);
-            }// if not first obs in sequence
-            // Gradient with respect to B
-            for(i=0; i<this->p->nS /*&& param->fitparam[2]>0*/; i++)
-                a_gradB[i][o] -= x_data[x]->alpha[t][i] * x_data[x]->beta[t][i] / safe0num(x_data[x]->p_O_param * getB(x_data[x],i,o)/*this->B[k][i][o]*/);
-        } // for all observations within skill-group
-    } // for all Groups
-    RecycleFitData(xndat, x_data, this->p);
-    
-} // computeGradients()
-
-void HMMProblemPiGK::computeGradientsG(NCAT g, NUMBER* a_gradPI) {
-	toZero1DNumber(a_gradPI, this->p->nS);
-
-	NCAT x, k;
-	NDAT t, xndat;
-	NPAR i, o;
-    struct data ** x_data = NULL;
-    NUMBER update, combined_pLo;
-    xndat  = this->p->g_numk[g];
-    x_data = this->p->g_k_data[g];
-    computeAlphaAndPOParam(xndat, x_data);
-    computeBeta(xndat, x_data);
-    for(x=0; x<xndat; x++) { // for all Groups within this sKill
-		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
-        t = 0;
-        o = x_data[x]->obs[t];
-        k = x_data[x]->k;
+    }
+    else
         for(i=0; i<this->p->nS; i++) {
-            // logit combination
-            combined_pLo = getPI(x_data[x],i);//sigmoid( logit(this->PI[kidx][i]) + logit(this->PIg[g][i]) );
-            update =  combined_pLo * (1-combined_pLo) * x_data[x]->beta[t][i] * getB(x_data[x],i,o)/*B[k][i][o]*/ / safe0num(x_data[x]->p_O_param);
-            a_gradPI[i] -= update;
-            // Corbett combination - todo
+            combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
+            deriv_logit = 1 / safe0num( this->PIg[ dt->g ][i] * (1-this->PIg[ dt->g ][i]) );
+			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * getB(dt,i,o) / safe0num(dt->p_O_param);
         }
-    } // for all Groups
-    RecycleFitData(xndat, x_data, this->p);
-    
-} // computeGradients()
+}
 
 void HMMProblemPiGK::toFile(const char *filename) {
 	FILE *fid = fopen(filename,"w");
@@ -413,7 +281,7 @@ void HMMProblemPiGK::fit() {
     switch(this->p->solver)
     {
         case BKT_GD_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-            loglik_rmse[0] += GradientDescentPLoSKillGroupOtherSkill1();
+            loglik_rmse[0] += GradientDescentPLoSKillGroupOtherSkill(0/*K*/);
             break;
         default:
             fprintf(stderr,"Solver specified is not supported.\n");
@@ -423,12 +291,13 @@ void HMMProblemPiGK::fit() {
     free(loglik_rmse);
 }
 
-NUMBER HMMProblemPiGK::GradientDescentPLoSKillGroupOtherSkill1() {
+NUMBER HMMProblemPiGK::GradientDescentPLoSKillGroupOtherSkill(NPAR kg_flag) {
 	NCAT k, g;
-    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
+    // NPAR nS = this->p->nS, nO = this->p->nO;
+    NCAT nK = this->p->nK, nG = this->p->nG;
     NUMBER loglik = 0;
-    bool conv_flagsK[3] = {true, true,  true};
-    bool conv_flagsG[3] = {true, false, false};
+//    bool conv_flagsK[3] = {true, true,  true};
+//    bool conv_flagsG[3] = {true, false, false};
     
 	bool conv;
 	int iter; // iteration count
@@ -443,68 +312,24 @@ NUMBER HMMProblemPiGK::GradientDescentPLoSKillGroupOtherSkill1() {
         this->fitG = Malloc(bool, nG);
         for(x=0; x<nG; x++) this->fitG[x] = true; //
     }
-    NUMBER *PI, **A, **B; // just pointer
-    NUMBER *PI_m1, ** A_m1, ** B_m1;
-    init3Params(PI_m1, A_m1, B_m1, nS, nO);
-    NUMBER *a_gradPI, ** a_gradA, ** a_gradB;
-    init3Params(a_gradPI, a_gradA, a_gradB, nS, nO);
+    
+    FitBit *fb = new FitBit(this->p);
+    fb->init(FBS_PARm1);
+    fb->init(FBS_GRAD);
+    fb->init(FBS_GRADm1);
+    fb->init(FBS_DIRm1);
+//    NUMBER *PI, **A, **B; // just pointer
+//    NUMBER *PI_m1, ** A_m1, ** B_m1;
+//    init3Params(PI_m1, A_m1, B_m1, nS, nO);
+//    NUMBER *a_gradPI, ** a_gradA, ** a_gradB;
+//    init3Params(a_gradPI, a_gradA, a_gradB, nS, nO);
 
 	//
 	// fit all as 1 skill first, set group gradients to 0, and do not fit them
 	//
 	if(this->p->single_skill==1) {
-        NUMBER *a_gradPI_sum, ** a_gradA_sum, ** a_gradB_sum;
-        init3Params(a_gradPI_sum, a_gradA_sum, a_gradB_sum, nS, nO);
-        NUMBER pO0, pO;
-		iter = 1;
-		pO0 = 0.0;
-		conv = 0; // converged
-        for(x=0; x<nG; x++) this->fitG[x] = false; // do not fit group gradients
-		while( !conv && iter<=this->p->maxiter ) {
-            // all gradients are computed in one call
-			// add gradients
-			for(k=0; k<nK; k++) {
-                computeGradientsK(k, a_gradPI, a_gradA, a_gradB);
-                if(iter>1) {
-                    toZero1DNumber(a_gradPI_sum, nS);
-                    toZero2DNumber(a_gradA_sum,  nS, nS);
-                    toZero2DNumber(a_gradB_sum,  nS, nO);
-                    pO0 += getSumLogPOPara(this->p->k_numg[k], this->p->k_g_data[k]);
-                }
-                if(iter==1) {
-                }
-				add1DNumbersWeighted(a_gradPI, a_gradPI_sum, nS, 1.0);
-				add2DNumbersWeighted(a_gradA,  a_gradA_sum,  nS, nS, 1.0);
-				add2DNumbersWeighted(a_gradB,  a_gradB_sum,  nS, nO, 1.0);
-			}
-			// copy old SAVED! values for params, just for skill #0 is enough
-			cpy1DNumber(this->getPI(0), PI_m1, nS);
-			cpy2DNumber(this->getA(0),  A_m1,  nS, nS);
-			cpy2DNumber(this->getB(0),  B_m1,  nS, nO);
-			
-			// make step only on K
-			for(k=0; k<nK; k++) {
-                //				doLevinsonRabinerSondhi1982Step(hmm->getPI(k), hmm->getA(k), hmm->getB(k), gradPI, gradA, gradB, param);
-                doLinearStep(this->p->k_numg[k], this->p->k_g_data[k], this->PI[k], this->A[k], this->B[k], a_gradPI_sum, a_gradA_sum, a_gradB_sum);
-            }
-			// check convergence, on any skill, e.g. #0
-			conv = checkConvergence(this->getPI(k), this->getA(k), this->getB(k), PI_m1, A_m1, B_m1, conv_flagsK);
-			
-			if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (conv || iter==this->p->maxiter) )) {
-                for(k=0; k<nK; k++) {
-                    computeAlphaAndPOParam(this->p->k_numg[k], this->p->k_g_data[k]);
-                    pO += HMMProblemPiGK::getSumLogPOPara(this->p->k_numg[k], this->p->k_g_data[k]);
-                }
-				printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",iter,pO0,pO,conv);
-			}
-			iter ++;
-		}// single skill loop
-        for(x=0; x<nG; x++) this->fitG[x] = true; // from now DO fit group gradients
-        toZero3Params(PI_m1, A_m1, B_m1, nS, nO);
-        free(a_gradPI_sum);
-        free2DNumber(a_gradA_sum, nS);
-        free2DNumber(a_gradB_sum, nS);
-	}
+        GradientDescent1Skill(fb);
+    }
 	
 	//
 	// Main fit
@@ -516,7 +341,7 @@ NUMBER HMMProblemPiGK::GradientDescentPLoSKillGroupOtherSkill1() {
     int skip_k = 0, skip_g = 0;
     iter = 1; // iteration count
     NUMBER pO, pO0;
-    NUMBER e; // step
+//    NUMBER e; // step
     
     int i = 0;
     while(skip_k<nK || skip_g<nG) {
@@ -532,34 +357,29 @@ NUMBER HMMProblemPiGK::GradientDescentPLoSKillGroupOtherSkill1() {
             iter = 1; // iteration count
             pO0 = 0.0;
             pO = 0.0;
-            PI = this->PI[k];// pointer stays same through fitting
-            A  = this->A[k]; // pointer stays same through fitting
-            B  = this->B[k]; // pointer stays same through fitting
-            toZero1DNumber(a_gradPI, nS);
-            toZero2DNumber(a_gradA,  nS, nS);
-            toZero2DNumber(a_gradB,  nS, nO);
+            fb->linkPar(this->getPI(k), this->getA(k), this->getB(k));
+//            PI = this->PI[k];// pointer stays same through fitting
+//            A  = this->A[k]; // pointer stays same through fitting
+//            B  = this->B[k]; // pointer stays same through fitting
+//            toZero1DNumber(a_gradPI, nS);
+//            toZero2DNumber(a_gradA,  nS, nS);
+//            toZero2DNumber(a_gradB,  nS, nO);
             
             while( !conv && iter<=this->p->maxiter ) {
-                computeGradientsK(k, a_gradPI, a_gradA, a_gradB);
+                computeGradients(xndat, x_data, fb, 0/*K here*/);// a_gradPI, a_gradA, a_gradB);
                 if(iter==1) {
                     pO0 = HMMProblem::getSumLogPOPara(xndat, x_data);
                 }
                 
                 // copy old SAVED! values for params
-                // no selectivity here, these should change
-                cpy1DNumber(PI, PI_m1, nS);
-                cpy2DNumber(A,  A_m1,  nS, nS);
-                cpy2DNumber(B,  B_m1,  nS, nO);
+                //            cpy3Params(PI, A, B, PI_m1, A_m1, B_m1, nS, nO);
+                fb->copy(FBS_PAR, FBS_PARm1);
                 
-                //                tm2 = clock();
-                e = doLinearStepSkill(xndat, x_data, PI, A, B, a_gradPI, a_gradA, a_gradB);
-                //                times2 += (NUMBER)(clock()-tm2)/CLOCKS_PER_SEC;
+                doLinearStep(xndat, x_data, fb, -1/*co copy*/);//PI, A, B, a_gradPI, a_gradA, a_gradB);
                 
                 // check convergence
-                //                tm3 = clock();
-                conv = checkConvergence(PI, A, B, PI_m1, A_m1, B_m1, conv_flagsK);
-                //                times3 += (NUMBER)(clock()-tm3)/CLOCKS_PER_SEC;
-                
+                //			conv = checkConvergence(PI, A, B, PI_m1, A_m1, B_m1, conv_flags);
+                conv = fb->checkConvergence();
                 iter ++;
             } // main solver loop
             iter--; // to turn in right
@@ -597,22 +417,26 @@ NUMBER HMMProblemPiGK::GradientDescentPLoSKillGroupOtherSkill1() {
             iter = 1; // iteration count
             pO0 = 0.0;
             pO = 0.0;
-            PI = this->PIg[g]; // pointer stays same through fitting
-            toZero1DNumber(a_gradPI, nS); // zero these, for the sake of selective fitting
+            fb->linkPar(this->getPIg(g), NULL, NULL);
+//            PI = this->PIg[g]; // pointer stays same through fitting
+//            toZero1DNumber(a_gradPI, nS); // zero these, for the sake of selective fitting
             while( !conv && iter<=this->p->maxiter ) {
-                computeGradientsG(g, a_gradPI);
+                computeGradients(xndat, x_data, fb, 1/*G here*/);
                 if(iter==1) {
                     pO0 = HMMProblemPiGK::getSumLogPOPara(xndat, x_data);
                 }
                 
                 // copy old SAVED! values for params
                 // no selectivity here, these should change
-                cpy1DNumber(PI, PI_m1, nS);
+//                cpy1DNumber(PI, PI_m1, nS);
+                fb->copy(FBS_PAR, FBS_PARm1);
                 
-                e = doLinearStepPLoGroup(xndat, x_data, PI, a_gradPI);
+//                e = doLinearStepPLoGroup(xndat, x_data, PI, a_gradPI);
+                doLinearStep(xndat, x_data, fb, -1/*co copy*/);//PI, A, B, a_gradPI, a_gradA, a_gradB);
                 
                 // check convergence
-                conv = checkConvergence(PI, NULL, NULL, PI_m1, NULL, NULL, conv_flagsG);
+//                conv = checkConvergence(PI, NULL, NULL, PI_m1, NULL, NULL, conv_flagsG);
+                conv = fb->checkConvergence();
                 
                 iter ++;
             } // main solver loop
@@ -640,12 +464,13 @@ NUMBER HMMProblemPiGK::GradientDescentPLoSKillGroupOtherSkill1() {
         //		printf("time G elapsed is %8.6f seconds\n",(NUMBER)(clock()-tm0)/CLOCKS_PER_SEC);
         i++; // run counter
     }// external loop for alternating PI and A,B
-    free(PI_m1);
-    free2DNumber(A_m1, nS);
-    free2DNumber(B_m1, nS);
-    free(a_gradPI);
-    free2DNumber(a_gradA, nS);
-    free2DNumber(a_gradB, nS);
+//    free(PI_m1);
+//    free2DNumber(A_m1, nS);
+//    free2DNumber(B_m1, nS);
+//    free(a_gradPI);
+//    free2DNumber(a_gradA, nS);
+//    free2DNumber(a_gradB, nS);
+    delete fb;
     
     // compute loglik
     for(k=0; k<nK; k++) { // for all A,B-by-skill
@@ -655,121 +480,121 @@ NUMBER HMMProblemPiGK::GradientDescentPLoSKillGroupOtherSkill1() {
     return loglik;
 }
 
-NUMBER HMMProblemPiGK::doLinearStepSkill(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B,
-                                         NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB) {
-	NPAR i,j,m;
-    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
-	// first scale down gradients
-	doLog10Scale1DGentle(a_gradPI, a_PI, nS);
-	doLog10Scale2DGentle(a_gradA,  a_A,  nS, nS);
-	doLog10Scale2DGentle(a_gradB,  a_B,  nS, nO);
-	
-    NUMBER *PI_cpy, ** A_cpy, ** B_cpy;
-    init3Params(PI_cpy, A_cpy, B_cpy, nS, nO);
-	NUMBER e = this->p->ArmijoSeed; // step seed
-	bool compliesArmijo = false;
-	NUMBER f_xk = HMMProblem::getSumLogPOPara(xndat, x_data);
-	NUMBER f_xkplus1;
-	
-	cpy1DNumber(a_PI, PI_cpy, nS); // save copy
-	cpy2DNumber(a_A,  A_cpy,  nS, nS); // save copy
-	cpy2DNumber(a_B,  B_cpy,  nS, nO); // save copy
-	// compute p_k * -p_k
-	NUMBER p_k_by_neg_p_k = 0;
-	for(i=0; i<nS; i++)
-	{
-		p_k_by_neg_p_k -= a_gradPI[i]*a_gradPI[i];
-		for(j=0; j<nS; j++) p_k_by_neg_p_k -= a_gradA[i][j]*a_gradA[i][j];
-		for(m=0; m<nO; m++) p_k_by_neg_p_k -= a_gradB[i][m]*a_gradB[i][m];
-	}
-	int iter = 0; // limit iter steps to 20
-	while( !compliesArmijo && e > this->p->ArmijoMinStep) {
-		// update
-		for(i=0; i<nS; i++) {
-			a_PI[i] = PI_cpy[i] - e * a_gradPI[i];
-			for(j=0; j<nS; j++)
-				a_A[i][j] = A_cpy[i][j] - e * a_gradA[i][j];
-			for(m=0; m<nO; m++)
-				a_B[i][m] = B_cpy[i][m] - e * a_gradB[i][m];
-		}
-		// scale
-		if( !this->hasNon01Constraints() ) {
-			projectsimplex(a_PI, nS);
-			for(i=0; i<nS; i++) {
-				projectsimplex(a_A[i], nS);
-				projectsimplex(a_B[i], nS);
-			}
-		} else {
-			projectsimplexbounded(a_PI, this->getLbPI(), this->getUbPI(), nS);
-			for(i=0; i<nS; i++) {
-				projectsimplexbounded(a_A[i], this->getLbA()[i], this->getUbA()[i], nS);
-				projectsimplexbounded(a_B[i], this->getLbB()[i], this->getUbB()[i], nS);
-			}
-		}
-		// recompute alpha and p(O|param)
-        //		zeroLabels(xndat, x_data); // THIS IS NOT DONE HERE
-		computeAlphaAndPOParam(xndat, x_data);
-		// compute f(x_{k+1})
-		f_xkplus1 = HMMProblem::getSumLogPOPara(xndat, x_data);
-		// compute Armijo compliance
-		compliesArmijo = (f_xkplus1 <= (f_xk + (this->p->ArmijoC1 * e * p_k_by_neg_p_k)));
-		e /= (compliesArmijo)?1:this->p->ArmijoReduceFactor;
-		iter++;
-	} // armijo loop
-    if(!compliesArmijo) {
-        e = 0;
-        cpy1DNumber(PI_cpy, a_PI, nS); // save copy
-        cpy2DNumber(A_cpy,  a_A,  nS, nS); // save copy
-        cpy2DNumber(B_cpy,  a_B,  nS, nO); // save copy
-    }
-    RecycleFitData(xndat, x_data, this->p);
-	free(PI_cpy);
-	free2DNumber(A_cpy, nS);
-	free2DNumber(B_cpy, nS);
-    return e;
-} // doLinearStep
-
-NUMBER HMMProblemPiGK::doLinearStepPLoGroup(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER *a_gradPI) {
-	NPAR i;
-NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;	// first scale down gradients
-	doLog10Scale1DGentle(a_gradPI, a_PI, nS);
-	
-	NUMBER *PI_cpy = init1DNumber(nS); // safe copy
-	NUMBER e = this->p->ArmijoSeed; // step seed
-	bool compliesArmijo = false;
-	NUMBER f_xk = HMMProblemPiGK::getSumLogPOPara(xndat, x_data);
-	NUMBER f_xkplus1;
-	
-	cpy1DNumber(a_PI, PI_cpy, nS); // save copy
-	// compute p_k * -p_k
-	NUMBER p_k_by_neg_p_k = 0;
-	for(i=0; i<nS; i++)
-		p_k_by_neg_p_k -= a_gradPI[i]*a_gradPI[i];
-	int iter = 0; // limit iter steps to 20
-	while( !compliesArmijo && e > this->p->ArmijoMinStep) {
-		// update
-		for(i=0; i<nS; i++)
-			a_PI[i] = PI_cpy[i] - e * a_gradPI[i];
-		// scale
-		if( !this->hasNon01Constraints() )
-			projectsimplex(a_PI, nS);
-		else
-			projectsimplexbounded(a_PI, this->getLbPI(), this->getUbPI(), nS);
-		// recompute alpha and p(O|param)
-        //		zeroLabels(xndat, x_data); // THIS IS NOT DONE HERE
-        computeAlphaAndPOParam(xndat, x_data);
-		// compute f(x_{k+1})
-		f_xkplus1 = HMMProblemPiGK::getSumLogPOPara(xndat, x_data);
-		// compute Armijo compliance
-		compliesArmijo = (f_xkplus1 <= (f_xk + (this->p->ArmijoC1 * e * p_k_by_neg_p_k)));
-		e /= (compliesArmijo)?1:this->p->ArmijoReduceFactor;
-		iter++;
-	} // armijo loop
-    if(!compliesArmijo) {
-        e = 0;
-        cpy1DNumber(PI_cpy, a_PI, nS); // save copy
-    }
-	free(PI_cpy);
-    RecycleFitData(xndat, x_data, this->p);
-    return e;
-} // doLinearStep
+//NUMBER HMMProblemPiGK::doLinearStepSkill(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B,
+//                                         NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB) {
+//	NPAR i,j,m;
+//    NPAR nS = this->p->nS, nO = this->p->nO; //NCAT nK = this->p->nK, nG = this->p->nG;
+//	// first scale down gradients
+//	doLog10Scale1DGentle(a_gradPI, a_PI, nS);
+//	doLog10Scale2DGentle(a_gradA,  a_A,  nS, nS);
+//	doLog10Scale2DGentle(a_gradB,  a_B,  nS, nO);
+//	
+//    NUMBER *PI_cpy, ** A_cpy, ** B_cpy;
+//    init3Params(PI_cpy, A_cpy, B_cpy, nS, nO);
+//	NUMBER e = this->p->ArmijoSeed; // step seed
+//	bool compliesArmijo = false;
+//	NUMBER f_xk = HMMProblem::getSumLogPOPara(xndat, x_data);
+//	NUMBER f_xkplus1;
+//	
+//	cpy1DNumber(a_PI, PI_cpy, nS); // save copy
+//	cpy2DNumber(a_A,  A_cpy,  nS, nS); // save copy
+//	cpy2DNumber(a_B,  B_cpy,  nS, nO); // save copy
+//	// compute p_k * -p_k
+//	NUMBER p_k_by_neg_p_k = 0;
+//	for(i=0; i<nS; i++)
+//	{
+//		p_k_by_neg_p_k -= a_gradPI[i]*a_gradPI[i];
+//		for(j=0; j<nS; j++) p_k_by_neg_p_k -= a_gradA[i][j]*a_gradA[i][j];
+//		for(m=0; m<nO; m++) p_k_by_neg_p_k -= a_gradB[i][m]*a_gradB[i][m];
+//	}
+//	int iter = 0; // limit iter steps to 20
+//	while( !compliesArmijo && e > this->p->ArmijoMinStep) {
+//		// update
+//		for(i=0; i<nS; i++) {
+//			a_PI[i] = PI_cpy[i] - e * a_gradPI[i];
+//			for(j=0; j<nS; j++)
+//				a_A[i][j] = A_cpy[i][j] - e * a_gradA[i][j];
+//			for(m=0; m<nO; m++)
+//				a_B[i][m] = B_cpy[i][m] - e * a_gradB[i][m];
+//		}
+//		// scale
+//		if( !this->hasNon01Constraints() ) {
+//			projectsimplex(a_PI, nS);
+//			for(i=0; i<nS; i++) {
+//				projectsimplex(a_A[i], nS);
+//				projectsimplex(a_B[i], nS);
+//			}
+//		} else {
+//			projectsimplexbounded(a_PI, this->getLbPI(), this->getUbPI(), nS);
+//			for(i=0; i<nS; i++) {
+//				projectsimplexbounded(a_A[i], this->getLbA()[i], this->getUbA()[i], nS);
+//				projectsimplexbounded(a_B[i], this->getLbB()[i], this->getUbB()[i], nS);
+//			}
+//		}
+//		// recompute alpha and p(O|param)
+//        //		zeroLabels(xndat, x_data); // THIS IS NOT DONE HERE
+//		computeAlphaAndPOParam(xndat, x_data);
+//		// compute f(x_{k+1})
+//		f_xkplus1 = HMMProblem::getSumLogPOPara(xndat, x_data);
+//		// compute Armijo compliance
+//		compliesArmijo = (f_xkplus1 <= (f_xk + (this->p->ArmijoC1 * e * p_k_by_neg_p_k)));
+//		e /= (compliesArmijo)?1:this->p->ArmijoReduceFactor;
+//		iter++;
+//	} // armijo loop
+//    if(!compliesArmijo) {
+//        e = 0;
+//        cpy1DNumber(PI_cpy, a_PI, nS); // save copy
+//        cpy2DNumber(A_cpy,  a_A,  nS, nS); // save copy
+//        cpy2DNumber(B_cpy,  a_B,  nS, nO); // save copy
+//    }
+//    RecycleFitData(xndat, x_data, this->p);
+//	free(PI_cpy);
+//	free2DNumber(A_cpy, nS);
+//	free2DNumber(B_cpy, nS);
+//    return e;
+//} // doLinearStep
+//
+//NUMBER HMMProblemPiGK::doLinearStepPLoGroup(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER *a_gradPI) {
+//	NPAR i;
+//    NPAR nS = this->p->nS, //nO = this->p->nO; //NCAT nK = this->p->nK, nG = this->p->nG;	// first scale down gradients
+//	doLog10Scale1DGentle(a_gradPI, a_PI, nS);
+//	
+//	NUMBER *PI_cpy = init1DNumber(nS); // safe copy
+//	NUMBER e = this->p->ArmijoSeed; // step seed
+//	bool compliesArmijo = false;
+//	NUMBER f_xk = HMMProblemPiGK::getSumLogPOPara(xndat, x_data);
+//	NUMBER f_xkplus1;
+//	
+//	cpy1DNumber(a_PI, PI_cpy, nS); // save copy
+//	// compute p_k * -p_k
+//	NUMBER p_k_by_neg_p_k = 0;
+//	for(i=0; i<nS; i++)
+//		p_k_by_neg_p_k -= a_gradPI[i]*a_gradPI[i];
+//	int iter = 0; // limit iter steps to 20
+//	while( !compliesArmijo && e > this->p->ArmijoMinStep) {
+//		// update
+//		for(i=0; i<nS; i++)
+//			a_PI[i] = PI_cpy[i] - e * a_gradPI[i];
+//		// scale
+//		if( !this->hasNon01Constraints() )
+//			projectsimplex(a_PI, nS);
+//		else
+//			projectsimplexbounded(a_PI, this->getLbPI(), this->getUbPI(), nS);
+//		// recompute alpha and p(O|param)
+//        //		zeroLabels(xndat, x_data); // THIS IS NOT DONE HERE
+//        computeAlphaAndPOParam(xndat, x_data);
+//		// compute f(x_{k+1})
+//		f_xkplus1 = HMMProblemPiGK::getSumLogPOPara(xndat, x_data);
+//		// compute Armijo compliance
+//		compliesArmijo = (f_xkplus1 <= (f_xk + (this->p->ArmijoC1 * e * p_k_by_neg_p_k)));
+//		e /= (compliesArmijo)?1:this->p->ArmijoReduceFactor;
+//		iter++;
+//	} // armijo loop
+//    if(!compliesArmijo) {
+//        e = 0;
+//        cpy1DNumber(PI_cpy, a_PI, nS); // save copy
+//    }
+//	free(PI_cpy);
+//    RecycleFitData(xndat, x_data, this->p);
+//    return e;
+//} // doLinearStep

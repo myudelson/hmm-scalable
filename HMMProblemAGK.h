@@ -30,9 +30,13 @@ public:
 	NUMBER** getAg(NCAT g);
 	NUMBER** getB(NCAT k);
     // getters for computing alpha, beta, gamma
-    NUMBER getPI(struct data* dt, NPAR i);         // to be redefined
-    NUMBER getA (struct data* dt, NPAR i, NPAR j); // same
-    NUMBER getB (struct data* dt, NPAR i, NPAR m); // same
+    virtual NUMBER getPI(struct data* dt, NPAR i);         // to be redefined
+    virtual NUMBER getA (struct data* dt, NPAR i, NPAR j); // same
+    virtual NUMBER getB (struct data* dt, NPAR i, NPAR m); // same
+    // getters for computing gradients of alpha, beta, gamma
+//    virtual void setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag);
+    virtual void setGradA (struct data* dt, FitBit *fb, NPAR kg_flag);
+//    virtual void setGradB (struct data* dt, FitBit *fb, NPAR kg_flag);
 	void toFile(const char *filename);
     // fitting (the only public method)
     void fit(); // return -LL for the model
@@ -56,14 +60,14 @@ protected:
 	virtual void destroy(); // non-fit specific descruction
 	void initGrad();
 private:
-	void computeGradients();
-	void computeGradientsK(NCAT k, NUMBER* a_gradPI, NUMBER** a_gradA, NUMBER** a_gradB);
-	void computeGradientsG(NCAT g, NUMBER** a_gradA);
+//	void computeGradients();
+//	virtual void computeGradients (NCAT xndat, struct data** x_data, FitBit *fb);
+//	virtual void computeGradientsG(NCAT xndat, struct data** x_data, FitBit *fb);
     // fitting methods (hidden)
-    NUMBER GradientDescentPLoSKillGroupOtherSkill(); // fit alternating
-    NUMBER doLinearStepSkill(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B,
-                             NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB);
-    NUMBER doLinearStepPLoGroup(NCAT xndat, struct data** x_data, NUMBER **a_A, NUMBER **a_gradA);
+    NUMBER GradientDescentPLoSKillGroupOtherSkill(NPAR kg_flag); // fit alternating
+//    NUMBER doLinearStepSkill(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B,
+//                             NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB);
+//    NUMBER doLinearStepPLoGroup(NCAT xndat, struct data** x_data, NUMBER **a_A, NUMBER **a_gradA);
     // predicting
 //	static void computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat, struct data** x_data, NUMBER*a_PIk, NUMBER** a_Ak, NUMBER*** a_Ag, NUMBER **a_B, struct param* param);
 };
