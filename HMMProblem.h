@@ -94,8 +94,6 @@ protected:
 	void initGamma(NCAT xndat, struct data** x_data); // generic
 	void initBeta(NCAT xndat, struct data** x_data); // generic
 	void computeAlphaAndPOParam(NCAT xndat, struct data** x_data);
-//	void computeAlphaAndPOParamG(NCAT g);
-//	virtual void computeBeta(NCAT xndat, struct data** x_data, NUMBER** a_A, NUMBER **a_B, NPAR a_nS);
 	void computeBeta(NCAT xndat, struct data** x_data);
 	void computeGamma(NCAT xndat, struct data** x_data);
 	void computeXi(NCAT xndat, struct data** x_data);
@@ -117,16 +115,15 @@ protected:
 //    void createLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space);
 //    void createLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space, NCAT k); // multiple KC's separately
 //    void recycleLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space);
-    void GradientDescent1Skill(FitBit *fb); // return -LL for the model
-    void GradientConjugateDescent1Skill(FitBit *fb); // return -LL for the model
-
+//    void GradientDescent1Skill(FitBit *fb); // return -LL for the model
+    FitResult GradientDescentBit(NCAT x, NCAT xndat, struct data** x_data, NPAR kg_flag, FitBit *fb, bool is1SkillForAll); // for 1 skill or 1 group, all 1 skill for all data
+//    void GradientConjugateDescent1Skill(FitBit *fb); // return -LL for the model
+    virtual NUMBER GradientDescent(); // return -LL for the model
 private:
 	bool checkPIABConstraints(NUMBER* a_PI, NUMBER** a_A, NUMBER** a_B); // all constraints, inc row sums
-    
     // fitting methods - helpers (hidden)
     // fitting methods (hidden)
-    NUMBER GradientDescent(NPAR kg_flag); // return -LL for the model
-    NUMBER ConjugateGradientDescent(NPAR kg_flag); // return -LL for the model
+//    NUMBER ConjugateGradientDescent(NPAR kg_flag); // return -LL for the model
     NUMBER BaumWelchSkill();
     void doBaumWelchStep(NCAT xndat, struct data** x_data, FitBit *fb);//, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B);
 //    void predictMetricsGroup(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill);

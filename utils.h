@@ -40,19 +40,42 @@ typedef short NCAT; // number of categories, groups or skills, now 32K max
 typedef unsigned int NDAT; // number of data rows, now 4 bill max
 typedef double NUMBER; // numeric float format
 
-enum SOLVER {
-    BKT_NULL     =  0, // 0 unassigned
-    BKT_CGD      =  1, // 1 - Conjugate Gradient Descent by skill
-    BKT_GD       =  2, // 2 - Gradient Descent by skill
-    BKT_BW       =  3, // 3 - Baum Welch  by skill
-    BKT_GD_BW    =  4, // 4 - Gradient Descent then Expectation Maximization (Baum-Welch) by skill
-    BKT_BW_GD    =  5, // 5 - Expectation Maximization (Baum-Welch) then Gradient Descent by skill
-    BKT_GD_G     =  6, // 6 - Gradient Descent by group
-    BKT_GD_PIg   =  7, // 7 - Gradient Descent: PI by group, A,B by skill
-    BKT_GD_PIgk  =  8, // 8 - Gradient Descent, PI=logit(skill,group), other by skill
-    BKT_GD_APIgk =  9, // 9 - Gradient Descent, PI=logit(skill,group), A=logit(skill,group), B by skill
-    BKT_GD_Agk   = 10, //10 - Gradient Descent, A=logit(skill,group), PI,B by skill
-    BKT_GD_T     = 11  //11 - Gradient Descent by skill with transfer matrix
+//enum SOLVER { // deprecating
+//    BKT_NULL     =  0, // 0 unassigned
+//    BKT_CGD      =  1, // 1 - Conjugate Gradient Descent by skill
+//    BKT_GD       =  2, // 2 - Gradient Descent by skill
+//    BKT_BW       =  3, // 3 - Baum Welch  by skill
+//    BKT_GD_BW    =  4, // 4 - Gradient Descent then Expectation Maximization (Baum-Welch) by skill
+//    BKT_BW_GD    =  5, // 5 - Expectation Maximization (Baum-Welch) then Gradient Descent by skill
+//    BKT_GD_G     =  6, // 6 - Gradient Descent by group
+//    BKT_GD_PIg   =  7, // 7 - Gradient Descent: PI by group, A,B by skill
+//    BKT_GD_PIgk  =  8, // 8 - Gradient Descent, PI=logit(skill,group), other by skill
+//    BKT_GD_APIgk =  9, // 9 - Gradient Descent, PI=logit(skill,group), A=logit(skill,group), B by skill
+//    BKT_GD_Agk   = 10, //10 - Gradient Descent, A=logit(skill,group), PI,B by skill
+//    BKT_GD_T     = 11  //11 - Gradient Descent by skill with transfer matrix
+//};
+
+enum METHOD {
+    METHOD_BW   = 1,  // 1 - Baum Welch (expectation maximization)
+    METHOD_GD   = 2,  // 2 - Gradient Descent
+    METHOD_CGD  = 3   // 3 - Conjugate Gradient Descent
+};
+
+enum STRUCTURE {
+    STRUCTURE_SKILL   = 1,  // 1 - all by skill
+    STRUCTURE_GROUP   = 2,  // 2 - all by group (user)
+    STRUCTURE_PIg     = 3,  // 3 - PI by group, A,B by skill
+    STRUCTURE_PIgk    = 4,  // 4 - PI by skll&group, A,B by skill
+    STRUCTURE_PIAgk   = 5,  // 5 - PI,A by skll&group, B by skill
+    STRUCTURE_Agk     = 6,   // 6 - A by skll&group, PI,B by skill
+    STRUCTURE_SKILL_T = 7   // 6 - by skill with transfer matrix
+};
+
+struct FitResult {
+    int iter;   // interations
+    NUMBER pO0; // starting log-likelihood
+    NUMBER pO;  // final log-likelihood
+    int conv;   // converged? (maybe just went though max-iter
 };
 
 struct data {
@@ -78,8 +101,9 @@ struct param {
 	int maxiter; // maximum iterations (200 by default)
 	NPAR quiet;   // quiet mode (no outputs)
 	NPAR single_skill; // 0 - do nothing, 1 - fit all skills as skingle skill, to set a starting point, 2 - enforce fit single skill
+	NPAR structure; // whether to fit by skill, by group, or mixture of them
 	NPAR solver; // whether to first fit all skills as skingle skill, to set a starting point
-	NPAR solver_settting; // to be used by individual solver
+	NPAR solver_setting; // to be used by individual solver
 //	int user_pLo; // fit user pLo with skill pLo
 	NUMBER C;// weight of the L1 norm penalty
 	int metrics;   // compute AIC, BIC, RMSE of training

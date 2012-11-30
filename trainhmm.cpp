@@ -12,7 +12,7 @@
 //#include "HMMProblemPiG.h"
 #include "HMMProblemPiGK.h"
 #include "HMMProblemAGK.h"
-//#include "HMMProblemPiAGK.h"
+#include "HMMProblemPiAGK.h"
 //#include "HMMProblemKT.h"
 #include "StripedArray.h"
 using namespace std;
@@ -58,26 +58,22 @@ int main (int argc, char ** argv) {
     if(param.cv_folds==0) {
         // create problem
         HMMProblem *hmm;
-        switch(param.solver)
+        switch(param.structure)
         {
-            case BKT_CGD: // Conjugate Gradient Descent
-            case BKT_GD: // Gradient Descent
-            case BKT_BW: // Expectation Maximization (Baum-Welch)
-            case BKT_GD_BW: // Gradient Descent then Expectation Maximization (Baum-Welch)
-            case BKT_BW_GD: // Expectation Maximization (Baum-Welch) then Gradient Descent
-            case BKT_GD_G: // Gradient Descent by group
+            case STRUCTURE_SKILL: // Conjugate Gradient Descent
+            case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmm = new HMMProblem(&param);
                 break;
-//            case BKT_GD_PIg: // Gradient Descent: PI by group, A,B by skill
+//            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
 //                hmm = new HMMProblemPiG(&param);
 //                break;
-            case BKT_GD_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+            case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
                 hmm = new HMMProblemPiGK(&param);
                 break;
-//            case BKT_GD_APIgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-//                hmm = new HMMProblemPiAGK(&param);
-//                break;
-            case BKT_GD_Agk: // Gradient Descent, pT=f(K,G), other by K
+            case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+                hmm = new HMMProblemPiAGK(&param);
+                break;
+            case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
                 hmm = new HMMProblemAGK(&param);
                 break;
 //            case BKT_GD_T: // Gradient Descent with Transfer
@@ -115,7 +111,8 @@ int main (int argc, char ** argv) {
                 hmm->computeMetrics(metrics);
             }
             if( param.metrics>0 ) {
-                printf("trained model LL=%15.7f(%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f)\n",metrics[0], hmm->getLogLik(), metrics[1], metrics[2], metrics[3], metrics[4]);
+//                printf("trained model LL=%15.7f(%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f)\n",metrics[0], hmm->getLogLik(), metrics[1], metrics[2], metrics[3], metrics[4]);
+                printf("trained model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4]);
             }
             free(metrics);
         } // if predict or metrics
@@ -154,8 +151,15 @@ void exit_with_help() {
 	printf(
 		   "Usage: trainhmm [options] input_file [[output_file] predicted_response_file]\n"
 		   "options:\n"
-		   "(-s) : solver, 0 - brute-force, 1 - grid-search, 2 - gradient descent (2 default)\n"
-           "       3 - expectation maximization (Baum-Welch)\n"
+		   "(-s) : structure.solver[.solver setting], structures: 1-by skill, 2-by user,\n"
+           "       3-Pi by skill, A,B-by user, 4-Pi by skill and user, A,B-by user,\n"
+           "       5-A by skill and user, Pi,B by skill, 6-Pi,A by skill and user, B by skill;\n"
+           "       solvers: 1-Baum-Welch, 2-Gradient Descent, 3-Conjugate Gradient Descent;\n"
+           "       Conjugate Gradient Descent has 3 setings: 1-Polak-Ribiere, 2-Fletcher–Reeves,\n"
+           "       3-Hestenes-Stiefel.\n"
+           "       For example '-s 1.3.1' would be by skill structure (classical) with Conjugate\n"
+           "       Gradient Descent and Hestenes-Stiefel formula, '-s 2.1' would be by student structure\n"
+           "       fit using Baum-Welch method.\n"
 		   "-t : tolerance of termination criterion (0.01 default)\n"
 		   "-i : maximum iterations (200 by default)\n"
 		   "-q : quiet mode, without output, 0-no (default), or 1-yes\n"
@@ -248,17 +252,47 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 				//fprintf(stdout, "fit single skill=%d\n",param.quiet);
 				break;
 			case 's':
-				param.solver = (NPAR)atoi( strtok(argv[i],".\t\n\r") );
-                ch = strtok(NULL,"\t\n\r");
+//				param.solver = (NPAR)atoi( strtok(argv[i],".\t\n\r") );
+//                ch = strtok(NULL,"\t\n\r");
+//                if(ch != NULL)
+//                    param.solver_setting = (NPAR)atoi(ch);
+//                if( param.solver != BKT_CGD      && param.solver != BKT_GD      &&
+//                    param.solver != BKT_BW       && param.solver != BKT_GD_BW   &&
+//                    param.solver != BKT_BW_GD    && param.solver != BKT_GD_G    &&
+//                    param.solver != BKT_GD_PIg   && param.solver != BKT_GD_PIgk &&
+//                    param.solver != BKT_GD_APIgk && param.solver != BKT_GD_Agk  &&
+//                    param.solver != BKT_GD_T ) {
+//                    fprintf(stderr, "Method specified (%d) is out of range of allowed values\n",param.solver);
+//					exit_with_help();
+//                }
+//                // new
+				param.structure = (NPAR)atoi( strtok(argv[i],".\t\n\r") );
+                ch = strtok(NULL,".\t\n\r"); // could be NULL (default GD solver)
                 if(ch != NULL)
-                    param.solver_settting = (NPAR)atoi(ch);
-                if( param.solver != BKT_CGD      && param.solver != BKT_GD      &&
-                    param.solver != BKT_BW       && param.solver != BKT_GD_BW   &&
-                    param.solver != BKT_BW_GD    && param.solver != BKT_GD_G    &&
-                    param.solver != BKT_GD_PIg   && param.solver != BKT_GD_PIgk &&
-                    param.solver != BKT_GD_APIgk && param.solver != BKT_GD_Agk  &&
-                    param.solver != BKT_GD_T ) {
+                    param.solver = (NPAR)atoi(ch);
+                ch = strtok(NULL,"\t\n\r"); // could be NULL (default GD solver)
+                if(ch != NULL)
+                    param.solver_setting = (NPAR)atoi(ch);
+                if( param.structure != STRUCTURE_SKILL && param.structure != STRUCTURE_GROUP &&
+                    param.structure != STRUCTURE_PIg   && param.structure != STRUCTURE_PIgk  &&
+                    param.structure != STRUCTURE_PIAgk && param.structure != STRUCTURE_Agk      ) {
+                    fprintf(stderr, "Model Structure specified (%d) is out of range of allowed values\n",param.structure);
+					exit_with_help();
+                }
+                if( param.solver != METHOD_BW  && param.solver != METHOD_GD &&
+                    param.solver != METHOD_CGD ) {
                     fprintf(stderr, "Method specified (%d) is out of range of allowed values\n",param.solver);
+					exit_with_help();
+                }
+                if( param.structure == METHOD_BW && ( param.solver != STRUCTURE_SKILL && param.solver != STRUCTURE_GROUP ) ) {
+                    fprintf(stderr, "Baum-Welch solver does not support model structure specified (%d)\n",param.solver);
+					exit_with_help();
+                }
+                if( param.solver == METHOD_CGD  &&
+                    ( param.solver_setting != 1 && param.solver_setting != 2 &&
+                      param.solver_setting != 3 )
+                   ) {
+                    fprintf(stderr, "Conjugate Gradient Descent setting specified (%d) is out of range of allowed values\n",param.solver_setting);
 					exit_with_help();
                 }
 				break;
@@ -619,7 +653,7 @@ void read_train_data(const char *filename) {
 	free(k_countg);
 	free(g_countk);
     free(index_null_skill_group);
-    if(param.cv_folds==0 && param.solver != BKT_GD_T) {
+    if(param.cv_folds==0 && param.structure != STRUCTURE_SKILL_T) {
         if(param.multiskill==0) {
             delete param.dat_skill;//.clear();
             param.dat_skill = NULL;
@@ -906,32 +940,54 @@ void cross_validate(NUMBER* metrics, const char *filename) {
     int q = param.quiet;
     param.quiet = 1;
     for(f=0; f<param.cv_folds; f++) {
-        switch(param.solver)
+        switch(param.structure)
         {
-            case BKT_CGD: // Conjugate Gradient Descent
-            case BKT_GD: // Gradient Descent
-            case BKT_BW: // Expectation Maximization (Baum-Welch)
-            case BKT_GD_BW: // Gradient Descent then Expectation Maximization (Baum-Welch)
-            case BKT_BW_GD: // Expectation Maximization (Baum-Welch) then Gradient Descent
-            case BKT_GD_G: // Gradient Descent by group
+            case STRUCTURE_SKILL: // Conjugate Gradient Descent
+            case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblem(&param);
                 break;
-//            case BKT_GD_PIg: // Gradient Descent: PI by group, A,B by skill
-//                hmms[f] = new HMMProblemPiG(&param);
+//            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
+//                hmm = new HMMProblemPiG(&param);
 //                break;
-//            case BKT_GD_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-//                hmms[f] = new HMMProblemPiGK(&param);
+            case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+                hmms[f] = new HMMProblemPiGK(&param);
+                break;
+//            case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+//                hmm = new HMMProblemPiAGK(&param);
 //                break;
-//            case BKT_GD_APIgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-//                hmms[f] = new HMMProblemPiAGK(&param);
-//                break;
-//            case BKT_GD_Agk: // Gradient Descent, pT=f(K,G), other by K
-//                hmms[f] = new HMMProblemAGK(&param);
-//                break;
+            case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
+                hmms[f] = new HMMProblemAGK(&param);
+                break;
 //            case BKT_GD_T: // Gradient Descent with Transfer
-//                hmms[f] = new HMMProblemKT(&param);
+//                hmm = new HMMProblemKT(&param);
 //                break;
         }
+//        switch(param.solver)
+//        {
+//            case BKT_CGD: // Conjugate Gradient Descent
+//            case BKT_GD: // Gradient Descent
+//            case BKT_BW: // Expectation Maximization (Baum-Welch)
+//            case BKT_GD_BW: // Gradient Descent then Expectation Maximization (Baum-Welch)
+//            case BKT_BW_GD: // Expectation Maximization (Baum-Welch) then Gradient Descent
+//            case BKT_GD_G: // Gradient Descent by group
+//                hmms[f] = new HMMProblem(&param);
+//                break;
+////            case BKT_GD_PIg: // Gradient Descent: PI by group, A,B by skill
+////                hmms[f] = new HMMProblemPiG(&param);
+////                break;
+////            case BKT_GD_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+////                hmms[f] = new HMMProblemPiGK(&param);
+////                break;
+////            case BKT_GD_APIgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+////                hmms[f] = new HMMProblemPiAGK(&param);
+////                break;
+////            case BKT_GD_Agk: // Gradient Descent, pT=f(K,G), other by K
+////                hmms[f] = new HMMProblemAGK(&param);
+////                break;
+////            case BKT_GD_T: // Gradient Descent with Transfer
+////                hmms[f] = new HMMProblemKT(&param);
+////                break;
+//        }
         // block respective data
         for(g=0; g<param.nG; g++) // for all groups
             if(folds[g]==f) { // if in current fold

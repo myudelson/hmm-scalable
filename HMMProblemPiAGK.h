@@ -39,6 +39,8 @@ public:
     NUMBER getB (struct data* dt, NPAR i, NPAR m); // same
 	void toFile(const char *filename);
     // fitting (the only public method)
+    void setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag);
+    void setGradA (struct data* dt, FitBit *fb, NPAR kg_flag);
     void fit(); // return -LL for the model
 protected:
 	//
@@ -60,16 +62,17 @@ protected:
 	
 	virtual void init(struct param *param); // non-fit specific initialization
     virtual void destroy();
-	void initGrad();
+//	void initGrad();
+    NUMBER GradientDescent(); // fit alternating
 private:
 //	void computeGradients();
-	void computeGradientsK(NCAT k, NUMBER* a_gradPI, NUMBER** a_gradA, NUMBER** a_gradB);
-	void computeGradientsG(NCAT g, NUMBER* a_gradPI, NUMBER** a_gradA);
+//	void computeGradientsK(NCAT k, NUMBER* a_gradPI, NUMBER** a_gradA, NUMBER** a_gradB);
+//	void computeGradientsG(NCAT g, NUMBER* a_gradPI, NUMBER** a_gradA);
     // fitting methods (hidden)
-    NUMBER GradientDescentPLoSKillGroupOtherSkill(); // fit alternating
-    NUMBER doLinearStepSkill(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B,
-                           NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB);
-    NUMBER doLinearStepPLoGroup(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER *a_gradPI, NUMBER **a_gradA);
+//    NUMBER GradientDescentPLoSKillGroupOtherSkill(); // fit alternating
+//    NUMBER doLinearStepSkill(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B,
+//                           NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB);
+//    NUMBER doLinearStepPLoGroup(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER *a_gradPI, NUMBER **a_gradA);
     // predicting
 //	static void computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat, struct data** x_data, NUMBER *a_PIk, NUMBER **a_PIg, NUMBER** a_Ak, NUMBER*** a_Ag, NUMBER **a_B, struct param* param);
 };

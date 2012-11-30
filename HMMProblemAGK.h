@@ -52,19 +52,19 @@ protected:
 //	NUMBER*** gradA; // MULTIPLE gradients of transition matrix
 //	NUMBER*** gradAg; // MULTIPLE gradients of transition matrix
 //	NUMBER*** gradB; // MULTIPLE gradients of observation matrix
-    bool* fitK; // flags for enabling the fittig of a skill
-    bool* fitG; // flags for enabling the fittig of a group
-    NCAT* fitK_countG; // number of groups per skill that have a raised fitG flag
+//    bool* fitK; // flags for enabling the fittig of a skill
+//    bool* fitG; // flags for enabling the fittig of a group
+//    NCAT* fitK_countG; // number of groups per skill that have a raised fitG flag
 	
     virtual void init(struct param *param); // non-fit specific initialization
 	virtual void destroy(); // non-fit specific descruction
-	void initGrad();
+//	void initGrad();
+    virtual NUMBER GradientDescent(); // fit alternating
 private:
 //	void computeGradients();
 //	virtual void computeGradients (NCAT xndat, struct data** x_data, FitBit *fb);
 //	virtual void computeGradientsG(NCAT xndat, struct data** x_data, FitBit *fb);
     // fitting methods (hidden)
-    NUMBER GradientDescentPLoSKillGroupOtherSkill(NPAR kg_flag); // fit alternating
 //    NUMBER doLinearStepSkill(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B,
 //                             NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB);
 //    NUMBER doLinearStepPLoGroup(NCAT xndat, struct data** x_data, NUMBER **a_A, NUMBER **a_gradA);

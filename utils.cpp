@@ -491,8 +491,9 @@ void set_param_defaults(struct param *param) {
 	param->maxiter               = 200;
 	param->quiet                 = 0;
 	param->single_skill          = 0;
-	param->solver				 = 2; // default is gradient descent
-	param->solver_settting		 = -1; // -1 - not set
+	param->structure			 = 0; // default is by skill
+	param->solver				 = 2; // default is Gradient Descent
+	param->solver_setting		 = -1; // -1 - not set
     param->metrics               = 0;
     param->metrics_target_obs    = 0;
     param->predictions           = 0;
