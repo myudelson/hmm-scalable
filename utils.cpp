@@ -491,7 +491,7 @@ void set_param_defaults(struct param *param) {
 	param->maxiter               = 200;
 	param->quiet                 = 0;
 	param->single_skill          = 0;
-	param->structure			 = 0; // default is by skill
+	param->structure			 = 1; // default is by skill
 	param->solver				 = 2; // default is Gradient Descent
 	param->solver_setting		 = -1; // -1 - not set
     param->metrics               = 0;
@@ -551,6 +551,85 @@ void set_param_defaults(struct param *param) {
     param->ArmijoMinStep       = 0.001; //  0.000001~20steps, 0.001~10steps
 }
 
+void destroy_input_data(struct param *param) {
+	if(param->init_params != NULL) free(param->init_params);
+	if(param->param_lo != NULL) free(param->param_lo);
+	if(param->param_hi != NULL) free(param->param_hi);
+	
+    // data
+	if(param->dat_obs != NULL) free(param->dat_obs);
+	if(param->dat_group != NULL) free(param->dat_group);
+	if(param->dat_skill != NULL) free(param->dat_skill);
+	if(param->dat_multiskill != NULL) free(param->dat_multiskill);
+    
+    if(param->all_data != NULL) free(param->all_data); // ndat of them
+    if(param->k_data != NULL)   free(param->k_data); // ndat of them (reordered by k)
+    if(param->g_data != NULL)   free(param->g_data); // ndat of them (reordered by g)
+    if(param->k_g_data != NULL) free(param->k_g_data); // nK of them
+    if(param->g_k_data != NULL) free(param->g_k_data); // nG of them
+    
+	if(param->k_numg != NULL)   free(param->k_numg);
+	if(param->g_numk != NULL)   free(param->g_numk);
+    // null skills
+    for(NCAT g=0;g<param->n_null_skill_group; g++)
+        free(param->null_skills[g].obs);
+    if(param->null_skills != NULL) free(param->null_skills);
+    // vocabularies
+    delete param->map_group_fwd;
+    delete param->map_group_bwd;
+    delete param->map_step;
+    delete param->map_skill_fwd;
+    delete param->map_skill_bwd;
+}
+
+
+//
+// read/write solver info to a file
+//
+void writeSolverInfo(FILE *fid, struct param *param) {
+    // solver id
+    if( param->solver_setting>0 ) {
+        fprintf(fid,"SolverId\t%d.%d.%d\n",param->structure,param->solver,param->solver_setting);        
+    } else {
+        fprintf(fid,"SolverId\t%d.%d\n",param->structure,param->solver);
+    }
+	// nK
+    fprintf(fid,"nK\t%d\n",param->nK);
+    // nG
+    fprintf(fid,"nG\t%d\n",param->nG);
+    // nS
+    fprintf(fid,"nS\t%d\n",param->nS);
+    // nO
+    fprintf(fid,"nO\t%d\n",param->nO);
+}
+
+void readSolverInfo(FILE *fid, struct param *param, NDAT *line_no) {
+    string s;
+    int c, i1, i2;
+    // SolverId
+    fscanf(fid,"SolverId\t%i.%i", &i1, &i2);
+    param->structure = (NPAR) i1;
+    param->solver    = (NPAR) i2;
+    fscanf(fid,"SolverId\t%hhu.%hhu", &param->structure, &param->solver);
+    c = fscanf(fid,".%hhu\n", &param->solver_setting);
+    if( c<1 ) {
+        fscanf(fid,"\n");
+        param->solver_setting = -1;
+    }
+    (*line_no)++;
+	// nK
+    fscanf(fid,"nK\t%hi\n",&param->nK);
+    (*line_no)++;
+    // nG
+    fscanf(fid,"nG\t%hi\n",&param->nG);
+    (*line_no)++;
+    // nS
+    fscanf(fid,"nS\t%hhu\n",&param->nS);
+    (*line_no)++;
+    // nO
+    fscanf(fid,"nO\t%hhu\n",&param->nO);
+    (*line_no)++;
+}
 
 //
 // Handling blocking labels

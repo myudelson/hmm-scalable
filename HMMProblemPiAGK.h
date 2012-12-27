@@ -64,6 +64,7 @@ protected:
     virtual void destroy();
 //	void initGrad();
     NUMBER GradientDescent(); // fit alternating
+    virtual void readModel(FILE *fid, NDAT *line_no);
 private:
 //	void computeGradients();
 //	void computeGradientsK(NCAT k, NUMBER* a_gradPI, NUMBER** a_gradA, NUMBER** a_gradB);

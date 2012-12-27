@@ -151,6 +151,12 @@ struct param {
 	NUMBER ArmijoMinStep;			// Minimum step to consider before abandoing reducing it
 };
 
+void destroy_input_data(struct param *param);
+
+// reading/writing solver info
+void writeSolverInfo(FILE *fid, struct param *param);
+void readSolverInfo(FILE *fid, struct param *param, NDAT *line_no);
+
 // projection of others
 int compareNumber (const void * a, const void * b);
 void qsortNumber(NUMBER* ar, NPAR size);

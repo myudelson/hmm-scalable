@@ -39,6 +39,7 @@ public:
 	void toFile(const char *filename);
     // fitting (the only public method)
     void fit(); // return -LL for the model
+    virtual void readModel(FILE *fid, NDAT *line_no);
 protected:
 	//
 	// Givens

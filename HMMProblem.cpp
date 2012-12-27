@@ -27,10 +27,12 @@ HMMProblem::HMMProblem(struct param *param) {
     NPAR i;
     switch (param->structure) {
         case STRUCTURE_SKILL: // Expectation Maximization (Baum-Welch)
+//            this->sizes[3] = {param->nK, param->nK, param->nK};
             for(i=0; i<3; i++) this->sizes[i] = param->nK;
             this->n_params = param->nK * 4;
             break;
         case STRUCTURE_GROUP: // Gradient Descent by group
+//            this->sizes = {param->nG, param->nG, param->nG};
             for(i=0; i<3; i++) this->sizes[i] = param->nG;
             this->n_params = param->nG * 4;
             break;
@@ -635,9 +637,13 @@ void HMMProblem::toFileSkill(const char *filename) {
 		fprintf(stderr,"Can't write output model file %s\n",filename);
 		exit(1);
 	}
+    // write solved id
+    writeSolverInfo(fid, this->p);
+    
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
 		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
+    
 	NCAT k;
 	std::map<NCAT,std::string>::iterator it;
 	for(k=0;k<this->p->nK;k++) {
@@ -665,6 +671,10 @@ void HMMProblem::toFileGroup(const char *filename) {
 		fprintf(stderr,"Can't write output model file %s\n",filename);
 		exit(1);
 	}
+    
+    // write solved id
+    writeSolverInfo(fid, this->p);
+
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
 		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
@@ -712,7 +722,7 @@ void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, 
     free(local_pred_inner);
 }
 
-void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill) {
+void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled) {
 	NDAT t;
 	NCAT g, k;
 	NPAR i, j, m, o, isTarget;
@@ -725,6 +735,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
     NUMBER ll = 0.0, rmse = 0.0, rmse_no_null = 0.0;
     NUMBER p;
     FILE *fid; // file for storing prediction should that be necessary
+    bool output_this; // flag for turning on/off the writing out
     if(this->p->predictions>0) {
         fid = fopen(filename,"w");
         if(fid == NULL)
@@ -745,7 +756,10 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
 		}
 	
 	for(t=0; t<this->p->N; t++) {
+        output_this = true;
 		o = dat_obs->get(t);//[t];
+        if( only_unlabeled && o>-1 ) // if we only output predictions for unlabelled, it's labelled - turn off
+            output_this = false;
 		g = dat_group->get(t);//[t];
         dt->g = g;
         isTarget = this->p->metrics_target_obs == o;
@@ -764,7 +778,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
             isTarget = this->null_skill_obs==o;
             rmse += pow(isTarget - this->null_skill_obs_prob,2);
             ll -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1 - this->null_skill_obs_prob);
-            if(this->p->predictions>0) // write predictions file if it was opened
+            if(this->p->predictions>0 && output_this) // write predictions file if it was opened
                 for(m=0; m<nO; m++)
                     fprintf(fid,"%10.8f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
             continue;
@@ -776,21 +790,31 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
             //for(m=0; m<nO; m++) local_pred_inner[m] = 0.0;
             k = ar[l];
             dt->k = k;
+            
+            if(o>-1) { // known observations
             // update p(L)
-            pLe_denom = 0.0;
-            // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
-            for(i=0; i<nS; i++) pLe_denom += group_skill_map[g][k][i] * getB(dt,i,o);//B[i][o];
-            for(i=0; i<nS; i++) pLe[i] = group_skill_map[g][k][i] * getB(dt,i,o)/*B[i][o]*/ / safe0num(pLe_denom);
-            // 2. L = (pLe'*A)';
-            for(i=0; i<nS; i++) group_skill_map[g][k][i] = 0.0;
-            for(j=0; j<nS; j++)
-                for(i=0; i<nS; i++)
-                    group_skill_map[g][k][j] += pLe[i] * getA(dt,i,j);//A[i][j];
+                pLe_denom = 0.0;
+                // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
+                for(i=0; i<nS; i++) pLe_denom += group_skill_map[g][k][i] * getB(dt,i,o);//B[i][o];
+                for(i=0; i<nS; i++) pLe[i] = group_skill_map[g][k][i] * getB(dt,i,o)/*B[i][o]*/ / safe0num(pLe_denom);
+                // 2. L = (pLe'*A)';
+                for(i=0; i<nS; i++) group_skill_map[g][k][i] = 0.0;
+                for(j=0; j<nS; j++)
+                    for(i=0; i<nS; i++)
+                        group_skill_map[g][k][j] += pLe[i] * getA(dt,i,j);//A[i][j];
+            } else { // unknown observation
+                // 2. L = (pL'*A)';
+                for(i=0; i<nS; i++) pLe[i] = group_skill_map[g][k][i]; // copy first;
+                for(i=0; i<nS; i++) group_skill_map[g][k][i] = 0.0; // erase old value
+                for(j=0; j<nS; j++)
+                    for(i=0; i<nS; i++)
+                        group_skill_map[g][k][j] += pLe[i] * getA(dt,i,j);
+            }// ibservations
         }
         local_know[0] = 0;
         for(int l=0; l<n; l++)
             sprintf(local_know,"%s%s%10.8f",local_know,(strlen(local_know)>0)?",":"",group_skill_map[g][ ar[l] ][0]);
-        if(this->p->predictions>0) { // write predictions file if it was opened
+        if(this->p->predictions>0 && output_this) { // write predictions file if it was opened
             for(m=0; m<nO; m++)
                 fprintf(fid,"%10.8f%s",local_pred[m],(m<(nO-1))?"\t":"\n");
 //            fprintf(fid,"%s\n",local_know);
@@ -808,12 +832,13 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
     free3DNumber(group_skill_map, nG, nK);
     rmse = sqrt(rmse / this->p->N);
     rmse_no_null = sqrt(rmse_no_null / (this->p->N - this->p->N_null));
-    metrics[0] = ll;
-    metrics[1] = 2*nK*4 + 2*ll;
-    metrics[2] = nK*4*safelog(this->p->N) + 2*ll;
-    metrics[3] = rmse;
-    metrics[4] = rmse_no_null;
-    
+    if(metrics != NULL) {
+        metrics[0] = ll;
+        metrics[1] = 2*nK*4 + 2*ll;
+        metrics[2] = nK*4*safelog(this->p->N) + 2*ll;
+        metrics[3] = rmse;
+        metrics[4] = rmse_no_null;
+    }
     if(this->p->predictions>0) // close predictions file if it was opened
         fclose(fid);
 }
@@ -1935,11 +1960,11 @@ void HMMProblem::doBaumWelchStep(NCAT xndat, struct data** x_data, FitBit *fb) {
 //    //
 //    // now set up parameter
 //    //
-//    param.solver_type = L1R_LR;
-//    param.C = 1;
-//    param.eps = 0.01;
-//    param.weight_label = NULL;
-//    param.weight = NULL;
+//    this->p->solver_type = L1R_LR;
+//    this->p->C = 1;
+//    this->p->eps = 0.01;
+//    this->p->weight_label = NULL;
+//    this->p->weight = NULL;
 //    
 //}
 //
@@ -2049,12 +2074,12 @@ void HMMProblem::doBaumWelchStep(NCAT xndat, struct data** x_data, FitBit *fb) {
 //    //
 //    // now set up parameter
 //    //
-//    param.solver_type = L2R_LR;
-//    param.C = 1;
-//    param.eps = 0.01;
-//    param.weight_label = NULL;
-//    param.weight = NULL;
-//    param.nr_weight = 0;
+//    this->p->solver_type = L2R_LR;
+//    this->p->C = 1;
+//    this->p->eps = 0.01;
+//    this->p->weight_label = NULL;
+//    this->p->weight = NULL;
+//    this->p->nr_weight = 0;
 //    
 //}
 //
@@ -2065,3 +2090,91 @@ void HMMProblem::doBaumWelchStep(NCAT xndat, struct data** x_data, FitBit *fb) {
 //	free(x_space);
 //}
 
+void HMMProblem::readNullObsRatio(FILE *fid, NDAT *line_no) {
+	NPAR i;
+	//
+	// read null skill ratios
+	//
+    fscanf(fid, "Null skill ratios\t");
+    this->null_obs_ratio =Calloc(NUMBER, this->p->nO);
+    this->null_skill_obs      = 0;
+    this->null_skill_obs_prob = 0;
+	for(i=0; i<this->p->nO; i++) {
+        if( i==(this->p->nO-1) ) // end
+            fscanf(fid,"%lf\n",&this->null_obs_ratio[i] );
+        else
+            fscanf(fid,"%lf\t",&this->null_obs_ratio[i] );
+		
+        if( this->null_obs_ratio[i] > this->null_skill_obs_prob ) {
+            this->null_skill_obs_prob = this->null_obs_ratio[i];
+            this->null_skill_obs = i;
+        }
+	}
+    (*line_no)++;
+}
+
+
+void HMMProblem::readModel(FILE *fid, NDAT *line_no) {
+	NPAR i,j,m;
+	NCAT k = 0;
+	string s;
+    char col[1024];
+    //
+    readNullObsRatio(fid, line_no);
+    //
+    // init param
+    //
+    this->p->map_group_fwd = new map<string,NCAT>();
+    this->p->map_group_bwd = new map<NCAT,string>();
+    this->p->map_skill_fwd = new map<string,NCAT>();
+    this->p->map_skill_bwd = new map<NCAT,string>();
+	//
+	// read skills
+	//
+	for(k=0; k<this->p->nK; k++) {
+		// read skill label
+        fscanf(fid,"%*s\t%[^\n]\n",col);
+        s = string( col );
+        (*line_no)++;
+		this->p->map_skill_fwd->insert(pair<string,NCAT>(s, this->p->map_skill_fwd->size()));
+		this->p->map_skill_bwd->insert(pair<NCAT,string>(this->p->map_skill_bwd->size(), s));
+
+        // read PI
+        fscanf(fid,"PI\t");
+        for(i=0; i<(this->p->nS-1); i++) { // read 1 less then necessary
+            fscanf(fid,"%[^\t]\t",col);
+            this->PI[k][i] = atof(col);
+        }
+        fscanf(fid,"%[^\n]\n",col);// read last one
+        this->PI[k][i] = atof(col);
+        (*line_no)++;
+		// read A
+        fscanf(fid,"A\t");
+		for(i=0; i<this->p->nS; i++)
+			for(j=0; j<this->p->nS; j++) {
+                if(i==(this->p->nS-1) && j==(this->p->nS-1)) {
+                    fscanf(fid,"%[^\n]\n", col); // last one;
+                    this->A[k][i][j] = atof(col);
+                }
+                else {
+                    fscanf(fid,"%[^\t]\t", col); // not las one
+                    this->A[k][i][j] = atof(col); 
+                }
+			}
+        (*line_no)++;
+		// read B
+        fscanf(fid,"B\t");
+		for(i=0; i<this->p->nS; i++)
+			for(m=0; m<this->p->nS; m++) {
+                if(i==(this->p->nS-1) && m==(this->p->nS-1)) {
+                    fscanf(fid,"%[^\n]\n", col); // last one;
+                    this->B[k][i][m] = atof(col);
+                }
+                else {
+                    fscanf(fid,"%[^\t]\t", col); // not las one
+                    this->B[k][i][m] = atof(col);
+                }
+			}
+        (*line_no)++;
+	} // for all k
+}

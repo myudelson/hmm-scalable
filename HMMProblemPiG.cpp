@@ -21,9 +21,10 @@ HMMProblemPiG::HMMProblemPiG(struct param *param) {
         fprintf(stderr,"Method specified is not supported and should have been caught earlier\n");
         exit(1);
     }
-    this->sizes[0] = param->nG;
-    this->sizes[1] = param->nK;
-    this->sizes[2] = param->nK;
+    this->sizes = {param->nG, param->nK, param->nK};
+//    this->sizes[0] = param->nG;
+//    this->sizes[1] = param->nK;
+//    this->sizes[2] = param->nK;
     this->n_params = param->nG + 3 * param->nK;
     init(param);
 }
@@ -124,6 +125,10 @@ void HMMProblemPiG::toFile(const char *filename) {
 		fprintf(stderr,"Can't write output model file %s\n",filename);
 		exit(1);
 	}
+    
+    // write solved id
+    writeSolvedId(fid, this->p);
+    
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
 		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");

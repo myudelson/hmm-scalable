@@ -60,6 +60,7 @@ protected:
 	virtual void destroy(); // non-fit specific descruction
 //	void initGrad();
     virtual NUMBER GradientDescent(); // fit alternating
+    virtual void readModel(FILE *fid, NDAT *line_no);
 private:
 //	void computeGradients();
 //	virtual void computeGradients (NCAT xndat, struct data** x_data, FitBit *fb);

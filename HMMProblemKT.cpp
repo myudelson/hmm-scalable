@@ -53,6 +53,10 @@ void HMMProblemKT::toFile(const char *filename) {
 		fprintf(stderr,"Can't write output model file %s\n",filename);
 		exit(1);
 	}
+    
+    // write solved id
+    writeSolvedId(fid, this->p);
+    
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
 		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");

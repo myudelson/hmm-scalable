@@ -22,16 +22,11 @@ using namespace std;
 struct param param;
 static char *line = NULL;
 static int max_line_length;
-//StripedArray<NPAR> *dat_obs = NULL;
-//StripedArray<NCAT> *dat_group = NULL;
-//StripedArray<NCAT> *dat_skill = NULL;
-//StripedArray< NCAT* > *dat_multiskill = NULL;
 
 void exit_with_help();
 void parse_arguments(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name);
 void read_train_data(const char *filename);
 void read_predict_data(const char *filename);
-void destroy_input_data();
 static char* readline(FILE *fid);
 void cross_validate(NUMBER* metrics, const char *filename);
 
@@ -93,7 +88,7 @@ int main (int argc, char ** argv) {
             NUMBER* metrics = Calloc(NUMBER, 5); // AIC, BIC, RMSE
             if(param.predictions>0) {
                 read_predict_data(input_file); // re-read the data
-                hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill);
+                hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
                 // now remove the data read
                 if(param.multiskill==0) {
                     delete param.dat_skill;//.clear();
@@ -140,7 +135,7 @@ int main (int argc, char ** argv) {
     }
 
 	// free data
-	destroy_input_data();
+	destroy_input_data(&param);
 	
 	if(param.quiet == 0)
 		printf("overall time running is %8.6f seconds\n",(NUMBER)(clock()-tm0)/CLOCKS_PER_SEC);
@@ -351,7 +346,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
                 if(ch!=NULL)
                     param.metrics_target_obs = atoi(ch)-1;
 				if(param.metrics<0 || param.metrics>1) {
-					fprintf(stderr,"value for -r should be either 0 or 1.\n");
+					fprintf(stderr,"value for -m should be either 0 or 1.\n");
 					exit_with_help();
 				}
 				if(param.metrics_target_obs<0) {// || param.metrics_target_obs>(param.nO-1)) {
@@ -404,7 +399,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 //        exit_with_help();
 //    }
     if(param.cv_target_obs>0 && param.metrics>0) { // correct for 0-start coding
-        fprintf(stderr,"values for -v and -r cannot be both non-zeros\n");
+        fprintf(stderr,"values for -v and -m cannot be both non-zeros\n");
         exit_with_help();
     }
 	
@@ -676,66 +671,12 @@ void read_train_data(const char *filename) {
             param.null_skills[x].cnt = 0;
 }
 
-void destroy_input_data() {
-	if(param.init_params != NULL) free(param.init_params);
-	if(param.param_lo != NULL) free(param.param_lo);
-	if(param.param_hi != NULL) free(param.param_hi);
-	
-    // data
-	if(param.dat_obs != NULL) free(param.dat_obs);
-	if(param.dat_group != NULL) free(param.dat_group);
-	if(param.dat_skill != NULL) free(param.dat_skill);
-	if(param.dat_multiskill != NULL) free(param.dat_multiskill);
-
-    free(param.all_data); // ndat of them
-    free(param.k_data); // ndat of them (reordered by k)
-    free(param.g_data); // ndat of them (reordered by g)
-    free(param.k_g_data); // nK of them
-    free(param.g_k_data); // nG of them
-//	NCAT k,g;
-//	NDAT t;
-//	for(k=0; k<param.nK; k++) {
-//		for(g=0; g<param.k_numg[k]; g++) {
-//			free(param.k_g_data[k][g]->obs); // only free data here
-//			if( param.k_g_data[k][g]->c != NULL )
-//				free(param.k_g_data[k][g]->c);  // only free data here
-//			if( param.k_g_data[k][g]->alpha != NULL )
-//				free2DNumber(param.k_g_data[k][g]->alpha,  param.k_g_data[k][g]->ndat);  // only free data here
-//			if( param.k_g_data[k][g]->beta != NULL )
-//				free2DNumber(param.k_g_data[k][g]->beta,  param.k_g_data[k][g]->ndat); // only free data here
-//			if( param.k_g_data[k][g]->gamma != NULL )
-//				free2DNumber(param.k_g_data[k][g]->gamma,  param.k_g_data[k][g]->ndat); // only free data here
-//			if( param.k_g_data[k][g]->xi != NULL )
-//				for(t=0;t<param.k_g_data[k][g]->ndat; t++)
-//					free2DNumber(param.k_g_data[k][g]->xi[t],  param.nS); // only free data here
-//			free(param.k_g_data[k][g]);
-//		}
-//		free(param.k_g_data[k]);
-//	}
-//	for(g=0; g<param.nG; g++)
-//		free(param.g_k_data[g]);
-    
-	free(param.k_numg);
-	free(param.g_numk);
-    // null skills
-    for(NCAT g=0;g<param.n_null_skill_group; g++)
-        free(param.null_skills[g].obs);
-    free(param.null_skills);
-    // vocabularies
-    delete param.map_group_fwd;
-    delete param.map_group_bwd;
-    delete param.map_step;
-    delete param.map_skill_fwd;
-    delete param.map_skill_bwd;
-}
-
 void read_predict_data(const char *filename) {
 	FILE *fid = fopen(filename,"r");
 	int number_columns = 0;
 	max_line_length = 1024;
 	char *col;
-	
-    
+
 	// count lines and check for number of columns
 	line = (char *)malloc(max_line_length);// Malloc(char,max_line_length);
 	
@@ -952,9 +893,9 @@ void cross_validate(NUMBER* metrics, const char *filename) {
             case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
                 hmms[f] = new HMMProblemPiGK(&param);
                 break;
-//            case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-//                hmm = new HMMProblemPiAGK(&param);
-//                break;
+            case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+                hmms[f] = new HMMProblemPiAGK(&param);
+                break;
             case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
                 hmms[f] = new HMMProblemAGK(&param);
                 break;

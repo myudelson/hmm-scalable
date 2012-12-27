@@ -18,6 +18,7 @@
 
 HMMProblemPiGK::HMMProblemPiGK(struct param *param) {
     for(NPAR i=0; i<3; i++) this->sizes[i] = param->nK;
+//    this->sizes = {param->nK, param->nK, param->nK};
     this->n_params = param->nK * 4 + param->nG;
     init(param);
 }
@@ -244,6 +245,10 @@ void HMMProblemPiGK::toFile(const char *filename) {
 		fprintf(stderr,"Can't write output model file %s\n",filename);
 		exit(1);
 	}
+    
+    // write solved id
+    writeSolverInfo(fid, this->p);
+    
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
 		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
@@ -699,3 +704,89 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 //    RecycleFitData(xndat, x_data, this->p);
 //    return e;
 //} // doLinearStep
+
+void HMMProblemPiGK::readModel(FILE *fid, NDAT *line_no) {
+	NPAR i,j,m;
+	NCAT k = 0, g = 0;
+	string s;
+    char col[1024];
+    //
+    readNullObsRatio(fid, line_no);
+    //
+    // init param
+    //
+    this->p->map_group_fwd = new map<string,NCAT>();
+    this->p->map_group_bwd = new map<NCAT,string>();
+    this->p->map_skill_fwd = new map<string,NCAT>();
+    this->p->map_skill_bwd = new map<NCAT,string>();
+	//
+	// read grouped PIg
+	//
+    for(g=0; g<this->p->nG; g++) {
+		// read group label
+        fscanf(fid,"%*s\t%[^\n]\n",col);
+        s = string( col );
+        (*line_no)++;
+		this->p->map_group_fwd->insert(pair<string,NCAT>(s, this->p->map_group_fwd->size()));
+		this->p->map_group_bwd->insert(pair<NCAT,string>(this->p->map_group_bwd->size(), s));
+
+        // read PI
+        fscanf(fid,"PIg\t");
+        for(i=0; i<(this->p->nS-1); i++) { // read 1 less then necessary
+            fscanf(fid,"%[^\t]\t",col);
+            this->PIg[k][i] = atof(col);
+        }
+        fscanf(fid,"%[^\n]\n",col);// read last one
+        this->PIg[k][i] = atof(col);
+        (*line_no)++;
+    }
+    //
+    // read skills
+    //
+	for(k=0; k<this->p->nK; k++) {
+		// read skill label
+        fscanf(fid,"%*s\t%[^\n]\n",col);
+        s = string( col );
+        (*line_no)++;
+		this->p->map_skill_fwd->insert(pair<string,NCAT>(s, this->p->map_skill_fwd->size()));
+		this->p->map_skill_bwd->insert(pair<NCAT,string>(this->p->map_skill_bwd->size(), s));
+        
+        // read PI
+        fscanf(fid,"PIk\t");
+        for(i=0; i<(this->p->nS-1); i++) { // read 1 less then necessary
+            fscanf(fid,"%[^\t]\t",col);
+            this->PI[k][i] = atof(col);
+        }
+        fscanf(fid,"%[^\n]\n",col);// read last one
+        this->PI[k][i] = atof(col);
+        (*line_no)++;
+		// read A
+        fscanf(fid,"A\t");
+		for(i=0; i<this->p->nS; i++)
+			for(j=0; j<this->p->nS; j++) {
+                if(i==(this->p->nS-1) && j==(this->p->nS-1)) {
+                    fscanf(fid,"%[^\n]\n", col); // last one;
+                    this->A[k][i][j] = atof(col);
+                }
+                else {
+                    fscanf(fid,"%[^\t]\t", col); // not las one
+                    this->A[k][i][j] = atof(col);
+                }
+			}
+        (*line_no)++;
+		// read B
+        fscanf(fid,"B\t");
+		for(i=0; i<this->p->nS; i++)
+			for(m=0; m<this->p->nS; m++) {
+                if(i==(this->p->nS-1) && m==(this->p->nS-1)) {
+                    fscanf(fid,"%[^\n]\n", col); // last one;
+                    this->B[k][i][m] = atof(col);
+                }
+                else {
+                    fscanf(fid,"%[^\t]\t", col); // not las one
+                    this->B[k][i][m] = atof(col);
+                }
+			}
+        (*line_no)++;
+	} // for all k
+}
