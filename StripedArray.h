@@ -26,6 +26,7 @@ public:
 	void add(T value);
 	T& operator [] (unsigned long idx);
 	T get(unsigned long idx);
+	void set(unsigned long idx, T value);
 	void clear();
 private:
 	unsigned long size; // linear
@@ -101,7 +102,7 @@ void StripedArray<T>::clear() {
 template <typename T>
 T& StripedArray<T>::operator [](unsigned long idx) {
 	if(idx>(this->size-1)) {
-		fprintf(stderr, "Exception! Element index %d exceeds array size %d.\n",idx,this->size);
+		fprintf(stderr, "   %d exceeds array size %d.\n",idx,this->size);
 		return NULL;
 	}
 	unsigned long idx_stripe = idx / this->stripe_size;
@@ -129,6 +130,22 @@ T StripedArray<T>::get(unsigned long idx) {
 }
 
 template <typename T>
+void StripedArray<T>::set(unsigned long idx, T value) {
+	if(idx>(this->size-1)) {
+		fprintf(stderr, "Exception! Element index %lu exceeds array size %lu\n",idx,this->size);
+		return;
+	}
+	unsigned long idx_stripe = idx / this->stripe_size;
+	unsigned long idx_within = idx % this->stripe_size;
+    //	if(idx_within>(this->size_last_stripe-1)) {
+    //		fprintf(stderr, "Exception! Element index in last stripe %d exceeds sltipe size %d\n",idx_within,this->size_last_stripe);
+    //		return NULL;
+    //	}
+	this->stripes[idx_stripe][idx_within] = value;
+}
+
+
+template <typename T>
 unsigned long StripedArray<T>::getSize() {
 	return this->size;
 }
@@ -136,7 +153,7 @@ unsigned long StripedArray<T>::getSize() {
 template <typename T>
 void StripedArray<T>::addStripe() {
 	if(this->size_last_stripe<this->stripe_size && this->nstripes>0) {
-		fprintf(stderr, "Exception! You can only add stripes when none exits of previous is full.\n");
+		fprintf(stderr, "Exception! You can only add stripes when none exits or previous is full.\n");
 		return;
 	}
 	

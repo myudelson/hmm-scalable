@@ -111,6 +111,8 @@ void HMMProblemPiG::computeGradientsAB(NCAT xndat, struct data** x_data, NUMBER*
 				
 			}// if not first obs in sequence
 			// Gradient with respect to B
+            if(o<0)
+                continue;
 			for(i=0; i<this->p->nS /*&& param->fitparam[2]>0*/; i++)
 				a_gradB[i][o] -= min_p_O_param * x_data[x]->alpha[t][i] * x_data[x]->beta[t][i] / safe0num(x_data[x]->p_O_param * getB(x_data[x],i,o));
 		} // for all observations within skill-group
@@ -250,8 +252,8 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
     // this is a loop of repeated fits of PI(user), and A,B(skill)
     NPAR* mask_skill = Calloc(NPAR, nK);
     NPAR* mask_group = Calloc(NPAR, nG);
-    int first_iteration_qualify = 0; // at what iteration, qualification for skill/group convergence should start
-    int iterations_to_qualify = 2; // how many concecutive iterations necessary for skill/group to qualify as converged
+    int first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
+    int iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
     int skip_k = 0, skip_g = 0;
     for(int i=0; i<10; i++) {
         //

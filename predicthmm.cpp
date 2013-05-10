@@ -71,14 +71,14 @@ int main (int argc, char ** argv) {
     //
 	clock_t tm = clock();
     if(param.metrics>0 || param.predictions>0) {
-        metrics = Calloc(NUMBER, 5); // AIC, BIC, RMSE
+        metrics = Calloc(NUMBER, 7);// LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
     }
     //	predict(input_file, predict_file);
     hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, true/*only unlabelled*/);
 	if(param.quiet == 0)
 		printf("predicting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
     if( param.metrics>0 ) {
-        printf("trained model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4]);
+        printf("predicted model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]);
     }
     free(metrics);
     
@@ -103,7 +103,8 @@ void exit_with_help() {
            "       For example '-s 1.3.1' would be by skill structure (classical) with Conjugate\n"
            "       Gradient Descent and Hestenes-Stiefel formula, '-s 2.1' would be by student structure\n"
            "       fit using Baum-Welch method.\n"
-		   "-t : tolerance of termination criterion (0.01 default)\n"
+		   "-e : tolerance (epsilon) of termination criterion (0.01 default)\n"
+		   "-t : reading time from 5th column 0-do not read(default) 1-do read as seconds since epoch.\n"
 		   "-i : maximum iterations (200 by default)\n"
 		   "-q : quiet mode, without output, 0-no (default), or 1-yes\n"
 		   "-n : number of hidden states, should be 2 or more (default 2)\n"
@@ -180,7 +181,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 				exit_with_help();
 				break;
 		}
-	}
+	}   
     if(param.cv_target_obs>0 && param.metrics>0) { // correct for 0-start coding
         fprintf(stderr,"values for -v and -m cannot be both non-zeros\n");
         exit_with_help();
@@ -226,11 +227,14 @@ void read_predict_data(const char *filename) {
         param.dat_skill = new StripedArray<NCAT>();//Malloc(NCAT, global_N);
     else
         param.dat_multiskill = new StripedArray< NCAT* >(true);
+    if(param.time)
+        param.dat_obs   = new StripedArray<NPAR>();//Malloc(NPAR, global_N);
 	
 	string s_obs, s_group, s_step, s_skill;
 	map<string,NCAT>::iterator it_k;
 	map<string,NCAT>::iterator it_g;
     NPAR obs = 0;
+    int time = 0;
     
 	bool wrong_no_columns = false;
     param.N = 0;
@@ -352,6 +356,22 @@ void read_predict_data(const char *filename) {
                 else                                    // found
                     param.dat_skill->add(it_k->second);
             } // single skill
+            
+            // Time
+            if(param.time) {
+                col = strtok(line,"\t\n\r");
+                if(col == NULL) {
+                    wrong_no_columns = true;
+                    break;
+                }
+                number_columns++;
+                time = atoi( col );
+                if( time<=0 ) {
+                    fprintf(stderr,"Time cannot be negative or zero (line %d).\n",param.N+1);
+                    exit(1);
+                }
+                param.dat_time->add(time);
+            }// time
 		}
 		// count lines
 		param.N++;	// increase line count

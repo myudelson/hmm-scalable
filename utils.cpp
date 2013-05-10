@@ -239,6 +239,30 @@ void cpy3DNumber(NUMBER*** source, NUMBER*** target, NDAT size1, NPAR size2, NPA
             memcpy( target[t][i], source[t][i], sizeof(NUMBER)*size3 );
 }
 
+void swap1DNumber(NUMBER* source, NUMBER* target, NDAT size) {
+    NUMBER* buffer = init1DNumber(size);
+	memcpy( target, buffer, sizeof(NUMBER)*size );
+	memcpy( source, target, sizeof(NUMBER)*size );
+	memcpy( buffer, source, sizeof(NUMBER)*size );
+    free(buffer);
+}
+
+void swap2DNumber(NUMBER** source, NUMBER** target, NDAT size1, NPAR size2) {
+    NUMBER** buffer = init2DNumber(size1, size2);
+    cpy2DNumber(target, buffer, size1, size2);
+    cpy2DNumber(source, target, size1, size2);
+    cpy2DNumber(buffer, source, size1, size2);
+    free2DNumber(buffer, size1);
+}
+
+void swap3DNumber(NUMBER*** source, NUMBER*** target, NDAT size1, NPAR size2, NPAR size3) {
+    NUMBER*** buffer = init3DNumber(size1, size2, size3);
+    cpy3DNumber(target, buffer, size1, size2, size3);
+    cpy3DNumber(source, target, size1, size2, size3);
+    cpy3DNumber(buffer, source, size1, size2, size3);
+    free3DNumber(buffer, size1, size2);
+}
+
 NUMBER safe01num(NUMBER val) {
     //    val = (val<0)?0:((val>1)?1:val); // squeeze into [0,1]
     //	return val + SAFETY*(val==0) - SAFETY*(val==1); // then futher in
@@ -487,7 +511,8 @@ NUMBER elnprod(NUMBER eln_x, NUMBER eln_y) {
 
 void set_param_defaults(struct param *param) {
 	// configurable - set
-	param->tol                   = 0.01; 
+	param->tol                   = 0.01;
+	param->time                  = 0;
 	param->maxiter               = 200;
 	param->quiet                 = 0;
 	param->single_skill          = 0;
@@ -511,12 +536,14 @@ void set_param_defaults(struct param *param) {
 	param->param_hi[0] = 1.0; param->param_hi[1] = 1.0; param->param_hi[2] = 1.0; param->param_hi[3] = 0.0; param->param_hi[4] = 1.0; 
 	param->param_hi[5] = 1.0; param->param_hi[6] = 1.0; param->param_hi[7] = 0.3; param->param_hi[8] = 0.3; param->param_hi[9] = 1.0; 
 	param->cv_folds = 0;
+	param->cv_strat = 'g'; // default group(student)-stratified
     param->cv_target_obs = 0; // 1st state to validate agains by default, cv_folds enables cross-validation
     param->multiskill = 0; // single skill per ovservation by default
-    // data
+    // vocabilaries
     param->map_group_fwd = NULL;
     param->map_group_bwd = NULL;
-    param->map_step = NULL;
+    param->map_step_fwd = NULL;
+    param->map_step_bwd = NULL;
     param->map_skill_fwd = NULL;
     param->map_skill_bwd = NULL;
 	// derived from data - set to 0
@@ -525,12 +552,7 @@ void set_param_defaults(struct param *param) {
 	param->nO = 0;
 	param->nG = 0;
 	param->nK = 0;
-    // vocabilaries
-    param->map_group_fwd = NULL;
-    param->map_group_bwd = NULL;
-    param->map_step = NULL;
-    param->map_skill_fwd = NULL;
-    param->map_skill_bwd = NULL;
+	param->nI = 0;
 	// data
     param->all_data = NULL;
     param->ndata = NULL;
@@ -547,8 +569,12 @@ void set_param_defaults(struct param *param) {
 	param->ArmijoC1            = 1e-4;				
 	param->ArmijoC2            = 0.9;				
 	param->ArmijoReduceFactor  = 2;//1/0.9;//
-	param->ArmijoSeed          = 1; //1;
+	param->ArmijoSeed          = 1; //1; - since we use smooth stepping 1 is the only thing we need
     param->ArmijoMinStep       = 0.001; //  0.000001~20steps, 0.001~10steps
+    // coord descend
+    param->first_iteration_qualify = 0;
+    param->iterations_to_qualify   = 2;
+    
 }
 
 void destroy_input_data(struct param *param) {
@@ -556,12 +582,20 @@ void destroy_input_data(struct param *param) {
 	if(param->param_lo != NULL) free(param->param_lo);
 	if(param->param_hi != NULL) free(param->param_hi);
 	
-    // data
+    // data - checks if pointers to data are null anyway (whether we delete linear columns of data or not)
 	if(param->dat_obs != NULL) free(param->dat_obs);
 	if(param->dat_group != NULL) free(param->dat_group);
+	if(param->dat_item != NULL) free(param->dat_item);
 	if(param->dat_skill != NULL) free(param->dat_skill);
 	if(param->dat_multiskill != NULL) free(param->dat_multiskill);
+	if(param->dat_time != NULL) free(param->dat_time);
     
+    // not null skills
+    for(NDAT kg=0;kg<param->ndata; kg++) {
+        free(param->all_data[kg].idx); // was obs;
+        if(param->time)
+            free(param->all_data[kg].time);
+    }
     if(param->all_data != NULL) free(param->all_data); // ndat of them
     if(param->k_data != NULL)   free(param->k_data); // ndat of them (reordered by k)
     if(param->g_data != NULL)   free(param->g_data); // ndat of them (reordered by g)
@@ -572,12 +606,13 @@ void destroy_input_data(struct param *param) {
 	if(param->g_numk != NULL)   free(param->g_numk);
     // null skills
     for(NCAT g=0;g<param->n_null_skill_group; g++)
-        free(param->null_skills[g].obs);
+        free(param->null_skills[g].idx); // was obs
     if(param->null_skills != NULL) free(param->null_skills);
     // vocabularies
     delete param->map_group_fwd;
     delete param->map_group_bwd;
-    delete param->map_step;
+    delete param->map_step_fwd;
+    delete param->map_step_bwd;
     delete param->map_skill_fwd;
     delete param->map_skill_bwd;
 }
@@ -674,5 +709,96 @@ void RecycleFitData(NCAT xndat, struct data** x_data, struct param *param) {
 	}
 }
 
+//
+// working with time
+//
 
+// limits are the borders of time bins, there are nlimits+1 bins total,  bins 0:nlimits
+NPAR sec_to_linear_interval(int time, int *limits, NPAR nlimits){
+    for(NPAR i=0; i<nlimits; i++)
+        if( time < limits[i] )
+            return i;
+    return nlimits;
+}
+
+// limits are the borders of time bins, there are nlimits+1 bins total
+int time_lim_20HDWM[5] = {20*60, 60*60, 24*60*60, 7*24*60*60, 30*24*60*60}; // 20min, hour, day, week, month
+
+// 9 categories: <2m, <20m, <1h, same day, next day, same week, next week, <30d, >=30d
+NPAR sec_to_9cat(int time1, int time2, int *limits, NPAR nlimits) {
+    int diff = time2 - time1;
+    
+    if(diff <0 ) {
+        fprintf(stderr,"ERROR! time 1 should be smaller than time 2\n");
+        return 0;
+    } else if ( diff < (2*60) ) { // 20min
+        return 0;
+    } else if ( diff < (20*60) ) { // 20min
+        return 1;
+    } else if (diff < (60*60) ) { // 1h
+        return 2;
+    } else if(diff < (14*24*60*60)) { // detect date structures
+        time_t t1 = (time_t)time1;
+        time_t t2 = (time_t)time2;
+        struct tm * ttm1 = localtime (&t1);
+        struct tm * ttm2 = localtime (&t2);
+        if( diff < (24*60*60) && ttm1->tm_mday==ttm2->tm_mday ) { // same day
+            return 3;
+        } else if(    diff < (2*24*60*60) &&                      // next day
+                   ( (ttm2->tm_wday == (ttm1->tm_wday+1)) ||
+                     (ttm1->tm_wday==6 && ttm2->tm_wday==0)
+                   )
+                  ) {
+            return 4;
+        } else if( diff < (7*24*60*60) && (ttm1->tm_wday<ttm2->tm_wday) ) { // this week
+            return 5;
+        } else { // next week
+            return 6;
+        }
+    } else if(diff < (30*24*60*60)) { // less than 30 days
+        return 7;
+    } else if(diff >= (30*24*60*60)) { // 30 days or more
+        return 8;
+    }
+    return 0;
+}
+
+
+// write time intervals to file
+void write_time_interval_data(param* param, const char *file_name) {
+    if(param->time != 1) {
+        fprintf(stderr,"ERROR! Time data has not been read.\n");
+        return;
+    }
+    std::map<NCAT,std::string>::iterator it_g;
+    std::map<NCAT,std::string>::iterator it_k;
+    string group, skill;
+    data *dt;
+    // open file
+    FILE *fid = fopen(file_name,"w");
+    fprintf(fid,"Group\tKC\ttime1\ttime2\ttimediff\ttime_lim_20HDWM\tOutcome\n");
+    // for all groups
+    for(NCAT g=0; g<param->nG; g++) {
+        // for all KCs
+        it_g = param->map_group_bwd->find(g);
+        for(NCAT k=0; k<param->g_numk[g]; k++) {
+            it_k = param->map_skill_bwd->find(k);
+            dt = param->g_k_data[g][k];
+            // for times from 2 to N
+            for(NDAT t=1; t<dt->ndat; t++) {
+//                NPAR code = sec_to_linear_interval(dt->time[t]-dt->time[t-1], time_lim_20HDWM, sizeof(time_lim_20HDWM)/sizeof(int));
+                NPAR code = sec_to_9cat(dt->time[t-1], dt->time[t], time_lim_20HDWM, sizeof(time_lim_20HDWM)/sizeof(int));
+                fprintf(fid,"%s\t%s\t%d\t%d\t%d\t%d\t%d\n", it_g->second.c_str(), it_k->second.c_str(), dt->time[t-1], dt->time[t], (dt->time[t]-dt->time[t-1]), code, 1-param->dat_obs->get( dt->idx[t] ) );
+            }// for times from 2 to N
+        }// for all KCs
+    }// for all groups
+    // close file
+    fclose(fid);
+}
+
+// penalties
+NUMBER L2penalty(param* param, NUMBER w) {
+    NUMBER penalty_offset = 0.5;
+    return (param->C > 0)? 0.5*param->C*fabs((w-penalty_offset)) : 0;
+}
 

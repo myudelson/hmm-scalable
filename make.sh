@@ -2,7 +2,7 @@
 
 #
 #
-# 
+#
 #
 #
 
@@ -17,32 +17,32 @@
 # ./create_train.sh algebra_2008_2009_train.txt a89_ss_train.txt ss 0
 # ./create_train.sh algebra_2008_2009_train.txt a89_kts_train.txt kts 0
 # ./create_train.sh bridge_to_algebra_2008_2009_train.txt bta89_kts_train.txt kts 0
-# 
+#
 # ./create_train.sh algebra_2008_2009_train.txt a89_Uss_train.txt ss u
 # ./create_train.sh algebra_2008_2009_train.txt a89_Ukts_train.txt kts u
 # ./create_train.sh bridge_to_algebra_2008_2009_train.txt bta89_Uss_train.txt ss u
 # ./create_train.sh bridge_to_algebra_2008_2009_train.txt bta89_Ukts_train.txt kts u
-# 
+#
 # ./create_test.sh bridge_to_algebra_2008_2009_test.txt bta89_ss_train.txt bta89_ss_test.txt ss 0
 # ./create_test.sh bridge_to_algebra_2008_2009_test.txt bta89_kts_train.txt bta89_kts_test.txt kts 0
 # ./create_test.sh algebra_2008_2009_test.txt a89_ss_train.txt a89_ss_test.txt ss 0
 # ./create_test.sh algebra_2008_2009_test.txt a89_kts_train.txt a89_kts_test.txt kts 0
-# 
+#
 # ./create_test.sh algebra_2008_2009_test.txt a89_Uss_train.txt a89_Uss_test.txt ss u
 # ./create_test.sh algebra_2008_2009_test.txt a89_Ukts_train.txt a89_Ukts_test.txt kts u
 # ./create_test.sh bridge_to_algebra_2008_2009_test.txt bta89_Uss_train.txt bta89_Uss_test.txt ss u
 # ./create_test.sh bridge_to_algebra_2008_2009_test.txt bta89_Ukts_train.txt bta89_Ukts_test.txt kts u
-# 
+#
 # # create a pure self-test file (same as train, but no observations)
 # awk -F'\t' 'BEGIN{OFS=""} {print ".\t",$2,"\t",$3,"\t",$4}' a89_kts_train.txt > a89_kts_test0.txt
 # awk -F'\t' 'BEGIN{OFS=""} {print ".\t",$2,"\t",$3,"\t",$4}' a89_ss_train.txt > a89_ss_test0.txt
-# 
+#
 # awk -F'\t' 'BEGIN{OFS=""} {print ".\t",$2,"\t",$3,"\t",$4}' a89_Ukts_train.txt > a89_Ukts_test0.txt
 # awk -F'\t' 'BEGIN{OFS=""} {print ".\t",$2,"\t",$3,"\t",$4}' a89_Uss_train.txt > a89_Uss_test0.txt
-# 
+#
 # awk -F'\t' 'BEGIN{OFS=""} {print ".\t",$2,"\t",$3,"\t",$4}' bta89_kts_train.txt > bta89_kts_test0.txt
 # awk -F'\t' 'BEGIN{OFS=""} {print ".\t",$2,"\t",$3,"\t",$4}' bta89_ss_train.txt > bta89_ss_test0.txt
-# 
+#
 # awk -F'\t' 'BEGIN{OFS=""} {print ".\t",$2,"\t",$3,"\t",$4}' bta89_Ukts_train.txt > bta89_Ukts_test0.txt
 # awk -F'\t' 'BEGIN{OFS=""} {print ".\t",$2,"\t",$3,"\t",$4}' bta89_Uss_train.txt > bta89_Uss_test0.txt
 
@@ -86,7 +86,7 @@
 # mv algebra_2008_2009_train.txt algebra_2008_2009_trainRM.txt
 # mv algebra_2008_2009_train.txt.bak algebra_2008_2009_train.txt
 # grep -P '[\t|~]([A-Za-z][A-Za-z0-1 ,\-]+)~~\1[\t|~]' algebra_2008_2009_trainRM.txt >o.txt
-# 
+#
 # grep -P '[\t|~]([A-Za-z][A-Za-z0-1 ,\-]+)~~\1[\n|~]' a89_kts_train.txt >o.txt
 # perl -i.bak -pe 's/([~|\t])([A-Za-z][A-Za-z0-1 ,\-]+)~~\2/\1\2/g' a89_kts_train.txt
 # mv a89_kts_train.txt a89_kts_trainRM.txt
@@ -107,9 +107,58 @@
 # done
 
 # # Fitting AIC,BIC,RMSE (gradient descent)
-for f in `ls ~/Documents/hcii/DataShop/data/data4hmm/*`; do
-	echo "Processing $f"
-	./trainhmm -s 6 -0 0.5,1.0,0.4,0.8,0.2 -l 0,0,1,0,0,0,0,0,0,0 -u 1,1,1,0,1,1,1,0.3,0.3,1 -t 0.01 -q 1 -m 1 "$f" m.txt
-	echo " "
-done
-# run as './make.sh > out.txt' 
+# for f in `ls ~/Documents/hcii/DataShop/data/data4hmm/*`; do
+# 	echo "Processing $f"
+# 	./trainhmm -s 6 -0 0.5,1.0,0.4,0.8,0.2 -l 0,0,1,0,0,0,0,0,0,0 -u 1,1,1,0,1,1,1,0.3,0.3,1 -t 0.01 -q 1 -m 1 "$f" m.txt
+# 	echo " "
+# done
+# run as './make.sh > out.txt'
+
+#
+# compare to CLI
+#
+
+# ./create_train.sh algebra_2008_2009_train.txt a89_kts_train.txt kts 0
+# ./create_train.sh algebra_2008_2009_train.txt a89_ukts_train.txt kts u
+# ./create_train.sh algebra_2008_2009_train.txt a89_uskts_train.txt kts s
+# ./create_train.sh bridge_to_algebra_2008_2009_train.txt b89_kts_train.txt kts 0
+# ./create_train.sh bridge_to_algebra_2008_2009_train.txt b89_ukts_train.txt kts u
+# ./create_train.sh bridge_to_algebra_2008_2009_train.txt b89_uskts_train.txt kts s
+
+# ./trainhmm -s 1.2 -m 1 -d ~ a89_kts_train.txt a89_kts_s1.2delim_model.txt > a89_kts_s1.2delim_out.txt
+# ./trainhmm -s 4.2 -m 1 -d ~ a89_kts_train.txt a89_kts_s4.2delim_model.txt > a89_kts_s4.2delim_out.txt
+# ./trainhmm -s 5.2 -m 1 -d ~ a89_kts_train.txt a89_kts_s5.2delim_model.txt > a89_kts_s5.2delim_out.txt
+# ./trainhmm -s 6.2 -m 1 -d ~ a89_kts_train.txt a89_kts_s6.2delim_model.txt > a89_kts_s6.2delim_out.txt
+#
+# ./trainhmm -s 1.2 -m 1 -d ~ a89_ukts_train.txt a89_ukts_s1.2delim_model.txt > a89_ukts_s1.2delim_out.txt
+# ./trainhmm -s 4.2 -m 1 -d ~ a89_ukts_train.txt a89_ukts_s4.2delim_model.txt > a89_ukts_s4.2delim_out.txt
+# ./trainhmm -s 5.2 -m 1 -d ~ a89_ukts_train.txt a89_ukts_s5.2delim_model.txt > a89_ukts_s5.2delim_out.txt
+# ./trainhmm -s 6.2 -m 1 -d ~ a89_ukts_train.txt a89_ukts_s6.2delim_model.txt > a89_ukts_s6.2delim_out.txt
+#
+# ./trainhmm -s 1.2 -m 1 -d ~ a89_uskts_train.txt a89_uskts_s1.2delim_model.txt > a89_uskts_s1.2delim_out.txt
+# ./trainhmm -s 4.2 -m 1 -d ~ a89_uskts_train.txt a89_uskts_s4.2delim_model.txt > a89_uskts_s4.2delim_out.txt
+# ./trainhmm -s 5.2 -m 1 -d ~ a89_uskts_train.txt a89_uskts_s5.2delim_model.txt > a89_uskts_s5.2delim_out.txt
+# ./trainhmm -s 6.2 -m 1 -d ~ a89_uskts_train.txt a89_uskts_s6.2delim_model.txt > a89_uskts_s6.2delim_out.txt
+#
+#
+# ./trainhmm -s 1.2 -m 1 -d ~ b89_kts_train.txt b89_kts_s1.2delim_model.txt > b89_kts_s1.2delim_out.txt
+# ./trainhmm -s 4.2 -m 1 -d ~ b89_kts_train.txt b89_kts_s4.2delim_model.txt > b89_kts_s4.2delim_out.txt
+# ./trainhmm -s 5.2 -m 1 -d ~ b89_kts_train.txt b89_kts_s5.2delim_model.txt > b89_kts_s5.2delim_out.txt
+# ./trainhmm -s 6.2 -m 1 -d ~ b89_kts_train.txt b89_kts_s6.2delim_model.txt > b89_kts_s6.2delim_out.txt
+#
+# ./trainhmm -s 1.2 -m 1 -d ~ b89_ukts_train.txt b89_ukts_s1.2delim_model.txt > b89_ukts_s1.2delim_out.txt
+# ./trainhmm -s 4.2 -m 1 -d ~ b89_ukts_train.txt b89_ukts_s4.2delim_model.txt > b89_ukts_s4.2delim_out.txt
+# ./trainhmm -s 5.2 -m 1 -d ~ b89_ukts_train.txt b89_ukts_s5.2delim_model.txt > b89_ukts_s5.2delim_out.txt
+# ./trainhmm -s 6.2 -m 1 -d ~ b89_ukts_train.txt b89_ukts_s6.2delim_model.txt > b89_ukts_s6.2delim_out.txt
+#
+# ./trainhmm -s 1.2 -m 1 -d ~ b89_uskts_train.txt b89_uskts_s1.2delim_model.txt > b89_uskts_s1.2delim_out.txt
+# ./trainhmm -s 4.2 -m 1 -d ~ b89_uskts_train.txt b89_uskts_s4.2delim_model.txt > b89_uskts_s4.2delim_out.txt
+# ./trainhmm -s 5.2 -m 1 -d ~ b89_uskts_train.txt b89_uskts_s5.2delim_model.txt > b89_uskts_s5.2delim_out.txt
+# ./trainhmm -s 6.2 -m 1 -d ~ b89_uskts_train.txt b89_uskts_s6.2delim_model.txt > b89_uskts_s6.2delim_out.txt
+
+#
+# unique Unit-Section-problem
+#
+awk -F'\t' 'BEGIN{OFS=""} {print $3}' a89_kts_train.txt > a89_kts_train__ITEM.txt # save just item
+sort a89_kts_train__ITEM.txt > a89_kts_train__ITEM_srt.txt
+

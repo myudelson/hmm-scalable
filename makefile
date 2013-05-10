@@ -23,8 +23,8 @@ train: utils.o StripedArray.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemP
 	$(CXX) $(CFLAGS) -o trainhmm trainhmm.cpp utils.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiAGK.o HMMProblemAGK.o
 
 
-predict: predicthmm.o utils.o 
-	$(CXX) $(CFLAGS) -o predicthmm predicthmm.o utils.o
+predict: utils.o StripedArray.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiAGK.o HMMProblemAGK.o predicthmm.cpp
+	$(CXX) $(CFLAGS) -o predicthmm predicthmm.cpp utils.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiAGK.o HMMProblemAGK.o
 
 #tron.o: tron.cpp tron.h
 #	$(CXX) $(CFLAGS) -c -o tron.o tron.cpp

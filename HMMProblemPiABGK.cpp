@@ -1,12 +1,12 @@
 //
-//  HMMProblemPiGKPloGK.cpp
+//  HMMProblemPiABGK.cpp
 //  HMM
 //
-//  Created by Mikhail Yudelson on 8/31/12.
+//  Created by Yudelson, Michael on 5/10/13.
 //
 //
 
-#include "HMMProblemPiGK.h"
+#include "HMMProblemPiABGK.h"
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,21 +16,23 @@
 #include <math.h>
 #include <map>
 
-HMMProblemPiGK::HMMProblemPiGK(struct param *param) {
-    for(NPAR i=0; i<3; i++) this->sizes[i] = param->nK;
-//    this->sizes = {param->nK, param->nK, param->nK};
-    this->n_params = param->nK * 4 + param->nG;
+HMMProblemPiABGK::HMMProblemPiABGK(struct param *param) {
+    //    this->sizes = {param->nK, param->nK, param->nK};
+    this->sizes[0] = param->nK;
+    this->sizes[1] = param->nK;
+    this->sizes[2] = param->nK;
+    this->n_params = param->nK * 4 + param->nG * 4;
     init(param);
 }
 
-void HMMProblemPiGK::init(struct param *param) {
+void HMMProblemPiABGK::init(struct param *param) {
 	this->p = param;
-    NPAR nS = this->p->nS, nO = this->p->nO; //NCAT nK = this->p->nK, nG = this->p->nG;
 	this->non01constraints = true;
     this->null_obs_ratio = Calloc(NUMBER, this->p->nO);
     this->neg_log_lik = 0;
     this->null_skill_obs = 0;
     this->null_skill_obs_prob = 0;
+    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
     
     NUMBER *a_PI, ** a_A, ** a_B;
     init3Params(a_PI, a_A, a_B, nS, nO);
@@ -38,132 +40,170 @@ void HMMProblemPiGK::init(struct param *param) {
     //
     // setup params
     //
-	NPAR i, j, idx, offset;
+	NPAR i, j, m, idx, offset;
 	NUMBER sumPI = 0;
-	NUMBER sumA[this->p->nS];
-	NUMBER sumB[this->p->nS];
-	for(i=0; i<this->p->nS; i++) {
+	NUMBER sumA[nS];
+	NUMBER sumB[nS];
+	for(i=0; i<nS; i++) {
 		sumA[i] = 0;
 		sumB[i] = 0;
 	}
 	// populate PI
-	for(i=0; i<((this->p->nS)-1); i++) {
+	for(i=0; i<((nS)-1); i++) {
 		a_PI[i] = this->p->init_params[i];
 		sumPI  += this->p->init_params[i];
 	}
-	a_PI[this->p->nS-1] = 1 - sumPI;
+	a_PI[nS-1] = 1 - sumPI;
 	// populate A
-	offset = this->p->nS-1;
-	for(i=0; i<this->p->nS; i++) {
-		for(j=0; j<((this->p->nS)-1); j++) {
-			idx = offset + i*((this->p->nS)-1) + j;
+	offset = nS-1;
+	for(i=0; i<nS; i++) {
+		for(j=0; j<((nS)-1); j++) {
+			idx = offset + i*((nS)-1) + j;
 			a_A[i][j] = this->p->init_params[idx];
 			sumA[i]  += this->p->init_params[idx];
 		}
-		a_A[i][((this->p->nS)-1)]  = 1 - sumA[i];
+		a_A[i][((nS)-1)]  = 1 - sumA[i];
 	}
 	// polupale B
-	offset = (this->p->nS-1) + this->p->nS*(this->p->nS-1);
-	for(i=0; i<this->p->nS; i++) {
-		for(j=0; j<((this->p->nO)-1); j++) {
-			idx = offset + i*((this->p->nO)-1) + j;
+	offset = (nS-1) + nS*(nS-1);
+	for(i=0; i<nS; i++) {
+		for(j=0; j<((nO)-1); j++) {
+			idx = offset + i*((nO)-1) + j;
 			a_B[i][j] = this->p->init_params[idx];
 			sumB[i] += this->p->init_params[idx];
 		}
-		a_B[i][((this->p->nO)-1)]  = 1 - sumB[i];
+		a_B[i][((nO)-1)]  = 1 - sumB[i];
 	}
     
     // mass produce PI's/PIg's, A's, B's
 	if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-		this->PI  = init2DNumber(this->p->nK, this->p->nS);
-		this->A   = init3DNumber(this->p->nK, this->p->nS, this->p->nS);
-		this->B   = init3DNumber(this->p->nK, this->p->nS, this->p->nO);
-		this->PIg = init2DNumber(this->p->nG, this->p->nS);
+		this->PI  = init2DNumber(nK, nS);
+		this->A   = init3DNumber(nK, nS, nS);
+		this->B   = init3DNumber(nK, nS, nO);
+		this->PIg = init2DNumber(nG, nS);
+		this->Ag  = init3DNumber(nG, nS, nS);
+		this->Bg  = init3DNumber(nG, nS, nO);
         NCAT x;
-		for(x=0; x<this->p->nK; x++) {
-			cpy1DNumber(a_PI, this->PI[x], this->p->nS);
-			cpy2DNumber(a_A,  this->A[x],  this->p->nS, this->p->nS);
-			cpy2DNumber(a_B,  this->B[x],  this->p->nS, this->p->nO);
+		for(x=0; x<nK; x++) {
+			cpy1DNumber(a_PI, this->PI[x], nS);
+			cpy2DNumber(a_A,  this->A[x],  nS, nS);
+			cpy2DNumber(a_B,  this->B[x],  nS, nO);
         }
-        // PIg start with same params
-		for(x=0; x<this->p->nG; x++)
-			cpy1DNumber(a_PI, this->PIg[x], this->p->nS);
+        // PIg start with "no-effect" params,PI[i] = 1/nS
+		for(x=0; x<nG; x++) {
+            for(i=0; i<nS; i++) {
+                this->PIg[x][i] = (NUMBER)1/nS;
+                for(j=0; j<nS; j++)
+                    this->Ag[x][i][j] = (NUMBER)1/nS;
+                for(m=0; m<nS; m++)
+                    this->Bg[x][i][m] = (NUMBER)1/nO;
+            }
+        }
 	} else {
 		fprintf(stderr,"params do not meet constraints.\n");
 		exit(1);
 	}
     // destroy setup params
 	free(a_PI);
-	free2DNumber(a_A, this->p->nS);
-	free2DNumber(a_B, this->p->nS);
+	free2DNumber(a_A, nS);
+	free2DNumber(a_B, nS);
 	
     // populate boundaries
 	// populate lb*/ub*
 	// *PI
     init3Params(this->lbPI, this->lbA, this->lbB, nS, nO);
     init3Params(this->ubPI, this->ubA, this->ubB, nS, nO);
-	for(i=0; i<this->p->nS; i++) {
+	for(i=0; i<nS; i++) {
 		lbPI[i] = this->p->param_lo[i];
 		ubPI[i] = this->p->param_hi[i];
 	}
 	// *A
-	offset = this->p->nS;
-	for(i=0; i<this->p->nS; i++)
-		for(j=0; j<this->p->nS; j++) {
-			idx = offset + i*this->p->nS + j;
+	offset = nS;
+	for(i=0; i<nS; i++)
+		for(j=0; j<nS; j++) {
+			idx = offset + i*nS + j;
 			lbA[i][j] = this->p->param_lo[idx];
 			ubA[i][j] = this->p->param_hi[idx];
 		}
 	// *B
-	offset = this->p->nS + this->p->nS*this->p->nS;
-	for(i=0; i<this->p->nS; i++)
-		for(j=0; j<this->p->nO; j++) {
-			idx = offset + i*this->p->nS + j;
+	offset = nS + nS*nS;
+	for(i=0; i<nS; i++)
+		for(j=0; j<nO; j++) {
+			idx = offset + i*nS + j;
 			lbB[i][j] = this->p->param_lo[idx];
 			ubB[i][j] = this->p->param_hi[idx];
 		}
-//	this->gradPI = NULL;
-//	this->gradPIg = NULL;
-//	this->gradA = NULL;
-//	this->gradB = NULL;
+    
+    //	this->gradPI = NULL;
+    //	this->gradPIg = NULL;
+    //	this->gradA = NULL;
+    //	this->gradAg = NULL;
+    //	this->gradB = NULL;
     this->fitK = NULL;
     this->fitG = NULL;
     fitK_countG = NULL;
 }
 
-HMMProblemPiGK::~HMMProblemPiGK() {
+HMMProblemPiABGK::~HMMProblemPiABGK() {
     destroy();
 }
 
-void HMMProblemPiGK::destroy() {
-	// destroy additional model data
+void HMMProblemPiABGK::destroy() {
+	// destroy model data - only additional stuff
 	free2DNumber(this->PIg, this->p->nG);
+	free3DNumber(this->Ag, this->p->nG, this->p->nS);
+	free3DNumber(this->Bg, this->p->nG, this->p->nS);
 	// destroy fitting data
-//	// gradPI,g
-//	if ( this->gradPIg != NULL) {
-//		free2DNumber(this->gradPIg, this->p->nG);
-//		this->gradPIg = NULL;
-//	}
-    // free fit flags
-    if(this->fitK != NULL)        free(this->fitK);
-    if(this->fitG != NULL)        free(this->fitG);
-    if(this->fitK_countG != NULL) free(this->fitK_countG);    
+    //	// gradPI,g
+    //	if ( this->gradPIg != NULL) {
+    //		free2DNumber(this->gradPIg, this->p->nG);
+    //		this->gradPIg = NULL;
+    //	}
+    //	// gradA
+    //	if ( this->gradAg != NULL) {
+    //		free3DNumber(this->gradAg, this->p->nG, this->p->nS);
+    //		this->gradAg = NULL;
+    //	}
+    //    // free fit flags
+    //    if(this->fitK != NULL)        free(this->fitK);
+    //    if(this->fitG != NULL)        free(this->fitG);
+    //    if(this->fitK_countG != NULL) free(this->fitK_countG);
     
-}// ~HMMProblemPiGK
+}// ~HMMProblemPiABGK
 
-NUMBER** HMMProblemPiGK::getPI() { // same as getPIk
+NUMBER** HMMProblemPiABGK::getPI() { // same as getPIk
 	return this->PI;
 }
 
-NUMBER** HMMProblemPiGK::getPIk() {
+NUMBER** HMMProblemPiABGK::getPIk() {
 	return this->PI;
 }
 
-NUMBER** HMMProblemPiGK::getPIg() {
+NUMBER** HMMProblemPiABGK::getPIg() {
 	return this->PIg;
 }
 
-NUMBER* HMMProblemPiGK::getPI(NCAT x) { // same as getPIk(x)
+NUMBER*** HMMProblemPiABGK::getA() {
+	return this->A;
+}
+
+NUMBER*** HMMProblemPiABGK::getAk() {
+	return this->A;
+}
+
+NUMBER*** HMMProblemPiABGK::getAg() {
+	return this->Ag;
+}
+
+NUMBER*** HMMProblemPiABGK::getBk() {
+	return this->B;
+}
+
+NUMBER*** HMMProblemPiABGK::getBg() {
+	return this->Bg;
+}
+
+NUMBER* HMMProblemPiABGK::getPI(NCAT x) { // same as getPIk(x)
 	if( x > (this->p->nK-1) ) {
 		fprintf(stderr,"While accessing PI_k, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
 		exit(1);
@@ -171,23 +211,23 @@ NUMBER* HMMProblemPiGK::getPI(NCAT x) { // same as getPIk(x)
 	return this->PI[x];
 }
 
-NUMBER** HMMProblemPiGK::getA(NCAT x) {
+NUMBER** HMMProblemPiABGK::getA(NCAT x) {
 	if( x > (this->p->nK-1) ) {
-		fprintf(stderr,"While accessing A, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
+		fprintf(stderr,"While accessing A_k, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
 		exit(1);
 	}
 	return this->A[x];
 }
 
-NUMBER** HMMProblemPiGK::getB(NCAT x) {
+NUMBER** HMMProblemPiABGK::getB(NCAT x) {
 	if( x > (this->p->nK-1) ) {
-		fprintf(stderr,"While accessing B, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
+		fprintf(stderr,"While accessing B_k, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
 		exit(1);
 	}
 	return this->B[x];
 }
 
-NUMBER* HMMProblemPiGK::getPIk(NCAT x) {
+NUMBER* HMMProblemPiABGK::getPIk(NCAT x) {
 	if( x > (this->p->nK-1) ) {
 		fprintf(stderr,"While accessing PI_k, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
 		exit(1);
@@ -195,7 +235,7 @@ NUMBER* HMMProblemPiGK::getPIk(NCAT x) {
 	return this->PI[x];
 }
 
-NUMBER* HMMProblemPiGK::getPIg(NCAT x) {
+NUMBER* HMMProblemPiABGK::getPIg(NCAT x) {
 	if( x > (this->p->nG-1) ) {
 		fprintf(stderr,"While accessing PI_g, skill index %d exceeded last index of the data %d.\n", x, this->p->nG-1);
 		exit(1);
@@ -203,40 +243,75 @@ NUMBER* HMMProblemPiGK::getPIg(NCAT x) {
 	return this->PIg[x];
 }
 
-NUMBER HMMProblemPiGK::getPI(struct data* dt, NPAR i) {
+NUMBER** HMMProblemPiABGK::getAk(NCAT x) {
+	if( x > (this->p->nK-1) ) {
+		fprintf(stderr,"While accessing A_k, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
+		exit(1);
+	}
+	return this->A[x];
+}
+
+NUMBER** HMMProblemPiABGK::getAg(NCAT x) {
+	if( x > (this->p->nG-1) ) {
+		fprintf(stderr,"While accessing A_g, skill index %d exceeded last index of the data %d.\n", x, this->p->nG-1);
+		exit(1);
+	}
+	return this->Ag[x];
+}
+
+NUMBER** HMMProblemPiABGK::getBk(NCAT x) {
+	if( x > (this->p->nK-1) ) {
+		fprintf(stderr,"While accessing B_k, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
+		exit(1);
+	}
+	return this->B[x];
+}
+
+NUMBER** HMMProblemPiABGK::getBg(NCAT x) {
+	if( x > (this->p->nG-1) ) {
+		fprintf(stderr,"While accessing B_g, skill index %d exceeded last index of the data %d.\n", x, this->p->nG-1);
+		exit(1);
+	}
+	return this->Bg[x];
+}
+
+NUMBER HMMProblemPiABGK::getPI(struct data* dt, NPAR i) {
     NUMBER p = this->PI[dt->k][i], q = this->PIg[dt->g][i];
     return 1/( 1 + (1-p)*(1-q)/(p*q) );
-//    return sigmoid( logit( p ) + logit( q ) );
+    //    return sigmoid( logit( this->PI[dt->k][i] ) + logit( this->PIg[dt->g][i] ) );
 }
 
 // getters for computing alpha, beta, gamma
-NUMBER HMMProblemPiGK::getA(struct data* dt, NPAR i, NPAR j) {
-    return this->A[dt->k][i][j];
+NUMBER HMMProblemPiABGK::getA(struct data* dt, NPAR i, NPAR j) {
+    NUMBER p = this->A[dt->k][i][j], q = this->Ag[dt->g][i][j];
+    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+    //    return sigmoid( logit( this->A[dt->k][i][j] ) + logit( this->Ag[dt->k][i][j] ) );
 }
 
 // getters for computing alpha, beta, gamma
-NUMBER HMMProblemPiGK::getB(struct data* dt, NPAR i, NPAR m) {
+NUMBER HMMProblemPiABGK::getB(struct data* dt, NPAR i, NPAR m) {
     // special attention for "unknonw" observations, i.e. the observation was there but we do not know what it is
     // in this case we simply return 1, effectively resulting in no change in \alpha or \beta vatiables
     if(m<0)
         return 1;
-    return this->B[dt->k][i][m];
+    NUMBER p = this->B[dt->k][i][m], q = this->Bg[dt->g][i][m];
+    return 1/( 1 + (1-p)*(1-q)/(p*q) );
 }
 
-void HMMProblemPiGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
+void HMMProblemPiABGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
     NDAT t = 0;
     NPAR i, o;
     NUMBER combined, deriv_logit;
-//    o = dt->obs[t];
+    //    o = dt->obs[t];
     o = this->p->dat_obs->get( dt->idx[t] );
-    if(kg_flag == 0) { // k
+    if(kg_flag == 0) { // by Skill
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( this->PI[ dt->k ][i] * (1-this->PI[ dt->k ][i]) );
 			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * getB(dt,i,o) / safe0num(dt->p_O_param);
         }
     }
-    else
+    else  // by group
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( this->PIg[ dt->g ][i] * (1-this->PIg[ dt->g ][i]) );
@@ -244,7 +319,64 @@ void HMMProblemPiGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
         }
 }
 
-void HMMProblemPiGK::toFile(const char *filename) {
+void HMMProblemPiABGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
+    NDAT t;
+    NPAR o, i, j;
+    NUMBER combined, deriv_logit;
+    if(kg_flag == 0) { // by Skill
+        for(t=1; t<dt->ndat; t++) {
+            //            o = dt->obs[t];
+            o = this->p->dat_obs->get( dt->idx[t] );
+            for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++)
+                for(j=0; j<this->p->nS; j++) {
+                    combined = getA(dt,i,j);
+                    deriv_logit = 1 / safe0num( this->A[ dt->k ][i][j] * (1-this->A[ dt->k ][i][j]) );
+                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * getB(dt,j,o) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
+                }
+        }
+    }
+    else // by group
+        for(t=1; t<dt->ndat; t++) {
+            //            o = dt->obs[t];
+            o = this->p->dat_obs->get( dt->idx[t] );
+            for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++)
+                for(j=0; j<this->p->nS; j++) {
+                    combined = getA(dt,i,j);
+                    deriv_logit = 1 / safe0num( this->Ag[ dt->g ][i][j] * (1-this->Ag[ dt->g ][i][j]) );
+                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * getB(dt,j,o) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
+                }
+        }
+}
+
+void HMMProblemPiABGK::setGradB (struct data* dt, FitBit *fb, NPAR kg_flag){
+    NDAT t;
+    NPAR o, i;
+    NUMBER combined, deriv_logit;
+    if(kg_flag == 0) { // by Skill
+        for(t=1; t<dt->ndat; t++) {
+            //            o = dt->obs[t];
+            o = this->p->dat_obs->get( dt->idx[t] );
+            for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++) {
+                combined = getB(dt,i,o);
+                deriv_logit = 1 / safe0num( this->B[ dt->k ][i][o] * (1-this->B[ dt->k ][i][o]) );
+                fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o));
+            }
+        }
+    }
+    else // by group
+        for(t=1; t<dt->ndat; t++) {
+            //            o = dt->obs[t];
+            o = this->p->dat_obs->get( dt->idx[t] );
+            for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++) {
+                combined = getB(dt,i,o);
+                deriv_logit = 1 / safe0num( this->Bg[ dt->g ][i][o] * (1-this->Bg[ dt->g ][i][o]) );
+                fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o));
+            }
+        }
+}
+
+
+void HMMProblemPiABGK::toFile(const char *filename) {
 	FILE *fid = fopen(filename,"w");
 	if(fid == NULL) {
 		fprintf(stderr,"Can't write output model file %s\n",filename);
@@ -266,6 +398,14 @@ void HMMProblemPiGK::toFile(const char *filename) {
 		fprintf(fid,"PIg\t");
 		for(i=0; i<this->p->nS; i++)
 			fprintf(fid,"%10.8f%s",this->PIg[g][i],(i==(this->p->nS-1))?"\n":"\t");
+		fprintf(fid,"Ag\t");
+		for(i=0; i<this->p->nS; i++)
+			for(j=0; j<this->p->nS; j++)
+				fprintf(fid,"%10.8f%s",this->Ag[g][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+		fprintf(fid,"Bg\t");
+		for(i=0; i<this->p->nS; i++)
+			for(m=0; m<this->p->nO; m++)
+				fprintf(fid,"%10.8f%s",this->Bg[g][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
     }
 	for(k=0;k<this->p->nK;k++) {
 		it = this->p->map_skill_bwd->find(k);
@@ -273,7 +413,7 @@ void HMMProblemPiGK::toFile(const char *filename) {
 		fprintf(fid,"PIk\t");
 		for(i=0; i<this->p->nS; i++)
 			fprintf(fid,"%10.8f%s",this->PI[k][i],(i==(this->p->nS-1))?"\n":"\t");
-		fprintf(fid,"A\t");
+		fprintf(fid,"Ak\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
 				fprintf(fid,"%10.8f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
@@ -285,19 +425,20 @@ void HMMProblemPiGK::toFile(const char *filename) {
 	fclose(fid);
 }
 
-void HMMProblemPiGK::fit() {
+void HMMProblemPiABGK::fit() {
     NUMBER* loglik_rmse = init1DNumber(2);
     FitNullSkill(loglik_rmse, false /*do not need RMSE/SE*/);
-    if(this->p->structure == STRUCTURE_PIgk) {
+    if(this->p->structure==STRUCTURE_PIABgk)
         loglik_rmse[0] += GradientDescent();
-    } else {
+    else {
         fprintf(stderr,"Solver specified is not supported.\n");
+        exit(1);
     }
     this->neg_log_lik = loglik_rmse[0];
     free(loglik_rmse);
 }
 
-NUMBER HMMProblemPiGK::GradientDescent() {
+NUMBER HMMProblemPiABGK::GradientDescent() {
 	NCAT k, g;
     /*NPAR nS = this->p->nS, nO = this->p->nO;*/ NCAT nK = this->p->nK, nG = this->p->nG;
     NUMBER loglik = 0;
@@ -315,46 +456,25 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 	if(this->p->single_skill>0) {
         fb->linkPar( this->getPI(0), this->getA(0), this->getB(0));// link skill 0 (we'll copy fit parameters to others
         fr = GradientDescentBit(0/*use skill 0*/, this->p->ndata, this->p->k_data, 0/* by skill*/, fb, true /*is1SkillForAll*/);
-        if( !this->p->quiet )
-            printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
+        printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
     }
 	
 	//
 	// Main fit
 	//
     if( this->p->single_skill!=2 ) { // if not "force single skill"
-        int first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
-        int iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
+        int first_iteration_qualify = (int)this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
+        int iterations_to_qualify = (int)this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
         NPAR* iter_qual_skill = Calloc(NPAR, nK);
         NPAR* iter_qual_group = Calloc(NPAR, nG);
         int skip_k = 0, skip_g = 0;
         
-//        NUMBER **cpyPI;
-////        NUMBER **cpyPIg;
-//        NUMBER ***cpyA;
-//        NUMBER ***cpyB;
-//        if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//            cpyPI  = init2DNumber(this->p->nK, this->p->nS);
-//            cpyA   = init3DNumber(this->p->nK, this->p->nS, this->p->nS);
-//            cpyB   = init3DNumber(this->p->nK, this->p->nS, this->p->nO);
-////            cpyPIg = init2DNumber(this->p->nG, this->p->nS);
-//            NCAT x;
-//            for(x=0; x<nK; x++) {
-//                cpy1DNumber(this->getPI(x), cpyPI[x], this->p->nS);
-//                cpy2DNumber(this->getA(x),  cpyA[x],  this->p->nS, this->p->nS);
-//                cpy2DNumber(this->getB(x),  cpyB[x],  this->p->nS, this->p->nO);
-//            }
-////            // PIg start with same params
-////            for(x=0; x<nG; x++)
-////                cpy1DNumber(cpyPIg[x], this->PIg[x], this->p->nS);
-//        }
-
         int i = 0; // count runs
         while(skip_k<nK || skip_g<nG) {
             //
             // Skills first
             //
-            for(k=0; k<nK && skip_k<nK; k++) { // for all A,B-by-skill
+            for(k=0; k<nK && skip_k<nK; k++) { // for all PI,A,B-by-skill
                 if(iter_qual_skill[k]==iterations_to_qualify)
                     continue;
                 NCAT xndat = this->p->k_numg[k];
@@ -378,26 +498,17 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                     else
                         iter_qual_skill[k]=0;
                 } // decide on convergence
-//                //
-//                // make copies of parameters to do gradient descend, link to copies, but grads computed from actual params
-//                //
-//                if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//                    swap1DNumber(cpyPI[k], this->getPI(k), this->p->nS);
-//                    swap2DNumber(cpyA[k],   this->getA(k), this->p->nS, this->p->nS);
-//                    swap2DNumber(cpyB[k],   this->getB(k), this->p->nS, this->p->nO);
-//                }
             } // for all skills
             //
-            // PIg second
+            // PIg, Ag, Bg second
             //
-//            int z = 0;
             for(g=0; g<nG && skip_g<nG; g++) { // for all PI-by-user
                 if(iter_qual_group[g]==iterations_to_qualify)
                     continue;
                 NCAT xndat = this->p->g_numk[g];
                 struct data** x_data = this->p->g_k_data[g];
                 // vvvvvvvvvvvvvvvvvvvvv ONLY PART THAT IS DIFFERENT FROM others
-                fb->linkPar(this->getPIg(g), NULL, NULL);
+                fb->linkPar(this->getPIg(g), this->getAg(g), this->getBg(g));
                 // ^^^^^^^^^^^^^^^^^^^^^
                 // decide on convergence
                 fr = GradientDescentBit(g/*use group x*/, xndat, x_data, 1/*group*/, fb, false /*is1SkillForAll*/);
@@ -416,43 +527,13 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                     else
                         iter_qual_group[g]=0;
                 } // decide on convergence
-//                //
-//                // make copies of parameters to do gradient descend, link to copies, but grads computed from actual params
-//                //
-//                if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//                    swap1DNumber(this->PIg[g], cpyPIg[g], this->p->nS);
-//                }
             } // for all groups
-
-//            //
-//            // write copies to parameters
-//            //
-//            if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//                NCAT x;
-//                for(x=0; x<this->p->nK; x++) {
-//                    if(iter_qual_skill[x]==iterations_to_qualify)
-//                        continue;
-//                    cpy1DNumber(cpyPI[x], this->PI[x], this->p->nS);
-//                    cpy2DNumber( cpyA[x],  this->A[x], this->p->nS, this->p->nS);
-//                    cpy2DNumber( cpyB[x],  this->B[x], this->p->nS, this->p->nO);
-//                }
-////                // PIg start with same params
-////                for(x=0; x<this->p->nG; x++)
-////                    cpy1DNumber(cpyPIg[x], this->PIg[x], this->p->nS);
-//            }
             i++;
         }
         // recycle qualifications
         if( iter_qual_skill != NULL ) free(iter_qual_skill);
         if( iter_qual_group != NULL) free(iter_qual_group);
-
-//        if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//            free2DNumber(cpyPI, nK);
-//            free3DNumber(cpyA,  nK, this->p->nS);
-//            free3DNumber(cpyB,  nK, this->p->nS);
-////            free2DNumber(cpyPIg, this->p->nG);
-//        }
-    } // if not "force single skill
+    } // if not "force single skill"
     
     delete fb;
     // compute loglik
@@ -464,7 +545,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
     return loglik;
 }
 
-void HMMProblemPiGK::readModel(FILE *fid, NDAT *line_no) {
+void HMMProblemPiABGK::readModel(FILE *fid, NDAT *line_no) {
 	NPAR i,j,m;
 	NCAT k = 0, g = 0;
 	string s;
@@ -479,7 +560,7 @@ void HMMProblemPiGK::readModel(FILE *fid, NDAT *line_no) {
     this->p->map_skill_fwd = new map<string,NCAT>();
     this->p->map_skill_bwd = new map<NCAT,string>();
 	//
-	// read grouped PIg
+	// read grouped PIg, Ag, and Bg
 	//
     for(g=0; g<this->p->nG; g++) {
 		// read group label
@@ -488,8 +569,8 @@ void HMMProblemPiGK::readModel(FILE *fid, NDAT *line_no) {
         (*line_no)++;
 		this->p->map_group_fwd->insert(pair<string,NCAT>(s, this->p->map_group_fwd->size()));
 		this->p->map_group_bwd->insert(pair<NCAT,string>(this->p->map_group_bwd->size(), s));
-
-        // read PI
+        
+        // read PIg
         fscanf(fid,"PIg\t");
         for(i=0; i<(this->p->nS-1); i++) { // read 1 less then necessary
             fscanf(fid,"%[^\t]\t",col);
@@ -497,6 +578,33 @@ void HMMProblemPiGK::readModel(FILE *fid, NDAT *line_no) {
         }
         fscanf(fid,"%[^\n]\n",col);// read last one
         this->PIg[k][i] = atof(col);
+        (*line_no)++;
+		// read Ag
+        fscanf(fid,"Ag\t");
+		for(i=0; i<this->p->nS; i++)
+			for(j=0; j<this->p->nS; j++) {
+                if(i==(this->p->nS-1) && j==(this->p->nS-1)) {
+                    fscanf(fid,"%[^\n]\n", col); // last one;
+                    this->Ag[k][i][j] = atof(col);
+                }
+                else {
+                    fscanf(fid,"%[^\t]\t", col); // not las one
+                    this->Ag[k][i][j] = atof(col);
+                }
+			}
+		// read Bg
+        fscanf(fid,"Bg\t");
+		for(i=0; i<this->p->nS; i++)
+			for(m=0; m<this->p->nO; m++) {
+                if(i==(this->p->nS-1) && m==(this->p->nO-1)) {
+                    fscanf(fid,"%[^\n]\n", col); // last one;
+                    this->Bg[k][i][m] = atof(col);
+                }
+                else {
+                    fscanf(fid,"%[^\t]\t", col); // not las one
+                    this->Bg[k][i][m] = atof(col);
+                }
+			}
         (*line_no)++;
     }
     //
@@ -520,7 +628,7 @@ void HMMProblemPiGK::readModel(FILE *fid, NDAT *line_no) {
         this->PI[k][i] = atof(col);
         (*line_no)++;
 		// read A
-        fscanf(fid,"A\t");
+        fscanf(fid,"Ak\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++) {
                 if(i==(this->p->nS-1) && j==(this->p->nS-1)) {

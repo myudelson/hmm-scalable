@@ -83,9 +83,9 @@ void FitBit::linkPar(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B) {
 }
 
 void FitBit::toZero(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B) {
-    if(this->PI != NULL) toZero1DNumber(a_PI, this->nS);
-    if(this->A  != NULL) toZero2DNumber(a_A,  this->nS, this->nS);
-    if(this->B  != NULL) toZero2DNumber(a_B,  this->nS, this->nO);
+    if(this->PI != NULL && a_PI != NULL) toZero1DNumber(a_PI, this->nS);
+    if(this->A  != NULL && a_A  != NULL) toZero2DNumber(a_A,  this->nS, this->nS);
+    if(this->B  != NULL && a_B  != NULL) toZero2DNumber(a_B,  this->nS, this->nO);
 }
 
 void FitBit::copy(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB){
@@ -101,9 +101,9 @@ void FitBit::add(NUMBER *soursePI, NUMBER **sourseA, NUMBER **sourseB, NUMBER *t
 }
 
 void FitBit::destroy(NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B) {
-    if(this->PI != NULL) free(a_PI);
-    if(this->A  != NULL) free2DNumber(a_A, this->nS);
-    if(this->B  != NULL) free2DNumber(a_B, this->nS);
+    if(this->PI != NULL && a_PI != NULL) free(a_PI);
+    if(this->A  != NULL && a_A  != NULL) free2DNumber(a_A, this->nS);
+    if(this->B  != NULL && a_B  != NULL) free2DNumber(a_B, this->nS);
     a_PI = NULL;
     a_A  = NULL;
     a_B  = NULL;
