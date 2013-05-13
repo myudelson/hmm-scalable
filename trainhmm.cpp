@@ -26,8 +26,8 @@ static int max_line_length;
 
 void exit_with_help();
 void parse_arguments(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name);
-void read_train_data(const char *filename);
-void read_predict_data(const char *filename);
+bool read_train_data(const char *filename);
+bool read_predict_data(const char *filename);
 static char* readline(FILE *fid);
 void cross_validate(NUMBER* metrics, const char *filename);
 void cross_validate_item(NUMBER* metrics, const char *filename);
@@ -41,204 +41,174 @@ int main (int argc, char ** argv) {
 		
 	set_param_defaults(&param);
 	parse_arguments(argc, argv, input_file, output_file, predict_file);
+    
     if(!param.quiet)
         printf("trainhmm starting...\n");
-	read_train_data(input_file);
+	bool is_data_read = read_train_data(input_file);
 
-	if(!param.quiet)
-		printf("input read, nO=%d, nG=%d, nK=%d, nI=%d\n",param.nO, param.nG, param.nK, param.nI);
-
-    clock_t tm;
-    
-//    // write time
-//    if(param.time==1) {
-//        const char * fn = "a89_kts_times.txt";
-////        const char * fn = "a89_uskts_times.txt";
-//        write_time_interval_data(&param, fn);
-//    }
-    
-    
-    // erase blocking labels
-    zeroLabels(&param);
-    // go
-    if(param.cv_folds==0) { // not cross-validation
-        // create problem
-        HMMProblem *hmm;
-        switch(param.structure)
-        {
-            case STRUCTURE_SKILL: // Conjugate Gradient Descent
-            case STRUCTURE_GROUP: // Conjugate Gradient Descent
-                hmm = new HMMProblem(&param);
-                break;
-//            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
-//                hmm = new HMMProblemPiG(&param);
-//                break;
-            case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-                hmm = new HMMProblemPiGK(&param);
-                break;
-            case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-                hmm = new HMMProblemPiAGK(&param);
-                break;
-            case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
-                hmm = new HMMProblemAGK(&param);
-                break;
-            case STRUCTURE_PIABgk: // Gradient Descent, pT=f(K,G), other by K
-                hmm = new HMMProblemPiABGK(&param);
-                break;
-//            case BKT_GD_T: // Gradient Descent with Transfer
-//                hmm = new HMMProblemKT(&param);
-//                break;
-        }
-        
-        tm = clock();
-        hmm->fit();
-        
-        //
-        // this is "incremental" bit... will be removed later
-        //
-//        HMMProblem *hmmO;
-        
-//        // (1-2)
-//        hmmO = hmm;
-//        hmm = new HMMProblemPiGK(&param);
-//        param.structure = STRUCTURE_PIgk;
-//        for(NCAT k=0; k<param.nK; k++) { // copy the rest
-//            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
-//            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
-//            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
-//        }
-//        delete hmmO;
-//        hmm->fit();
-        
-//        // (1-3)
-//        hmmO = hmm;
-//        hmm = new HMMProblemAGK(&param);
-//        param.structure = STRUCTURE_Agk;
-//        for(NCAT k=0; k<param.nK; k++) { // copy the rest
-//            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
-//            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
-//            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
-//        }
-//        delete hmmO;
-//        hmm->fit();
-
-//        // (1-4)
-//        hmmO = hmm;
-//        hmm = new HMMProblemPiAGK(&param);
-//        param.structure = STRUCTURE_PIAgk;
-//        for(NCAT k=0; k<param.nK; k++) { // copy the rest
-//            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
-//            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
-//            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
-//        }
-//        delete hmmO;
-//        hmm->fit();
-        
-//        // (2-4,1-2-4)
-//        hmmO = hmm;
-//        hmm = new HMMProblemPiAGK(&param);
-//        param.structure = STRUCTURE_PIAgk;
-//        for(NCAT k=0; k<param.nK; k++) { // copy the rest
-//            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
-//            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
-//            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
-//        }
-//        for(NCAT g=0; g<param.nG; g++) { // copy the rest
-//            cpy1DNumber(((HMMProblemPiGK *)hmmO)->getPIg(g), ((HMMProblemPiAGK *)hmm)->getPIg(g), param.nS);
-//        }
-//        delete hmmO;
-//        hmm->fit();
-
-//        // (3-4, 1-3-4)
-//        hmmO = hmm;
-//        hmm = new HMMProblemPiAGK(&param);
-//        param.structure = STRUCTURE_PIAgk;
-//        for(NCAT k=0; k<param.nK; k++) { // copy the rest
-//            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
-//            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
-//            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
-//        }
-//        for(NCAT g=0; g<param.nG; g++) { // copy the rest
-//            cpy2DNumber(((HMMProblemAGK *)hmmO)->getAg(g), ((HMMProblemPiAGK *)hmm)->getAg(g), param.nS, param.nS);
-//        }
-//        delete hmmO;
-//        hmm->fit();
-        
-        
-        if(param.quiet == 0)
-            printf("fitting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
-        
-        // write model
-        hmm->toFile(output_file);
-        
-        if(param.metrics>0 || param.predictions>0) {
-            NUMBER* metrics = Calloc(NUMBER, 7); // LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
-            if(param.predictions>0) {
-//                read_predict_data(input_file); // re-read the data we do not re-read the data anymore, because we do not delete it
-                hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
-//                // now remove the data read
-//                if(param.multiskill==0) {
-//                    delete param.dat_skill;//.clear();
-//                    param.dat_skill = NULL;
-//                }
-//                else {
-//                    delete param.dat_multiskill;
-//                    param.dat_multiskill = NULL;
-//                }
-//                delete param.dat_group;
-//                delete param.dat_item;
-//                delete param.dat_obs;
-//                param.dat_group = NULL;
-//                param.dat_item = NULL;
-//                param.dat_obs = NULL;
-            } else {
-                hmm->computeMetrics(metrics);
-            }
-            if( param.metrics>0 && !param.quiet) {
-//                printf("trained model LL=%15.7f(%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f)\n",metrics[0], hmm->getLogLik(), metrics[1], metrics[2], metrics[3], metrics[4]);
-                printf("trained model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]);
-            }
-            free(metrics);
-        } // if predict or metrics
-        
-        delete hmm;
-    } else { // cross-validation
-        tm = clock();
-        NUMBER* metrics = Calloc(NUMBER, 4); // AIC, BIC, RMSE, RMSE no null
-        switch (param.cv_strat) {
-            case CV_GROUP:
-                cross_validate(metrics, predict_file);
-                break;
-            case CV_ITEM:
-                cross_validate_item(metrics, predict_file);
-                break;
-            case CV_NSTR:
-                cross_validate_nstrat(metrics, predict_file);
-                break;
-            default:
-                
-                break;
-        }
+    if( is_data_read ) {
         if(!param.quiet)
-            printf("%d-fold cross-validation: AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f) computed in %8.6f seconds\n",param.cv_folds, metrics[0],metrics[1],metrics[2], metrics[3], (NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
-        free(metrics);
-//        // now delete source data
-//        if(param.multiskill==0) {
-//            delete param.dat_skill;//.clear();
-//            param.dat_skill = NULL;
-//        }
-//        else {
-//            delete param.dat_multiskill;
-//            param.dat_multiskill = NULL;
-//        }
-//        delete param.dat_group;
-//        delete param.dat_item;
-//        delete param.dat_obs;
-//        param.dat_group = NULL;
-//        param.dat_item = NULL;
-//        param.dat_obs = NULL;
-    }
+            printf("input read, nO=%d, nG=%d, nK=%d, nI=%d\n",param.nO, param.nG, param.nK, param.nI);
 
+        clock_t tm;
+        
+    //    // write time
+    //    if(param.time==1) {
+    //        const char * fn = "a89_kts_times.txt";
+    ////        const char * fn = "a89_uskts_times.txt";
+    //        write_time_interval_data(&param, fn);
+    //    }
+        
+        
+        // erase blocking labels
+        zeroLabels(&param);
+        // go
+        if(param.cv_folds==0) { // not cross-validation
+            // create problem
+            HMMProblem *hmm;
+            switch(param.structure)
+            {
+                case STRUCTURE_SKILL: // Conjugate Gradient Descent
+                case STRUCTURE_GROUP: // Conjugate Gradient Descent
+                    hmm = new HMMProblem(&param);
+                    break;
+    //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
+    //                hmm = new HMMProblemPiG(&param);
+    //                break;
+                case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+                    hmm = new HMMProblemPiGK(&param);
+                    break;
+                case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+                    hmm = new HMMProblemPiAGK(&param);
+                    break;
+                case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
+                    hmm = new HMMProblemAGK(&param);
+                    break;
+                case STRUCTURE_PIABgk: // Gradient Descent, pT=f(K,G), other by K
+                    hmm = new HMMProblemPiABGK(&param);
+                    break;
+    //            case BKT_GD_T: // Gradient Descent with Transfer
+    //                hmm = new HMMProblemKT(&param);
+    //                break;
+            }
+            
+            tm = clock();
+            hmm->fit();
+            
+            //
+            // this is "incremental" bit... will be removed later
+            //
+    //        HMMProblem *hmmO;
+            
+    //        // (1-2)
+    //        hmmO = hmm;
+    //        hmm = new HMMProblemPiGK(&param);
+    //        param.structure = STRUCTURE_PIgk;
+    //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
+    //            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
+    //            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
+    //            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
+    //        }
+    //        delete hmmO;
+    //        hmm->fit();
+            
+    //        // (1-3)
+    //        hmmO = hmm;
+    //        hmm = new HMMProblemAGK(&param);
+    //        param.structure = STRUCTURE_Agk;
+    //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
+    //            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
+    //            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
+    //            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
+    //        }
+    //        delete hmmO;
+    //        hmm->fit();
+
+    //        // (1-4)
+    //        hmmO = hmm;
+    //        hmm = new HMMProblemPiAGK(&param);
+    //        param.structure = STRUCTURE_PIAgk;
+    //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
+    //            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
+    //            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
+    //            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
+    //        }
+    //        delete hmmO;
+    //        hmm->fit();
+            
+    //        // (2-4,1-2-4)
+    //        hmmO = hmm;
+    //        hmm = new HMMProblemPiAGK(&param);
+    //        param.structure = STRUCTURE_PIAgk;
+    //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
+    //            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
+    //            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
+    //            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
+    //        }
+    //        for(NCAT g=0; g<param.nG; g++) { // copy the rest
+    //            cpy1DNumber(((HMMProblemPiGK *)hmmO)->getPIg(g), ((HMMProblemPiAGK *)hmm)->getPIg(g), param.nS);
+    //        }
+    //        delete hmmO;
+    //        hmm->fit();
+
+    //        // (3-4, 1-3-4)
+    //        hmmO = hmm;
+    //        hmm = new HMMProblemPiAGK(&param);
+    //        param.structure = STRUCTURE_PIAgk;
+    //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
+    //            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
+    //            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
+    //            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
+    //        }
+    //        for(NCAT g=0; g<param.nG; g++) { // copy the rest
+    //            cpy2DNumber(((HMMProblemAGK *)hmmO)->getAg(g), ((HMMProblemPiAGK *)hmm)->getAg(g), param.nS, param.nS);
+    //        }
+    //        delete hmmO;
+    //        hmm->fit();
+            
+            
+            if(param.quiet == 0)
+                printf("fitting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
+            
+            // write model
+            hmm->toFile(output_file);
+            
+            if(param.metrics>0 || param.predictions>0) {
+                NUMBER* metrics = Calloc(NUMBER, 7); // LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
+                if(param.predictions>0) {
+                    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
+                } else {
+                    hmm->computeMetrics(metrics);
+                }
+                if( param.metrics>0 && !param.quiet) {
+                    printf("trained model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]);
+                }
+                free(metrics);
+            } // if predict or metrics
+            
+            delete hmm;
+        } else { // cross-validation
+            tm = clock();
+            NUMBER* metrics = Calloc(NUMBER, 7); // AIC, BIC, RMSE, RMSE no null
+            switch (param.cv_strat) {
+                case CV_GROUP:
+                    cross_validate(metrics, predict_file);
+                    break;
+                case CV_ITEM:
+                    cross_validate_item(metrics, predict_file);
+                    break;
+                case CV_NSTR:
+                    cross_validate_nstrat(metrics, predict_file);
+                    break;
+                default:
+                    
+                    break;
+            }
+            if(!param.quiet)
+                printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f) computed in %8.6f seconds\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], (NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
+            free(metrics);
+        }
+    }
 	// free data
 	destroy_input_data(&param);
 	
@@ -561,8 +531,11 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 	}
 }
 
-void read_train_data(const char *filename) {
-	read_predict_data(filename);
+bool read_train_data(const char *filename) {
+    
+	if ( !read_predict_data(filename) )
+        return false;
+    
 	param.nG = (NCAT)param.map_group_fwd->size();
 	param.nK = (NCAT)param.map_skill_fwd->size();
 	param.nI = (NCAT2)param.map_step_fwd->size();
@@ -831,10 +804,16 @@ void read_train_data(const char *filename) {
                 param.g_k_data[g][k]->cnt = 0;
     for(NCAT x=0; x<param.n_null_skill_group; x++)
             param.null_skills[x].cnt = 0;
+    return true;
 }
 
-void read_predict_data(const char *filename) {
+bool read_predict_data(const char *filename) {
 	FILE *fid = fopen(filename,"r");
+    if( fid == NULL) {
+        fprintf(stderr,"Could not read input file (%s).\n",filename);
+        return false;
+    }
+    
 	int number_columns = 0;
 	max_line_length = 1024;
 	char *col;
@@ -878,7 +857,7 @@ void read_predict_data(const char *filename) {
 		NPAR obs = (NPAR)(atoi( col )-1);
 		if(obs==NPAR_MAX) {
 			fprintf(stderr,"Number of observtions exceeds allowed maximum of %d.\n",NPAR_MAX);
-			exit(1);
+			return false;
 		}
 		param.dat_obs->add((NPAR)obs); // dat_obs[t] = (NPAR)obs;
 		if( (obs >= 0) && ((param.nO-1) < obs) )
@@ -895,7 +874,7 @@ void read_predict_data(const char *filename) {
 		if( it==param.map_group_fwd->end() ) { // not found
 			if(param.map_group_fwd->size()==NCAT_MAX) {
 				fprintf(stderr,"Number of unique groups exceeds allowed maximum of %d.\n",NCAT_MAX);
-				exit(1);
+				return false;
 			}
 			NCAT newg = param.map_group_fwd->size();
 			param.dat_group->add(newg); //[t] = param.map_group_fwd.size();
@@ -918,7 +897,7 @@ void read_predict_data(const char *filename) {
 		if( it2==param.map_step_fwd->end() ) { // not found
 			if(param.map_step_fwd->size()==NCAT2_MAX) {
 				fprintf(stderr,"Number of unique steps exceeds allowed maximum of %d.\n",NCAT2_MAX);
-				exit(1);
+				return false;
 			}
             NCAT2 news = param.map_step_fwd->size();
 			param.dat_item->add(news); //[t] = param.map_group_fwd.size();
@@ -949,7 +928,7 @@ void read_predict_data(const char *filename) {
             time = atoi( col );
             if( time<=0 ) {
                 fprintf(stderr,"Time cannot be negative or zero (line %d).\n",param.N+1);
-                exit(1);
+				return false;
             }
             param.dat_time->add(time);
         } // time
@@ -982,7 +961,7 @@ void read_predict_data(const char *filename) {
                     if( it==param.map_skill_fwd->end() ) { // not found
                         if(param.map_skill_fwd->size()==NCAT_MAX) {
                             fprintf(stderr,"Number of unique skills exceeds allowed maximum of %d.\n",NCAT_MAX);
-                            exit(1);
+                            return false;
                         }
                         a_skills.insert(a_skills.end(), param.map_skill_fwd->size()); //dat_skill->add(param.map_skill_fwd->size());
                         param.map_skill_fwd->insert(pair<string,NCAT>(s_kc, param.map_skill_fwd->size()));
@@ -1006,7 +985,7 @@ void read_predict_data(const char *filename) {
                 if( it==param.map_skill_fwd->end() ) { // not found
                     if(param.map_skill_fwd->size()==NCAT_MAX) {
                         fprintf(stderr,"Number of unique skills exceeds allowed maximum of %d.\n",NCAT_MAX);
-                        exit(1);
+                        return false;
                     }
                     param.dat_skill->add(param.map_skill_fwd->size()); //[t] = param.map_skill_fwd.size();
                     param.map_skill_fwd->insert(pair<string,NCAT>(s_skill, param.map_skill_fwd->size()));
@@ -1023,19 +1002,18 @@ void read_predict_data(const char *filename) {
 	}// reading loop
 	if(wrong_no_columns) {
 		fprintf(stderr,"Wrong number of columns in line %u. Expected %d, found %d\n",param.N+1,COLUMNS+param.time, number_columns);
-        // this is an early exit from the data, so we do delete data here, but using a pre-made function
-        destroy_input_data(&param);
 		free(line);
 		fclose(fid);
-		exit(1);
+        return false;
 	}
 	fclose(fid);
 	free(line);
+    return true;
 }
 
 void cross_validate(NUMBER* metrics, const char *filename) {
     NUMBER rmse = 0.0;
-    NUMBER rmse_no_null = 0.0;
+    NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
     FILE *fid; // file for storing prediction should that be necessary
@@ -1148,6 +1126,8 @@ void cross_validate(NUMBER* metrics, const char *filename) {
         }
         if(ar[0]<0) { // if no skill label
             rmse += pow(isTarget-hmms[f]->getNullSkillObs(param.cv_target_obs),2);
+            accuracy += isTarget == (hmms[f]->getNullSkillObs(param.cv_target_obs)>=0.5);
+            
             prob = safe0num(hmms[f]->getNullSkillObs(param.cv_target_obs));
             ll -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
             if(param.predictions>0) // write predictions file if it was opened
@@ -1181,11 +1161,14 @@ void cross_validate(NUMBER* metrics, const char *filename) {
                 fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
         rmse += pow(isTarget-local_pred[param.cv_target_obs],2);
         rmse_no_null += pow(isTarget-local_pred[param.cv_target_obs],2);
+        accuracy += isTarget == (local_pred[param.cv_target_obs]>=0.5);
+        accuracy_no_null += isTarget == (local_pred[param.cv_target_obs]>=0.5);
         prob = safe01num(local_pred[param.metrics_target_obs]);
         ll -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
+    
     // delete problems
     NCAT n_par = 0;
     for(f=0; f<param.cv_folds; f++) {
@@ -1198,15 +1181,17 @@ void cross_validate(NUMBER* metrics, const char *filename) {
     free3DNumber(group_skill_map, param.nG, param.nK);
     if(param.predictions>0) // close predictions file if it was opened
         fclose(fid);
-    metrics[0] = 2*(n_par) + 2*ll;
-    metrics[1] = n_par*safelog(param.N) + 2*ll;
-    metrics[2] = rmse;
-    metrics[3] = rmse_no_null;
+    metrics[0] = ll;
+    metrics[1] = 2*(n_par) + 2*ll;
+    metrics[2] = n_par*safelog(param.N) + 2*ll;
+    metrics[3] = rmse;
+    metrics[4] = rmse_no_null;
+    metrics[5] = accuracy / param.N;
+    metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }
 
 void cross_validate_item(NUMBER* metrics, const char *filename) {
-    NUMBER rmse = 0.0;
-    NUMBER rmse_no_null = 0.0;
+    NUMBER rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
     NCAT2 I; // item
@@ -1320,6 +1305,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
         }
         if(ar[0]<0) { // if no skill label
             rmse += pow(isTarget-hmms[f]->getNullSkillObs(param.cv_target_obs),2);
+            accuracy += isTarget == (hmms[f]->getNullSkillObs(param.cv_target_obs)>=0.5);
+            
             prob = safe0num(hmms[f]->getNullSkillObs(param.cv_target_obs));
             ll -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
             if(param.predictions>0) // write predictions file if it was opened
@@ -1353,6 +1340,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
                 fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
         rmse += pow(isTarget-local_pred[param.cv_target_obs],2);
         rmse_no_null += pow(isTarget-local_pred[param.cv_target_obs],2);
+        accuracy += isTarget == (local_pred[param.cv_target_obs]>=0.5);
+        accuracy_no_null += isTarget == (local_pred[param.cv_target_obs]>=0.5);
         prob = safe01num(local_pred[param.metrics_target_obs]);
         ll -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
 	} // for all data
@@ -1371,15 +1360,18 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
     free3DNumber(group_skill_map, param.nG, param.nK);
     if(param.predictions>0) // close predictions file if it was opened
         fclose(fid);
-    metrics[0] = 2*(n_par) + 2*ll;
-    metrics[1] = n_par*safelog(param.N) + 2*ll;
-    metrics[2] = rmse;
-    metrics[3] = rmse_no_null;
+    metrics[0] = ll;
+    metrics[1] = 2*(n_par) + 2*ll;
+    metrics[2] = n_par*safelog(param.N) + 2*ll;
+    metrics[3] = rmse;
+    metrics[4] = rmse_no_null;
+    metrics[5] = accuracy / param.N;
+    metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }
 
 void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
     NUMBER rmse = 0.0;
-    NUMBER rmse_no_null = 0.0;
+    NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
     NCAT2 I; // item
@@ -1493,6 +1485,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
         }
         if(ar[0]<0) { // if no skill label
             rmse += pow(isTarget-hmms[f]->getNullSkillObs(param.cv_target_obs),2);
+            accuracy += isTarget == (hmms[f]->getNullSkillObs(param.cv_target_obs)>=0.5);
+            
             prob = safe0num(hmms[f]->getNullSkillObs(param.cv_target_obs));
             ll -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
             if(param.predictions>0) // write predictions file if it was opened
@@ -1526,6 +1520,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
                 fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
         rmse += pow(isTarget-local_pred[param.cv_target_obs],2);
         rmse_no_null += pow(isTarget-local_pred[param.cv_target_obs],2);
+        accuracy += isTarget == (local_pred[param.cv_target_obs]>=0.5);
+        accuracy_no_null += isTarget == (local_pred[param.cv_target_obs]>=0.5);
         prob = safe01num(local_pred[param.metrics_target_obs]);
         ll -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
 	} // for all data
@@ -1544,8 +1540,11 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
     free3DNumber(group_skill_map, param.nG, param.nK);
     if(param.predictions>0) // close predictions file if it was opened
         fclose(fid);
-    metrics[0] = 2*(n_par) + 2*ll;
-    metrics[1] = n_par*safelog(param.N) + 2*ll;
-    metrics[2] = rmse;
-    metrics[3] = rmse_no_null;
+    metrics[0] = ll;
+    metrics[1] = 2*(n_par) + 2*ll;
+    metrics[2] = n_par*safelog(param.N) + 2*ll;
+    metrics[3] = rmse;
+    metrics[4] = rmse_no_null;
+    metrics[5] = accuracy / param.N;
+    metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }

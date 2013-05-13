@@ -439,7 +439,7 @@ void HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
 			if(t==0) { // it's alpha(1,i)
                 // compute \alpha_1(i) = \pi_i b_i(o_1)
 				for(i=0; i<nS; i++) {
-					x_data[x]->alpha[t][i] = getPI(x_data[x],i) * getB(x_data[x],i,o);
+					x_data[x]->alpha[t][i] = getPI(x_data[x],i) * ((o<0)?1:getB(x_data[x],i,o)); // if observatiob unknown use 1
                     x_data[x]->c[t] += x_data[x]->alpha[t][i];
                 }
 			} else { // it's alpha(t,i)
@@ -448,7 +448,7 @@ void HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
 					for(j=0; j<nS; j++) {
 						x_data[x]->alpha[t][i] += x_data[x]->alpha[t-1][j] * getA(x_data[x],j,i);
 					}
-					x_data[x]->alpha[t][i] *= getB(x_data[x],i,o);
+					x_data[x]->alpha[t][i] *= ((o<0)?1:getB(x_data[x],i,o)); // if observatiob unknown use 1
                     x_data[x]->c[t] += x_data[x]->alpha[t][i];
 				}
 			}
@@ -482,7 +482,7 @@ void HMMProblem::computeBeta(NCAT xndat, struct data** x_data) {
                 o = this->p->dat_obs->get( x_data[x]->idx[t+1] );
 				for(i=0; i<nS; i++) {
 					for(j=0; j<nS; j++)
-						x_data[x]->beta[t][i] += x_data[x]->beta[t+1][j] * getA(x_data[x],i,j) * getB(x_data[x],j,o);
+						x_data[x]->beta[t][i] += x_data[x]->beta[t+1][j] * getA(x_data[x],i,j) * ((o<0)?1:getB(x_data[x],j,o)); // if observatiob unknown use 1
                     // scale
 //                    x_data[x]->beta[t][i] *= x_data[x]->c[t];
                 }
@@ -545,9 +545,9 @@ void HMMProblem::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
 //        o = dt->obs[t];
         o = this->p->dat_obs->get( dt->idx[t] );
         for(i=0; i<this->p->nS; i++) {
-            fb->gradPI[i] -= dt->beta[t][i] * getB(dt,i,o) / safe0num(dt->p_O_param) + L2penalty(this->p,getPI(dt,i)); // PENALTY
+            fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,getPI(dt,i)); // PENALTY
         }
-//    }
+//    } 
 }
 
 void HMMProblem::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
@@ -559,7 +559,7 @@ void HMMProblem::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
             o = this->p->dat_obs->get( dt->idx[t] );
             for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++)
                 for(j=0; j<this->p->nS; j++)
-                    fb->gradA[i][j] -= dt->beta[t][j] * getB(dt,j,o) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,getA(dt,i,j)); // PENALTY
+                    fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,getA(dt,i,j)); // PENALTY
         }
 //    }
 }
@@ -809,8 +809,8 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
             // update p(L)
                 pLe_denom = 0.0;
                 // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
-                for(i=0; i<nS; i++) pLe_denom += group_skill_map[g][k][i] * getB(dt,i,o);//B[i][o];
-                for(i=0; i<nS; i++) pLe[i] = group_skill_map[g][k][i] * getB(dt,i,o)/*B[i][o]*/ / safe0num(pLe_denom);
+                for(i=0; i<nS; i++) pLe_denom += group_skill_map[g][k][i] * getB(dt,i,o);
+                for(i=0; i<nS; i++) pLe[i] = group_skill_map[g][k][i] * getB(dt,i,o) / safe0num(pLe_denom);
                 // 2. L = (pLe'*A)';
                 for(i=0; i<nS; i++) group_skill_map[g][k][i] = 0.0;
                 for(j=0; j<nS; j++)
@@ -896,9 +896,9 @@ void HMMProblem::computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat
             pLe_denom = 0;
             // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
             for(i=0; i<nS; i++)
-                pLe_denom += (pL[i]) * getB(x_data[x],i,o);//a_B[i][o];
+                pLe_denom += (pL[i]) * ((o<0)?1:getB(x_data[x],i,o)); // if observatiob unknown use 1
             for(i=0; i<nS; i++)
-                pLe[i] = pL[i] * getB(x_data[x],i,o)/*a_B[i][o]*/ / pLe_denom;
+                pLe[i] = pL[i] * ((o<0)?1:getB(x_data[x],i,o)) / pLe_denom; // if observatiob unknown use 1 
             //            projectsimplex(pLe, param->nS);
             // 2. L = (pLe'*A)';
             for(i=0; i<nS; i++) pL[i] = 0.0;
@@ -978,7 +978,8 @@ void HMMProblem::FitNullSkill(NUMBER* loglik_rmse, bool keep_SE) {
         for(t=0; t<dat->ndat; t++) {
 //            o = dat->obs[t];
             o = this->p->dat_obs->get( dat->idx[t] );
-            this->null_obs_ratio[ o ]++;
+            if(((int)o)>=0) // -1 we skip \xff in char notation
+                this->null_obs_ratio[ o ]++;
         }
     }
     // produce means

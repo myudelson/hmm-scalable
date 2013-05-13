@@ -279,14 +279,14 @@ void HMMProblemPiAGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( this->PI[ dt->k ][i] * (1-this->PI[ dt->k ][i]) );
-			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * getB(dt,i,o) / safe0num(dt->p_O_param);
+			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PI[ dt->k ][i]); // ;
         }
     }
     else
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( this->PIg[ dt->g ][i] * (1-this->PIg[ dt->g ][i]) );
-			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * getB(dt,i,o) / safe0num(dt->p_O_param);
+			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PIg[ dt->g ][i]); // ;
         }
 }
 
@@ -302,7 +302,7 @@ void HMMProblemPiAGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
                 for(j=0; j<this->p->nS; j++) {
                     combined = getA(dt,i,j);
                     deriv_logit = 1 / safe0num( this->A[ dt->k ][i][j] * (1-this->A[ dt->k ][i][j]) );
-                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * getB(dt,j,o) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
+                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,this->A[ dt->k ][i][j]); // PENALTY
                 }
         }
     }
@@ -314,7 +314,7 @@ void HMMProblemPiAGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
                 for(j=0; j<this->p->nS; j++) {
                     combined = getA(dt,i,j);
                     deriv_logit = 1 / safe0num( this->Ag[ dt->g ][i][j] * (1-this->Ag[ dt->g ][i][j]) );
-                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * getB(dt,j,o) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
+                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,this->Ag[ dt->g ][i][j]); // PENALTY
                 }
         }
 }

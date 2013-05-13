@@ -16,11 +16,11 @@ all: train predict
 #	$(CXX) $${SHARED_LIB_FLAG} linear.o tron.o blas/blas.a -o liblinear.so.$(SHVER)
 
 
-#train: tron.o linear.o utils.o StripedArray.o FitBit.o HMMProblem.o HMMProblemKT.o HMMProblemPiG.o HMMProblemPiGK.o HMMProblemAGK.o HMMProblemPiAGK.o trainhmm.cpp blas/blas.a
-#	$(CXX) $(CFLAGS) -o trainhmm trainhmm.cpp tron.o linear.o utils.o HMMProblem.o HMMProblemKT.o HMMProblemPiG.o HMMProblemPiGK.o HMMProblemAGK.o HMMProblemPiAGK.o $(LIBS)
+#train: tron.o linear.o utils.o StripedArray.o FitBit.o HMMProblem.o HMMProblemKT.o HMMProblemPiG.o HMMProblemPiGK.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o trainhmm.cpp blas/blas.a
+#	$(CXX) $(CFLAGS) -o trainhmm trainhmm.cpp tron.o linear.o utils.o HMMProblem.o HMMProblemKT.o HMMProblemPiG.o HMMProblemPiGK.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o $(LIBS)
 
-train: utils.o StripedArray.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiAGK.o HMMProblemAGK.o trainhmm.cpp
-	$(CXX) $(CFLAGS) -o trainhmm trainhmm.cpp utils.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiAGK.o HMMProblemAGK.o
+train: utils.o StripedArray.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemAGK.o trainhmm.cpp
+	$(CXX) $(CFLAGS) -o trainhmm trainhmm.cpp utils.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemAGK.o
 
 
 predict: utils.o StripedArray.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiAGK.o HMMProblemAGK.o predicthmm.cpp
@@ -56,6 +56,8 @@ HMMProblemAGK.o: HMMProblemAGK.cpp HMMProblemAGK.h
 	$(CXX) $(CFLAGS) -c -o HMMProblemAGK.o HMMProblemAGK.cpp
 HMMProblemPiAGK.o: HMMProblemPiAGK.cpp HMMProblemPiAGK.h
 	$(CXX) $(CFLAGS) -c -o HMMProblemPiAGK.o HMMProblemPiAGK.cpp
+HMMProblemPiABGK.o: HMMProblemPiABGK.cpp HMMProblemPiABGK.h
+	$(CXX) $(CFLAGS) -c -o HMMProblemPiABGK.o HMMProblemPiABGK.cpp
 
 clean:
 	make -C blas clean
