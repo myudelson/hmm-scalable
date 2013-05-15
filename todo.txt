@@ -2,49 +2,27 @@ HTK - Hidden Markov Model Toolkit (HTK) [for speech recognition/synthesis, handw
 HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literature
 
 == HMM todo ==
+- Collapse all gradient descent to one class with "switchers" for per-student and
+    per-skill attributes
+- add per-item (problem) effects
 - step tolerance == convergence tolerance, BEWARE! when conv tolerance grows
 - check whether AIC and BIC computed correctly (n.parameters in particular)
-- remove ->cut!=0 as blocking for computing gradient
-- Revisit all fitting algorithms in order to optimize repetitive calls to get pO|model for stepping etc.
-- Recycle should be called after computeAlpha… in gradient it's already called (check)
 
-- for RMSE and LL, no need to re-read data and waste space for K*G*nO for pL
-- make all loglik and RMSE computation more efficient
+- (?) striped data  - destructive read, if beyond certain border, delete previous
 
-- striped data  - destructive read, if beyond certain border, delete previous
-
-- Gradient Descent - is not tested with fitting as one skill first
 - Baum Welch - does not have fitting of as one skill first
 - Baum Welch - does not have selective fitting of PI,A,B
-- All other steppers/fitters (Barzalai Borwein, LevinsonRabiner…, Exponentiated etc.) are not updated properly.
-- algorithm is a parameter for predicthmm
-	- reading model files should be done by problem object
-- abstract class should be created or all methods should have standard signatures
+- All other steppers/fitters (Barzalai Borwein, LevinsonRabiner, Exponentiated etc.) are not updated properly.
 
 == Assumptions ==
-- columns: observation, user, step, skill[, opportunity]
-
-=== ds445 ===
-- 0.450512,  - basic by-skill (LevinsonRabinerSondhi1982 step)
-- 0.450712,  - basic by-skill (Exponentiated step, exp takes to Inf sometimes :( )
-- 0.454851 - basic by-skill (Linear step, log10 scale all together)
-- 0.454927 - basic by-skill (Linear step, log10 scale separately)
-== ds392 ==
-- 0.243803 - t 0.01,   basic (LevinsonRabinerSondhi Step) 
-- 0.244872 - t 0.01,   basic (Linear Step) 
-- 0.24387  - t 0.001,  basic (Linear Step) 
-- 0.243866 - t 0.0001, basic (Linear Step) 
-- 0.262217 - t 0.01,   basic (Baum&Welch Step) 
-
-
-== working with files ==
+- columns: observation, user, step, skill[, time in ms]
 
 
 == GGordon ==GraphLab Carlos CS CMU - parallel
 - Tinkerers, less flex than R bit more
 - DataShop access to data
 - potential clients: Ken, John, Phil, Emma, 
-- get hub, sourceforge - repositories, search there
+- git hub, sourceforge - repositories, search there
 - Uncertainty in AI mail list
 
 
