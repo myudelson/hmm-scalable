@@ -29,4 +29,9 @@ HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literatur
 - git hub, sourceforge - repositories, search there
 - Uncertainty in AI mail list
 
+== commandline commits/push ==
+push: git push dropbox master
+
+
+
 
