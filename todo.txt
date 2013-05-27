@@ -2,12 +2,16 @@ HTK - Hidden Markov Model Toolkit (HTK) [for speech recognition/synthesis, handw
 HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literature
 
 == HMM todo ==
+- change per-student effects to resemble Logistic Regression: student pLo and pT
+    are NOT correction to skill's pLo and pT, but true student intercept and 
+    slope emulators
+- add per-item (problem) effects
 - Collapse all gradient descent to one class with "switchers" for per-student and
     per-skill attributes
-- add per-item (problem) effects
 - step tolerance == convergence tolerance, BEWARE! when conv tolerance grows
 - check whether AIC and BIC computed correctly (n.parameters in particular)
-
+- add capability to run multiple model fits on one input file read (e.g., via a
+    -F <filename> parameters where file contains multiple modeling specs
 - (?) striped data  - destructive read, if beyond certain border, delete previous
 
 - Baum Welch - does not have fitting of as one skill first

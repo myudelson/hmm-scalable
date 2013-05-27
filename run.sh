@@ -1,6 +1,7 @@
 #!/bin/sh
  
-solvers="1.2 4.2 6.2 5.2 7.2"
+#solvers="1.2 4.2 6.2 5.2 7.2"
+solvers="5.2 7.2"
 flag="0"
 cv="10,i 10,g 10,n"
 #dataset="a89 b89"
@@ -9,6 +10,7 @@ kcmodel="kts" # ss
 predict="0"
 metrics="1"
 #delimiters="# ~" # here # is a fake delimiter that is nowhere in our data # HARDCODED
+#regularization="0 4 2 1 0.5 0.25 0.125 0.0625 0.03125 0.015625"
 regularization="0 4 2 1 0.5 0.25 0.125 0.0625 0.03125 0.015625"
 
 #./trainhmm -s 1.2 -m 1 -p 1 -d ~ -v 10 data/a89_kts_train.txt > a89_kts_out_s1.2_v10.txt

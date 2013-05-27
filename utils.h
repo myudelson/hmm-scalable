@@ -95,17 +95,34 @@ struct FitResult {
 struct data {
 	NDAT ndat; // number of data points (observations)
 	NDAT cnt;  // help counter, used for building the data and "banning" data from being fit when cross-valudating based on group
-//	NPAR *obs; // onservations array - will become the pointer array to the big data
+    //	NPAR *obs; // onservations array - will become the pointer array to the big data
     NDAT *idx; // these are 'ndat' indices to the through arrays (e.g. param.dat_obs and param.dat_item)
 	NUMBER *c; // nS  - scaling factor
     int *time;
-	NUMBER **alpha; // ndat x nS 
-	NUMBER **beta;  // ndat x nS 
-	NUMBER **gamma; // ndat x nS 
-	NUMBER ***xi; // ndat x nS x nS 
+	NUMBER **alpha; // ndat x nS
+	NUMBER **beta;  // ndat x nS
+	NUMBER **gamma; // ndat x nS
+	NUMBER ***xi; // ndat x nS x nS
 	NUMBER p_O_param; // ndat
     NUMBER loglik; // loglikelihood
 	NCAT k,g; // pointers to skill (k) and group (g)
+};
+
+// a sequence of observations (usually belonging to a student with respect to a property /e.g. problem/)
+struct pdata {
+	NDAT ndat; // number of data points (observations)
+	NDAT cnt;  // help counter, used for building the data and "banning" data from being fit when cross-valudating based on group
+    //	NPAR *obs; // onservations array - will become the pointer array to the big data
+    NDAT *idx; // these are 'ndat' indices to the through arrays (e.g. param.dat_obs and param.dat_item)
+	NUMBER *c; // nS  - scaling factor
+    int *time;
+	NUMBER **alpha; // ndat x nS
+	NUMBER **beta;  // ndat x nS
+	NUMBER **gamma; // ndat x nS
+	NUMBER ***xi; // ndat x nS x nS
+	NUMBER p_O_param; // ndat
+    NUMBER loglik; // loglikelihood
+	NCAT p,g; // pointers to skill (k) and group (g)
 };
 
 // parameters of the problem, including configuration parameters, vocabularies of string values, and data
