@@ -162,3 +162,19 @@
 awk -F'\t' 'BEGIN{OFS=""} {print $3}' a89_kts_train.txt > a89_kts_train__ITEM.txt # save just item
 sort a89_kts_train__ITEM.txt > a89_kts_train__ITEM_srt.txt
 
+
+# unique items
+awk -F'\t' 'BEGIN{OFS="\t"} {print 2-$1,$2,$3,$4}' a89_kts_train01.txt > a89_kts_train.txt
+
+# $3 step, $2 student
+gawk -F'\t' 'BEGIN{OFS="\t"} { if(a[$2,$3]==0) { a[$2,$3] = ($1==0)?-1:1; } } END { for (i in a) { print i,a[i] } }' a89_kts_train01.txt > a89_kts_train01_recess.txt
+
+# ctrl+v ctrl+i
+sed -i ''  's/Unit /<TAB>Unit /' a89_kts_train01_recess.txt 
+sed -i ''  's/<TAB>-1/<TAB>0/' a89_kts_train01_recess.txt
+
+
+
+# not vocabulary
+awk -F'\t' '{ a[$2]++; c[$2]+=$3 } END { for (i in a) { print i"\t"c[i]/a[i] } }' a89_kts_train01_recess.txt > a89_kts_train01_voc_i.txt
+# mean=1, sd - measure, z-score, convert to probability treating as logit

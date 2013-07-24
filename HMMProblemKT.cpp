@@ -474,7 +474,7 @@ NUMBER HMMProblemKT::GradientDescentKT2() {
     for(NCAT k=0; k<nK; k++) {
         counts[k] = 0;
         for(NCAT gidx=0; gidx<this->p->k_numg[k]; gidx++)
-            counts[k] += this->p->k_g_data[k][gidx]->ndat;
+            counts[k] += this->p->k_g_data[k][gidx]->n;
     }
     NDAT n_max = 0;
     for(NCAT k=0; k<nK; k++)

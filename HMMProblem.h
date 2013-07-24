@@ -80,13 +80,13 @@ protected:
 	bool non01constraints; // whether there are lower or upper boundaries different from 0,1 respectively
 	
 	struct param *p; // data and params
-
+    
 	//
 	// Derived
 	//
-//	NUMBER* gradPI; // gradient of initial state probabilities
-//	NUMBER** gradA; // gradient of transition matrix
-//	NUMBER** gradB; // gradient of observation matrix
+    //	NUMBER* gradPI; // gradient of initial state probabilities
+    //	NUMBER** gradA; // gradient of transition matrix
+    //	NUMBER** gradB; // gradient of observation matrix
 	
 	virtual void init(struct param *param); // non-fit specific initialization
 	virtual void destroy(); // non-fit specific descruction
@@ -111,24 +111,24 @@ protected:
     virtual NUMBER doLinearStep(NCAT xndat, struct data** x_data, FitBit *fb, NCAT copy);//NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB);
     NUMBER doConjugateLinearStep(NCAT xndat, struct data** x_data, FitBit *fb, NCAT copy);//NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1);
     NUMBER doBarzalaiBorweinStep(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1);
-//    bool checkConvergence(NUMBER* PI, NUMBER** A, NUMBER** B, NUMBER* PI_m1, NUMBER** A_m1, NUMBER** B_m1, bool flags[3]);
+    //    bool checkConvergence(NUMBER* PI, NUMBER** A, NUMBER** B, NUMBER* PI_m1, NUMBER** A_m1, NUMBER** B_m1, bool flags[3]);
     // bridge to Liblinear - all objects are liblinear objects
-//    void createLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space);
-//    void createLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space, NCAT k); // multiple KC's separately
-//    void recycleLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space);
-//    void GradientDescent1Skill(FitBit *fb); // return -LL for the model
+    //    void createLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space);
+    //    void createLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space, NCAT k); // multiple KC's separately
+    //    void recycleLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space);
+    //    void GradientDescent1Skill(FitBit *fb); // return -LL for the model
     FitResult GradientDescentBit(NCAT x, NCAT xndat, struct data** x_data, NPAR kg_flag, FitBit *fb, bool is1SkillForAll); // for 1 skill or 1 group, all 1 skill for all data
-//    void GradientConjugateDescent1Skill(FitBit *fb); // return -LL for the model
+    //    void GradientConjugateDescent1Skill(FitBit *fb); // return -LL for the model
     virtual NUMBER GradientDescent(); // return -LL for the model
     void readNullObsRatio(FILE *fid, NDAT *line_no);
-private:
 	bool checkPIABConstraints(NUMBER* a_PI, NUMBER** a_A, NUMBER** a_B); // all constraints, inc row sums
+private:
     // fitting methods - helpers (hidden)
     // fitting methods (hidden)
-//    NUMBER ConjugateGradientDescent(NPAR kg_flag); // return -LL for the model
+    //    NUMBER ConjugateGradientDescent(NPAR kg_flag); // return -LL for the model
     NUMBER BaumWelchSkill();
     void doBaumWelchStep(NCAT xndat, struct data** x_data, FitBit *fb);//, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B);
-//    void predictMetricsGroup(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill);
+    //    void predictMetricsGroup(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill);
     // write model
 	void toFileSkill(const char *filename);
 	void toFileGroup(const char *filename);

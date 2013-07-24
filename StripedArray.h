@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
+#include <math.h>
 
 #ifndef STRIPEDARRAY_H
 #define STRIPEDARRAY_H
@@ -20,6 +21,8 @@ template <typename T>
 class StripedArray {
 public:
 	StripedArray();
+	StripedArray(unsigned int _size, bool a_complex); // predefined size
+	StripedArray(FILE *f, unsigned long N);
 	StripedArray(bool a_complex);
 	~StripedArray();
 	unsigned long getSize();
@@ -28,6 +31,7 @@ public:
 	T get(unsigned long idx);
 	void set(unsigned long idx, T value);
 	void clear();
+    unsigned long toBinFile(FILE* f);
 private:
 	unsigned long size; // linear
 	unsigned long stripe_size;
@@ -37,6 +41,7 @@ private:
 	T** stripes;
 	void addStripe();
 };
+
 
 template <typename T>
 StripedArray<T>::StripedArray() {
@@ -48,14 +53,52 @@ StripedArray<T>::StripedArray() {
     this->complex = false;
 }
 
+// predefined size
+template <typename T>
+StripedArray<T>::StripedArray(unsigned int _size, bool a_complex) {
+	stripe_size = 20000;
+    complex = a_complex;
+	size = _size;
+	nstripes = (unsigned long)ceil((double)size/stripe_size);
+	size_last_stripe = (unsigned long)fmod(size, stripe_size);
+	stripes = (T **) calloc(nstripes, sizeof(T*));
+    unsigned long num;
+    for(unsigned long i=0; i<nstripes; i++) {
+        num = (i<(nstripes-1)?stripe_size:size_last_stripe);
+        stripes[i] = (T*)calloc(num, sizeof(T)); // alloc data
+    }
+}
+
+// from file
+template <typename T>
+StripedArray<T>::StripedArray(FILE *f, unsigned long N) {
+	stripe_size = 20000;
+    complex = false;
+	size = N;
+	nstripes = (unsigned long)ceil((double)N/stripe_size);
+	size_last_stripe = (unsigned long)fmod(N, stripe_size);
+	stripes = (T **) calloc(nstripes, sizeof(T*));
+    unsigned long num;
+    unsigned long nread;
+    for(unsigned long i=0; i<nstripes; i++) {
+        num = (i<(nstripes-1)?stripe_size:size_last_stripe);
+        stripes[i] = (T*)calloc(num, sizeof(T)); // alloc data
+        nread = fread (stripes[i], sizeof(T), num, f);
+        if(nread != num) {
+            fprintf(stderr,"Error reading data from file\n");
+            return;
+        }
+    }
+}
+
 template <typename T>
 StripedArray<T>::StripedArray(bool a_complex) {
-	this->size = 0;
-	this->stripe_size = 20000;
-	this->nstripes = 0;
-	this->size_last_stripe = 0;
-	this->stripes = NULL;
-    this->complex = a_complex;
+	size = 0;
+	stripe_size = 20000;
+	nstripes = 0;
+	size_last_stripe = 0;
+	stripes = NULL;
+    complex = a_complex;
 }
 
 template <typename T>
@@ -118,7 +161,7 @@ template <typename T>
 T StripedArray<T>::get(unsigned long idx) {
 	if(idx>(this->size-1)) {
 		fprintf(stderr, "Exception! Element index %lu exceeds array size %lu\n",idx,this->size);
-		return 0;
+		return NULL;
 	}
 	unsigned long idx_stripe = idx / this->stripe_size;
 	unsigned long idx_within = idx % this->stripe_size;
@@ -171,5 +214,21 @@ void StripedArray<T>::addStripe() {
 	this->size_last_stripe = 0; // reset counter
 }
 
+template <typename T>
+unsigned long StripedArray<T>::toBinFile(FILE *f) {
+    unsigned long num;
+    unsigned long nwrit;
+    unsigned long all_nwrit = 0;
+    for(unsigned long i=0; i<nstripes; i++) {
+        num = (unsigned int)(i<(nstripes-1))?stripe_size:size_last_stripe;
+        nwrit = fwrite (stripes[i] , sizeof(T), num, f);
+        all_nwrit += nwrit;
+        if(num != nwrit) {
+            fprintf(stderr, "Error writing. Attempted to write %lu but %lu were written.\n",num, nwrit);
+            return 0;
+        }
+    }
+    return all_nwrit;
+}
 
 #endif

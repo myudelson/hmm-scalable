@@ -100,7 +100,7 @@ void HMMProblemPiG::computeGradientsAB(NCAT xndat, struct data** x_data, NUMBER*
 		// Gradient with respect to PI
 		t = 0;
         // skip gradient for PI
-		for(t=0; t<x_data[x]->ndat; t++) {
+		for(t=0; t<x_data[x]->n; t++) {
 			o = x_data[x]->obs[t];
 			// Gradient with respect to A
 			// \frac{\partial J}{\partial a_{ij}} = - \frac{1}{L_{tot}} \sum_{t=2}^T \beta_t(j) b_j(o_t) \alpha_{t-1}(i)

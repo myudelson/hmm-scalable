@@ -16,7 +16,7 @@ int compareNumber (const void * a, const void * b) {
 }
 
 int compareNumberRev (const void * a, const void * b) {
-//	return ( *(NUMBER*)b - *(NUMBER*)a );
+    //	return ( *(NUMBER*)b - *(NUMBER*)a );
 	NUMBER cmp = ( *(NUMBER*)b - *(NUMBER*)a );
 	return -1*(cmp<0) + 0 + (cmp>0)*1;
 }
@@ -31,14 +31,14 @@ void qsortNumberRev(NUMBER* ar, NPAR size) {
 
 // refer to http://arxiv.org/abs/1101.6081 for source
 void projsimplex(NUMBER* y, NPAR size) {
-
+    
 	bool bget = false;
-	NUMBER *s = init1DNumber(size);
-	cpy1DNumber(y, s, size);
+	NUMBER *s = init1D<NUMBER>(size);
+	cpy1D<NUMBER>(y, s, size);
 	
 	qsortNumberRev(s, size);
 	NUMBER tmpsum = 0, tmax = 0;
-
+    
 	for(NPAR i=0; i<(size-1); i++) {
 		tmpsum = tmpsum + s[i];
 		tmax = (tmpsum - 1)/(i+1);
@@ -49,7 +49,7 @@ void projsimplex(NUMBER* y, NPAR size) {
 	}
 	if(!bget) tmax = (tmpsum + s[size-1] -1)/size;
 	free(s);
-
+    
 	for(NPAR i=0; i<size; i++)
 		y[i] = ((y[i]-tmax)<0)?0:(y[i]-tmax);
 }
@@ -92,7 +92,7 @@ void projectsimplex(NUMBER* ar, NPAR size) {
 			at_lo[i] = (ar[i]<0)?1:0;
 			ar[i] = (at_lo[i]==1)?0:ar[i];
 			num_at_lo += at_lo[i];
-
+            
 			at_hi[i] = (ar[i]>1)?1:0;
 			ar[i] = (at_hi[i]==1)?1:ar[i];
 			num_at_hi += at_hi[i];
@@ -143,126 +143,6 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 
 
 
-
-void toZero1DNumber(NUMBER *ar, NDAT size) { // 1D array
-	NDAT i;
-	for(i=0; i<size; i++)
-		ar[i] = 0;	
-}
-
-void toZero2DNumber(NUMBER **ar, NDAT size1, NPAR size2) { // 1D array
-	NDAT i;
-	NPAR j;
-	for(i=0; i<size1; i++)
-		for(j=0; j<size2; j++)
-			ar[i][j] = 0;
-}
-
-void toZero3DNumber(NUMBER ***ar, NDAT size1, NPAR size2, NPAR size3) { // 1D array
-	NDAT i;
-	NPAR j, m;
-	for(i=0; i<size1; i++)
-		for(j=0; j<size2; j++)
-            for(m=0; m<size2; m++)
-                ar[i][j][m] = 0;
-}
-
-NUMBER* init1DNumber(NDAT size) {
-	NUMBER* ar = Calloc(NUMBER,size);
-//	toZero1DNumber(ar, size);
-	return ar;
-}
-
-NUMBER** init2DNumber(NDAT size1, NPAR size2) {
-	NDAT i;
-	NUMBER** ar = (NUMBER **)Calloc(NUMBER *,size1);
-	for(i=0; i<size1; i++)
-		ar[i] = (NUMBER *)Calloc(NUMBER, size2);
-//	toZero2DNumber(ar, size1, size2);
-	return ar;
-}
-
-NUMBER*** init3DNumber(NCAT size1, NDAT size2, NPAR size3) {
-	NCAT i;
-	NDAT j;
-	NUMBER*** ar = Calloc(NUMBER **, size1);
-	for(i=0; i<size1; i++) {
-		ar[i] = Calloc(NUMBER*, size2);
-		for(j=0; j<size2; j++)
-			ar[i][j] = Calloc(NUMBER, size3);
-	}
-	return ar;
-}
-
-NPAR** init2DNCat(NCAT size1, NCAT size2) {
-	NCAT i;
-	NPAR** ar = Calloc(NPAR *,size1);
-	for(i=0; i<size1; i++)
-		ar[i] = Calloc(NPAR, size2);
-	return ar;
-}
-
-void free2DNumber(NUMBER **ar, NDAT size1) {
-	for(NDAT i=0; i<size1; i++)
-		free(ar[i]);
-	free(ar);
-}
-
-void free3DNumber(NUMBER ***ar, NCAT size1, NDAT size2) {
-	for(NCAT i=0; i<size1; i++) {
-		for(NDAT j=0; j<size2; j++)
-			free(ar[i][j]);
-		free(ar[i]);
-	}
-	free(ar);
-}
-
-void free2DNCat(NPAR**ar, NCAT size1) {
-	NCAT i;
-	for(i=0; i<size1; i++)
-		free(ar[i]);
-	free(ar);
-}
-
-void cpy1DNumber(NUMBER* source, NUMBER* target, NDAT size) {
-	memcpy( target, source, sizeof(NUMBER)*size );
-}
-
-void cpy2DNumber(NUMBER** source, NUMBER** target, NDAT size1, NPAR size2) {
-	for(NDAT i=0; i<size1; i++)
-		memcpy( target[i], source[i], sizeof(NUMBER)*size2 );
-}
-
-void cpy3DNumber(NUMBER*** source, NUMBER*** target, NDAT size1, NPAR size2, NPAR size3) {
-	for(NDAT t=0; t<size1; t++)
-        for(NPAR i=0; i<size2; i++)
-            memcpy( target[t][i], source[t][i], sizeof(NUMBER)*size3 );
-}
-
-void swap1DNumber(NUMBER* source, NUMBER* target, NDAT size) {
-    NUMBER* buffer = init1DNumber(size);
-	memcpy( target, buffer, sizeof(NUMBER)*size );
-	memcpy( source, target, sizeof(NUMBER)*size );
-	memcpy( buffer, source, sizeof(NUMBER)*size );
-    free(buffer);
-}
-
-void swap2DNumber(NUMBER** source, NUMBER** target, NDAT size1, NPAR size2) {
-    NUMBER** buffer = init2DNumber(size1, size2);
-    cpy2DNumber(target, buffer, size1, size2);
-    cpy2DNumber(source, target, size1, size2);
-    cpy2DNumber(buffer, source, size1, size2);
-    free2DNumber(buffer, size1);
-}
-
-void swap3DNumber(NUMBER*** source, NUMBER*** target, NDAT size1, NPAR size2, NPAR size3) {
-    NUMBER*** buffer = init3DNumber(size1, size2, size3);
-    cpy3DNumber(target, buffer, size1, size2, size3);
-    cpy3DNumber(source, target, size1, size2, size3);
-    cpy3DNumber(buffer, source, size1, size2, size3);
-    free3DNumber(buffer, size1, size2);
-}
-
 NUMBER safe01num(NUMBER val) {
     //    val = (val<0)?0:((val>1)?1:val); // squeeze into [0,1]
     //	return val + SAFETY*(val==0) - SAFETY*(val==1); // then futher in
@@ -270,7 +150,7 @@ NUMBER safe01num(NUMBER val) {
 }
 
 NUMBER safe0num(NUMBER val) {
-//    return (fabs(val)<SAFETY)?(SAFETY*(val>=0) + SAFETY*(val<0)*(-1)):val;
+    //    return (fabs(val)<SAFETY)?(SAFETY*(val>=0) + SAFETY*(val<0)*(-1)):val;
     return (val<SAFETY)?SAFETY:val;
 }
 
@@ -293,11 +173,11 @@ NUMBER sigmoid(NUMBER val) {
 NUMBER logit(NUMBER val) {
     NUMBER prob = (val<=0)? SAFETY : ( (val>=1)? (1-SAFETY) : val );
     return log( prob / (1-prob) );
-//    return fsafelog(val/safe0num(1-val));
+    //    return fsafelog(val/safe0num(1-val));
 }
 
 //#define logit(y)
-//#define logit(y) 
+//#define logit(y)
 //NUMBER logit(NUMBER val) {
 //    //	return fsafelog( val / safe0num(1-val) );
 //    return fastsafelog((val+(val==0)*SAFETY)/(1-val+(val>=1)*SAFETY));
@@ -357,9 +237,9 @@ NUMBER doLog10Scale1D(NUMBER *ar, NPAR size) {
 	if(max_10_scale > 0)
 		for(i=0; i<size; i++)
 			ar[i] = ar[i] / pow(10, max_10_scale);
-//	if(min_10_scale<1000)
-//		for(i=0; i<size; i++)
-//			ar[i] = ar[i] / pow(10, min_10_scale);
+    //	if(min_10_scale<1000)
+    //		for(i=0; i<size; i++)
+    //			ar[i] = ar[i] / pow(10, min_10_scale);
 	return pow(10, max_10_scale);
 }
 
@@ -384,10 +264,10 @@ NUMBER doLog10Scale2D(NUMBER **ar, NPAR size1, NPAR size2) {
 		for(i=0; i<size1; i++)
 			for(j=0; j<size2; j++)
 				ar[i][j] = ar[i][j] / pow(10, max_10_scale);
-//	if(min_10_scale<1000)
-//		for(i=0; i<size1; i++)
-//			for(j=0; j<size2; j++)
-//				ar[i][j] = ar[i][j] / pow(10, min_10_scale);
+    //	if(min_10_scale<1000)
+    //		for(i=0; i<size1; i++)
+    //			for(j=0; j<size2; j++)
+    //				ar[i][j] = ar[i][j] / pow(10, min_10_scale);
 	return pow(10, max_10_scale);
 }
 
@@ -407,14 +287,14 @@ NUMBER doLog10Scale1DGentle(NUMBER *grad, NUMBER *par, NPAR size) {
 			max_10_scale = candidate;
         // delta: if grad<0 - distance to 1, if grad>0 - distance to 0
         candidate = (grad[i]<0)*(1-par[i]) + (grad[i]>0)*(par[i]) +
-            ( (fabs(par[i])< SAFETY) || (fabs(1-par[i])< SAFETY) ); // these terms are there to avoid already extreme 0, 1 values;
+        ( (fabs(par[i])< SAFETY) || (fabs(1-par[i])< SAFETY) ); // these terms are there to avoid already extreme 0, 1 values;
         if( candidate < min_delta)
             min_delta = candidate;
 	}
     max_grad = max_grad / pow(10, max_10_scale);
     if(max_10_scale > 0)
         for(i=0; i<size; i++)
-        grad[i] = ( 0.95 * min_delta / max_grad) * grad[i] / pow(10, max_10_scale);
+            grad[i] = ( 0.95 * min_delta / max_grad) * grad[i] / pow(10, max_10_scale);
     return ( 0.95 * min_delta / max_grad ) / pow(10, max_10_scale);
 }
 
@@ -434,7 +314,7 @@ NUMBER doLog10Scale2DGentle(NUMBER **grad, NUMBER **par, NPAR size1, NPAR size2)
 				max_10_scale = candidate;
             // delta: if grad<0 - distance to 1, if grad>0 - distance to 0
             candidate = (grad[i][j]<0)*(1-par[i][j]) + (grad[i][j]>0)*(par[i][j]) +
-                ( (fabs(par[i][j])< SAFETY) || (fabs(1-par[i][j])< SAFETY) ); // these terms are there to avoid already extreme 0, 1 values
+            ( (fabs(par[i][j])< SAFETY) || (fabs(1-par[i][j])< SAFETY) ); // these terms are there to avoid already extreme 0, 1 values
             if( candidate < min_delta)
                 min_delta = candidate;
 		}
@@ -455,7 +335,7 @@ void zeroLabels(NCAT xdat, struct data** x_data) { // set counts in data sequenc
 		x_data[x][0].cnt = 0;
 }
 
-// whether one value is no less than 20% of the sum 
+// whether one value is no less than 20% of the sum
 bool isBalancedArray(NUMBER *ar, NPAR size) {
 	NPAR i;
 	NUMBER sum = 0;
@@ -476,7 +356,7 @@ NUMBER eexp(NUMBER x) {
 NUMBER eln(NUMBER x) {
 	if(x==0 || (x>0 && x<SAFETY))
 		return LOGZERO;
-	else if(x>0) 
+	else if(x>0)
 		return safelog(x);
 	else {
 		printf("Error, log of negative value!\n");
@@ -501,7 +381,7 @@ NUMBER elnsum(NUMBER eln_x, NUMBER eln_y) {
 NUMBER elnprod(NUMBER eln_x, NUMBER eln_y) {
 	if( (eln_x>=LOGZERO) || (eln_y>=LOGZERO) )
 		return LOGZERO;
-	else		
+	else
 		return eln_x + eln_y;
 }
 
@@ -510,6 +390,7 @@ NUMBER elnprod(NUMBER eln_x, NUMBER eln_y) {
 //
 
 void set_param_defaults(struct param *param) {
+    param->item_complexity = NULL;
 	// configurable - set
 	param->tol                   = 0.01;
 	param->time                  = 0;
@@ -522,6 +403,7 @@ void set_param_defaults(struct param *param) {
     param->metrics               = 0;
     param->metrics_target_obs    = 0;
     param->predictions           = 0;
+    param->binaryinput           = 0;
 	param->C                     = 0;
 	param->init_params			 = Calloc(NUMBER, 5);
 	param->init_params[0] = 0.5; // PI[0]
@@ -530,11 +412,11 @@ void set_param_defaults(struct param *param) {
 	param->init_params[3] = 0.8; // p(not slip)
 	param->init_params[4] = 0.2; // p(guess)
 	param->param_lo				= Calloc(NUMBER, 10);
-	param->param_lo[0] = 0; param->param_lo[1] = 0; param->param_lo[2] = 1; param->param_lo[3] = 0; param->param_lo[4] = 0; 
-	param->param_lo[5] = 0; param->param_lo[6] = 0; param->param_lo[7] = 0; param->param_lo[8] = 0; param->param_lo[9] = 0; 
+	param->param_lo[0] = 0; param->param_lo[1] = 0; param->param_lo[2] = 1; param->param_lo[3] = 0; param->param_lo[4] = 0;
+	param->param_lo[5] = 0; param->param_lo[6] = 0; param->param_lo[7] = 0; param->param_lo[8] = 0; param->param_lo[9] = 0;
 	param->param_hi				= Calloc(NUMBER, 10);
-	param->param_hi[0] = 1.0; param->param_hi[1] = 1.0; param->param_hi[2] = 1.0; param->param_hi[3] = 0.0; param->param_hi[4] = 1.0; 
-	param->param_hi[5] = 1.0; param->param_hi[6] = 1.0; param->param_hi[7] = 0.3; param->param_hi[8] = 0.3; param->param_hi[9] = 1.0; 
+	param->param_hi[0] = 1.0; param->param_hi[1] = 1.0; param->param_hi[2] = 1.0; param->param_hi[3] = 0.0; param->param_hi[4] = 1.0;
+	param->param_hi[5] = 1.0; param->param_hi[6] = 1.0; param->param_hi[7] = 0.3; param->param_hi[8] = 0.3; param->param_hi[9] = 1.0;
 	param->cv_folds = 0;
 	param->cv_strat = 'g'; // default group(student)-stratified
     param->cv_target_obs = 0; // 1st state to validate agains by default, cv_folds enables cross-validation
@@ -555,7 +437,7 @@ void set_param_defaults(struct param *param) {
 	param->nI = 0;
 	// data
     param->all_data = NULL;
-    param->ndata = NULL;
+    param->nSeq = NULL;
 	param->k_numg = NULL;
 	param->k_data = NULL;
 	param->k_g_data = NULL;
@@ -566,8 +448,8 @@ void set_param_defaults(struct param *param) {
     param->n_null_skill_group = 0;
     param->null_skills = NULL;
 	// fitting specific - Armijo rule
-	param->ArmijoC1            = 1e-4;				
-	param->ArmijoC2            = 0.9;				
+	param->ArmijoC1            = 1e-4;
+	param->ArmijoC2            = 0.9;
 	param->ArmijoReduceFactor  = 2;//1/0.9;//
 	param->ArmijoSeed          = 1; //1; - since we use smooth stepping 1 is the only thing we need
     param->ArmijoMinStep       = 0.001; //  0.000001~20steps, 0.001~10steps
@@ -578,6 +460,7 @@ void set_param_defaults(struct param *param) {
 }
 
 void destroy_input_data(struct param *param) {
+    if(param->item_complexity) free(param->item_complexity);
 	if(param->init_params != NULL) free(param->init_params);
 	if(param->param_lo != NULL) free(param->param_lo);
 	if(param->param_hi != NULL) free(param->param_hi);
@@ -591,8 +474,8 @@ void destroy_input_data(struct param *param) {
 	if(param->dat_time != NULL) free(param->dat_time);
     
     // not null skills
-    for(NDAT kg=0;kg<param->ndata; kg++) {
-        free(param->all_data[kg].idx); // was obs;
+    for(NDAT kg=0;kg<param->nSeq; kg++) {
+        free(param->all_data[kg].ix); // was obs;
         if(param->time)
             free(param->all_data[kg].time);
     }
@@ -606,7 +489,7 @@ void destroy_input_data(struct param *param) {
 	if(param->g_numk != NULL)   free(param->g_numk);
     // null skills
     for(NCAT g=0;g<param->n_null_skill_group; g++)
-        free(param->null_skills[g].idx); // was obs
+        free(param->null_skills[g].ix); // was obs
     if(param->null_skills != NULL) free(param->null_skills);
     // vocabularies
     delete param->map_group_fwd;
@@ -624,7 +507,7 @@ void destroy_input_data(struct param *param) {
 void writeSolverInfo(FILE *fid, struct param *param) {
     // solver id
     if( param->solver_setting>0 ) {
-        fprintf(fid,"SolverId\t%d.%d.%d\n",param->structure,param->solver,param->solver_setting);        
+        fprintf(fid,"SolverId\t%d.%d.%d\n",param->structure,param->solver,param->solver_setting);
     } else {
         fprintf(fid,"SolverId\t%d.%d\n",param->structure,param->solver);
     }
@@ -683,10 +566,10 @@ void RecycleFitData(NCAT xndat, struct data** x_data, struct param *param) {
 	NCAT x;
 	NDAT t;
 	for(x=0; x<xndat; x++) {
-//        if( x_data[x][0].cnt != 0)
-//            continue;
+        //        if( x_data[x][0].cnt != 0)
+        //            continue;
 		if( x_data[x][0].alpha != NULL ) {
-			free2DNumber(x_data[x][0].alpha, x_data[x][0].ndat);  // only free data here
+			free2D<NUMBER>(x_data[x][0].alpha, x_data[x][0].n);  // only free data here
 			x_data[x][0].alpha = NULL;
 		}
 		if( x_data[x][0].c != NULL ) {
@@ -694,16 +577,16 @@ void RecycleFitData(NCAT xndat, struct data** x_data, struct param *param) {
 			x_data[x][0].c = NULL;
 		}
 		if( x_data[x][0].beta != NULL ) {
-			free2DNumber(x_data[x][0].beta,  x_data[x][0].ndat); // only free data here
+			free2D<NUMBER>(x_data[x][0].beta,  x_data[x][0].n); // only free data here
 			x_data[x][0].beta = NULL;
 		}
 		if( x_data[x][0].gamma != NULL ) {
-			free2DNumber(x_data[x][0].gamma, x_data[x][0].ndat); // only free data here
+			free2D<NUMBER>(x_data[x][0].gamma, x_data[x][0].n); // only free data here
 			x_data[x][0].gamma = NULL;
 		}
 		if( x_data[x][0].xi != NULL ) {
-			for(t=0;t<x_data[x][0].ndat; t++)
-				free2DNumber(x_data[x][0].xi[t],  param->nS); // only free data here
+			for(t=0;t<x_data[x][0].n; t++)
+				free2D<NUMBER>(x_data[x][0].xi[t],  param->nS); // only free data here
 			x_data[x][0].xi = NULL;
 		}
 	}
@@ -745,8 +628,8 @@ NPAR sec_to_9cat(int time1, int time2, int *limits, NPAR nlimits) {
         if( diff < (24*60*60) && ttm1->tm_mday==ttm2->tm_mday ) { // same day
             return 3;
         } else if(    diff < (2*24*60*60) &&                      // next day
-                   ( (ttm2->tm_wday == (ttm1->tm_wday+1)) ||
-                     (ttm1->tm_wday==6 && ttm2->tm_wday==0)
+                  ( (ttm2->tm_wday == (ttm1->tm_wday+1)) ||
+                   (ttm1->tm_wday==6 && ttm2->tm_wday==0)
                    )
                   ) {
             return 4;
@@ -785,10 +668,10 @@ void write_time_interval_data(param* param, const char *file_name) {
             it_k = param->map_skill_bwd->find(k);
             dt = param->g_k_data[g][k];
             // for times from 2 to N
-            for(NDAT t=1; t<dt->ndat; t++) {
-//                NPAR code = sec_to_linear_interval(dt->time[t]-dt->time[t-1], time_lim_20HDWM, sizeof(time_lim_20HDWM)/sizeof(int));
+            for(NDAT t=1; t<dt->n; t++) {
+                //                NPAR code = sec_to_linear_interval(dt->time[t]-dt->time[t-1], time_lim_20HDWM, sizeof(time_lim_20HDWM)/sizeof(int));
                 NPAR code = sec_to_9cat(dt->time[t-1], dt->time[t], time_lim_20HDWM, sizeof(time_lim_20HDWM)/sizeof(int));
-                fprintf(fid,"%s\t%s\t%d\t%d\t%d\t%d\t%d\n", it_g->second.c_str(), it_k->second.c_str(), dt->time[t-1], dt->time[t], (dt->time[t]-dt->time[t-1]), code, 1-param->dat_obs->get( dt->idx[t] ) );
+                fprintf(fid,"%s\t%s\t%d\t%d\t%d\t%d\t%d\n", it_g->second.c_str(), it_k->second.c_str(), dt->time[t-1], dt->time[t], (dt->time[t]-dt->time[t-1]), code, 1-param->dat_obs->get( dt->ix[t] ) );
             }// for times from 2 to N
         }// for all KCs
     }// for all groups

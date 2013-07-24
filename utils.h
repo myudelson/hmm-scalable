@@ -37,6 +37,8 @@ using namespace std;
 #define NDAT_MAX  UINT_MAX
 //http://stackoverflow.com/questions/2053843/min-and-max-value-of-data-type-in-c
 
+#define COLUMNS 4
+
 typedef signed char NPAR;    // number of observations or states, now 128 max, KEEP THIS SIGNED, we need -1 code for NULL
 typedef short NCAT;          // number of categories, groups or skills, now 32K max; LEAVE THIS UNSIGNED, we need -1 code for NULL
 typedef int NCAT2;           // number of categories 2 (larger), items, now 2 bill max
@@ -78,9 +80,10 @@ enum STRUCTURE {
     STRUCTURE_PIg     = 3,  // 3 - PI by group, A,B by skill
     STRUCTURE_PIgk    = 4,  // 4 - PI by skll&group, A,B by skill
     STRUCTURE_PIAgk   = 5,  // 5 - PI, A by skll&group, B by skill
-    STRUCTURE_Agk     = 6,   // 6 - A by skll&group, PI,B by skill
+    STRUCTURE_Agk     = 6,  // 6 - A by skll&group, PI,B by skill
     STRUCTURE_PIABgk  = 7,  // 5 - PI, A, B by skll&group
-    STRUCTURE_SKILL_T = 8   // 6 - by skill with transfer matrix
+    STRUCTURE_SKILL_T = 8,  // 6 - by skill with transfer matrix
+    STRUCTURE_Agki    = 9   //     A by skll&group & interaction, PI,B by skill
 };
 
 // return type cummrizing a result of a fir of the [subset of the] data
@@ -93,10 +96,10 @@ struct FitResult {
 
 // a sequence of observations (usually belonging to a student practicing a skill)
 struct data {
-	NDAT ndat; // number of data points (observations)
+	NDAT n; // number of data points (observations)
 	NDAT cnt;  // help counter, used for building the data and "banning" data from being fit when cross-valudating based on group
     //	NPAR *obs; // onservations array - will become the pointer array to the big data
-    NDAT *idx; // these are 'ndat' indices to the through arrays (e.g. param.dat_obs and param.dat_item)
+    NDAT *ix; // these are 'ndat' indices to the through arrays (e.g. param.dat_obs and param.dat_item)
 	NUMBER *c; // nS  - scaling factor
     int *time;
 	NUMBER **alpha; // ndat x nS
@@ -127,6 +130,8 @@ struct pdata {
 
 // parameters of the problem, including configuration parameters, vocabularies of string values, and data
 struct param {
+    //
+    NUMBER *item_complexity;
 	// configurable
 	NUMBER *init_params;
 	NUMBER *param_lo;
@@ -143,6 +148,7 @@ struct param {
 	int metrics;   // compute AIC, BIC, RMSE of training
 	int metrics_target_obs;   // target observation for RMSE of training
     int predictions; // report predictions on training data
+    int binaryinput; // input file is in binary format
 	NPAR cv_folds; // cross-validation folds
 	NPAR cv_strat; // cross-validation stratification
 	NPAR cv_target_obs; // cross-validation target observation to validate prediction of
@@ -165,7 +171,7 @@ struct param {
     struct data *null_skills;
     NCAT n_null_skill_group; // number of groups (students) with rows not labelled by any skill
 	// data arrays, by skill
-    NDAT ndata; // number of all data sequence where KC label is present ( nG*nK is an upper boundary )
+    NDAT nSeq; // number of all data sequence where KC label is present ( nG*nK is an upper boundary )
 	NCAT *k_numg; // num groups for skill
 	struct data *all_data; // all data sequence pointers in one array
 	struct data **k_data; // all skill-group data sequence pointers in one array (by skill)
@@ -212,26 +218,114 @@ void projectsimplex(NUMBER* ar, NPAR size);
 void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size);
 
 
-void toZero1DNumber(NUMBER *ar, NDAT size);
-void toZero2DNumber(NUMBER **ar, NDAT size1, NPAR size2);
-void toZero3DNumber(NUMBER ***ar, NDAT size1, NPAR size2, NPAR size3);
+template<typename T> void toZero1D(T* ar, NDAT size) {
+	for(NDAT i=0; i<size; i++)
+		ar[i] = 0;
+}
 
-NUMBER* init1DNumber(NDAT size);
-NUMBER** init2DNumber(NDAT size1, NPAR size2);
-NUMBER*** init3DNumber(NCAT size1, NDAT size2, NPAR size3);
-NPAR** init2DNCat(NCAT size1, NCAT size2);
+template<typename T> void toZero2D(T** ar, NDAT size1, NDAT size2) {
+	for(NDAT i=0; i<size1; i++)
+        for(NDAT j=0; j<size2; j++)
+            ar[i][j] = 0;
+}
 
-void free2DNumber(NUMBER** ar, NDAT size1);
-void free3DNumber(NUMBER ***ar, NCAT size1, NDAT size2);
-void free2DNCat(NPAR**ar, NCAT size1);
+template<typename T> void toZero3D(T*** ar, NDAT size1, NDAT size2, NDAT size3) {
+	for(NDAT i=0; i<size1; i++)
+        for(NDAT j=0; j<size2; j++)
+            for(NDAT l=0; l<size3; l++)
+                ar[i][j][l] = 0;
+}
+//void toZero1DNumber(NUMBER *ar, NDAT size);
+//void toZero2DNumber(NUMBER **ar, NDAT size1, NPAR size2);
+//void toZero3DNumber(NUMBER ***ar, NDAT size1, NPAR size2, NPAR size3);
 
-void cpy1DNumber(NUMBER* source, NUMBER* target, NDAT size);
-void cpy2DNumber(NUMBER** source, NUMBER** target, NDAT size1, NPAR size2);
-void cpy3DNumber(NUMBER*** source, NUMBER*** target, NDAT size1, NPAR size2, NPAR size3);
 
-void swap1DNumber(NUMBER* source, NUMBER* target, NDAT size);
-void swap2DNumber(NUMBER** source, NUMBER** target, NDAT size1, NPAR size2);
-void swap3DNumber(NUMBER*** source, NUMBER*** target, NDAT size1, NPAR size2, NPAR size3);
+template<typename T> T* init1D(NDAT size) {
+    T* ar = Calloc(T, size);
+    return ar;
+}
+
+template<typename T> T** init2D(NDAT size1, NDAT size2) {
+	T** ar = (T **)Calloc(T *,size1);
+	for(NDAT i=0; i<size1; i++)
+		ar[i] = (T *)Calloc(T, size2);
+	return ar;
+}
+
+template<typename T> T*** init3D(NDAT size1, NDAT size2, NDAT size3) {
+	NDAT i,j;
+	T*** ar = Calloc(T **, size1);
+	for(i=0; i<size1; i++) {
+		ar[i] = Calloc(T*, size2);
+		for(j=0; j<size2; j++)
+			ar[i][j] = Calloc(T, size3);
+	}
+	return ar;
+}
+//NUMBER* init1DNumber(NDAT size);
+//NUMBER** init2DNumber(NDAT size1, NPAR size2);
+//NUMBER*** init3DNumber(NCAT size1, NDAT size2, NPAR size3);
+//NPAR** init2DNCat(NCAT size1, NCAT size2);
+
+template<typename T> void free2D(T** ar, NDAT size1) {
+	for(NDAT i=0; i<size1; i++)
+		free(ar[i]);
+	free(ar);
+    //    &ar = NULL;
+}
+
+template<typename T> void free3D(T*** ar, NDAT size1, NDAT size2) {
+	for(NDAT i=0; i<size1; i++) {
+		for(NDAT j=0; j<size2; j++)
+			free(ar[i][j]);
+		free(ar[i]);
+	}
+	free(ar);
+    //    &ar = NULL;
+}
+
+//void free2DNumber(NUMBER **ar, NDAT size1);
+//void free3DNumber(NUMBER ***ar, NCAT size1, NDAT size2);
+//void free2DNCat(NCAT **ar, NCAT size1);
+
+template<typename T> void cpy1D(T* source, T* target, NDAT size) {
+    memcpy( target, source, sizeof(T)*size );
+}
+template<typename T> void cpy2D(T** source, T** target, NDAT size1, NDAT size2) {
+	for(NDAT i=0; i<size1; i++)
+		memcpy( target[i], source[i], sizeof(T)*size2 );
+}
+template<typename T> void cpy3D(T*** source, T*** target, NDAT size1, NDAT size2, NDAT size3) {
+	for(NDAT t=0; t<size1; t++)
+        for(NDAT i=0; i<size2; i++)
+            memcpy( target[t][i], source[t][i], sizeof(T)*size3 );
+}
+
+//void cpy1DNumber(NUMBER* source, NUMBER* target, NDAT size);
+//void cpy2DNumber(NUMBER** source, NUMBER** target, NDAT size1, NPAR size2);
+//void cpy3DNumber(NUMBER*** source, NUMBER*** target, NDAT size1, NPAR size2, NPAR size3);
+
+template<typename T> void swap1D(T* source, T* target, NDAT size) {
+    T* buffer = init1D<T>(size); // init1<NUMBER>(size);
+	memcpy( target, buffer, sizeof(T)*size );
+	memcpy( source, target, sizeof(T)*size );
+	memcpy( buffer, source, sizeof(T)*size );
+    free(buffer);
+}
+template<typename T> void swap2D(T** source, T** target, NDAT size1, NDAT size2) {
+    T** buffer = init2D<T>(size1, size2);
+    cpy2D<T>(target, buffer, size1, size2);
+    cpy2D<T>(source, target, size1, size2);
+    cpy2D<T>(buffer, source, size1, size2);
+    free2D<T>(buffer, size1);
+}
+template<typename T> void swap3D(T*** source, T*** target, NDAT size1, NDAT size2, NDAT size3) {
+    T*** buffer = init3D<T>(size1, size2, size3);
+    cpy3D<T>(target, buffer, size1, size2, size3);
+    cpy3D<T>(source, target, size1, size2, size3);
+    cpy3D<T>(buffer, source, size1, size2, size3);
+    free3D<T>(buffer, size1, size2);
+}
 
 NUMBER safe01num(NUMBER val); // convert number to a safe [0, 1] range
 NUMBER safe0num(NUMBER val); // convert number to a safe (0, inf) or (-inf, 0) range
@@ -241,7 +335,7 @@ NUMBER sigmoid(NUMBER val);
 NUMBER deprecated_fsafelog(NUMBER val); // fast and safe log for params
 NUMBER safelog(NUMBER val); // safe log for prediction
 NUMBER sgn(NUMBER val);
-			 
+
 void add1DNumbersWeighted(NUMBER* sourse, NUMBER* target, NPAR size, NUMBER weight);
 
 void add2DNumbersWeighted(NUMBER** sourse, NUMBER** target, NPAR size1, NPAR size2, NUMBER weight);

@@ -2,6 +2,7 @@ HTK - Hidden Markov Model Toolkit (HTK) [for speech recognition/synthesis, handw
 HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literature
 
 == HMM todo ==
+- not just per-student & per-skill effects, but the interaction (work out gradient)
 - change per-student effects to resemble Logistic Regression: student pLo and pT
     are NOT correction to skill's pLo and pT, but true student intercept and 
     slope emulators
@@ -21,6 +22,10 @@ HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literatur
 == Assumptions ==
 - columns: observation, user, step, skill[, time in ms]
 
+== Not fixed ==
+- getPi,A,B - only does 1 or multi skill
+- Computing Xi and Gamma is not implemented
+- fit 1 skill disabled
 
 == GGordon ==GraphLab Carlos CS CMU - parallel
 - Tinkerers, less flex than R bit more
@@ -31,7 +36,3 @@ HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literatur
 
 == commandline commits/push ==
 push: git push dropbox master
-
-
-
-

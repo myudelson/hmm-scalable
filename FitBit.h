@@ -48,7 +48,7 @@ public:
     NUMBER **dirAm1; // previous step direction
     NUMBER **dirBm1; // previous step direction
     
-    FitBit(struct param *p);
+    FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol);
     ~FitBit();
     void init(enum FIT_BIT_SLOT fbs);
     void linkPar(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B);

@@ -75,27 +75,27 @@ void HMMProblemPiGK::init(struct param *param) {
     
     // mass produce PI's/PIg's, A's, B's
 	if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-		this->PI  = init2DNumber(this->p->nK, this->p->nS);
-		this->A   = init3DNumber(this->p->nK, this->p->nS, this->p->nS);
-		this->B   = init3DNumber(this->p->nK, this->p->nS, this->p->nO);
-		this->PIg = init2DNumber(this->p->nG, this->p->nS);
+		this->PI  = init2D<NUMBER>(this->p->nK, this->p->nS);
+		this->A   = init3D<NUMBER>(this->p->nK, this->p->nS, this->p->nS);
+		this->B   = init3D<NUMBER>(this->p->nK, this->p->nS, this->p->nO);
+		this->PIg = init2D<NUMBER>(this->p->nG, this->p->nS);
         NCAT x;
 		for(x=0; x<this->p->nK; x++) {
-			cpy1DNumber(a_PI, this->PI[x], this->p->nS);
-			cpy2DNumber(a_A,  this->A[x],  this->p->nS, this->p->nS);
-			cpy2DNumber(a_B,  this->B[x],  this->p->nS, this->p->nO);
+			cpy1D<NUMBER>(a_PI, this->PI[x], this->p->nS);
+			cpy2D<NUMBER>(a_A,  this->A[x],  this->p->nS, this->p->nS);
+			cpy2D<NUMBER>(a_B,  this->B[x],  this->p->nS, this->p->nO);
         }
         // PIg start with same params
 		for(x=0; x<this->p->nG; x++)
-			cpy1DNumber(a_PI, this->PIg[x], this->p->nS);
+			cpy1D<NUMBER>(a_PI, this->PIg[x], this->p->nS);
 	} else {
 		fprintf(stderr,"params do not meet constraints.\n");
 		exit(1);
 	}
     // destroy setup params
 	free(a_PI);
-	free2DNumber(a_A, this->p->nS);
-	free2DNumber(a_B, this->p->nS);
+	free2D<NUMBER>(a_A, this->p->nS);
+	free2D<NUMBER>(a_B, this->p->nS);
 	
     // populate boundaries
 	// populate lb*/ub*
@@ -137,11 +137,11 @@ HMMProblemPiGK::~HMMProblemPiGK() {
 
 void HMMProblemPiGK::destroy() {
 	// destroy additional model data
-	free2DNumber(this->PIg, this->p->nG);
+	free2D<NUMBER>(this->PIg, this->p->nG);
 	// destroy fitting data
 //	// gradPI,g
 //	if ( this->gradPIg != NULL) {
-//		free2DNumber(this->gradPIg, this->p->nG);
+//		free2D<NUMBER>(this->gradPIg, this->p->nG);
 //		this->gradPIg = NULL;
 //	}
     // free fit flags
@@ -204,9 +204,14 @@ NUMBER* HMMProblemPiGK::getPIg(NCAT x) {
 }
 
 NUMBER HMMProblemPiGK::getPI(struct data* dt, NPAR i) {
+//    NUMBER p = this->PI[dt->k][i], q = this->PIg[dt->g][i];
+//    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+
     NUMBER p = this->PI[dt->k][i], q = this->PIg[dt->g][i];
-    return 1/( 1 + (1-p)*(1-q)/(p*q) );
-//    return sigmoid( logit( p ) + logit( q ) );
+    NUMBER item = this->p->item_complexity[ this->p->dat_item->get( dt->ix[0] ) ];
+    NUMBER v = 1/( 1 + (1-p)*(1-q)*(1-item)/(p*q*item) );
+    return v;
+    
 }
 
 // getters for computing alpha, beta, gamma
@@ -228,7 +233,7 @@ void HMMProblemPiGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
     NPAR i, o;
     NUMBER combined, deriv_logit;
 //    o = dt->obs[t];
-    o = this->p->dat_obs->get( dt->idx[t] );
+    o = this->p->dat_obs->get( dt->ix[t] );
     if(kg_flag == 0) { // k
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
@@ -286,7 +291,7 @@ void HMMProblemPiGK::toFile(const char *filename) {
 }
 
 void HMMProblemPiGK::fit() {
-    NUMBER* loglik_rmse = init1DNumber(2);
+    NUMBER* loglik_rmse = init1D<NUMBER>(2);
     FitNullSkill(loglik_rmse, false /*do not need RMSE/SE*/);
     if(this->p->structure == STRUCTURE_PIgk) {
         loglik_rmse[0] += GradientDescent();
@@ -302,7 +307,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
     /*NPAR nS = this->p->nS, nO = this->p->nO;*/ NCAT nK = this->p->nK, nG = this->p->nG;
     NUMBER loglik = 0;
     FitResult fr;
-    FitBit *fb = new FitBit(this->p);
+    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
     fb->init(FBS_PARm1);
     fb->init(FBS_GRAD);
     if(this->p->solver==METHOD_CGD) {
@@ -314,7 +319,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 	//
 	if(this->p->single_skill>0) {
         fb->linkPar( this->getPI(0), this->getA(0), this->getB(0));// link skill 0 (we'll copy fit parameters to others
-        fr = GradientDescentBit(0/*use skill 0*/, this->p->ndata, this->p->k_data, 0/* by skill*/, fb, true /*is1SkillForAll*/);
+        fr = GradientDescentBit(0/*use skill 0*/, this->p->nSeq, this->p->k_data, 0/* by skill*/, fb, true /*is1SkillForAll*/);
         if( !this->p->quiet )
             printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
     }
@@ -334,19 +339,19 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 //        NUMBER ***cpyA;
 //        NUMBER ***cpyB;
 //        if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//            cpyPI  = init2DNumber(this->p->nK, this->p->nS);
-//            cpyA   = init3DNumber(this->p->nK, this->p->nS, this->p->nS);
-//            cpyB   = init3DNumber(this->p->nK, this->p->nS, this->p->nO);
-////            cpyPIg = init2DNumber(this->p->nG, this->p->nS);
+//            cpyPI  = init2D<NUMBER>(this->p->nK, this->p->nS);
+//            cpyA   = init3D<NUMBER>(this->p->nK, this->p->nS, this->p->nS);
+//            cpyB   = init3D<NUMBER>(this->p->nK, this->p->nS, this->p->nO);
+////            cpyPIg = init2D<NUMBER>(this->p->nG, this->p->nS);
 //            NCAT x;
 //            for(x=0; x<nK; x++) {
-//                cpy1DNumber(this->getPI(x), cpyPI[x], this->p->nS);
-//                cpy2DNumber(this->getA(x),  cpyA[x],  this->p->nS, this->p->nS);
-//                cpy2DNumber(this->getB(x),  cpyB[x],  this->p->nS, this->p->nO);
+//                cpy1D<NUMBER>(this->getPI(x), cpyPI[x], this->p->nS);
+//                cpy2D<NUMBER>(this->getA(x),  cpyA[x],  this->p->nS, this->p->nS);
+//                cpy2D<NUMBER>(this->getB(x),  cpyB[x],  this->p->nS, this->p->nO);
 //            }
 ////            // PIg start with same params
 ////            for(x=0; x<nG; x++)
-////                cpy1DNumber(cpyPIg[x], this->PIg[x], this->p->nS);
+////                cpy1D<NUMBER>(cpyPIg[x], this->PIg[x], this->p->nS);
 //        }
 
         int i = 0; // count runs
@@ -382,9 +387,9 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 //                // make copies of parameters to do gradient descend, link to copies, but grads computed from actual params
 //                //
 //                if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//                    swap1DNumber(cpyPI[k], this->getPI(k), this->p->nS);
-//                    swap2DNumber(cpyA[k],   this->getA(k), this->p->nS, this->p->nS);
-//                    swap2DNumber(cpyB[k],   this->getB(k), this->p->nS, this->p->nO);
+//                    swap1D<NUMBER>(cpyPI[k], this->getPI(k), this->p->nS);
+//                    swap2D<NUMBER>(cpyA[k],   this->getA(k), this->p->nS, this->p->nS);
+//                    swap2D<NUMBER>(cpyB[k],   this->getB(k), this->p->nS, this->p->nO);
 //                }
             } // for all skills
             //
@@ -420,7 +425,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 //                // make copies of parameters to do gradient descend, link to copies, but grads computed from actual params
 //                //
 //                if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//                    swap1DNumber(this->PIg[g], cpyPIg[g], this->p->nS);
+//                    swap1D<NUMBER>(this->PIg[g], cpyPIg[g], this->p->nS);
 //                }
             } // for all groups
 
@@ -432,13 +437,13 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 //                for(x=0; x<this->p->nK; x++) {
 //                    if(iter_qual_skill[x]==iterations_to_qualify)
 //                        continue;
-//                    cpy1DNumber(cpyPI[x], this->PI[x], this->p->nS);
-//                    cpy2DNumber( cpyA[x],  this->A[x], this->p->nS, this->p->nS);
-//                    cpy2DNumber( cpyB[x],  this->B[x], this->p->nS, this->p->nO);
+//                    cpy1D<NUMBER>(cpyPI[x], this->PI[x], this->p->nS);
+//                    cpy2D<NUMBER>( cpyA[x],  this->A[x], this->p->nS, this->p->nS);
+//                    cpy2D<NUMBER>( cpyB[x],  this->B[x], this->p->nS, this->p->nO);
 //                }
 ////                // PIg start with same params
 ////                for(x=0; x<this->p->nG; x++)
-////                    cpy1DNumber(cpyPIg[x], this->PIg[x], this->p->nS);
+////                    cpy1D<NUMBER>(cpyPIg[x], this->PIg[x], this->p->nS);
 //            }
             i++;
         }
@@ -447,10 +452,10 @@ NUMBER HMMProblemPiGK::GradientDescent() {
         if( iter_qual_group != NULL) free(iter_qual_group);
 
 //        if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//            free2DNumber(cpyPI, nK);
-//            free3DNumber(cpyA,  nK, this->p->nS);
-//            free3DNumber(cpyB,  nK, this->p->nS);
-////            free2DNumber(cpyPIg, this->p->nG);
+//            free2D<NUMBER>(cpyPI, nK);
+//            free3D<NUMBER>(cpyA,  nK, this->p->nS);
+//            free3D<NUMBER>(cpyB,  nK, this->p->nS);
+////            free2D<NUMBER>(cpyPIg, this->p->nG);
 //        }
     } // if not "force single skill
     

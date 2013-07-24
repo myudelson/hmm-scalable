@@ -8,17 +8,17 @@
 #include <map>
 #include <list>
 #include "utils.h"
-#include "InputUtil.h"
 #include "HMMProblem.h"
 ////#include "HMMProblemPiG.h"
-#include "HMMProblemPiGK.h"
-#include "HMMProblemAGK.h"
-#include "HMMProblemAGKi.h"
-#include "HMMProblemPiAGK.h"
-#include "HMMProblemPiABGK.h"
+//#include "HMMProblemPiGK.h"
+//#include "HMMProblemAGK.h"
+//#include "HMMProblemPiAGK.h"
+//#include "HMMProblemPiABGK.h"
 ////#include "HMMProblemKT.h"
 #include "StripedArray.h"
 using namespace std;
+
+#define COLUMNS 4
 
 struct param param;
 static char *line = NULL;
@@ -26,76 +26,32 @@ static int max_line_length;
 
 void exit_with_help();
 void parse_arguments(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name);
-bool read_train_data(const char *filename);
-//bool read_predict_data(const char *filename);
+bool structure_data(const char *filename);
+bool read_data(const char *filename);
 static char* readline(FILE *fid);
 void cross_validate(NUMBER* metrics, const char *filename);
 void cross_validate_item(NUMBER* metrics, const char *filename);
 void cross_validate_nstrat(NUMBER* metrics, const char *filename);
 
+
 int main (int argc, char ** argv) {
-    
-//    int c = (unsigned long)ceil((double)34600/20000);
-    
 	clock_t tm0 = clock();
 	char input_file[1024];
 	char output_file[1024];
 	char predict_file[1024];
-    
-	set_param_defaults(&param);
+
 	parse_arguments(argc, argv, input_file, output_file, predict_file);
-    
     
     if(!param.quiet)
         printf("trainhmm starting...\n");
-	bool is_data_read = read_train_data(input_file);
-    
-//    //
-//    // read item mean % correct
-//    //
-//    FILE *fid = fopen("a89_kts_train01_voc_i.txt","r");
-//	max_line_length = 1024;
-//	char *col;
-//    string item;
-//    map<string,NCAT2>::iterator it;
-//    param.item_complexity = Calloc(NUMBER, param.map_step_bwd->size());
-//    line = (char *)malloc(max_line_length);// Malloc(char,max_line_length);
-//    while( readline(fid)!=NULL) {
-//		// Group
-//		col = strtok(line,"\t\n\r");
-//		item = string( col );
-//		it = param.map_step_fwd->find(item);
-//		if( it==param.map_step_fwd->end() ) { // not found
-//            fprintf(stderr,"DID NOT FIND THE STEP!!\n");
-//            return false;
-//		}
-//		else {
-////            if( it->second > param.map_step_bwd->size()) {
-////                int z = 0 ;
-////            }
-//            NUMBER v = atof( strtok(NULL,"\t\n\r") );
-//            param.item_complexity[ it->second ] = v;
-//		}
-//    }
-//    free(line);
-//    fclose(fid);
+	bool is_data_read = structure_data(input_file);
 
     if( is_data_read ) {
         if(!param.quiet)
             printf("input read, nO=%d, nG=%d, nK=%d, nI=%d\n",param.nO, param.nG, param.nK, param.nI);
-        
         clock_t tm;
-        
-        //    // write time
-        //    if(param.time==1) {
-        //        const char * fn = "a89_kts_times.txt";
-        ////        const char * fn = "a89_uskts_times.txt";
-        //        write_time_interval_data(&param, fn);
-        //    }
-        
-        
         // erase blocking labels
-        zeroLabels(&param);
+        zeroTags(&param);
         // go
         if(param.cv_folds==0) { // not cross-validation
             // create problem
@@ -106,27 +62,24 @@ int main (int argc, char ** argv) {
                 case STRUCTURE_GROUP: // Conjugate Gradient Descent
                     hmm = new HMMProblem(&param);
                     break;
-                    //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
-                    //                hmm = new HMMProblemPiG(&param);
-                    //                break;
-                case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-                    hmm = new HMMProblemPiGK(&param);
-                    break;
-                case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-                    hmm = new HMMProblemPiAGK(&param);
-                    break;
-                case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
-                    hmm = new HMMProblemAGK(&param);
-                    break;
-                case STRUCTURE_Agki: // Gradient Descent, pT=f(K,G), other by K
-                    hmm = new HMMProblemAGKi(&param);
-                    break;
-                case STRUCTURE_PIABgk: // Gradient Descent, pT=f(K,G), other by K
-                    hmm = new HMMProblemPiABGK(&param);
-                    break;
-                    //            case BKT_GD_T: // Gradient Descent with Transfer
-                    //                hmm = new HMMProblemKT(&param);
-                    //                break;
+//    //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
+//    //                hmm = new HMMProblemPiG(&param);
+//    //                break;
+//                case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+//                    hmm = new HMMProblemPiGK(&param);
+//                    break;
+//                case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+//                    hmm = new HMMProblemPiAGK(&param);
+//                    break;
+//                case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
+//                    hmm = new HMMProblemAGK(&param);
+//                    break;
+//                case STRUCTURE_PIABgk: // Gradient Descent, pT=f(K,G), other by K
+//                    hmm = new HMMProblemPiABGK(&param);
+//                    break;
+//    //            case BKT_GD_T: // Gradient Descent with Transfer
+//    //                hmm = new HMMProblemKT(&param);
+//    //                break;
             }
             
             tm = clock();
@@ -135,73 +88,73 @@ int main (int argc, char ** argv) {
             //
             // this is "incremental" bit... will be removed later
             //
-            //        HMMProblem *hmmO;
+    //        HMMProblem *hmmO;
             
-            //        // (1-2)
-            //        hmmO = hmm;
-            //        hmm = new HMMProblemPiGK(&param);
-            //        param.structure = STRUCTURE_PIgk;
-            //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
-            //            cpy1D<NUMBER>(hmmO->getPI(k), hmm->getPI(k), param.nS);
-            //            cpy2D<NUMBER>(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
-            //            cpy2D<NUMBER>(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
-            //        }
-            //        delete hmmO;
-            //        hmm->fit();
+    //        // (1-2)
+    //        hmmO = hmm;
+    //        hmm = new HMMProblemPiGK(&param);
+    //        param.structure = STRUCTURE_PIgk;
+    //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
+    //            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
+    //            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
+    //            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
+    //        }
+    //        delete hmmO;
+    //        hmm->fit();
             
-            //        // (1-3)
-            //        hmmO = hmm;
-            //        hmm = new HMMProblemAGK(&param);
-            //        param.structure = STRUCTURE_Agk;
-            //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
-            //            cpy1D<NUMBER>(hmmO->getPI(k), hmm->getPI(k), param.nS);
-            //            cpy2D<NUMBER>(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
-            //            cpy2D<NUMBER>(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
-            //        }
-            //        delete hmmO;
-            //        hmm->fit();
+    //        // (1-3)
+    //        hmmO = hmm;
+    //        hmm = new HMMProblemAGK(&param);
+    //        param.structure = STRUCTURE_Agk;
+    //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
+    //            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
+    //            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
+    //            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
+    //        }
+    //        delete hmmO;
+    //        hmm->fit();
+
+    //        // (1-4)
+    //        hmmO = hmm;
+    //        hmm = new HMMProblemPiAGK(&param);
+    //        param.structure = STRUCTURE_PIAgk;
+    //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
+    //            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
+    //            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
+    //            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
+    //        }
+    //        delete hmmO;
+    //        hmm->fit();
             
-            //        // (1-4)
-            //        hmmO = hmm;
-            //        hmm = new HMMProblemPiAGK(&param);
-            //        param.structure = STRUCTURE_PIAgk;
-            //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
-            //            cpy1D<NUMBER>(hmmO->getPI(k), hmm->getPI(k), param.nS);
-            //            cpy2D<NUMBER>(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
-            //            cpy2D<NUMBER>(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
-            //        }
-            //        delete hmmO;
-            //        hmm->fit();
-            
-            //        // (2-4,1-2-4)
-            //        hmmO = hmm;
-            //        hmm = new HMMProblemPiAGK(&param);
-            //        param.structure = STRUCTURE_PIAgk;
-            //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
-            //            cpy1D<NUMBER>(hmmO->getPI(k), hmm->getPI(k), param.nS);
-            //            cpy2D<NUMBER>(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
-            //            cpy2D<NUMBER>(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
-            //        }
-            //        for(NCAT g=0; g<param.nG; g++) { // copy the rest
-            //            cpy1D<NUMBER>(((HMMProblemPiGK *)hmmO)->getPIg(g), ((HMMProblemPiAGK *)hmm)->getPIg(g), param.nS);
-            //        }
-            //        delete hmmO;
-            //        hmm->fit();
-            
-            //        // (3-4, 1-3-4)
-            //        hmmO = hmm;
-            //        hmm = new HMMProblemPiAGK(&param);
-            //        param.structure = STRUCTURE_PIAgk;
-            //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
-            //            cpy1D<NUMBER>(hmmO->getPI(k), hmm->getPI(k), param.nS);
-            //            cpy2D<NUMBER>(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
-            //            cpy2D<NUMBER>(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
-            //        }
-            //        for(NCAT g=0; g<param.nG; g++) { // copy the rest
-            //            cpy2D<NUMBER>(((HMMProblemAGK *)hmmO)->getAg(g), ((HMMProblemPiAGK *)hmm)->getAg(g), param.nS, param.nS);
-            //        }
-            //        delete hmmO;
-            //        hmm->fit();
+    //        // (2-4,1-2-4)
+    //        hmmO = hmm;
+    //        hmm = new HMMProblemPiAGK(&param);
+    //        param.structure = STRUCTURE_PIAgk;
+    //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
+    //            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
+    //            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
+    //            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
+    //        }
+    //        for(NCAT g=0; g<param.nG; g++) { // copy the rest
+    //            cpy1DNumber(((HMMProblemPiGK *)hmmO)->getPIg(g), ((HMMProblemPiAGK *)hmm)->getPIg(g), param.nS);
+    //        }
+    //        delete hmmO;
+    //        hmm->fit();
+
+    //        // (3-4, 1-3-4)
+    //        hmmO = hmm;
+    //        hmm = new HMMProblemPiAGK(&param);
+    //        param.structure = STRUCTURE_PIAgk;
+    //        for(NCAT k=0; k<param.nK; k++) { // copy the rest
+    //            cpy1DNumber(hmmO->getPI(k), hmm->getPI(k), param.nS);
+    //            cpy2DNumber(hmmO->getA(k), hmm->getA(k), param.nS, param.nS);
+    //            cpy2DNumber(hmmO->getB(k), hmm->getB(k), param.nS, param.nO);
+    //        }
+    //        for(NCAT g=0; g<param.nG; g++) { // copy the rest
+    //            cpy2DNumber(((HMMProblemAGK *)hmmO)->getAg(g), ((HMMProblemPiAGK *)hmm)->getAg(g), param.nS, param.nS);
+    //        }
+    //        delete hmmO;
+    //        hmm->fit();
             
             
             if(param.quiet == 0)
@@ -211,22 +164,23 @@ int main (int argc, char ** argv) {
             hmm->toFile(output_file);
             
             if(param.metrics>0 || param.predictions>0) {
-                NUMBER* metrics = Calloc(NUMBER, 7); // LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
-                if(param.predictions>0) {
-                    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
-                } else {
-                    hmm->computeMetrics(metrics);
-                }
-                if( param.metrics>0 && !param.quiet) {
-                    printf("trained model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]);
-                }
-                free(metrics);
+                fprintf(stderr,"Prediction is not yet implemented");
+//                NUMBER* metrics = Calloc(NUMBER, 7); // LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
+//                if(param.predictions>0) {
+//                    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
+//                } else {
+//                    hmm->computeMetrics(metrics);
+//                }
+//                if( param.metrics>0 && !param.quiet) {
+//                    printf("trained model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]);
+//                }
+//                free(metrics);
             } // if predict or metrics
             
             delete hmm;
         } else { // cross-validation
             tm = clock();
-            NUMBER* metrics = Calloc(NUMBER, 7); // AIC, BIC, RMSE, RMSE no null
+            NUMBER* metrics = Calloc(NUMBER, 7); // Loglik, AIC, BIC, RMSE, RMSE no null, Accuracy, Accuracy no null
             switch (param.cv_strat) {
                 case CV_GROUP:
                     cross_validate(metrics, predict_file);
@@ -291,7 +245,6 @@ void exit_with_help() {
 		   "-d : multi-skill per observation delimiter 0-sinle skill per observation (default), [delimiter character].\n"
            "     For example, '-d ~'.\n"
 		   "-b : treat input file as binary input file (lookup format specifications in help)\n"
-           
 		   );
 	exit(1);
 }
@@ -314,6 +267,7 @@ static char* readline(FILE *fid) {
 }
 
 void parse_arguments(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name) {
+    set_param_defaults(&param);
 	// parse command line options, starting from 1 (0 is path to executable)
 	// go in pairs, looking at whether first in pair starts with '-', if not, stop parsing arguments
 	int i;
@@ -367,20 +321,20 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 				//fprintf(stdout, "fit single skill=%d\n",param.quiet);
 				break;
 			case 's':
-                //				param.solver = (NPAR)atoi( strtok(argv[i],".\t\n\r") );
-                //                ch = strtok(NULL,"\t\n\r");
-                //                if(ch != NULL)
-                //                    param.solver_setting = (NPAR)atoi(ch);
-                //                if( param.solver != BKT_CGD      && param.solver != BKT_GD      &&
-                //                    param.solver != BKT_BW       && param.solver != BKT_GD_BW   &&
-                //                    param.solver != BKT_BW_GD    && param.solver != BKT_GD_G    &&
-                //                    param.solver != BKT_GD_PIg   && param.solver != BKT_GD_PIgk &&
-                //                    param.solver != BKT_GD_APIgk && param.solver != BKT_GD_Agk  &&
-                //                    param.solver != BKT_GD_T ) {
-                //                    fprintf(stderr, "Method specified (%d) is out of range of allowed values\n",param.solver);
-                //					exit_with_help();
-                //                }
-                //                // new
+//				param.solver = (NPAR)atoi( strtok(argv[i],".\t\n\r") );
+//                ch = strtok(NULL,"\t\n\r");
+//                if(ch != NULL)
+//                    param.solver_setting = (NPAR)atoi(ch);
+//                if( param.solver != BKT_CGD      && param.solver != BKT_GD      &&
+//                    param.solver != BKT_BW       && param.solver != BKT_GD_BW   &&
+//                    param.solver != BKT_BW_GD    && param.solver != BKT_GD_G    &&
+//                    param.solver != BKT_GD_PIg   && param.solver != BKT_GD_PIgk &&
+//                    param.solver != BKT_GD_APIgk && param.solver != BKT_GD_Agk  &&
+//                    param.solver != BKT_GD_T ) {
+//                    fprintf(stderr, "Method specified (%d) is out of range of allowed values\n",param.solver);
+//					exit_with_help();
+//                }
+//                // new
 				param.structure = (NPAR)atoi( strtok(argv[i],".\t\n\r") );
                 ch = strtok(NULL,".\t\n\r"); // could be NULL (default GD solver)
                 if(ch != NULL)
@@ -389,14 +343,14 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
                 if(ch != NULL)
                     param.solver_setting = (NPAR)atoi(ch);
                 if( param.structure != STRUCTURE_SKILL && param.structure != STRUCTURE_GROUP &&
-                   param.structure != STRUCTURE_PIg   && param.structure != STRUCTURE_PIgk  &&
-                   param.structure != STRUCTURE_PIAgk && param.structure != STRUCTURE_Agk &&
-                   param.structure != STRUCTURE_PIABgk && param.structure != STRUCTURE_Agki   ) {
+                    param.structure != STRUCTURE_PIg   && param.structure != STRUCTURE_PIgk  &&
+                    param.structure != STRUCTURE_PIAgk && param.structure != STRUCTURE_Agk &&
+                    param.structure != STRUCTURE_PIABgk    ) {
                     fprintf(stderr, "Model Structure specified (%d) is out of range of allowed values\n",param.structure);
 					exit_with_help();
                 }
                 if( param.solver != METHOD_BW  && param.solver != METHOD_GD &&
-                   param.solver != METHOD_CGD ) {
+                    param.solver != METHOD_CGD ) {
                     fprintf(stderr, "Method specified (%d) is out of range of allowed values\n",param.solver);
 					exit_with_help();
                 }
@@ -405,8 +359,8 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 					exit_with_help();
                 }
                 if( param.solver == METHOD_CGD  &&
-                   ( param.solver_setting != 1 && param.solver_setting != 2 &&
-                    param.solver_setting != 3 )
+                    ( param.solver_setting != 1 && param.solver_setting != 2 &&
+                      param.solver_setting != 3 )
                    ) {
                     fprintf(stderr, "Conjugate Gradient Descent setting specified (%d) is out of range of allowed values\n",param.solver_setting);
 					exit_with_help();
@@ -541,14 +495,14 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 		}
 	}
     // post-argument checks
-    //    if( param.cv_target_obs>(param.nO-1)) {
-    //        fprintf(stderr,"target observation to be cross-validated against cannot be '%d'\n",param.cv_target_obs+1);
-    //        exit_with_help();
-    //    }
-    //    if(param.metrics_target_obs>(param.nO-1)) {
-    //        fprintf(stderr,"target observation to compute metrics against cannot be '%d'\n",param.metrics_target_obs+1);
-    //        exit_with_help();
-    //    }
+//    if( param.cv_target_obs>(param.nO-1)) {
+//        fprintf(stderr,"target observation to be cross-validated against cannot be '%d'\n",param.cv_target_obs+1);
+//        exit_with_help();
+//    }
+//    if(param.metrics_target_obs>(param.nO-1)) {
+//        fprintf(stderr,"target observation to compute metrics against cannot be '%d'\n",param.metrics_target_obs+1);
+//        exit_with_help();
+//    }
     if(param.cv_target_obs>0 && param.metrics>0) { // correct for 0-start coding
         fprintf(stderr,"values for -v and -m cannot be both non-zeros\n");
         exit_with_help();
@@ -556,7 +510,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 	
 	// next argument should be input file name
 	if(i>=argc) // if not
-		exit_with_help(); // leave
+		exit_with_help(); // leave 
 	
 	strcpy(input_file_name, argv[i++]); // copy and advance
 	
@@ -573,7 +527,8 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 	}
 }
 
-bool read_train_data(const char *filename) {
+bool structure_data(const char *filename) {
+    
     bool success;
     if(param.binaryinput==0) {
         success = InputUtil::readTxt(filename, &param);
@@ -581,191 +536,235 @@ bool read_train_data(const char *filename) {
         success = InputUtil::readBin(filename, &param);
     }
     
-	//	2. distribute data into nK skill bins
-	//		create
-	//          skill_group_map[nK][nG] - explicit 'sparse' map of skills and groups, here 1 means done
-	//			k_numg[nK]        - number of groups per skill                 RETAIN
+    // set counts
+	param.nG = (NCAT)param.map_group_fwd->size();
+	param.nK = (NCAT)param.map_skill_fwd->size();
+	param.nI = (NCAT2)param.map_step_fwd->size();
 	
-	NDAT t = 0;
-    int tm = 0; // time
+	NDAT t = 0, q = 0;
+//    int tm = 0; // time
 	NCAT g, k;
+    NCAT *ar;
+    bool is_null = false;
 	NPAR o;
-	NPAR **skill_group_map = init2D<NPAR>(param.nK, param.nG); // binary map of skills to groups
-	param.k_numg = Calloc(NCAT, param.nK);
-	param.g_numk = Calloc(NCAT, param.nG);
-    NDAT *count_null_skill_group = Calloc(NDAT, param.nG); // count null skill occurences per group
-    NCAT *index_null_skill_group = Calloc(NCAT, param.nG); // index of group in compressed array
+    int n;
+	NPAR **skill_group_map = init2D<NPAR>(param.nK+1, param.nG); // binary map of (skills+1) to groups, +1 for null skill groups
+	param.k_nG = Calloc(NCAT, param.nK + 1); //  +1 for null skill groups
+	param.k_N = Calloc(NDAT, param.nK+1); // +1 for null skills
+//	param.g_numk = Calloc(NCAT, param.nG);
+//    NDAT *count_null_skill_group = Calloc(NDAT, param.nG); // count null skill occurences per group
+//    NCAT *index_null_skill_group = Calloc(NCAT, param.nG); // index of group in compressed array
     
-	// Pass A
+    //
+	// Pass A: determine what skill (k) - group (g) combinations are there
+    //          and how many groups (k) per each skill (k) are there
+    //
 	for(t=0; t<param.N; t++) {
+        // first skill
         if(param.multiskill==0)
-            k = param.dat_skill->get(t);//[t];
+            k = param.dat_skill->get(t);
         else
             k = param.dat_multiskill->get(t)[1]; // #0 is count, #1 is first element
-		g = param.dat_group->get(t);//[t];
+		g = param.dat_group->get(t);
 		// null skill : just count
-		if( k < 0 ) {
-            if(count_null_skill_group[g]==0) param.n_null_skill_group++;
-            count_null_skill_group[g]++;
-			continue;
-		}
-        NCAT *ar;
-        int n;
-        if(param.multiskill==0) {
-            k = param.dat_skill->get(t);
+        // handle skills
+        is_null = false;
+		if( k < 0 ) { // Null skill
+            is_null = true;
+            k = param.nK; // last index
             ar = &k;
             n = 1;
-        } else {
+		} else if(param.multiskill==0) { // single skill
+            ar = &k; // array of skill ids, default &k
+            n = 1; // number of skill ids, default 1
+        } else { // multiple skill
             ar = &param.dat_multiskill->get(t)[1];
             n = param.dat_multiskill->get(t)[0];
         }
-        for(int l=0; l<n; l++) {
+        for(int l=0; l<n; l++) { // for all skills
             k = ar[l];
+            param.k_N[k]++; // count number of observations per skill
+            if(!is_null)
+                param.NN++; // number of skill observations (counting multi-skill codings multiple times) BUT NOT NULL
             if( skill_group_map[k][g] == 0 ) {
                 skill_group_map[k][g] = 1;
-                param.k_numg[k]++;
-                param.g_numk[g]++;
+                if(param.multiskill) { // set init flag - meaning start of the sequence
+                    param.dat_multiskill->get(t)[n+1] = 1; // n'th skill +1 'cos first element is size
+                }
+                param.k_nG[k]++;
+                if(is_null)
+                    param.nSeqNull++;
+                else
+                    param.nSeq++;
             }
-        }
-	}
-    for(k=0; k<param.nK; k++) param.nSeq += param.k_numg[k];
-    param.all_data = Calloc(struct data, param.nSeq);
+        }// all skills on the row
+	}// for all rows
+    // build k_ix1stSeq - ix of first sequence of the skill, account for nulls too
+    // build k_Gs - array of arrays of Gs
+    // build nK+1 array structure for t indexes per each skil, nK+1st is null
+    NDAT idx = 0;
+    NCAT **k_Gs = Calloc(NCAT *, param.nK+1); // +1 for nulls
+    param.k_t = Calloc(NDAT *, param.nK+1); // +1 for nulls
+    param.k_ix1stSeq = Calloc(NDAT, param.nK+1); // +1 for nulls
+    for(k=0; k<(param.nK+1); k++) {
+        param.k_ix1stSeq[k] = idx;
+        idx += param.k_nG[k];
+        // k_Gs
+        k_Gs[k] = Calloc(NCAT, param.k_nG[k]);
+        param.k_t[k]  = Calloc(NDAT, param.k_N[k]);
+        NCAT idxb = 0;
+        for(g=0; g<param.nG; g++) // if not zero, record in the array of Gs for k
+            if( skill_group_map[k][g]>0 )
+                k_Gs[k][idxb++] = g;
+    }
     
-	// Section B
-	param.k_g_data = Malloc(struct data **, param.nK);
-	param.k_data = Malloc(struct data *, param.nSeq);
-    //	for(k=0; k<param.nK; k++)
-    //		param.k_g_data[k] = Calloc(struct data*, param.k_numg[k]);
-	param.g_k_data = Calloc(struct data **, param.nG);
-	param.g_data = Malloc(struct data *, param.nSeq);
-    //	for(g=0; g<param.nG; g++)
-    //		param.g_k_data[g] = Calloc(struct data*, param.g_numk[g]);
-	param.null_skills = Malloc(struct data, param.n_null_skill_group);
+    
+    // allocate all sequences
+    param.all_seq = Calloc(struct data, param.nSeq+param.nSeqNull);
+    for(q=0; q<param.nSeq; q++)
+        initDat( &param.all_seq[q] );
+//	param.k_g_data = Malloc(struct data **, param.nK);
+//	param.k_data = Malloc(struct data *, param.nSeq);
+//	param.g_k_data = Calloc(struct data **, param.nG);
+//	param.g_data = Malloc(struct data *, param.nSeq);
+//	param.null_skills = Malloc(struct data, param.n_null_skill_group);
     // index compressed array of null-skill-BY-group
-    NCAT idx = 0;
-	for(g=0; g<param.nG; g++)
-        if( count_null_skill_group[g] >0 ) index_null_skill_group[g] = idx++;
+//    idx = 0;
+//	for(g=0; g<param.nG; g++)
+//        if( count_null_skill_group[g] >0 ) index_null_skill_group[g] = idx++;
+    if(param.multiskill)
+        param.dat_multiskill_seq = Calloc(data **, param.N);
+    else
+        param.dat_skill_seq = Calloc(data *, param.N);
+    // End of Pass A
     
-	// Pass C
-	NDAT *k_countg = Calloc(NDAT, param.nK); // track current group in skill
-	NDAT *g_countk = Calloc(NDAT, param.nG); // track current skill in group
-    // set k_countg and g_countk pointers to relative positions
-    NDAT sumk=0, sumg=0;
-    for(k=0; k<param.nK; k++) {
-        k_countg[k] = sumk;
-        param.k_g_data[k] = &param.k_data[sumk];
-        sumk += param.k_numg[k];
-    }
-    for(g=0; g<param.nG; g++) {
-        g_countk[g] = sumg;
-        param.g_k_data[g] = &param.g_data[sumg];
-        sumg += param.g_numk[g];
-    }
+    //
+	// Pass B : link pointers to sequences in dat_[multi]skill_seq and count
+    //          in each sequence
+    //
     
-    NDAT n_all_data = 0;
+//	NDAT *k_countg = Calloc(NDAT, param.nK); // track current group in skill
+////	NDAT *g_countk = Calloc(NDAT, param.nG); // track current skill in group
+//    // set k_countg and g_countk pointers to relative positions
+//    NDAT sumk=0;//, sumg=0;
+//    for(k=0; k<param.nK; k++) {
+//        k_countg[k] = sumk;
+//        param.k_g_data[k] = &param.k_data[sumk];
+//        sumk += param.k_nG[k];
+//    }
+////    for(g=0; g<param.nG; g++) {
+////        g_countk[g] = sumg;
+////        param.g_k_data[g] = &param.g_data[sumg];
+////        sumg += param.g_numk[g];
+////    }
+    
+//    NDAT n_all_data = 0;
+    NDAT *k_count = Calloc(NDAT, param.nK+1); // count t's in param.k_t arrays
 	for(t=0; t<param.N; t++) {
         NCAT *ar;
+        data **seq;
         int n;
+        is_null = false;
+        g = param.dat_group->get(t);//[t];
         if(param.multiskill==0) {
-            k = param.dat_skill->get(t);
-            ar = &k;
-            n = 1;
+            k = param.dat_skill->get(t); // skills
+            ar = &k; // array of skills
+            n = 1; // size of aray
+            seq = &param.dat_skill_seq[t]; // array of pointers to sequences
         } else {
-            ar = &param.dat_multiskill->get(t)[1];
-            n = param.dat_multiskill->get(t)[0];
+            ar = &param.dat_multiskill->get(t)[1]; // array of skills
+            n = param.dat_multiskill->get(t)[0]; // size of arrays
+            param.dat_multiskill_seq[t] = Calloc(data*, n);
+            seq = param.dat_multiskill_seq[t]; // array of pointers to sequences
         }
         for(int l=0; l<n; l++) {
             k = ar[l];
-            g = param.dat_group->get(t);//[t];
             // now allocate space for the data
             if( k < 0 ) {
-                NCAT gidx = index_null_skill_group[g];
-                if( param.null_skills[gidx].ix != NULL) // was obs // check if we allocated it already
-                    continue;
-                param.null_skills[gidx].n = count_null_skill_group[g];
-                param.null_skills[gidx].g = g;
-                param.null_skills[gidx].cnt = 0;
-                //                param.null_skills[gidx].obs = Calloc(NPAR, count_null_skill_group[g]);
-                param.null_skills[gidx].ix = Calloc(NDAT, count_null_skill_group[g]);
-                // no time for null skills is necessary
-                //                if(param.time)
-                //                    param.null_skills[gidx].time = Calloc(int, count_null_skill_group[g]);
-                param.null_skills[gidx].alpha = NULL;
-                param.null_skills[gidx].beta = NULL;
-                param.null_skills[gidx].gamma = NULL;
-                param.null_skills[gidx].xi = NULL;
-                param.null_skills[gidx].c = NULL;
-                param.null_skills[gidx].time = NULL;
-                param.null_skills[gidx].p_O_param = 0.0;
-                continue;
+                is_null = true;
+                k = param.nK; // nK+1st position in the data
+//                NCAT gidx = index_null_skill_group[g];
+//                if( param.null_skills[gidx].ix != NULL) // was obs // check if we allocated it already
+//                    continue;
+//                param.null_skills[gidx].n = count_null_skill_group[g];
+////                param.null_skills[gidx].g = g;
+//                param.null_skills[gidx].tag = 0;
+////                param.null_skills[gidx].obs = Calloc(NPAR, count_null_skill_group[g]);
+//                param.null_skills[gidx].ix = Calloc(NDAT, count_null_skill_group[g]);
+//                // no time for null skills is necessary
+////                if(param.time)
+////                    param.null_skills[gidx].time = Calloc(int, count_null_skill_group[g]);
+//                param.null_skills[gidx].alpha = NULL;
+//                param.null_skills[gidx].beta = NULL;
+//                param.null_skills[gidx].gamma = NULL;
+//                param.null_skills[gidx].xi = NULL;
+//                param.null_skills[gidx].c = NULL;
+//                param.null_skills[gidx].time = NULL;
+//                param.null_skills[gidx].p_O_param = 0.0;
+//                continue;
             }
+            // fill in the k_t array
+            param.k_t[k][ k_count[k]++ ] = t; // post increment of the counter
+            
             if( skill_group_map[k][g]==0)
                 printf("ERROR! position [%d,%d] in skill_group_map should have been 1\n",k,g);
-            else if( skill_group_map[k][g]==1 ) { // insert new sequence and grab new data
-                // link
-                param.k_data[ k_countg[k] ] = &param.all_data[n_all_data]; // in linear array
-                param.g_data[ g_countk[g] ] = &param.all_data[n_all_data]; // in linear array
-                // param.k_g_data[k] and param.g_k_data[g] are already linked
-                //                param.k_g_data[k][ k_countg[k] ] = Calloc(struct data, 1); // grab
-                //                param.g_k_data[g][ g_countk[g] ] = param.k_g_data[k][ k_countg[k] ]; // relink
-                //                param.k_g_data[k][ k_countg[k] ]->n = 1; // init data << VV
-                //                param.k_g_data[k][ k_countg[k] ]->k = k; // init k
-                //                param.k_g_data[k][ k_countg[k] ]->g = g; // init g
-                //                param.k_g_data[k][ k_countg[k] ]->cnt = 0;
-                //                param.k_g_data[k][ k_countg[k] ]->obs = NULL;
-                //                param.k_g_data[k][ k_countg[k] ]->alpha = NULL;
-                //                param.k_g_data[k][ k_countg[k] ]->beta = NULL;
-                //                param.k_g_data[k][ k_countg[k] ]->gamma = NULL;
-                //                param.k_g_data[k][ k_countg[k] ]->xi = NULL;
-                //                param.k_g_data[k][ k_countg[k] ]->c = NULL;
-                //                param.k_g_data[k][ k_countg[k] ]->p_O_param = 0.0;
-                //                param.k_g_data[k][ k_countg[k] ]->loglik = 0.0;
-                param.all_data[n_all_data].n = 1; // init data << VV
-                param.all_data[n_all_data].k = k; // init k
-                param.all_data[n_all_data].g = g; // init g
-                param.all_data[n_all_data].cnt = 0;
-                //                param.all_data[n_all_data].obs = NULL;
-                param.all_data[n_all_data].ix = NULL;
-                param.all_data[n_all_data].alpha = NULL;
-                param.all_data[n_all_data].beta = NULL;
-                param.all_data[n_all_data].gamma = NULL;
-                param.all_data[n_all_data].xi = NULL;
-                param.all_data[n_all_data].c = NULL;
-                param.all_data[n_all_data].p_O_param = 0.0;
-                param.all_data[n_all_data].loglik = 0.0;
-                k_countg[k]++; // count
-                g_countk[g]++; // count
-                skill_group_map[k][g] = 2; // mark
-                n_all_data++;
-            } else if( skill_group_map[k][g]== 2) { // update data count, LINEAR SEARCH :(
-                int gidx;
-                //                for(gidx=(k_countg[k]-(NCAT)1); gidx>=0 && param.k_g_data[k][gidx]->g!=g; gidx--)
-                //                    ;
-                for(gidx=(k_countg[k]-1); gidx>=0 && param.k_data[gidx]->g!=g; gidx--)
-                    ;
-                if( param.k_data[gidx]->g==g)
-                    param.k_data[gidx]->n++;
-                else
-                    printf("ERROR! position of group %d in skill %d not found\n",g,k);
+            else {
+                // get coordinates of the sequence
+                NDAT baseK = param.k_ix1stSeq[k]; // first seq of the skill
+                NCAT offsetG = (NCAT)binsearch(&g, k_Gs[k], param.k_nG[k]); // next is index which is the ix of Group
+                if( offsetG<0 ) {
+                    printf("ERROR! skill-group combination [%d,%d] is not found in the `k_Gs`\n",k,g);
+                    continue;
+                }
+                NDAT ix = baseK + (NDAT)offsetG;
+                seq[l] = &param.all_seq[ix];
+                if( skill_group_map[k][g]==1 ) { // insert new sequence and grab new data
+                    seq[l]->n = 1;
+                    if(is_null)
+                        seq[l]->id = -1;
+                    else
+                        seq[l]->id = k;
+                    skill_group_map[k][g] = 2;
+                } else if( skill_group_map[k][g]== 2) {
+                    seq[l]->n++;
+                }
             }
-        }
-	}
-	// recycle
-	free(k_countg);
-	free(g_countk);
-    free(count_null_skill_group);
+        }// all skills in step
+	}// all rows in the data
+    free(k_count);
+    // set data->ix1st, just like we set param.k_ix1stSeq (not for null skills)
+    idx = 0;
+    for(q=0; q<(param.nSeq + param.nSeqNull); q++) { // for nulls as well
+        param.all_seq[q].ix1st = idx;
+        idx += param.all_seq[q].n;
+    }
+    if(idx != (param.NN+param.N_null)) {
+        fprintf(stderr,"Final count of variable size should be the same as param.NN\n");
+        exit(1);
+    }
+	free2D<NPAR>(skill_group_map, param.nK+1); // +1 is for nulls
+    // End of Pass B
     
-    //	3 fill data
-    //		pass A
-    //			fill k_g_data.data (g_k_data is already linked)
-    //				using skill_group_map as marker, 3 - data grabbed
-	k_countg = Calloc(NDAT, param.nK); // track current group in skill
-	g_countk = Calloc(NDAT, param.nG); // track current skill in group
+	// recycle
+//	free(k_countg);
+//	free(g_countk);
+//    free(count_null_skill_group);
+		
+//	3 fill data
+//		pass A
+//			fill k_g_data.data (g_k_data is already linked)
+//				using skill_group_map as marker, 3 - data grabbed	
+//	k_countg = Calloc(NDAT, param.nK); // track current group in skill
+//	g_countk = Calloc(NDAT, param.nG); // track current skill in group
+    zeroTags(&param); // zero labels
+    data * seq;
+    NDAT ix;
+    param.dat_tix = Calloc(NDAT, param.NN+param.N_null);
 	for(t=0; t<param.N; t++) {
 		g = param.dat_group->get(t);
 		o = param.dat_obs->get(t);
-        if(param.time)
-            tm = param.dat_time->get(t);
+//        if(param.time)
+//            tm = param.dat_time->get(t);
         NCAT *ar;
         int n;
         if(param.multiskill==0) {
@@ -779,77 +778,81 @@ bool read_train_data(const char *filename) {
         for(int l=0; l<n; l++) {
             k = ar[l];
             if( k < 0 ) {
-                NCAT gidx = index_null_skill_group[g];
-                //                param.null_skills[gidx].obs[ param.null_skills[gidx].cnt++ ] = o; // use .cnt as counter
-                param.null_skills[gidx].ix[ param.null_skills[gidx].cnt++ ] = t; // use .cnt as counter
-                continue;
+                k = param.nK; // last row for nulls
+//                NCAT gidx = index_null_skill_group[g];
+////                param.null_skills[gidx].obs[ param.null_skills[gidx].cnt++ ] = o; // use .cnt as counter
+//                param.null_skills[gidx].ix[ param.null_skills[gidx].tag++ ] = t; // use .cnt as counter
+//                continue;
             }
-            if( skill_group_map[k][g]<2)
-                printf("ERROR! position [%d,%d] in skill_group_map should have been 2\n",k,g);
-            else if( skill_group_map[k][g]==2 ) { // grab data and insert first dat point
-                //                param.k_g_data[k][ k_countg[k] ]->obs = Calloc(NPAR, param.k_g_data[k][ k_countg[k] ]->n); // grab
-                //                param.k_g_data[k][ k_countg[k] ]->obs[0] = o; // insert
-                param.k_g_data[k][ k_countg[k] ]->ix = Calloc(NDAT, param.k_g_data[k][ k_countg[k] ]->n); // grab
-                if(param.time)
-                    param.k_g_data[k][ k_countg[k] ]->time = Calloc(int, param.k_g_data[k][ k_countg[k] ]->n); // grab
-                param.k_g_data[k][ k_countg[k] ]->ix[0] = t; // insert
-                if(param.time)
-                    param.k_g_data[k][ k_countg[k] ]->time[0] = tm; // insert
-                param.k_g_data[k][ k_countg[k] ]->cnt++; // increase data counter
-                k_countg[k]++; // count unique groups forward
-                g_countk[g]++; // count unique skills forward
-                skill_group_map[k][g] = 3; // mark
-            } else if( skill_group_map[k][g]== 3) { // insert next data point and inc counter, LINEAR SEARCH :(
-                NCAT gidx;
-                //			for(gidx=0; gidx < k_countg[k] && param.k_g_data[k][gidx]->g!=g; gidx++)
-                for(gidx=(k_countg[k]-(NCAT)1); gidx>=0 && param.k_g_data[k][gidx]->g!=g; gidx--)
-                    ; // skip
-                if( param.k_g_data[k][gidx]->g==g ) {
-                    NDAT pos = param.k_g_data[k][ gidx ]->cnt; // copy position
-                    //                    param.k_g_data[k][ gidx ]->obs[pos] = o; // insert
-                    param.k_g_data[k][ gidx ]->ix[pos] = t; // insert
-                    if(param.time)
-                        param.k_g_data[k][ gidx ]->time[pos] = tm; // insert
-                    param.k_g_data[k][ gidx ]->cnt++; // increase data counter
-                }
-                else
-                    printf("ERROR! position of group %d in skill %d not found\n",g,k);
-            }
+            NDAT baseK = param.k_ix1stSeq[k]; // first seq of the skill
+            NCAT offsetG = (NCAT)binsearch(&g, k_Gs[k], param.k_nG[k]); // next is index which is the ix of Group
+            seq = &param.all_seq[ baseK + (NDAT)offsetG ]; // grab the seq
+            ix = seq->ix1st + (seq->cnt++);
+            param.dat_tix[ix] = t;
+            
+//            if( skill_group_map[k][g]<2)
+//                printf("ERROR! position [%d,%d] in skill_group_map should have been 2\n",k,g);
+//            else if( skill_group_map[k][g]==2 ) { // grab data and insert first dat point
+////                param.k_g_data[k][ k_countg[k] ]->obs = Calloc(NPAR, param.k_g_data[k][ k_countg[k] ]->n); // grab
+////                param.k_g_data[k][ k_countg[k] ]->obs[0] = o; // insert
+//                param.k_g_data[k][ k_countg[k] ]->ix = Calloc(NDAT, param.k_g_data[k][ k_countg[k] ]->n); // grab
+//                if(param.time)
+//                    param.k_g_data[k][ k_countg[k] ]->time = Calloc(int, param.k_g_data[k][ k_countg[k] ]->n); // grab
+//                param.k_g_data[k][ k_countg[k] ]->ix[0] = t; // insert
+//                if(param.time)
+//                    param.k_g_data[k][ k_countg[k] ]->time[0] = tm; // insert
+//                param.k_g_data[k][ k_countg[k] ]->tag++; // increase data counter
+//                k_countg[k]++; // count unique groups forward
+////                g_countk[g]++; // count unique skills forward
+//                skill_group_map[k][g] = 3; // mark
+//            } else if( skill_group_map[k][g]== 3) { // insert next data point and inc counter, LINEAR SEARCH :(
+//                NCAT gidx;
+//                //			for(gidx=0; gidx < k_countg[k] && param.k_g_data[k][gidx]->g!=g; gidx++)
+//                for(gidx=(k_countg[k]-(NCAT)1); gidx>=0 && param.k_g_data[k][gidx]->g!=g; gidx--)
+//                    ; // skip
+//                if( param.k_g_data[k][gidx]->g==g ) {
+//                    NDAT pos = param.k_g_data[k][ gidx ]->tag; // copy position
+////                    param.k_g_data[k][ gidx ]->obs[pos] = o; // insert
+//                    param.k_g_data[k][ gidx ]->ix[pos] = t; // insert
+//                    if(param.time)
+//                        param.k_g_data[k][ gidx ]->time[pos] = tm; // insert
+//                    param.k_g_data[k][ gidx ]->tag++; // increase data counter
+//                }
+//                else
+//                    printf("ERROR! position of group %d in skill %d not found\n",g,k);
+//            }
         }
     }
+    free2D<NCAT>(k_Gs, param.nK+1); // +1 is for null skill labels
+    
 	// recycle
-	free(k_countg);
-	free(g_countk);
-    free(index_null_skill_group);
+//	free(k_countg);
+//	free(g_countk);
+//    free(index_null_skill_group);
     // we delete linear column data in the end now
-    //    if(param.cv_folds==0 && param.structure != STRUCTURE_SKILL_T) {
-    //        if(param.multiskill==0) {
-    //            delete param.dat_skill;//.clear();
-    //            param.dat_skill = NULL;
-    //        }
-    //        else {
-    //            delete param.dat_multiskill;
-    //            param.dat_multiskill = NULL;
-    //        }
-    //        delete param.dat_group;
-    //        delete param.dat_obs;
-    //        delete param.dat_item;
-    //        param.dat_group = NULL;
-    //        param.dat_obs   = NULL;
-    //        param.dat_item  = NULL;
-    //    }
-	free2D<NPAR>(skill_group_map, param.nK);
+//    if(param.cv_folds==0 && param.structure != STRUCTURE_SKILL_T) {
+//        if(param.multiskill==0) {
+//            delete param.dat_skill;//.clear();
+//            param.dat_skill = NULL;
+//        }
+//        else {
+//            delete param.dat_multiskill;
+//            param.dat_multiskill = NULL;
+//        }
+//        delete param.dat_group;
+//        delete param.dat_obs;
+//        delete param.dat_item;
+//        param.dat_group = NULL;
+//        param.dat_obs   = NULL;
+//        param.dat_item  = NULL;
+//    }
     // reset `cnt'
-    for(g=0; g<param.nG; g++) // for all groups
-        for(k=0; k<param.g_numk[g]; k++) // for all skills in it
-            param.g_k_data[g][k]->cnt = 0;
-    for(NCAT x=0; x<param.n_null_skill_group; x++)
-        param.null_skills[x].cnt = 0;
+    zeroTags(&param);
     return true;
 }
 
 void cross_validate(NUMBER* metrics, const char *filename) {
-    NUMBER rmse = 0.0;
+/*    NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
@@ -864,7 +867,7 @@ void cross_validate(NUMBER* metrics, const char *filename) {
     }
     // produce folds
     NPAR *folds = Calloc(NPAR, param.nG);//[param.nG];
-    srand ( (unsigned int)time(NULL) );
+    srand ( time(NULL) );
     for(g=0; g<param.nG; g++) folds[g] = rand() % param.cv_folds;
     // create and fit multiple problems
     HMMProblem* hmms[param.cv_folds];
@@ -876,10 +879,10 @@ void cross_validate(NUMBER* metrics, const char *filename) {
             case STRUCTURE_SKILL: // Conjugate Gradient Descent
             case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblem(&param);
-//                break;
-//                //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
-//                //                hmm = new HMMProblemPiG(&param);
-//                //                break;
+                break;
+////            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
+////                hmm = new HMMProblemPiG(&param);
+////                break;
 //            case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
 //                hmms[f] = new HMMProblemPiGK(&param);
 //                break;
@@ -892,20 +895,20 @@ void cross_validate(NUMBER* metrics, const char *filename) {
 //            case STRUCTURE_PIABgk: // Gradient Descent, pT=f(K,G), other by K
 //                hmms[f] = new HMMProblemPiABGK(&param);
 //                break;
-//                //            case BKT_GD_T: // Gradient Descent with Transfer
-//                //                hmm = new HMMProblemKT(&param);
-//                //                break;
+////            case BKT_GD_T: // Gradient Descent with Transfer
+////                hmm = new HMMProblemKT(&param);
+////                break;
         }
         // block respective data - do not fit the data belonging to the fold
         for(g=0; g<param.nG; g++) // for all groups
             if(folds[g]==f) { // if in current fold
                 for(k=0; k<param.g_numk[g]; k++) // for all skills in it
-                    param.g_k_data[g][k]->cnt = 1; // block it
+                    param.g_k_data[g][k]->tag = 1; // block it
             }
         // block nulls
         for(NCAT x=0; x<param.n_null_skill_group; x++) {
             if( param.null_skills[x].g == f)
-                param.null_skills[x].cnt = 1;
+                param.null_skills[x].tag = 1;
         }
         // now compute
         hmms[f]->fit();
@@ -913,12 +916,12 @@ void cross_validate(NUMBER* metrics, const char *filename) {
         for(g=0; g<param.nG; g++) // for all groups
             if(folds[g]==f) { // if in current fold
                 for(k=0; k<param.g_numk[g]; k++) // for all skills in it
-                    param.g_k_data[g][k]->cnt = 0; // UN-block it
+                    param.g_k_data[g][k]->tag = 0; // UN-block it
             }
         // UN-block nulls
         for(NCAT x=0; x<param.n_null_skill_group; x++) {
             if( param.null_skills[x].g == f)
-                param.null_skills[x].cnt = 0;
+                param.null_skills[x].tag = 0;
         }
         if(q == 0)
             printf("fold %d is done\n",f+1);
@@ -927,10 +930,10 @@ void cross_validate(NUMBER* metrics, const char *filename) {
     // go trhough original data and predict
 	NDAT t;
 	NPAR i, j, m, o, isTarget;
-	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
+	NUMBER *local_pred = init1DNumber(param.nO); // local prediction
 	NUMBER pLe[param.nS];// p(L|evidence);
 	NUMBER pLe_denom; // p(L|evidence) denominator
-	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states
+	NUMBER ***group_skill_map = init3DNumber(param.nG, param.nK, param.nS); // knowledge states
     NUMBER prob = 0, ll = 0;
     struct data dt;
 	// initialize
@@ -976,10 +979,10 @@ void cross_validate(NUMBER* metrics, const char *filename) {
         for(int l=0; l<n; l++) {
             k = ar[l];
             dt.k = k;
-            //            // produce prediction and copy to result
-            //            for(m=0; m<param.nO; m++)
-            //                for(i=0; i<param.nS; i++)
-            //                    local_pred[m] += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,m);
+//            // produce prediction and copy to result
+//            for(m=0; m<param.nO; m++)
+//                for(i=0; i<param.nS; i++)
+//                    local_pred[m] += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,m);
             // update p(L)
             pLe_denom = 0.0;
             // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
@@ -991,8 +994,8 @@ void cross_validate(NUMBER* metrics, const char *filename) {
                 for(i=0; i<param.nS; i++)
                     group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);
         }
-        //        for(m=0; m<param.nO; m++)
-        //            local_pred[m] /= n;
+//        for(m=0; m<param.nO; m++)
+//            local_pred[m] /= n;
         if(param.predictions>0) // write predictions file if it was opened
             for(m=0; m<param.nO; m++)
                 fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
@@ -1015,7 +1018,7 @@ void cross_validate(NUMBER* metrics, const char *filename) {
     n_par /= f;
     free(folds);
     free(local_pred);
-    free3D<NUMBER>(group_skill_map, param.nG, param.nK);
+    free3DNumber(group_skill_map, param.nG, param.nK);
     if(param.predictions>0) // close predictions file if it was opened
         fclose(fid);
     metrics[0] = ll;
@@ -1024,11 +1027,11 @@ void cross_validate(NUMBER* metrics, const char *filename) {
     metrics[3] = rmse;
     metrics[4] = rmse_no_null;
     metrics[5] = accuracy / param.N;
-    metrics[6] = accuracy_no_null / (param.N - param.N_null);
+    metrics[6] = accuracy_no_null / (param.N - param.N_null);*/
 }
 
 void cross_validate_item(NUMBER* metrics, const char *filename) {
-    NUMBER rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
+/*    NUMBER rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
     NCAT2 I; // item
@@ -1045,11 +1048,11 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
     // produce folds
     NPAR *folds = Calloc(NPAR, param.nI);
     NDAT *fold_counts = Calloc(NDAT, param.cv_folds);
-    //    NDAT *fold_shortcounts = Calloc(NDAT, param.cv_folds);
-    srand ( (unsigned int)time(NULL) ); // randomize
+//    NDAT *fold_shortcounts = Calloc(NDAT, param.cv_folds);
+    srand ( time(NULL) ); // randomize
     for(I=0; I<param.nI; I++) folds[I] = rand() % param.cv_folds; // produce folds
     // count number of items in each fold
-    //    for(I=0; I<param.nI; I++) fold_shortcounts[ folds[I] ]++; // produce folds
+//    for(I=0; I<param.nI; I++) fold_shortcounts[ folds[I] ]++; // produce folds
     for(t=0; t<param.N; t++) fold_counts[ folds[param.dat_item->get(t)] ]++;
     // create and fit multiple problems
     HMMProblem* hmms[param.cv_folds];
@@ -1062,9 +1065,9 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
             case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblem(&param);
                 break;
-//                //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
-//                //                hmm = new HMMProblemPiG(&param);
-//                //                break;
+////            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
+////                hmm = new HMMProblemPiG(&param);
+////                break;
 //            case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
 //                hmms[f] = new HMMProblemPiGK(&param);
 //                break;
@@ -1077,9 +1080,9 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
 //            case STRUCTURE_PIABgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
 //                hmms[f] = new HMMProblemPiABGK(&param);
 //                break;
-//                //            case BKT_GD_T: // Gradient Descent with Transfer
-//                //                hmm = new HMMProblemKT(&param);
-//                //                break;
+////            case BKT_GD_T: // Gradient Descent with Transfer
+////                hmm = new HMMProblemKT(&param);
+////                break;
         }
         // block respective data - do not fit the data belonging to the fold
         NPAR *saved_obs = Calloc(NPAR, fold_counts[f]);
@@ -1106,10 +1109,10 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
     param.quiet = q;
     // go trhough original data and predict
 	NPAR i, j, m, o, isTarget;
-	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
+	NUMBER *local_pred = init1DNumber(param.nO); // local prediction
 	NUMBER pLe[param.nS];// p(L|evidence);
 	NUMBER pLe_denom; // p(L|evidence) denominator
-	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states
+	NUMBER ***group_skill_map = init3DNumber(param.nG, param.nK, param.nS); // knowledge states
     NUMBER prob = 0, ll = 0;
     struct data dt;
 	// initialize
@@ -1192,9 +1195,9 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
     }
     n_par /= f;
     free(folds);
-    //    free(fold_shortcounts);
+//    free(fold_shortcounts);
     free(local_pred);
-    free3D<NUMBER>(group_skill_map, param.nG, param.nK);
+    free3DNumber(group_skill_map, param.nG, param.nK);
     if(param.predictions>0) // close predictions file if it was opened
         fclose(fid);
     metrics[0] = ll;
@@ -1203,11 +1206,11 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
     metrics[3] = rmse;
     metrics[4] = rmse_no_null;
     metrics[5] = accuracy / param.N;
-    metrics[6] = accuracy_no_null / (param.N - param.N_null);
+    metrics[6] = accuracy_no_null / (param.N - param.N_null);*/
 }
 
 void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
-    NUMBER rmse = 0.0;
+/*    NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
@@ -1226,7 +1229,7 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
     NPAR *folds = Calloc(NPAR, param.nI);
     NDAT *fold_counts = Calloc(NDAT, param.cv_folds);
     //    NDAT *fold_shortcounts = Calloc(NDAT, param.cv_folds);
-    srand ( (unsigned int)time(NULL) ); // randomize
+    srand ( time(NULL) ); // randomize
     for(I=0; I<param.nI; I++) folds[I] = rand() % param.cv_folds; // produce folds
     // count number of items in each fold
     //    for(I=0; I<param.nI; I++) fold_shortcounts[ folds[I] ]++; // produce folds
@@ -1242,9 +1245,9 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
             case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblem(&param);
                 break;
-//                //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
-//                //                hmm = new HMMProblemPiG(&param);
-//                //                break;
+////            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
+////                hmm = new HMMProblemPiG(&param);
+////                break;
 //            case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
 //                hmms[f] = new HMMProblemPiGK(&param);
 //                break;
@@ -1257,9 +1260,9 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
 //            case STRUCTURE_PIABgk: // Gradient Descent, pT=f(K,G), other by K
 //                hmms[f] = new HMMProblemPiABGK(&param);
 //                break;
-//                //            case BKT_GD_T: // Gradient Descent with Transfer
-//                //                hmm = new HMMProblemKT(&param);
-//                //                break;
+////            case BKT_GD_T: // Gradient Descent with Transfer
+////                hmm = new HMMProblemKT(&param);
+////                break;
         }
         // block respective data - do not fit the data belonging to the fold
         NPAR *saved_obs = Calloc(NPAR, fold_counts[f]);
@@ -1286,10 +1289,10 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
     param.quiet = q;
     // go trhough original data and predict
 	NPAR i, j, m, o, isTarget;
-	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
+	NUMBER *local_pred = init1DNumber(param.nO); // local prediction
 	NUMBER pLe[param.nS];// p(L|evidence);
 	NUMBER pLe_denom; // p(L|evidence) denominator
-	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states
+	NUMBER ***group_skill_map = init3DNumber(param.nG, param.nK, param.nS); // knowledge states
     NUMBER prob = 0, ll = 0;
     struct data dt;
 	// initialize
@@ -1374,7 +1377,7 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
     free(folds);
     //    free(fold_shortcounts);
     free(local_pred);
-    free3D<NUMBER>(group_skill_map, param.nG, param.nK);
+    free3DNumber(group_skill_map, param.nG, param.nK);
     if(param.predictions>0) // close predictions file if it was opened
         fclose(fid);
     metrics[0] = ll;
@@ -1383,5 +1386,5 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
     metrics[3] = rmse;
     metrics[4] = rmse_no_null;
     metrics[5] = accuracy / param.N;
-    metrics[6] = accuracy_no_null / (param.N - param.N_null);
+    metrics[6] = accuracy_no_null / (param.N - param.N_null);*/
 }

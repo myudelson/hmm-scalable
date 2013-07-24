@@ -77,17 +77,17 @@ void HMMProblemPiABGK::init(struct param *param) {
     
     // mass produce PI's/PIg's, A's, B's
 	if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-		this->PI  = init2DNumber(nK, nS);
-		this->A   = init3DNumber(nK, nS, nS);
-		this->B   = init3DNumber(nK, nS, nO);
-		this->PIg = init2DNumber(nG, nS);
-		this->Ag  = init3DNumber(nG, nS, nS);
-		this->Bg  = init3DNumber(nG, nS, nO);
+		this->PI  = init2D<NUMBER>(nK, nS);
+		this->A   = init3D<NUMBER>(nK, nS, nS);
+		this->B   = init3D<NUMBER>(nK, nS, nO);
+		this->PIg = init2D<NUMBER>(nG, nS);
+		this->Ag  = init3D<NUMBER>(nG, nS, nS);
+		this->Bg  = init3D<NUMBER>(nG, nS, nO);
         NCAT x;
 		for(x=0; x<nK; x++) {
-			cpy1DNumber(a_PI, this->PI[x], nS);
-			cpy2DNumber(a_A,  this->A[x],  nS, nS);
-			cpy2DNumber(a_B,  this->B[x],  nS, nO);
+			cpy1D<NUMBER>(a_PI, this->PI[x], nS);
+			cpy2D<NUMBER>(a_A,  this->A[x],  nS, nS);
+			cpy2D<NUMBER>(a_B,  this->B[x],  nS, nO);
         }
         // PIg start with "no-effect" params,PI[i] = 1/nS
 		for(x=0; x<nG; x++) {
@@ -105,8 +105,8 @@ void HMMProblemPiABGK::init(struct param *param) {
 	}
     // destroy setup params
 	free(a_PI);
-	free2DNumber(a_A, nS);
-	free2DNumber(a_B, nS);
+	free2D<NUMBER>(a_A, nS);
+	free2D<NUMBER>(a_B, nS);
 	
     // populate boundaries
 	// populate lb*/ub*
@@ -150,18 +150,18 @@ HMMProblemPiABGK::~HMMProblemPiABGK() {
 
 void HMMProblemPiABGK::destroy() {
 	// destroy model data - only additional stuff
-	free2DNumber(this->PIg, this->p->nG);
-	free3DNumber(this->Ag, this->p->nG, this->p->nS);
-	free3DNumber(this->Bg, this->p->nG, this->p->nS);
+	free2D<NUMBER>(this->PIg, this->p->nG);
+	free3D<NUMBER>(this->Ag, this->p->nG, this->p->nS);
+	free3D<NUMBER>(this->Bg, this->p->nG, this->p->nS);
 	// destroy fitting data
     //	// gradPI,g
     //	if ( this->gradPIg != NULL) {
-    //		free2DNumber(this->gradPIg, this->p->nG);
+    //		free2D<NUMBER>(this->gradPIg, this->p->nG);
     //		this->gradPIg = NULL;
     //	}
     //	// gradA
     //	if ( this->gradAg != NULL) {
-    //		free3DNumber(this->gradAg, this->p->nG, this->p->nS);
+    //		free3D<NUMBER>(this->gradAg, this->p->nG, this->p->nS);
     //		this->gradAg = NULL;
     //	}
     //    // free fit flags
@@ -303,7 +303,7 @@ void HMMProblemPiABGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
     NPAR i, o;
     NUMBER combined, deriv_logit;
     //    o = dt->obs[t];
-    o = this->p->dat_obs->get( dt->idx[t] );
+    o = this->p->dat_obs->get( dt->ix[t] );
     if(kg_flag == 0) { // by Skill
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
@@ -324,9 +324,9 @@ void HMMProblemPiABGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
     NPAR o, i, j;
     NUMBER combined, deriv_logit;
     if(kg_flag == 0) { // by Skill
-        for(t=1; t<dt->ndat; t++) {
+        for(t=1; t<dt->n; t++) {
             //            o = dt->obs[t];
-            o = this->p->dat_obs->get( dt->idx[t] );
+            o = this->p->dat_obs->get( dt->ix[t] );
             for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++)
                 for(j=0; j<this->p->nS; j++) {
                     combined = getA(dt,i,j);
@@ -336,9 +336,9 @@ void HMMProblemPiABGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
         }
     }
     else // by group
-        for(t=1; t<dt->ndat; t++) {
+        for(t=1; t<dt->n; t++) {
             //            o = dt->obs[t];
-            o = this->p->dat_obs->get( dt->idx[t] );
+            o = this->p->dat_obs->get( dt->ix[t] );
             for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++)
                 for(j=0; j<this->p->nS; j++) {
                     combined = getA(dt,i,j);
@@ -353,9 +353,9 @@ void HMMProblemPiABGK::setGradB (struct data* dt, FitBit *fb, NPAR kg_flag){
     NPAR o, i;
     NUMBER combined, deriv_logit;
     if(kg_flag == 0) { // by Skill
-        for(t=1; t<dt->ndat; t++) {
+        for(t=1; t<dt->n; t++) {
             //            o = dt->obs[t];
-            o = this->p->dat_obs->get( dt->idx[t] );
+            o = this->p->dat_obs->get( dt->ix[t] );
             if(o<0)
                 continue;
             for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++) {
@@ -366,9 +366,9 @@ void HMMProblemPiABGK::setGradB (struct data* dt, FitBit *fb, NPAR kg_flag){
         }
     }
     else // by group
-        for(t=1; t<dt->ndat; t++) {
+        for(t=1; t<dt->n; t++) {
             //            o = dt->obs[t];
-            o = this->p->dat_obs->get( dt->idx[t] );
+            o = this->p->dat_obs->get( dt->ix[t] );
             if(o<0)
                 continue;
             for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++) {
@@ -430,7 +430,7 @@ void HMMProblemPiABGK::toFile(const char *filename) {
 }
 
 void HMMProblemPiABGK::fit() {
-    NUMBER* loglik_rmse = init1DNumber(2);
+    NUMBER* loglik_rmse = init1D<NUMBER>(2);
     FitNullSkill(loglik_rmse, false /*do not need RMSE/SE*/);
     if(this->p->structure==STRUCTURE_PIABgk)
         loglik_rmse[0] += GradientDescent();
@@ -447,7 +447,7 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
     /*NPAR nS = this->p->nS, nO = this->p->nO;*/ NCAT nK = this->p->nK, nG = this->p->nG;
     NUMBER loglik = 0;
     FitResult fr;
-    FitBit *fb = new FitBit(this->p);
+    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
     fb->init(FBS_PARm1);
     fb->init(FBS_GRAD);
     if(this->p->solver==METHOD_CGD) {
@@ -459,7 +459,7 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
 	//
 	if(this->p->single_skill>0) {
         fb->linkPar( this->getPI(0), this->getA(0), this->getB(0));// link skill 0 (we'll copy fit parameters to others
-        fr = GradientDescentBit(0/*use skill 0*/, this->p->ndata, this->p->k_data, 0/* by skill*/, fb, true /*is1SkillForAll*/);
+        fr = GradientDescentBit(0/*use skill 0*/, this->p->nSeq, this->p->k_data, 0/* by skill*/, fb, true /*is1SkillForAll*/);
         printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
     }
 	
