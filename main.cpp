@@ -131,7 +131,7 @@ int main (int argc, char ** argv) {
 //    NUMBER big_ll = 0.0, big_loglik = 0.0;
 //    for(int ii=0; ii<45; ii++) {
 //        dt[0]->obs =   bigo[ii];
-//        dt[0]->ndat = sizes[ii];
+//        dt[0]->n = sizes[ii];
 //        dt[0]->cnt = 0;
 //        dt[0]->alpha = NULL;
 //        dt[0]->beta = NULL;
@@ -148,7 +148,7 @@ int main (int argc, char ** argv) {
 //        // compute pLo
 //        HMMProblem::computeAlphaAndPOParam(1, dt, PI, A, B, param->nS);
 //        printf("- Alpha -\n");
-//    //    for(int t=0; t<dt[0]->ndat; t++)
+//    //    for(int t=0; t<dt[0]->n; t++)
 //    //        for(int i=0; i<param->nS; i++)
 //    //            printf("%8.6f%s",dt[0]->alpha[t][i],((i==0)?"\t":"\n"));
 //        printf("LL:    %8.6f\n",-fsafelog(dt[0]->p_O_param));
@@ -162,7 +162,7 @@ int main (int argc, char ** argv) {
 //        NUMBER prob;
 //        for(int i=0;i<param->nO; i++) pL[i] = PI[i];
 //        NPAR o,m,i,j, metrics_target_obs=0, isTarget;
-//        for(int t=0; t<dt[0]->ndat; t++) {
+//        for(int t=0; t<dt[0]->n; t++) {
 //            o = dt[0]->obs[t];//[t];
 //            isTarget = (metrics_target_obs == o);
 //            for(m=0; m<param->nO; m++) local_pred[m] = 0.0;
