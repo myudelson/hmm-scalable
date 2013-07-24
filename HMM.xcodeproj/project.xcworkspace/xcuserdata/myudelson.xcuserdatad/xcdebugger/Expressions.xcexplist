@@ -1,0 +1,935 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "HMMProblemOld::setGradPI(data*, FitBit*, signed char):HMMProblemOld.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "dt-&gt;beta[t][i]">
+            </PersistentString>
+            <PersistentString
+               value = "getB(dt,i,o)">
+            </PersistentString>
+            <PersistentString
+               value = "dt-&gt;beta">
+            </PersistentString>
+            <PersistentString
+               value = "dt-&gt;p_O_param">
+            </PersistentString>
+            <PersistentString
+               value = "dt-&gt;beta[t][i] * getB(dt,i,o) / dt-&gt;p_O_param">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "write_time_interval_data(param*, char const*):utils.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "sizeof (time_lim_20HDWM)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::updSeqCounts(unsigned int, bool):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "dats[l]-&gt;cnt">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::doLinearStep(short, short, data*, short, FitBit*, short):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "f_xk">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblemAGK::getA(data*, signed char, signed char):HMMProblemAGK.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;Ag[0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblemOld::GradientDescent():HMMProblemOld.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "p-&gt;nS">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;p-&gt;nS">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;p-&gt;nO">
+            </PersistentString>
+            <PersistentString
+               value = "p-&gt;nO">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "StripedArray&lt;int&gt;::get(unsigned long):StripedArray.h">
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::GradientDescentBit(short, short, data*, short, signed char, FitBit*, bool):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;p-&gt;dat_obs">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "main:trainhmm.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "param">
+            </PersistentString>
+            <PersistentString
+               value = "param.item_complexity[0]">
+            </PersistentString>
+            <PersistentString
+               value = "item">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblemOld::computeBeta(short, data**):HMMProblemOld.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "x_data[x]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::doLinearStep(int, int, data*, short, FitBit*, short):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;alpha[0][1]">
+            </PersistentString>
+            <PersistentString
+               value = "fb">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;alpha[0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;alpha[1][1]">
+            </PersistentString>
+            <PersistentString
+               value = "fr">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;alpha[1][0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "binsearch(unsigned int, unsigned int*, unsigned int, unsigned int):utils.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "a[last]">
+            </PersistentString>
+            <PersistentString
+               value = "a[first]">
+            </PersistentString>
+            <PersistentString
+               value = "((first + last)/2)">
+            </PersistentString>
+            <PersistentString
+               value = "a[middle]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::computeAlphaEtAl(short, bool):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "t">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblemOld::setGradA(data*, FitBit*, signed char):HMMProblemOld.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "fb-&gt;gradA">
+            </PersistentString>
+            <PersistentString
+               value = "dt-&gt;p_O_param">
+            </PersistentString>
+            <PersistentString
+               value = "dt-&gt;beta[t][j]">
+            </PersistentString>
+            <PersistentString
+               value = "dt-&gt;alpha[t-1][i]">
+            </PersistentString>
+            <PersistentString
+               value = "getB(dt,j,o)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::computeGradients(FitBit**):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;p-&gt;all_seq[ this-&gt;p-&gt;k_ix1stSeq[920] ]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "StripedArray&lt;short*&gt;::set(unsigned long, short*):StripedArray.h">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;size">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "cross_validate_item(double*, char const*):trainhmm.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "fold_counts[6]">
+            </PersistentString>
+            <PersistentString
+               value = "fold_counts[8]">
+            </PersistentString>
+            <PersistentString
+               value = "fold_counts[1]">
+            </PersistentString>
+            <PersistentString
+               value = "folds[ param.dat_item-&gt;get(t) ]">
+            </PersistentString>
+            <PersistentString
+               value = "fold_counts[3]">
+            </PersistentString>
+            <PersistentString
+               value = "(int)folds[3]">
+            </PersistentString>
+            <PersistentString
+               value = "fold_counts[5]">
+            </PersistentString>
+            <PersistentString
+               value = "fold_counts[7]">
+            </PersistentString>
+            <PersistentString
+               value = "fold_counts[0]">
+            </PersistentString>
+            <PersistentString
+               value = "(int)folds[1]">
+            </PersistentString>
+            <PersistentString
+               value = "(int)max_fold">
+            </PersistentString>
+            <PersistentString
+               value = "fold_counts[9]">
+            </PersistentString>
+            <PersistentString
+               value = "(int)folds[0]">
+            </PersistentString>
+            <PersistentString
+               value = "hmms[f]">
+            </PersistentString>
+            <PersistentString
+               value = "fold_counts[4]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "FitBit::copy(FIT_BIT_SLOT, FIT_BIT_SLOT):FitBit.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "void cpy1D&lt;double&gt;(double*, double*, unsigned int):utils.h">
+         <PersistentStrings>
+            <PersistentString
+               value = "target[0]">
+            </PersistentString>
+            <PersistentString
+               value = "source[0]">
+            </PersistentString>
+            <PersistentString
+               value = "target[1]">
+            </PersistentString>
+            <PersistentString
+               value = "source[1]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::GradientDescentBit(FitResult*, FitBit**):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "fbs[k]">
+            </PersistentString>
+            <PersistentString
+               value = "frs[k]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "InputUtil::readMultiSkill(__sFILE*, param*):InputUtil.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "ar[2]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[5]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[0]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[3]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[6]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[1]">
+            </PersistentString>
+            <PersistentString
+               value = "param-&gt;dat_multiskill-&gt;getSize()">
+            </PersistentString>
+            <PersistentString
+               value = "ar[4]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "binsearch(void const*, void const*, unsigned long, unsigned long):utils.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "lim">
+            </PersistentString>
+            <PersistentString
+               value = "((char*)p-base)/size">
+            </PersistentString>
+            <PersistentString
+               value = "*((NCAT *)key)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::computeBeta():HMMProblem.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "void cpy2D&lt;double&gt;(double**, double**, unsigned int, unsigned int):utils.h">
+         <PersistentStrings>
+            <PersistentString
+               value = "source[1][1]">
+            </PersistentString>
+            <PersistentString
+               value = "source[0][1]">
+            </PersistentString>
+            <PersistentString
+               value = "target[0][1]">
+            </PersistentString>
+            <PersistentString
+               value = "source[0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "target[1][1]">
+            </PersistentString>
+            <PersistentString
+               value = "source[1][0]">
+            </PersistentString>
+            <PersistentString
+               value = "target[0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "target[1][0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::computeBeta(unsigned int, short):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "k">
+            </PersistentString>
+            <PersistentString
+               value = "dats[l]">
+            </PersistentString>
+            <PersistentString
+               value = "dats[l]-&gt;ix1st">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;beta[ix][i]">
+            </PersistentString>
+            <PersistentString
+               value = "dats[l]-&gt;cnt">
+            </PersistentString>
+            <PersistentString
+               value = "dats[l]-&gt;n">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;p-&gt;NN">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::FitNullSkill(double*, bool):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "(int)o">
+            </PersistentString>
+            <PersistentString
+               value = "((int)o)&gt;=0">
+            </PersistentString>
+            <PersistentString
+               value = "((int)o)&lt;0">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;Ag[0][0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;p-&gt;dat_obs-&gt;stripes[0][10]">
+            </PersistentString>
+            <PersistentString
+               value = "dat-&gt;idx[t]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::computeBeta(short, short, data*, short):HMMProblem.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblemAGK::fit():HMMProblemAGK.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;Ag[0][0][0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::GradientDescent():HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "frs[k].conv">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "read_train_data(char const*):trainhmm.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "param">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "structure_data(char const*):trainhmm.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "param.nSeqNull">
+            </PersistentString>
+            <PersistentString
+               value = "param.NN">
+            </PersistentString>
+            <PersistentString
+               value = "n">
+            </PersistentString>
+            <PersistentString
+               value = "l">
+            </PersistentString>
+            <PersistentString
+               value = "param.N_null">
+            </PersistentString>
+            <PersistentString
+               value = "t">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::setGradPI(data*, FitBit*, signed char):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "dt-&gt;beta[t][i]">
+            </PersistentString>
+            <PersistentString
+               value = "getB(dt,i,o)">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradPI[i]">
+            </PersistentString>
+            <PersistentString
+               value = "safe0num(dt-&gt;p_O_param)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "StripedArray&lt;signed char&gt;::get(unsigned long):StripedArray.h">
+      </ContextState>
+      <ContextState
+         contextName = "FitBit::toZero(double*, double**, double**):FitBit.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "InputUtil::writeMultiSkill(__sFILE*, param*):InputUtil.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "ar[2]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[5]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[0]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[3]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[6]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[1]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[4]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "StripedArray&lt;short&gt;::get(unsigned long):StripedArray.h">
+         <PersistentStrings>
+            <PersistentString
+               value = "idx">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;size">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "projectsimplexbounded(double*, double*, double*, signed char):utils.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "ar[0]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[1]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::fit():HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;p-&gt;dat_obs">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "read_predict_data(char const*):predicthmm.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblemOld::computeGradients(short, data**, FitBit*, signed char):HMMProblemOld.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;p-&gt;k_data[2]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[29]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradPI[0]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradPI[1]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::computeAlphaEtAl(short, short, data*, short):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;p-&gt;dat_obs">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "read_predict_data(char const*):trainhmm.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "line[0]">
+            </PersistentString>
+            <PersistentString
+               value = "param.map_skill_fwd-&gt;size()==NCAT_MAX">
+            </PersistentString>
+            <PersistentString
+               value = "param.map_skill_fwd-&gt;size()">
+            </PersistentString>
+            <PersistentString
+               value = "s_skill">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "StripedArray&lt;signed char&gt;::addStripe():StripedArray.h">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;nstripes">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;stripe_size">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;size_last_stripe &lt; this-&gt;stripe_size">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;size_last_stripe">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::computeAlphaEtAl(unsigned int, short):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "dats[l]">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;alpha[ix-1][i]">
+            </PersistentString>
+            <PersistentString
+               value = "n">
+            </PersistentString>
+            <PersistentString
+               value = "dats[l]-&gt;cnt">
+            </PersistentString>
+            <PersistentString
+               value = "t">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::GradientDescentBit(int, int, data*, short, signed char, FitBit*, bool):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "fb-&gt;gradA[0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradA[1][1]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradA[1][0]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradPI[1]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradB[0][1]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradB[0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradB[1][0]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradPI[0]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradB[1][1]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradA[0][1]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "FitBit::FitBit(param*):FitBit.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "p">
+            </PersistentString>
+            <PersistentString
+               value = "p-&gt;nS">
+            </PersistentString>
+            <PersistentString
+               value = "p-&gt;nO">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblemAGK::init(param*):HMMProblemAGK.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "(NUMBER)1/nS">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;Ag[0][0][0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::init(param*):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;ubPI">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;p-&gt;param_hi[i]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "parse_arguments(int, char**, char*, char*, char*):trainhmm.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "CV_GROUP">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::computeGradients(int, int, data*, FitBit*, short):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;alpha[0][1]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradPI[0]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradPI[1]">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;beta[0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;alpha[0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;beta[0][1]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "InputUtil::readBin(char const*, param*):InputUtil.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "param-&gt;dat_group-&gt;get(0)">
+            </PersistentString>
+            <PersistentString
+               value = "param-&gt;multiskill">
+            </PersistentString>
+            <PersistentString
+               value = "param-&gt;dat_obs-&gt;get(0)">
+            </PersistentString>
+            <PersistentString
+               value = "param-&gt;dat_item-&gt;get(0)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "FitBit::init(double*&amp;, double**&amp;, double**&amp;):FitBit.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::computeBeta(int, int, data*, short):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;beta[0][0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "double** init2D&lt;double&gt;(unsigned int, unsigned int):utils.h">
+      </ContextState>
+      <ContextState
+         contextName = "FitBit::init(FIT_BIT_SLOT):FitBit.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::computeGradients(short, short, data*, FitBit*, short):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;p-&gt;dat_obs">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblemOld::computeAlphaAndPOParam(short, data**):HMMProblemOld.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "x_data[0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "FitBit::FitBit(param const*):FitBit.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblemAGK::HMMProblemAGK(param*):HMMProblemAGK.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;Ag[0][0][0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::computeAlphaEtAl():HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "t4">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;p-&gt;all_seq[ this-&gt;p-&gt;k_ix1stSeq[920] ]">
+            </PersistentString>
+            <PersistentString
+               value = "t2">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;p-&gt;k_ix1stSeq[920]">
+            </PersistentString>
+            <PersistentString
+               value = "t3">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;p-&gt;k_nG[920]">
+            </PersistentString>
+            <PersistentString
+               value = "t1">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblemOld::GradientDescentBit(short, short, data**, signed char, FitBit*, bool):HMMProblemOld.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "x_data[0]-&gt;beta[0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradPI[0]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;alpha[2][0]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;beta[1][1]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradPI[1]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradB[1][1]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradB[0][1]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;beta[1][0]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;alpha[2][1]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;alpha[0][1]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;beta[2][1]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradB[1][0]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradA[1][1]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;alpha[1][0]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradA[0][1]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;beta[2][0]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradB[0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;beta[0][1]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradA[1][0]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradA[0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;alpha[1][1]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "InputUtil::toBin(param*, char const*):InputUtil.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "param-&gt;N">
+            </PersistentString>
+            <PersistentString
+               value = "param-&gt;dat_group-&gt;get(param-&gt;N-1)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblemPiAGK::getPI(data*, signed char):HMMProblemPiAGK.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "1/( 1 + (1-p)*(1-q)/(p*q) )">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::setGradPI(data*, FitBit*):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;beta[ix][i]">
+            </PersistentString>
+            <PersistentString
+               value = "dt-&gt;p_O_param">
+            </PersistentString>
+            <PersistentString
+               value = "getB(t,i,o)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblemOld::doLinearStep(short, data**, FitBit*, short):HMMProblemOld.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "fb">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;alpha[0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;alpha[0][1]">
+            </PersistentString>
+            <PersistentString
+               value = "this">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;alpha[1][1]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[0]-&gt;alpha[1][0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "read_data(char const*):trainhmm.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "binsearch(void const*, void const*, void const*, unsigned long, unsigned long):utils.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "*kkey">
+            </PersistentString>
+            <PersistentString
+               value = "*pp">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
