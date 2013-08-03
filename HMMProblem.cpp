@@ -899,8 +899,8 @@ void HMMProblem::computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat
             //            }
             loglik_rmse[1] += pow(isTarget - prob, 2);
             loglik_rmse[2] += pow(isTarget - prob, 2); // for RMSE without null skill
-            loglik_rmse[5] += isTarget == (this->null_skill_obs_prob>=0.5); // acccuracy all
-            loglik_rmse[6] += isTarget == (this->null_skill_obs_prob>=0.5); // acccuracy no null
+            loglik_rmse[5] += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5); // acccuracy all
+            loglik_rmse[6] += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5); // acccuracy no null
             // update p(L)
             pLe_denom = 0;
             // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
