@@ -257,41 +257,41 @@ int main (int argc, char ** argv) {
 void exit_with_help() {
 	printf(
 		   "Usage: trainhmm [options] input_file [[output_file] predicted_response_file]\n"
-		   "options:\n"
-		   "-s : structure.solver[.solver setting], structures: 1-by skill, 2-by user,\n"
-           "     3-Pi by skill, A,B-by user, 4-Pi by skill and user, A,B-by user,\n"
-           "     5-A by skill and user, Pi,B by skill, 6-Pi,A by skill and user, B by skill;\n"
+           "options:\n"
+           "-s : structure.solver[.solver setting], structures: 1-by skill, 2-by user;\n"
            "     solvers: 1-Baum-Welch, 2-Gradient Descent, 3-Conjugate Gradient Descent;\n"
-           "     Conjugate Gradient Descent has 3 setings: 1-Polak-Ribiere, 2-Fletcher–Reeves,\n"
-           "     3-Hestenes-Stiefel.\n"
-           "     For example '-s 1.3.1' would be by skill structure (classical) with Conjugate\n"
-           "     Gradient Descent and Hestenes-Stiefel formula, '-s 2.1' would be by student structure\n"
-           "     fit using Baum-Welch method.\n"
-		   "-t : tolerance of termination criterion (0.01 default)\n"
-		   "-i : maximum iterations (200 by default)\n"
-		   "-q : quiet mode, without output, 0-no (default), or 1-yes\n"
-		   "-n : number of hidden states, should be 2 or more (default 2)\n"
-		   "-0 : initial params (comma-separated), {PI{n-1},A{(n*(n-1)},B{n*(observations-1)}}\n"
-		   "     default 0.5,1.0,0.4,0.8,0.2\n"
-		   "-l : lower boundaries for params (comma-separated), {PI{n},A{n*n},B{n*(observations)}}\n"
-		   "     default 0,0,1,0,0,0,0,0,0,0\n"
-		   "-u : upper boundaries for params (comma-separated), {PI{n},A{n*n},B{n*(observations)}}\n"
-		   "     default 0,0,1,0,0,0,0,0,0,0\n"
-		   "-c : weight of the L1 penalty, 0 (default) if not applicable, 1 if applicable\n"
-		   "-f : fit as one skill, 0-no (default), 1 - fit as one skill and use params as starting\n"
-           "     point for multi-skill, 2 - force one skill"
-		   "-m : report model fitting metrics (AIC, BIC, RMSE) 0-no (default), 1-yes. To specify observation\n"
-           "     for which metrics to be reported, list it after ';'. For example '-m 0', '-m 1' (by default, \n"
-           "     observation 1 is assumed), '-m 1,2' (compute metrics for observation 2). Incompatible with-v option.\n"
-		   "-v : cross-validation folds and target state to validate against, perform subject-stratified\n"
-		   "     cross-validation, default 0 (no cross-validation),\n"
-           "     examples '-v 5,2' - 5 fold, predict state 2, '-v 10' - 10-fold predict state 1 by default.\n"
-		   "-p : report model predictions on the train set 0-no (default), 1-yes; works with any combination of\n"
-           "     -v and -m params.\n"
-		   "-d : multi-skill per observation delimiter 0-sinle skill per observation (default), [delimiter character].\n"
-           "     For example, '-d ~'.\n"
-		   "-b : treat input file as binary input file (lookup format specifications in help)\n"
-           
+           "     Conjugate Gradient Descent has 3 settings: 1-Polak-Ribiere,\n"
+           "     2-Fletcher–Reeves, 3-Hestenes-Stiefel.\n"
+           "     For example '-s 1.3.1' would be by skill structure (classical) with\n"
+           "     Conjugate Gradient Descent and Hestenes-Stiefel formula, '-s 2.1' would be\n"
+           "     by student structure fit using Baum-Welch method.\n"
+           "-t : tolerance of termination criterion (0.01 default)\n"
+           "-i : maximum iterations (200 by default)\n"
+           "-q : quiet mode, without output, 0-no (default), or 1-yes\n"
+           "-n : number of hidden states, should be 2 or more (default 2)\n"
+           "-0 : initial parameters comma-separated for priors, transition, and emission\n"
+           "     probabilities skipping the last value from each vector (matrix row) since\n"
+           "     they sum up to 1; default 0.5,1.0,0.4,0.8,0.2\n"
+           "-l : lower boundaries for parameters, comma-separated for priors, transition,\n"
+           "     and emission probabilities (without skips); default 0,0,1,0,0,0,0,0,0,0\n"
+           "-u : upper boundaries for params, comma-separated for priors, transition,\n"
+           "     and emission probabilities (without skips); default 0,0,1,0,0,0,0,0,0,0\n"
+           "-c : weight of the L2 penalty, 0 (default)\n"
+           "-f : fit as one skill, 0-no (default), 1 - fit as one skill and use params as\n"
+           "     starting point for multi-skill, 2 - force one skill\n"
+           "-m : report model fitting metrics (AIC, BIC, RMSE) 0-no (default), 1-yes. To \n"
+           "     specify observation for which metrics to be reported, list it after ','.\n"
+           "     For example '-m 0', '-m 1' (by default, observation 1 is assumed), '-m 1,2'\n"
+           "     (compute metrics for observation 2). Incompatible with-v option.\n"
+           "-v : cross-validation folds and target state to validate against, perform\n"
+           "     subject-stratified cross-validation, default 0 (no cross-validation),\n"
+           "     examples '-v 5,2' - 5 fold, predict state 2, '-v 10' - 10-fold predict\n"
+           "     state 1 by default.\n"
+           "-p : report model predictions on the train set 0-no (default), 1-yes; works with\n"
+           "     any combination of -v and -m parameters.\n"
+           "-d : delimiter for multiple skills per observation; 0-single skill per\n"
+           "     observation (default), otherwise -- delimiter character, e.g. '-d ~'.\n"
+           "-b : treat input file as binary input file (specifications TBA).\n"
 		   );
 	exit(1);
 }
@@ -1155,11 +1155,7 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
         for(int l=0; l<n; l++) {
             k = ar[l];
             dt.k = k;
-            //            // produce prediction and copy to result
-            //            for(m=0; m<param.nO; m++)
-            //                for(i=0; i<param.nS; i++)
-            //                    local_pred[m] += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,m);
-            // update p(L)
+            // produce prediction and copy to result
             pLe_denom = 0.0;
             // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
             for(i=0; i<param.nS; i++) pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);
@@ -1335,10 +1331,7 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
         for(int l=0; l<n; l++) {
             k = ar[l];
             dt.k = k;
-            //            // produce prediction and copy to result
-            //            for(m=0; m<param.nO; m++)
-            //                for(i=0; i<param.nS; i++)
-            //                    local_pred[m] += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,m);
+            // produce prediction and copy to result
             // update p(L)
             pLe_denom = 0.0;
             // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );

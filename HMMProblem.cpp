@@ -884,7 +884,7 @@ void HMMProblem::computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat
         N += x_data[x]->n;
         for(i=0;i<nO; i++) pL[i] = safe01num(getPI(x_data[x],i)); // /*safe01num*/(a_PI[i]); // init pL
         for(t=0; t<x_data[x]->n; t++) { // for all
-            //            o = x_data[x]->obs[t];
+//            o = x_data[x]->obs[t];
             o = this->p->dat_obs->get( x_data[x]->ix[t] );
             isTarget = (this->p->metrics_target_obs == o);
             // produce prediction
@@ -894,9 +894,6 @@ void HMMProblem::computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat
                     local_pred[m] += pL[i] * getB(x_data[x],i,m);//a_B[i][m];
             prob = safe01num(local_pred[this->p->metrics_target_obs]);
             loglik_rmse[0] -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
-            //            if( loglik_rmse[0]!=loglik_rmse[0] ) {
-            //                int z = 0;
-            //            }
             loglik_rmse[1] += pow(isTarget - prob, 2);
             loglik_rmse[2] += pow(isTarget - prob, 2); // for RMSE without null skill
             loglik_rmse[5] += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5); // acccuracy all
@@ -908,7 +905,7 @@ void HMMProblem::computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat
                 pLe_denom += (pL[i]) * ((o<0)?1:getB(x_data[x],i,o)); // if observatiob unknown use 1
             for(i=0; i<nS; i++)
                 pLe[i] = pL[i] * ((o<0)?1:getB(x_data[x],i,o)) / pLe_denom; // if observatiob unknown use 1
-            //            projectsimplex(pLe, param->nS);
+//            projectsimplex(pLe, param->nS);
             // 2. L = (pLe'*A)';
             for(i=0; i<nS; i++) pL[i] = 0.0;
             for(j=0; j<nS; j++)

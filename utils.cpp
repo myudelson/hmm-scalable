@@ -335,19 +335,6 @@ void zeroLabels(NCAT xdat, struct data** x_data) { // set counts in data sequenc
 		x_data[x][0].cnt = 0;
 }
 
-// whether one value is no less than 20% of the sum
-bool isBalancedArray(NUMBER *ar, NPAR size) {
-	NPAR i;
-	NUMBER sum = 0;
-	for(i=0; i<size; i++)
-		sum += ar[i];
-	for(i=0; i<size; i++)
-		if( ar[i]/sum < 0.2)
-			return false;
-	return true;
-}
-
-
 // log-scaled math
 NUMBER eexp(NUMBER x) {
 	return (x>=LOGZERO)?0:exp(x);
