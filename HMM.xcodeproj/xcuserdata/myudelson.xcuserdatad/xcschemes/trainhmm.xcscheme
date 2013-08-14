@@ -84,6 +84,18 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "-0"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "0.5,1.0,0.4,0.8,0.2"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "uopx_CLI_model_shrt.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "-t"
             isEnabled = "NO">
          </CommandLineArgument>
@@ -125,11 +137,11 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-b"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "1"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-d"
@@ -164,8 +176,8 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "uopx_hmm_kts.txt"
-            isEnabled = "YES">
+            argument = "uopx_hmm_uskts.txt"
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx_hmm_kts_single.bin"
@@ -173,7 +185,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx_hmm_kts_multi.bin"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx_model_uskts_multi.txt"

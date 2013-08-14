@@ -101,6 +101,10 @@ void HMMProblemAGK::init(struct param *param) {
 	free2D<NUMBER>(a_A, nS);
 	free2D<NUMBER>(a_B, nS);
 	
+    // if needs be -- read in init params from a file
+    if(param->initfile[0]!=0)
+        this->readModel(param->initfile, false /* read and upload but not overwrite*/);
+    
     // populate boundaries
 	// populate lb*/ub*
 	// *PI
@@ -426,13 +430,13 @@ NUMBER HMMProblemAGK::GradientDescent() {
     return loglik;
 }
 
-void HMMProblemAGK::readModel(FILE *fid, NDAT *line_no) {
+void HMMProblemAGK::readModelBody(FILE *fid, struct param *param, NDAT *line_no) {
 	NPAR i,j,m;
 	NCAT k = 0, g = 0;
 	string s;
     char col[1024];
     //
-    readNullObsRatio(fid, line_no);
+    readNullObsRatio(fid, param, line_no);
     //
     // init param
     //

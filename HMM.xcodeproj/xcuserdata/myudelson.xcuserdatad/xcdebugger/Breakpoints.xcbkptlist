@@ -73,11 +73,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "393516031.812477"
+         timestampString = "398195905.735384"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1055"
-         endingLineNumber = "1055"
+         startingLineNumber = "1060"
+         endingLineNumber = "1060"
          landmarkName = "HMMProblem::toZero3Params(NUMBER* &amp;PI, NUMBER** &amp;A, NUMBER** &amp;B, NPAR nS, NPAR nO)"
          landmarkType = "5">
       </FileBreakpoint>
@@ -86,88 +86,88 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "393516031.812477"
+         timestampString = "398195905.735384"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1054"
-         endingLineNumber = "1054">
+         startingLineNumber = "1059"
+         endingLineNumber = "1059">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "395845346.430168"
+         timestampString = "398195905.735384"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1873"
-         endingLineNumber = "1873">
+         startingLineNumber = "1878"
+         endingLineNumber = "1878">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "395845346.430168"
+         timestampString = "398195905.735384"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1869"
-         endingLineNumber = "1869">
+         startingLineNumber = "1874"
+         endingLineNumber = "1874">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "395845346.430168"
+         timestampString = "398195905.735384"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1912"
-         endingLineNumber = "1912">
+         startingLineNumber = "1917"
+         endingLineNumber = "1917">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "398180574.43246"
+         timestampString = "398197690.364733"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "2048"
-         endingLineNumber = "2048">
+         startingLineNumber = "2104"
+         endingLineNumber = "2104">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "398180574.43246"
+         timestampString = "398197690.364733"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "2034"
-         endingLineNumber = "2034">
+         startingLineNumber = "2090"
+         endingLineNumber = "2090">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "398180574.43246"
+         timestampString = "398197690.364733"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "2039"
-         endingLineNumber = "2039">
+         startingLineNumber = "2095"
+         endingLineNumber = "2095">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "395845346.430168"
+         timestampString = "398195905.735384"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1318"
-         endingLineNumber = "1318"
+         startingLineNumber = "1323"
+         endingLineNumber = "1323"
          landmarkName = "HMMProblem::doLinearStep(NCAT xndat, struct data** x_data, FitBit *fb, NCAT copy)"
          landmarkType = "5">
       </FileBreakpoint>
@@ -176,11 +176,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "395845346.430168"
+         timestampString = "398195905.735384"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1322"
-         endingLineNumber = "1322"
+         startingLineNumber = "1327"
+         endingLineNumber = "1327"
          landmarkName = "HMMProblem::doLinearStep(NCAT xndat, struct data** x_data, FitBit *fb, NCAT copy)"
          landmarkType = "5">
       </FileBreakpoint>
@@ -189,11 +189,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "395845346.430168"
+         timestampString = "398195905.735384"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1364"
-         endingLineNumber = "1364"
+         startingLineNumber = "1369"
+         endingLineNumber = "1369"
          landmarkName = "HMMProblem::doLinearStep(NCAT xndat, struct data** x_data, FitBit *fb, NCAT copy)"
          landmarkType = "5">
       </FileBreakpoint>

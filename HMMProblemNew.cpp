@@ -3076,7 +3076,7 @@ void HMMProblem::readNullObsRatio(FILE *fid, NDAT *line_no) {
 }
 
 
-void HMMProblem::readModel(FILE *fid, NDAT *line_no) {
+void HMMProblem::readModelBody(FILE *fid, NDAT *line_no) {
 	NPAR i,j,m;
 	NCAT k = 0;
 	string s;

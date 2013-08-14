@@ -96,7 +96,10 @@ void HMMProblemAGKi::init(struct param *param) {
 	free2D<NUMBER>(a_A, nS);
 	free2D<NUMBER>(a_B, nS);
 	
-    
+    // if needs be -- read in init params from a file
+    if(param->initfile[0]!=0)
+        this->readModel(param->initfile, false /* read and upload but not overwrite*/);
+
     // populate boundaries
 	// populate lb*/ub*
 	// *PI

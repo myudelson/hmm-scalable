@@ -128,7 +128,6 @@ int main (int argc, char ** argv) {
                     //                hmm = new HMMProblemKT(&param);
                     //                break;
             }
-            
             tm = clock();
             hmm->fit();
             
@@ -417,15 +416,22 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 				len = (int)strlen( argv[i] );
 				// count delimiters
 				n = 1; // start with 1
-				for(int j=0;j<len;j++)
+				for(int j=0;j<len;j++) {
 					n += (argv[i][j]==',')?(NPAR)1:(NPAR)0;
-				// init params
-				free(param.init_params);
-				param.init_params = Calloc(NUMBER, n);
-				// read params and write to params
-				param.init_params[0] = atof( strtok(argv[i],",\t\n\r") );
-				for(int j=1; j<n; j++)
-					param.init_params[j] = atof( strtok(NULL,",\t\n\r") );
+                    if( (argv[i][j] >= 'a' && argv[i][j] <= 'z') || (argv[i][j] >= 'A' && argv[i][j] <= 'Z') ) {
+                        strcpy(param.initfile, argv[i]);
+                        break;
+                    }
+                }
+                if(param.initfile[0]==0) { // init parameters parameters
+                    // init params
+                    free(param.init_params);
+                    param.init_params = Calloc(NUMBER, n);
+                    // read params and write to params
+                    param.init_params[0] = atof( strtok(argv[i],",\t\n\r") );
+                    for(int j=1; j<n; j++)
+                        param.init_params[j] = atof( strtok(NULL,",\t\n\r") );
+                }
 				break;
 			case 'l': // lower poundaries
 				len = (int)strlen( argv[i] );
@@ -873,25 +879,25 @@ void cross_validate(NUMBER* metrics, const char *filename) {
             case STRUCTURE_SKILL: // Conjugate Gradient Descent
             case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblem(&param);
+                break;
+//            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
+//                hmm = new HMMProblemPiG(&param);
 //                break;
-//                //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
-//                //                hmm = new HMMProblemPiG(&param);
-//                //                break;
-//            case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-//                hmms[f] = new HMMProblemPiGK(&param);
+            case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+                hmms[f] = new HMMProblemPiGK(&param);
+                break;
+            case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+                hmms[f] = new HMMProblemPiAGK(&param);
+                break;
+            case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
+                hmms[f] = new HMMProblemAGK(&param);
+                break;
+            case STRUCTURE_PIABgk: // Gradient Descent, pT=f(K,G), other by K
+                hmms[f] = new HMMProblemPiABGK(&param);
+                break;
+//            case BKT_GD_T: // Gradient Descent with Transfer
+//                hmm = new HMMProblemKT(&param);
 //                break;
-//            case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-//                hmms[f] = new HMMProblemPiAGK(&param);
-//                break;
-//            case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
-//                hmms[f] = new HMMProblemAGK(&param);
-//                break;
-//            case STRUCTURE_PIABgk: // Gradient Descent, pT=f(K,G), other by K
-//                hmms[f] = new HMMProblemPiABGK(&param);
-//                break;
-//                //            case BKT_GD_T: // Gradient Descent with Transfer
-//                //                hmm = new HMMProblemKT(&param);
-//                //                break;
         }
         // block respective data - do not fit the data belonging to the fold
         for(g=0; g<param.nG; g++) // for all groups

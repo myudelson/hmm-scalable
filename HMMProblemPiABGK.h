@@ -57,11 +57,6 @@ protected:
 	//
 	// Derived
 	//
-    //	NUMBER** gradPI; // MULTIPLE gradients of initial state probabilities
-    //	NUMBER** gradPIg; // MULTIPLE gradients of initial state probabilities
-    //	NUMBER*** gradA; // MULTIPLE gradients of transition matrix
-    //	NUMBER*** gradAg; // MULTIPLE gradients of transition matrix
-    //	NUMBER*** gradB; // MULTIPLE gradients of observation matrix
     bool* fitK; // flags for enabling the fittig of a skill
     bool* fitG; // flags for enabling the fittig of a group
     NCAT* fitK_countG; // number of groups per skill that have a raised fitG flag
@@ -70,18 +65,8 @@ protected:
     virtual void destroy();
     //	void initGrad();
     NUMBER GradientDescent(); // fit alternating
-    virtual void readModel(FILE *fid, NDAT *line_no);
+    virtual void readModelBody(FILE *fid, struct param* param, NDAT *line_no);
 private:
-    //	void computeGradients();
-    //	void computeGradientsK(NCAT k, NUMBER* a_gradPI, NUMBER** a_gradA, NUMBER** a_gradB);
-    //	void computeGradientsG(NCAT g, NUMBER* a_gradPI, NUMBER** a_gradA);
-    // fitting methods (hidden)
-    //    NUMBER GradientDescentPLoSKillGroupOtherSkill(); // fit alternating
-    //    NUMBER doLinearStepSkill(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B,
-    //                           NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB);
-    //    NUMBER doLinearStepPLoGroup(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER *a_gradPI, NUMBER **a_gradA);
-    // predicting
-    //	static void computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat, struct data** x_data, NUMBER *a_PIk, NUMBER **a_PIg, NUMBER** a_Ak, NUMBER*** a_Ag, NUMBER **a_B, struct param* param);
 };
 
 

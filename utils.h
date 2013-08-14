@@ -132,6 +132,7 @@ struct param {
 	int metrics_target_obs;   // target observation for RMSE of training
     int predictions; // report predictions on training data
     int binaryinput; // input file is in binary format
+    char initfile[1024]; // flag if we are using a model file as input
 	NPAR cv_folds; // cross-validation folds
 	NPAR cv_strat; // cross-validation stratification
 	NPAR cv_target_obs; // cross-validation target observation to validate prediction of

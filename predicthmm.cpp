@@ -57,7 +57,32 @@ int main (int argc, char ** argv) {
 	
 	parse_arguments(argc, argv, input_file, model_file, predict_file);
     param.predictions = 1; // force it on, since we, you know, predictinng :)
-	read_model(model_file);
+    //
+    // create hmm Object
+    //
+    switch(param.structure)
+    {
+        case STRUCTURE_SKILL: // Conjugate Gradient Descent
+        case STRUCTURE_GROUP: // Conjugate Gradient Descent
+            hmm = new HMMProblem(param);
+            break;
+            //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
+            //                hmm = new HMMProblemPiG(&param);
+            //                break;
+        case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+            hmm = new HMMProblemPiGK(param);
+            break;
+        case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+            hmm = new HMMProblemPiAGK(param);
+            break;
+        case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
+            hmm = new HMMProblemAGK(param);
+            break;
+            //            case BKT_GD_T: // Gradient Descent with Transfer
+            //                hmm = new HMMProblemKT(&param);
+            //                break;
+    }
+    hmm->readModel(model_file)
     
     if(param.binaryinput==0) {
         InputUtil::readTxt(input_file, &param);
@@ -174,7 +199,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 	}
 }
 
-void read_model(const char *filename) {
+void read_model(const char *filename, struct param *param, HMMProblem *hmm) {
 	FILE *fid = fopen(filename,"r");
 	if(fid == NULL)
 	{
@@ -187,7 +212,7 @@ void read_model(const char *filename) {
     //
     // read solver info
     //
-    readSolverInfo(fid, &param, &line_no);
+    readSolverInfo(fid, param, &line_no);
     
     //
     // create hmm Object
@@ -196,19 +221,19 @@ void read_model(const char *filename) {
     {
         case STRUCTURE_SKILL: // Conjugate Gradient Descent
         case STRUCTURE_GROUP: // Conjugate Gradient Descent
-            hmm = new HMMProblem(&param);
+            hmm = new HMMProblem(param);
             break;
             //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
             //                hmm = new HMMProblemPiG(&param);
             //                break;
         case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-            hmm = new HMMProblemPiGK(&param);
+            hmm = new HMMProblemPiGK(param);
             break;
         case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-            hmm = new HMMProblemPiAGK(&param);
+            hmm = new HMMProblemPiAGK(param);
             break;
         case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
-            hmm = new HMMProblemAGK(&param);
+            hmm = new HMMProblemAGK(param);
             break;
             //            case BKT_GD_T: // Gradient Descent with Transfer
             //                hmm = new HMMProblemKT(&param);
@@ -217,7 +242,7 @@ void read_model(const char *filename) {
     //
     // read model
     //
-    hmm->readModel(fid, &line_no);
+    hmm->readModelBody(fid, &line_no);
     
 	
     //	k=0;
@@ -230,6 +255,7 @@ void read_model(const char *filename) {
 	fclose(fid);
 	free(line);
 }
+
 void predict(const char *predict_file, HMMProblem *hmm) {
 	FILE *fid = fopen(predict_file,"w");
 	if(fid == NULL)

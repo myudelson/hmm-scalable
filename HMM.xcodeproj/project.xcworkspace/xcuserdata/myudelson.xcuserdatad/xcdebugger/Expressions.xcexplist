@@ -568,6 +568,14 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "HMMProblem::readModelBody(__sFILE*, unsigned int*):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;p-&gt;map_group_fwd">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "StripedArray&lt;signed char&gt;::addStripe():StripedArray.h">
          <PersistentStrings>
             <PersistentString
@@ -695,6 +703,9 @@
       <ContextState
          contextName = "parse_arguments(int, char**, char*, char*, char*):trainhmm.cpp">
          <PersistentStrings>
+            <PersistentString
+               value = "argv[i][0]">
+            </PersistentString>
             <PersistentString
                value = "CV_GROUP">
             </PersistentString>

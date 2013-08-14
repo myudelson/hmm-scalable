@@ -115,7 +115,11 @@ void HMMProblem::init(struct param *param) {
 	free(a_PI);
 	free2D<NUMBER>(a_A, nS);
 	free2D<NUMBER>(a_B, nS);
-	
+    
+    // if needs be -- read in init params from a file
+    if(param->initfile[0]!=0)
+        this->readModel(param->initfile, false /* read and upload but not overwrite*/);
+    
     
     // populate boundaries
 	// populate lb*/ub*
@@ -142,6 +146,7 @@ void HMMProblem::init(struct param *param) {
 			lbB[i][j] = this->p->param_lo[idx];
 			ubB[i][j] = this->p->param_hi[idx];
 		}
+
 }
 
 HMMProblem::~HMMProblem() {
@@ -1920,7 +1925,7 @@ void HMMProblem::doBaumWelchStep(NCAT xndat, struct data** x_data, FitBit *fb) {
 //	free(x_space);
 //}
 
-void HMMProblem::readNullObsRatio(FILE *fid, NDAT *line_no) {
+void HMMProblem::readNullObsRatio(FILE *fid, struct param* param, NDAT *line_no) {
 	NPAR i;
 	//
 	// read null skill ratios
@@ -1929,8 +1934,8 @@ void HMMProblem::readNullObsRatio(FILE *fid, NDAT *line_no) {
     this->null_obs_ratio =Calloc(NUMBER, this->p->nO);
     this->null_skill_obs      = 0;
     this->null_skill_obs_prob = 0;
-	for(i=0; i<this->p->nO; i++) {
-        if( i==(this->p->nO-1) ) // end
+	for(i=0; i<param->nO; i++) {
+        if( i==(param->nO-1) ) // end
             fscanf(fid,"%lf\n",&this->null_obs_ratio[i] );
         else
             fscanf(fid,"%lf\t",&this->null_obs_ratio[i] );
@@ -1943,39 +1948,90 @@ void HMMProblem::readNullObsRatio(FILE *fid, NDAT *line_no) {
     (*line_no)++;
 }
 
-void HMMProblem::readModel(FILE *fid, NDAT *line_no) {
+void HMMProblem::readModel(const char *filename, bool overwrite) {
+	FILE *fid = fopen(filename,"r");
+	if(fid == NULL)
+	{
+		fprintf(stderr,"Can't read model file %s\n",filename);
+		exit(1);
+	}
+	int max_line_length = 1024;
+	char *line = Malloc(char,max_line_length);
+	NDAT line_no = 0;
+    struct param initparam;
+    set_param_defaults(&initparam);
+    
+    //
+    // read solver info
+    //
+    if(overwrite)
+        readSolverInfo(fid, this->p, &line_no);
+    else
+        readSolverInfo(fid, &initparam, &line_no);
+    //
+    // read model
+    //
+    readModelBody(fid, &initparam, &line_no, overwrite);
+	
+    //	k=0;
+    //	map<NCAT,string>::iterator it;
+    //	for(k=0; k<param.nK; k++) {
+    //		it	= model_map_skill_bwd.find(k);
+    //		printf("%d %d %s \n", k, it->first, it->second.c_str());
+    //	}
+	
+	fclose(fid);
+	free(line);
+}
+
+void HMMProblem::readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite) {
 	NPAR i,j,m;
-	NCAT k = 0;
+	NCAT k = 0, idxk = 0;
+    std::map<std::string,NCAT>::iterator it;
 	string s;
     char col[1024];
     //
-    readNullObsRatio(fid, line_no);
+    readNullObsRatio(fid, param, line_no);
     //
     // init param
     //
-    this->p->map_group_fwd = new map<string,NCAT>();
-    this->p->map_group_bwd = new map<NCAT,string>();
-    this->p->map_skill_fwd = new map<string,NCAT>();
-    this->p->map_skill_bwd = new map<NCAT,string>();
+    if(overwrite) {
+        this->p->map_group_fwd = new map<string,NCAT>();
+        this->p->map_group_bwd = new map<NCAT,string>();
+        this->p->map_skill_fwd = new map<string,NCAT>();
+        this->p->map_skill_bwd = new map<NCAT,string>();
+    }
 	//
 	// read skills
 	//
-	for(k=0; k<this->p->nK; k++) {
+	for(k=0; k<param->nK; k++) {
 		// read skill label
         fscanf(fid,"%*s\t%[^\n]\n",col);
         s = string( col );
         (*line_no)++;
-		this->p->map_skill_fwd->insert(pair<string,NCAT>(s, this->p->map_skill_fwd->size()));
-		this->p->map_skill_bwd->insert(pair<NCAT,string>(this->p->map_skill_bwd->size(), s));
-        
+        if(overwrite) {
+            this->p->map_skill_fwd->insert(pair<string,NCAT>(s, this->p->map_skill_fwd->size()));
+            this->p->map_skill_bwd->insert(pair<NCAT,string>(this->p->map_skill_bwd->size(), s));
+            idxk = k;
+        } else {
+            it = this->p->map_skill_fwd->find(s);
+            if( it==this->p->map_skill_fwd->end() ) { // not found, skip 3 lines and continue
+                fscanf(fid,"%*s\n");
+                fscanf(fid,"%*s\n");
+                fscanf(fid,"%*s\n");
+                continue; // skip this iteration
+            }
+            else
+                idxk =it->second;
+        }
         // read PI
         fscanf(fid,"PI\t");
         for(i=0; i<(this->p->nS-1); i++) { // read 1 less then necessary
             fscanf(fid,"%[^\t]\t",col);
-            this->PI[k][i] = atof(col);
+            this->PI[idxk][i] = atof(col);
         }
         fscanf(fid,"%[^\n]\n",col);// read last one
-        this->PI[k][i] = atof(col);
+        this->PI[idxk][i] = atof(col);
         (*line_no)++;
 		// read A
         fscanf(fid,"A\t");
@@ -1983,11 +2039,11 @@ void HMMProblem::readModel(FILE *fid, NDAT *line_no) {
 			for(j=0; j<this->p->nS; j++) {
                 if(i==(this->p->nS-1) && j==(this->p->nS-1)) {
                     fscanf(fid,"%[^\n]\n", col); // last one;
-                    this->A[k][i][j] = atof(col);
+                    this->A[idxk][i][j] = atof(col);
                 }
                 else {
                     fscanf(fid,"%[^\t]\t", col); // not las one
-                    this->A[k][i][j] = atof(col);
+                    this->A[idxk][i][j] = atof(col);
                 }
 			}
         (*line_no)++;
@@ -1997,11 +2053,11 @@ void HMMProblem::readModel(FILE *fid, NDAT *line_no) {
 			for(m=0; m<this->p->nS; m++) {
                 if(i==(this->p->nS-1) && m==(this->p->nS-1)) {
                     fscanf(fid,"%[^\n]\n", col); // last one;
-                    this->B[k][i][m] = atof(col);
+                    this->B[idxk][i][m] = atof(col);
                 }
                 else {
                     fscanf(fid,"%[^\t]\t", col); // not las one
-                    this->B[k][i][m] = atof(col);
+                    this->B[idxk][i][m] = atof(col);
                 }
 			}
         (*line_no)++;

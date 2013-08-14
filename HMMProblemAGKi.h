@@ -27,15 +27,6 @@ protected:
 	virtual void destroy(); // non-fit specific descruction
     virtual NUMBER GradientDescent(); // fit alternating
 private:
-//	void computeGradients();
-//	virtual void computeGradients (NCAT xndat, struct data** x_data, FitBit *fb);
-//	virtual void computeGradientsG(NCAT xndat, struct data** x_data, FitBit *fb);
-    // fitting methods (hidden)
-//    NUMBER doLinearStepSkill(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B,
-//                             NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB);
-//    NUMBER doLinearStepPLoGroup(NCAT xndat, struct data** x_data, NUMBER **a_A, NUMBER **a_gradA);
-    // predicting
-//	static void computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat, struct data** x_data, NUMBER*a_PIk, NUMBER** a_Ak, NUMBER*** a_Ag, NUMBER **a_B, struct param* param);
 };
 
 #endif /* defined(__HMM__HMMProblemAGKi__) */

@@ -61,7 +61,7 @@ public:
     // predicting
 //    virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
     void predict(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled);
-    virtual void readModel(FILE *fid, NDAT *line_no);
+    virtual void readModelBody(FILE *fid, NDAT *line_no);
 protected:
 	//
 	// Givens

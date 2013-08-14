@@ -392,6 +392,7 @@ void set_param_defaults(struct param *param) {
     param->predictions           = 0;
     param->binaryinput           = 0;
 	param->C                     = 0;
+    param->initfile[0]           = 0; // 1st bit is 0 - no file
 	param->init_params			 = Calloc(NUMBER, 5);
 	param->init_params[0] = 0.5; // PI[0]
 	param->init_params[1] = 1.0; // p(not forget)
