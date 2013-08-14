@@ -90,7 +90,9 @@
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "1055"
-         endingLineNumber = "1055">
+         endingLineNumber = "1055"
+         landmarkName = "HMMProblem::cpy3Params(NUMBER* &amp;soursePI, NUMBER** &amp;sourseA, NUMBER** &amp;sourseB, NUMBER* &amp;targetPI, NUMBER** &amp;targetA, NUMBER** &amp;targetB, NPAR nS, NPAR nO)"
+         landmarkType = "5">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
@@ -101,7 +103,9 @@
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "1054"
-         endingLineNumber = "1054">
+         endingLineNumber = "1054"
+         landmarkName = "HMMProblem::cpy3Params(NUMBER* &amp;soursePI, NUMBER** &amp;sourseA, NUMBER** &amp;sourseB, NUMBER* &amp;targetPI, NUMBER** &amp;targetA, NUMBER** &amp;targetB, NPAR nS, NPAR nO)"
+         landmarkType = "5">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
@@ -258,6 +262,32 @@
          startingLineNumber = "179"
          endingLineNumber = "179"
          landmarkName = "set(unsigned long idx, T value)"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "Yes"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "trainhmm.cpp"
+         timestampString = "398173178.800559"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "216"
+         endingLineNumber = "216"
+         landmarkName = "main (int argc, char ** argv)"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "Yes"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "trainhmm.cpp"
+         timestampString = "398173181.150531"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "213"
+         endingLineNumber = "213"
+         landmarkName = "main (int argc, char ** argv)"
          landmarkType = "7">
       </FileBreakpoint>
    </FileBreakpoints>

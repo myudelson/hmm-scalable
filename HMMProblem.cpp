@@ -782,7 +782,8 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
             output_this = false;
 		g = dat_group->get(t);//[t];
         dt->g = g;
-        isTarget = this->p->metrics_target_obs == o;
+        if(!only_unlabeled) // this means we were not predicting in the first place
+            isTarget = this->p->metrics_target_obs == o;
         NCAT *ar;
         int n;
         if(this->p->multiskill==0) {
@@ -795,10 +796,13 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
         }
         // deal with null skill
         if(ar[0]<0) { // if no skill label
-            isTarget = this->null_skill_obs==o;
-            rmse += pow(isTarget - this->null_skill_obs_prob,2);
-            accuracy += isTarget == (this->null_skill_obs_prob>=0.5);
-            ll -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1 - this->null_skill_obs_prob);
+            
+            if(!only_unlabeled) { // this means we were not predicting in the first place
+                isTarget = this->null_skill_obs==o;
+                rmse += pow(isTarget - this->null_skill_obs_prob,2);
+                accuracy += isTarget == (this->null_skill_obs_prob>=0.5);
+                ll -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1 - this->null_skill_obs_prob);
+            }
             if(this->p->predictions>0 && output_this) // write predictions file if it was opened
                 for(m=0; m<nO; m++)
                     fprintf(fid,"%10.8f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
@@ -842,27 +846,31 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
             //            for(i=0; i<nS; i++)
             //                fprintf(fid,"%10.8f%s",local_know[i],(i<(nS-1))?"\t":"\n");
         }
-        rmse += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
-        rmse_no_null += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
-        accuracy += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
-        accuracy_no_null += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
-        p = safe01num(local_pred[this->p->metrics_target_obs]);
-        ll -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
+        if(!only_unlabeled) { // this means we were not predicting in the first place
+            rmse += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
+            rmse_no_null += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
+            accuracy += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
+            accuracy_no_null += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
+            p = safe01num(local_pred[this->p->metrics_target_obs]);
+            ll -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
+        }
 	} // for all data
     delete(dt);
 	free(local_pred);
     //	free(local_pred_inner);
     free3D<NUMBER>(group_skill_map, nG, nK);
-    rmse = sqrt(rmse / this->p->N);
-    rmse_no_null = sqrt(rmse_no_null / (this->p->N - this->p->N_null));
-    if(metrics != NULL) {
-        metrics[0] = ll;
-        metrics[1] = 2*this->n_params + 2*ll;
-        metrics[2] = this->n_params*safelog(this->p->N) + 2*ll;
-        metrics[3] = rmse;
-        metrics[4] = rmse_no_null;
-        metrics[5] = accuracy/this->p->N;
-        metrics[6] = accuracy_no_null/(this->p->N-this->p->N_null);
+    if(!only_unlabeled) { // this means we were not predicting in the first place
+        rmse = sqrt(rmse / this->p->N);
+        rmse_no_null = sqrt(rmse_no_null / (this->p->N - this->p->N_null));
+        if(metrics != NULL) {
+            metrics[0] = ll;
+            metrics[1] = 2*this->n_params + 2*ll;
+            metrics[2] = this->n_params*safelog(this->p->N) + 2*ll;
+            metrics[3] = rmse;
+            metrics[4] = rmse_no_null;
+            metrics[5] = accuracy/this->p->N;
+            metrics[6] = accuracy_no_null/(this->p->N-this->p->N_null);
+        }
     }
     if(this->p->predictions>0) // close predictions file if it was opened
         fclose(fid);

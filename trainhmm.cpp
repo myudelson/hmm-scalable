@@ -13,7 +13,7 @@
 ////#include "HMMProblemPiG.h"
 #include "HMMProblemPiGK.h"
 #include "HMMProblemAGK.h"
-#include "HMMProblemAGKi.h"
+//#include "HMMProblemAGKi.h"
 #include "HMMProblemPiAGK.h"
 #include "HMMProblemPiABGK.h"
 ////#include "HMMProblemKT.h"
@@ -118,9 +118,9 @@ int main (int argc, char ** argv) {
                 case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
                     hmm = new HMMProblemAGK(&param);
                     break;
-                case STRUCTURE_Agki: // Gradient Descent, pT=f(K,G), other by K
-                    hmm = new HMMProblemAGKi(&param);
-                    break;
+//                case STRUCTURE_Agki: // Gradient Descent, pT=f(K,G), other by K
+//                    hmm = new HMMProblemAGKi(&param);
+//                    break;
                 case STRUCTURE_PIABgk: // Gradient Descent, pT=f(K,G), other by K
                     hmm = new HMMProblemPiABGK(&param);
                     break;
