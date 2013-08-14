@@ -44,6 +44,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 void read_predict_data(const char *filename);
 void read_model(const char *filename);
 static char* readline(FILE *fid);
+void predict(const char *predict_file, HMMProblem *hmm);
 
 int main (int argc, char ** argv) {
 	clock_t tm0 = clock();
@@ -71,13 +72,14 @@ int main (int argc, char ** argv) {
     if(param.metrics>0 || param.predictions>0) {
         metrics = Calloc(NUMBER, 7);// LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
     }
-    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, true/*only unlabelled*/);
+    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*only unlabelled*/);
+//    predict(predict_file, hmm);
 	if(param.quiet == 0)
 		printf("predicting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
-    // THERE IS NO METRICS, WE PREDICT UNKNOWN
-//    if( param.metrics>0 ) {
-//        printf("predicted model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]);
-//    }
+    // THERE IS NO METRICS, WE PREDICT UNKNOWN, however, if we force prediction of all we do
+    if( param.predictions>0 ) {
+        printf("predicted model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]);
+    }
     free(metrics);
     
 	destroy_input_data(&param);
@@ -93,13 +95,11 @@ void exit_with_help() {
 		   "Usage: predicthmm [options] input_file model_file [predicted_response_file]\n"
            "options:\n"
            "-q : quiet mode, without output, 0-no (default), or 1-yes\n"
-           "-m : report model fitting metrics (AIC, BIC, RMSE) 0-no (default), 1-yes. To \n"
-           "     specify observation for which metrics to be reported, list it after ','.\n"
-           "     For example '-m 0', '-m 1' (by default, observation 1 is assumed), '-m 1,2'\n"
-           "     (compute metrics for observation 2). Incompatible with-v option.\n"
            "-d : delimiter for multiple skills per observation; 0-single skill per\n"
            "     observation (default), otherwise -- delimiter character, e.g. '-d ~'.\n"
            "-b : treat input file as binary input file (specifications TBA).\n"
+           "-p : produce model predictions for all rows, not just ones with unknown\n"
+           "     observations.\n"
 		   );
 	exit(1);
 }
@@ -123,33 +123,26 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 					exit_with_help();
 				}
 				break;
-                //			case 'n':
-                //				param.nS = (NPAR)atoi(argv[i]);
-                //				if(param.nS<2) {
-                //					fprintf(stderr,"ERROR! Number of hidden states should be at least 2\n");
-                //					exit_with_help();
-                //				}
-                //				//fprintf(stdout, "fit single skill=%d\n",param.quiet);
-                //				break;
-			case 'm':
-                param.metrics = atoi( strtok(argv[i],";\t\n\r"));
-                ch = strtok(NULL, "\t\n\r");
-                if(ch!=NULL)
-                    param.metrics_target_obs = atoi(ch)-1;
-				if(param.metrics<0 || param.metrics>1) {
-					fprintf(stderr,"value for -m should be either 0 or 1.\n");
-					exit_with_help();
-				}
-				if(param.metrics_target_obs<0) {// || param.metrics_target_obs>(param.nO-1)) {
-					fprintf(stderr,"target observation to compute metrics against cannot be '%d'\n",param.metrics_target_obs+1);
-					exit_with_help();
-				}
-                break;
+//			case 'n':
+//				param.nS = (NPAR)atoi(argv[i]);
+//				if(param.nS<2) {
+//					fprintf(stderr,"ERROR! Number of hidden states should be at least 2\n");
+//					exit_with_help();
+//				}
+//				//fprintf(stdout, "fit single skill=%d\n",param.quiet);
+//				break;
             case  'd':
 				param.multiskill = argv[i][0]; // just grab first character (later, maybe several)
                 break;
 			case 'b':
                 param.binaryinput = atoi( strtok(argv[i],"\t\n\r"));
+                break;
+            case  'p':
+				param.predictions = atoi(argv[i]);
+				if(param.predictions<0 || param.predictions>1) {
+					fprintf(stderr,"a flag of whether to report predictions for training data (-p) should be 0 or 1\n");
+					exit_with_help();
+				}
                 break;
 			default:
 				fprintf(stderr,"unknown option: -%c\n", argv[i-1][1]);
@@ -236,5 +229,94 @@ void read_model(const char *filename) {
 	
 	fclose(fid);
 	free(line);
+}
+void predict(const char *predict_file, HMMProblem *hmm) {
+	FILE *fid = fopen(predict_file,"w");
+	if(fid == NULL)
+	{
+		fprintf(stderr,"Can't open prediction output file %s\n",predict_file);
+		exit(1);
+	}
+
+	NDAT t;
+	NCAT g, k;
+	NPAR i, j, m, o;
+	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
+	NUMBER pLe[param.nS];// p(L|evidence);
+	NUMBER pLe_denom; // p(L|evidence) denominator
+	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS);
+    NCAT *ar;
+    int n;
+ 	// initialize
+    struct data dt;
+	for(g=0; g<param.nG; g++)
+		for(k=0; k<param.nK; k++) {
+			for(i=0; i<param.nO; i++) {
+                dt.g = g;
+                dt.k = k;
+                group_skill_map[g][k][i] = hmm->getPI(&dt,i);
+            }
+
+		}
+	NDAT predict_idx = 0;
+
+	for(t=0; t<param.N; t++) {
+        o = param.dat_obs->get(t);
+        if(param.multiskill==0) {
+            k = param.dat_skill->get(t);
+            ar = &k;
+            n = 1;
+        } else {
+            ar = &param.dat_multiskill->get(t)[1];
+            n = param.dat_multiskill->get(t)[0];
+        }
+        g = param.dat_group->get(t);
+        dt.g = g;
+
+		// produce prediction and copy to result
+		if(k<0) { // if no skill label
+			//for(m=0; m<param.nO; m++)
+			//	result[t][m] = param.null_obs_ratio[m];
+			if(o==-1 || param.predictions) {// if output
+				for(m=0; m<param.nO; m++)
+					fprintf(fid,"%10.8f%s",hmm->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
+				predict_idx++;
+			}
+			continue;
+		}
+        // produce prediction and copy to result
+        hmm->producePCorrect(group_skill_map, local_pred, ar, n, &dt);
+        for(int l=0; l<n; l++) {
+            k = ar[l];
+            dt.k = k;
+
+            if(o>-1) { // known observations
+                // update p(L)
+                pLe_denom = 0.0;
+                // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
+                for(i=0; i<param.nS; i++) pLe_denom += group_skill_map[g][k][i] * hmm->getB(&dt,i,o);
+                for(i=0; i<param.nS; i++) pLe[i] = group_skill_map[g][k][i] * hmm->getB(&dt,i,o) / safe0num(pLe_denom);
+                // 2. L = (pLe'*A)';
+                for(i=0; i<param.nS; i++) group_skill_map[g][k][i] = 0.0;
+                for(j=0; j<param.nS; j++)
+                    for(i=0; i<param.nS; i++)
+                        group_skill_map[g][k][j] += pLe[i] * hmm->getA(&dt,i,j);//A[i][j];
+            } else { // unknown observation
+                // 2. L = (pL'*A)';
+                for(i=0; i<param.nS; i++) pLe[i] = group_skill_map[g][k][i]; // copy first;
+                for(i=0; i<param.nS; i++) group_skill_map[g][k][i] = 0.0; // erase old value
+                for(j=0; j<param.nS; j++)
+                    for(i=0; i<param.nS; i++)
+                        group_skill_map[g][k][j] += pLe[i] * hmm->getA(&dt,i,j);
+            }// observations
+            if(param.predictions>0 || o==-1) { // write predictions file if it was opened
+                for(m=0; m<param.nO; m++)
+                    fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
+            }
+        }// for all subskills
+	} // for all data
+	free(line);
+	free(local_pred);
+	fclose(fid);
 }
 

@@ -53,7 +53,7 @@ public:
     // fitting (the only public method)
     virtual void fit(); // return -LL for the model
     // compute metrics
-    void computeMetrics(NUMBER* metrics);
+//    void computeMetrics(NUMBER* metrics);
     // predicting
     virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
     void predict(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled);
@@ -105,8 +105,8 @@ protected:
     void free3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS);
     void cpy3Params(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB, NPAR nS, NPAR nO);
     // predicting
-	virtual void computeLogLikRMSENullSkill(NUMBER* loglik_rmse, bool keep_SE);
-	virtual void computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat, struct data** x_data);
+//	virtual void computeLogLikRMSENullSkill(NUMBER* loglik_rmse, bool keep_SE);
+//	virtual void computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat, struct data** x_data);
 	virtual void computeGradients(NCAT xndat, struct data** x_data, FitBit *fb, NPAR kg_flag);// NUMBER *a_gradPI, NUMBER** a_gradA, NUMBER **a_gradB);
     virtual NUMBER doLinearStep(NCAT xndat, struct data** x_data, FitBit *fb, NCAT copy);//NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB);
     NUMBER doConjugateLinearStep(NCAT xndat, struct data** x_data, FitBit *fb, NCAT copy);//NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1);

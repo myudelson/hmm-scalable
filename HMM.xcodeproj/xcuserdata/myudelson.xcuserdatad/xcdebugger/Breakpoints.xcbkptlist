@@ -73,25 +73,12 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "395845346.430168"
-         startingColumnNumber = "9223372036854775807"
-         endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1945"
-         endingLineNumber = "1945"
-         landmarkName = "HMMProblem::readModel(FILE *fid, NDAT *line_no)"
-         landmarkType = "5">
-      </FileBreakpoint>
-      <FileBreakpoint
-         shouldBeEnabled = "No"
-         ignoreCount = "0"
-         continueAfterRunningActions = "No"
-         filePath = "HMMProblem.cpp"
          timestampString = "393516031.812477"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "1055"
          endingLineNumber = "1055"
-         landmarkName = "HMMProblem::cpy3Params(NUMBER* &amp;soursePI, NUMBER** &amp;sourseA, NUMBER** &amp;sourseB, NUMBER* &amp;targetPI, NUMBER** &amp;targetA, NUMBER** &amp;targetB, NPAR nS, NPAR nO)"
+         landmarkName = "HMMProblem::toZero3Params(NUMBER* &amp;PI, NUMBER** &amp;A, NUMBER** &amp;B, NPAR nS, NPAR nO)"
          landmarkType = "5">
       </FileBreakpoint>
       <FileBreakpoint
@@ -103,9 +90,7 @@
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "1054"
-         endingLineNumber = "1054"
-         landmarkName = "HMMProblem::cpy3Params(NUMBER* &amp;soursePI, NUMBER** &amp;sourseA, NUMBER** &amp;sourseB, NUMBER* &amp;targetPI, NUMBER** &amp;targetA, NUMBER** &amp;targetB, NPAR nS, NPAR nO)"
-         landmarkType = "5">
+         endingLineNumber = "1054">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
@@ -145,33 +130,33 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "395845346.430168"
+         timestampString = "398180574.43246"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "2049"
-         endingLineNumber = "2049">
+         startingLineNumber = "2048"
+         endingLineNumber = "2048">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "395845346.430168"
+         timestampString = "398180574.43246"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "2035"
-         endingLineNumber = "2035">
+         startingLineNumber = "2034"
+         endingLineNumber = "2034">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "HMMProblem.cpp"
-         timestampString = "395845346.430168"
+         timestampString = "398180574.43246"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "2040"
-         endingLineNumber = "2040">
+         startingLineNumber = "2039"
+         endingLineNumber = "2039">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
@@ -262,32 +247,6 @@
          startingLineNumber = "179"
          endingLineNumber = "179"
          landmarkName = "set(unsigned long idx, T value)"
-         landmarkType = "7">
-      </FileBreakpoint>
-      <FileBreakpoint
-         shouldBeEnabled = "Yes"
-         ignoreCount = "0"
-         continueAfterRunningActions = "No"
-         filePath = "trainhmm.cpp"
-         timestampString = "398173178.800559"
-         startingColumnNumber = "9223372036854775807"
-         endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "216"
-         endingLineNumber = "216"
-         landmarkName = "main (int argc, char ** argv)"
-         landmarkType = "7">
-      </FileBreakpoint>
-      <FileBreakpoint
-         shouldBeEnabled = "Yes"
-         ignoreCount = "0"
-         continueAfterRunningActions = "No"
-         filePath = "trainhmm.cpp"
-         timestampString = "398173181.150531"
-         startingColumnNumber = "9223372036854775807"
-         endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "213"
-         endingLineNumber = "213"
-         landmarkName = "main (int argc, char ** argv)"
          landmarkType = "7">
       </FileBreakpoint>
    </FileBreakpoints>

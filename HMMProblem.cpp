@@ -876,58 +876,58 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
         fclose(fid);
 }
 
-void HMMProblem::computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat, struct data** x_data) {
-    NCAT x;
-    NPAR o,m,i,j, isTarget;
-    NPAR nS = this->p->nS, nO = this->p->nO;
-    NDAT t;
-    NUMBER *local_pred = init1D<NUMBER>(nO);
-    NUMBER *pL = init1D<NUMBER>(nS);
-    NUMBER *pLe = init1D<NUMBER>(nS);
-    NUMBER pLe_denom = 0;
-    NUMBER prob;
-    NDAT N = 0;
-    for(x=0; x<xndat; x++) {
-		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
-        N += x_data[x]->n;
-        for(i=0;i<nO; i++) pL[i] = safe01num(getPI(x_data[x],i)); // /*safe01num*/(a_PI[i]); // init pL
-        for(t=0; t<x_data[x]->n; t++) { // for all
-//            o = x_data[x]->obs[t];
-            o = this->p->dat_obs->get( x_data[x]->ix[t] );
-            isTarget = (this->p->metrics_target_obs == o);
-            // produce prediction
-            for(m=0; m<nO; m++) local_pred[m] = 0.0; // init pCorr
-            for(m=0; m<nO; m++)
-                for(i=0; i<nS; i++)
-                    local_pred[m] += pL[i] * getB(x_data[x],i,m);//a_B[i][m];
-            prob = safe01num(local_pred[this->p->metrics_target_obs]);
-            loglik_rmse[0] -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
-            loglik_rmse[1] += pow(isTarget - prob, 2);
-            loglik_rmse[2] += pow(isTarget - prob, 2); // for RMSE without null skill
-            loglik_rmse[5] += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5); // acccuracy all
-            loglik_rmse[6] += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5); // acccuracy no null
-            // update p(L)
-            pLe_denom = 0;
-            // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
-            for(i=0; i<nS; i++)
-                pLe_denom += (pL[i]) * ((o<0)?1:getB(x_data[x],i,o)); // if observatiob unknown use 1
-            for(i=0; i<nS; i++)
-                pLe[i] = pL[i] * ((o<0)?1:getB(x_data[x],i,o)) / pLe_denom; // if observatiob unknown use 1
-//            projectsimplex(pLe, param->nS);
-            // 2. L = (pLe'*A)';
-            for(i=0; i<nS; i++) pL[i] = 0.0;
-            for(j=0; j<nS; j++)
-                for(i=0; i<nS; i++)
-                    pL[j] += safe01num(pLe[i] * getA(x_data[x],i,j));//a_A[i][j]);
-        } // for all data
-    }
-    if(!keep_SE) loglik_rmse[1] = sqrt(loglik_rmse[1]/N);
-    if(!keep_SE) loglik_rmse[2] = sqrt(loglik_rmse[2]/N);
-    free(local_pred);
-    free(pLe);
-    free(pL);
-}
-
+//void HMMProblem::computeLogLikRMSE(NUMBER* loglik_rmse, bool keep_SE, NCAT xndat, struct data** x_data) {
+//    NCAT x;
+//    NPAR o,m,i,j, isTarget;
+//    NPAR nS = this->p->nS, nO = this->p->nO;
+//    NDAT t;
+//    NUMBER *local_pred = init1D<NUMBER>(nO);
+//    NUMBER *pL = init1D<NUMBER>(nS);
+//    NUMBER *pLe = init1D<NUMBER>(nS);
+//    NUMBER pLe_denom = 0;
+//    NUMBER prob;
+//    NDAT N = 0;
+//    for(x=0; x<xndat; x++) {
+//		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
+//        N += x_data[x]->n;
+//        for(i=0;i<nO; i++) pL[i] = safe01num(getPI(x_data[x],i)); // /*safe01num*/(a_PI[i]); // init pL
+//        for(t=0; t<x_data[x]->n; t++) { // for all
+////            o = x_data[x]->obs[t];
+//            o = this->p->dat_obs->get( x_data[x]->ix[t] );
+//            isTarget = (this->p->metrics_target_obs == o);
+//            // produce prediction
+//            for(m=0; m<nO; m++) local_pred[m] = 0.0; // init pCorr
+//            for(m=0; m<nO; m++)
+//                for(i=0; i<nS; i++)
+//                    local_pred[m] += pL[i] * getB(x_data[x],i,m);//a_B[i][m];
+//            prob = safe01num(local_pred[this->p->metrics_target_obs]);
+//            loglik_rmse[0] -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
+//            loglik_rmse[1] += pow(isTarget - prob, 2);
+//            loglik_rmse[2] += pow(isTarget - prob, 2); // for RMSE without null skill
+//            loglik_rmse[5] += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5); // acccuracy all
+//            loglik_rmse[6] += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5); // acccuracy no null
+//            // update p(L)
+//            pLe_denom = 0;
+//            // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
+//            for(i=0; i<nS; i++)
+//                pLe_denom += (pL[i]) * ((o<0)?1:getB(x_data[x],i,o)); // if observatiob unknown use 1
+//            for(i=0; i<nS; i++)
+//                pLe[i] = pL[i] * ((o<0)?1:getB(x_data[x],i,o)) / pLe_denom; // if observatiob unknown use 1
+////            projectsimplex(pLe, param->nS);
+//            // 2. L = (pLe'*A)';
+//            for(i=0; i<nS; i++) pL[i] = 0.0;
+//            for(j=0; j<nS; j++)
+//                for(i=0; i<nS; i++)
+//                    pL[j] += safe01num(pLe[i] * getA(x_data[x],i,j));//a_A[i][j]);
+//        } // for all data
+//    }
+//    if(!keep_SE) loglik_rmse[1] = sqrt(loglik_rmse[1]/N);
+//    if(!keep_SE) loglik_rmse[2] = sqrt(loglik_rmse[2]/N);
+//    free(local_pred);
+//    free(pLe);
+//    free(pL);
+//}
+//
 NUMBER HMMProblem::getLogLik() { // get log likelihood of the fitted model
     return neg_log_lik;
 }
@@ -960,21 +960,21 @@ void HMMProblem::fit() {
     free(loglik_rmse);
 }
 
-void HMMProblem::computeMetrics(NUMBER* metrics) {
-    computeLogLikRMSENullSkill(metrics, true /* only SE*/);
-    // despite cycling on k-skill, would work for all
-    for(NCAT k=0; k<this->p->nK; k++)
-        computeLogLikRMSE(metrics, true /* only SE*/, this->p->k_numg[k], this->p->k_g_data[k]);
-    metrics[3] = metrics[1]; // move Squared Errors from position 2
-    metrics[3] = sqrt(metrics[3]/this->p->N);  // convert SE to RMSE
-    metrics[4] = metrics[2]; // move Squared Errors from position 2
-    metrics[4] = sqrt(metrics[4]/(this->p->N - this->p->N_null));  // convert SE to RMSE
-    metrics[5] = metrics[5] / this->p->N; // Accuracy
-    metrics[6] = metrics[6] / (this->p->N - this->p->N_null ); // Accuracy no null
-    
-    metrics[1] = 2*this->n_params + 2*metrics[0]/*loglik*/;  // AIC
-    metrics[2] = this->n_params*safelog(this->p->N) + 2*metrics[0]/*loglik*/;  // BIC
-}
+//void HMMProblem::computeMetrics(NUMBER* metrics) {
+//    computeLogLikRMSENullSkill(metrics, true /* only SE*/);
+//    // despite cycling on k-skill, would work for all
+//    for(NCAT k=0; k<this->p->nK; k++)
+//        computeLogLikRMSE(metrics, true /* only SE*/, this->p->k_numg[k], this->p->k_g_data[k]);
+//    metrics[3] = metrics[1]; // move Squared Errors from position 2
+//    metrics[3] = sqrt(metrics[3]/this->p->N);  // convert SE to RMSE
+//    metrics[4] = metrics[2]; // move Squared Errors from position 2
+//    metrics[4] = sqrt(metrics[4]/(this->p->N - this->p->N_null));  // convert SE to RMSE
+//    metrics[5] = metrics[5] / this->p->N; // Accuracy
+//    metrics[6] = metrics[6] / (this->p->N - this->p->N_null ); // Accuracy no null
+//    
+//    metrics[1] = 2*this->n_params + 2*metrics[0]/*loglik*/;  // AIC
+//    metrics[2] = this->n_params*safelog(this->p->N) + 2*metrics[0]/*loglik*/;  // BIC
+//}
 
 void HMMProblem::FitNullSkill(NUMBER* loglik_rmse, bool keep_SE) {
     if(this->p->n_null_skill_group==0) {
@@ -1027,23 +1027,23 @@ void HMMProblem::FitNullSkill(NUMBER* loglik_rmse, bool keep_SE) {
     if(!keep_SE) loglik_rmse[1] = sqrt(loglik_rmse[1]/N);
 }
 
-void HMMProblem::computeLogLikRMSENullSkill(NUMBER* loglik_rmse, bool keep_SE) {
-    // compute loglik
-    NDAT N = 0;
-    NPAR isTarget;
-    for(NCAT g=0; g<this->p->n_null_skill_group; g++) {
-        struct data *dat = &this->p->null_skills[g];
-        N += dat->n;
-        for(NDAT t=0; t<dat->n; t++) {
-            //            isTarget = dat->obs[t] == this->null_skill_obs;
-            isTarget = this->p->dat_obs->get( dat->ix[t] ) == this->null_skill_obs;
-            loglik_rmse[0] -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1-this->null_skill_obs_prob);
-            loglik_rmse[1] += pow(isTarget - this->null_skill_obs_prob, 2);
-            loglik_rmse[5] += isTarget == (this->null_skill_obs_prob>=0.5); // acccuracy all (nulls here)
-        }
-    }
-    if(!keep_SE) loglik_rmse[1] = sqrt(loglik_rmse[1]/N);
-}
+//void HMMProblem::computeLogLikRMSENullSkill(NUMBER* loglik_rmse, bool keep_SE) {
+//    // compute loglik
+//    NDAT N = 0;
+//    NPAR isTarget;
+//    for(NCAT g=0; g<this->p->n_null_skill_group; g++) {
+//        struct data *dat = &this->p->null_skills[g];
+//        N += dat->n;
+//        for(NDAT t=0; t<dat->n; t++) {
+//            //            isTarget = dat->obs[t] == this->null_skill_obs;
+//            isTarget = this->p->dat_obs->get( dat->ix[t] ) == this->null_skill_obs;
+//            loglik_rmse[0] -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1-this->null_skill_obs_prob);
+//            loglik_rmse[1] += pow(isTarget - this->null_skill_obs_prob, 2);
+//            loglik_rmse[5] += isTarget == (this->null_skill_obs_prob>=0.5); // acccuracy all (nulls here)
+//        }
+//    }
+//    if(!keep_SE) loglik_rmse[1] = sqrt(loglik_rmse[1]/N);
+//}
 
 void HMMProblem::init3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO) {
     PI = init1D<NUMBER>(nS);
@@ -1942,7 +1942,6 @@ void HMMProblem::readNullObsRatio(FILE *fid, NDAT *line_no) {
 	}
     (*line_no)++;
 }
-
 
 void HMMProblem::readModel(FILE *fid, NDAT *line_no) {
 	NPAR i,j,m;

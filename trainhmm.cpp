@@ -212,11 +212,8 @@ int main (int argc, char ** argv) {
             
             if(param.metrics>0 || param.predictions>0) {
                 NUMBER* metrics = Calloc(NUMBER, 7); // LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
-                if(param.predictions>0) {
-                    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
-                } else {
-                    hmm->computeMetrics(metrics);
-                }
+                // takes care of predictions and metrics, writes predictions if param.predictions==1
+                hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
                 if( param.metrics>0 && !param.quiet) {
                     printf("trained model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]);
                 }
