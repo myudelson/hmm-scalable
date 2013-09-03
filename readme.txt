@@ -93,8 +93,8 @@ options:
      subject-stratified cross-validation, default 0 (no cross-validation),
      examples '-v 5,2' - 5 fold, predict state 2, '-v 10' - 10-fold predict
      state 1 by default.
--p : report model predictions on the train set 0-no (default), 1-yes; works with
-     any combination of -v and -m parameters.
+-p : report model predictions on the train set 0-no (default), 1-yes; 2-yes,
+     plus output state probability; works with -v and -m parameters.
 -d : delimiter for multiple skills per observation; 0-single skill per
      observation (default), otherwise -- delimiter character, e.g. '-d ~'.
 -b : treat input file as binary input file (specifications TBA).
