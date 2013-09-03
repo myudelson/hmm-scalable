@@ -21,7 +21,7 @@ static char* readline(FILE *fid) {
 	if(fgets(line,max_line_length,fid) == NULL)
 		return NULL;
 	
-	while(strrchr(line,'\n') == NULL)
+	while(strrchr(line,'\n') == NULL || strrchr(line,'\r') == NULL) // do take both line endings
 	{
 		max_line_length *= 2;
 		line = (char *) realloc(line,max_line_length);
