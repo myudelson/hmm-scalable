@@ -283,8 +283,8 @@ void exit_with_help() {
            "     subject-stratified cross-validation, default 0 (no cross-validation),\n"
            "     examples '-v 5,2' - 5 fold, predict state 2, '-v 10' - 10-fold predict\n"
            "     state 1 by default.\n"
-           "-p : report model predictions on the train set 0-no (default), 1-yes; works with\n"
-           "     any combination of -v and -m parameters.\n"
+           "-p : report model predictions on the train set 0-no (default), 1-yes; 2-yes,\n"
+           "     plus output state probability; works with -v and -m parameters.\n"
            "-d : delimiter for multiple skills per observation; 0-single skill per\n"
            "     observation (default), otherwise -- delimiter character, e.g. '-d ~'.\n"
            "-b : treat input file as binary input file (specifications TBA).\n"
@@ -516,8 +516,8 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 				break;
             case  'p':
 				param.predictions = atoi(argv[i]);
-				if(param.predictions<0 || param.predictions>1) {
-					fprintf(stderr,"a flag of whether to report predictions for training data (-p) should be 0 or 1\n");
+				if(param.predictions<0 || param.predictions>2) {
+					fprintf(stderr,"a flag of whether to report predictions for training data (-p) should be 0, 1 or 2\n");
 					exit_with_help();
 				}
                 break;
