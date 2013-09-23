@@ -4,8 +4,8 @@
 # arg2 target file
 # arg3 ss, kts
 # arg4 if 0  - default, s - add unit and section to kc name '__' is separator lowercase, u - just unit
-# arg5 anything, markind test file
-# arg6 if non empty and non 0 add 5th column with POSIX time (seconds since 1970)
+# arg5 0 default, anything else markind test file
+# arg6 0 default, anything else add 5th column with POSIX time (seconds since 1970)
 echo "Creating train file..."
 
 tmp1=tmp1_`date +%H%M%S`.txt
@@ -55,7 +55,7 @@ middle_awk2=''
 second_awk=''
 if [ "$4" = "0" ]
 then #default
-	second_awk='((length($4)==0)?".":$4)' # if the KC field is empty use '.'
+	second_awk='((lengt h($4)==0)?".":$4)' # if the KC field is empty use '.'
 	# no unit
 	middle_awk1=''
 	middle_awk2='$3'
@@ -97,4 +97,3 @@ awk -F'\t' 'BEGIN{OFS=""} {print $1,"\t",$2,"\t",$3,"\t",'"$second_awk"''"$time_
 rm $tmp2
 
 echo "Done"
-

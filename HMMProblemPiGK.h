@@ -19,7 +19,7 @@
 class HMMProblemPiGK : public HMMProblem {
 public:
 	HMMProblemPiGK(struct param *param); // sizes=={nK, nK, nK} by default
-    virtual ~HMMProblemPiGK();
+    ~HMMProblemPiGK();
 	NUMBER** getPI();
 	NUMBER** getPIk();
 	NUMBER** getPIg();
@@ -29,14 +29,15 @@ public:
 	NUMBER** getA(NCAT k);
 	NUMBER** getB(NCAT k);
     // getters for computing alpha, beta, gamma
-    virtual NUMBER getPI(struct data* dt, NPAR i);         // to be redefined
-    virtual NUMBER getA (struct data* dt, NPAR i, NPAR j); // same
-    virtual NUMBER getB (struct data* dt, NPAR i, NPAR m); // same
+    NUMBER getPI(struct data* dt, NPAR i);         // to be redefined
+    NUMBER getA (struct data* dt, NPAR i, NPAR j); // same
+    NUMBER getB (struct data* dt, NPAR i, NPAR m); // same
     // getters for computing gradients of alpha, beta, gamma
-    virtual void setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag);
+    void setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag);
 	void toFile(const char *filename);
     // fitting (the only public method)
     void fit(); // return -LL for the model
+    void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);
 protected:
 	//
 	// Givens
@@ -49,11 +50,9 @@ protected:
     bool* fitG; // flags for enabling the fittig of a group
     NCAT* fitK_countG; // number of groups per skill that have a raised fitG flag
 	
-	virtual void init(struct param *param); // non-fit specific initialization
-	virtual void destroy(); // non-fit specific descruction
-//	void initGrad();
-    virtual NUMBER GradientDescent(); // fit alternating
-    virtual void readModelBody(FILE *fid, struct param* param, NDAT *line_no);
+	void init(struct param *param); // non-fit specific initialization
+	void destroy(); // non-fit specific descruction
+    NUMBER GradientDescent(); // fit alternating
 private:
 };
 

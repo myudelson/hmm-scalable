@@ -539,7 +539,7 @@ bool structure_data(const char *filename) {
     // set counts
 	param.nG = (NCAT)param.map_group_fwd->size();
 	param.nK = (NCAT)param.map_skill_fwd->size();
-	param.nI = (NCAT2)param.map_step_fwd->size();
+	param.nI = (NCAT)param.map_step_fwd->size();
 	
 	NDAT t = 0, q = 0;
 //    int tm = 0; // time
@@ -1034,7 +1034,7 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
 /*    NUMBER rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
-    NCAT2 I; // item
+    NCAT I; // item
     NDAT t;
     FILE *fid; // file for storing prediction should that be necessary
     if(param.predictions>0) {  // if we have to write the predictions file
@@ -1214,7 +1214,7 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
-    NCAT2 I; // item
+    NCAT I; // item
     NDAT t;
     FILE *fid; // file for storing prediction should that be necessary
     if(param.predictions>0) {  // if we have to write the predictions file

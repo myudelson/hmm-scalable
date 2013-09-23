@@ -19,7 +19,7 @@
 class HMMProblemPiABGK : public HMMProblem {
 public:
 	HMMProblemPiABGK(struct param *param); // sizes=={nK, nK, nK} by default
-    virtual ~HMMProblemPiABGK();
+    ~HMMProblemPiABGK();
 	NUMBER** getPI();
 	NUMBER** getPIk();
 	NUMBER** getPIg();
@@ -47,6 +47,7 @@ public:
     void setGradA (struct data* dt, FitBit *fb, NPAR kg_flag);
     void setGradB (struct data* dt, FitBit *fb, NPAR kg_flag);
     void fit(); // return -LL for the model
+    void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);
 protected:
 	//
 	// Givens
@@ -61,11 +62,10 @@ protected:
     bool* fitG; // flags for enabling the fittig of a group
     NCAT* fitK_countG; // number of groups per skill that have a raised fitG flag
 	
-	virtual void init(struct param *param); // non-fit specific initialization
-    virtual void destroy();
+	void init(struct param *param); // non-fit specific initialization
+    void destroy();
     //	void initGrad();
     NUMBER GradientDescent(); // fit alternating
-    virtual void readModelBody(FILE *fid, struct param* param, NDAT *line_no);
 private:
 };
 

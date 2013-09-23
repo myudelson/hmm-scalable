@@ -544,6 +544,7 @@ void HMMProblem::computeGamma(NCAT xndat, struct data** x_data) {
 }
 
 void HMMProblem::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
+    if(this->p->block_fitting[0]>0) return;
     NDAT t = 0;
     NPAR i, o;
     //    if(kg_flag == 0) { // k THIS PARAM DOESN'T MATTER HERE
@@ -556,6 +557,7 @@ void HMMProblem::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
 }
 
 void HMMProblem::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
+    if(this->p->block_fitting[1]>0) return;
     NDAT t;
     NPAR o, i, j;
     //    if(kg_flag == 0) { // k THIS PARAM DOESN'T MATTER HERE
@@ -570,6 +572,7 @@ void HMMProblem::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
 }
 
 void HMMProblem::setGradB (struct data* dt, FitBit *fb, NPAR kg_flag){
+    if(this->p->block_fitting[2]>0) return;
     NDAT t;
     NPAR o, i;
     //    if(kg_flag == 0) { // k THIS PARAM DOESN'T MATTER HERE
@@ -606,9 +609,9 @@ void HMMProblem::computeGradients(NCAT xndat, struct data** x_data, FitBit *fb, 
         dt = x_data[x];
 		if( dt->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
         
-        if(fb->PI != NULL) setGradPI(dt, fb, kg_flag);
-        if(fb->A  != NULL) setGradA(dt, fb, kg_flag);
-        if(fb->B  != NULL) setGradB(dt, fb, kg_flag);
+        if(fb->PI != NULL && this->p->block_fitting[0]==0) setGradPI(dt, fb, kg_flag);
+        if(fb->A  != NULL && this->p->block_fitting[1]==0) setGradA(dt, fb, kg_flag);
+        if(fb->B  != NULL && this->p->block_fitting[2]==0) setGradB(dt, fb, kg_flag);
     }// for all sequences
     
     //	for(x=0; x<xndat; x++) {
@@ -772,6 +775,49 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
 	// initialize
     struct data* dt = new data;
 	
+    // temporary experimental: IRT-like for fitting pLo in liblinear
+    /*
+    FILE *fid0 = fopen("irt.txt","w");
+    NPAR **group_skill_mask = init2D<NPAR>(nG, nK);
+    NCAT g_k;
+    data *dat;
+    NPAR obs;
+	for(g=0; g<nG; g++) {
+        g_k = this->p->g_numk[g];
+		for(k=0; k<g_k; k++) {
+            dat = this->p->g_k_data[g][ k ];
+            t = dat->ix[0];
+            NCAT *ar;
+            int n = 0;
+            if(this->p->multiskill==0) {
+                k = dat_skill->get(t);
+                ar = &k;
+                n = 1;
+            } else {
+                ar = &dat_multiskill->get(t)[1];
+                n = dat_multiskill->get(t)[0];
+                qsortNcat(ar, n);
+            }
+            obs = this->p->dat_obs->get( dat->ix[0] );
+            NPAR count = 0; // 557687 -> 499117
+            for(int l=0; l<n; l++)
+                count += group_skill_mask[g][ ar[l] ] == 1;
+            if(count<n) {
+                fprintf(fid0,"%s %u:1", ((1-obs)==0)?"-1":"+1",dat->g+1);
+                
+                for(int l=0; l<n; l++) {
+                    fprintf(fid0, " %u:1",ar[l]+nG+1);
+                    group_skill_mask[g][ ar[l] ] = 1;
+                }
+                fprintf(fid0,"\n");
+            }
+        }
+    }
+    fclose(fid0);
+    free2D(group_skill_mask, nG);
+    // ^^
+    */
+    
 	for(g=0; g<nG; g++)
 		for(k=0; k<nK; k++) {
             dt->k = k;
@@ -863,8 +909,25 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
             accuracy_no_null += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
             p = safe01num(local_pred[this->p->metrics_target_obs]);
             ll -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
+            
+            // temporary experimental
+            for(int l=0; this->p->per_kc_rmse_acc && this->p->kc_counts!=NULL && l<n; l++) {
+                //for(m=0; m<nO; m++) local_pred_inner[m] = 0.0;
+                k = ar[l];
+                this->p->kc_counts[k]++;
+                this->p->kc_rmse[k] += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
+                this->p->kc_acc[k]  += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
+            }
         }
 	} // for all data
+    
+    // temporary experimental
+    for(int k=0; this->p->per_kc_rmse_acc && this->p->kc_counts!=NULL && k<this->p->nK; k++) {
+        this->p->kc_rmse[k] = sqrt(this->p->kc_rmse[k] / this->p->kc_counts[k]);
+        this->p->kc_acc[k]  =      this->p->kc_acc[k]  / this->p->kc_counts[k];
+    }
+    
+    
     delete(dt);
 	free(local_pred);
     //	free(local_pred_inner);
@@ -1977,14 +2040,7 @@ void HMMProblem::readModel(const char *filename, bool overwrite) {
     // read model
     //
     readModelBody(fid, &initparam, &line_no, overwrite);
-	
-    //	k=0;
-    //	map<NCAT,string>::iterator it;
-    //	for(k=0; k<param.nK; k++) {
-    //		it	= model_map_skill_bwd.find(k);
-    //		printf("%d %d %s \n", k, it->first, it->second.c_str());
-    //	}
-	
+		
 	fclose(fid);
 	free(line);
 }
@@ -1994,7 +2050,7 @@ void HMMProblem::readModelBody(FILE *fid, struct param* param, NDAT *line_no, bo
 	NCAT k = 0, idxk = 0;
     std::map<std::string,NCAT>::iterator it;
 	string s;
-    char col[1024];
+    char col[2048];
     //
     readNullObsRatio(fid, param, line_no);
     //

@@ -30,9 +30,8 @@ using namespace std;
 
 struct param param;
 static char *line = NULL;
-static int max_line_length;
+//static int max_line_length;
 //static NDAT global_predict_N;
-HMMProblem *hmm;
 NUMBER* metrics;
 map<string,NCAT> data_map_group_fwd;
 map<NCAT,string> data_map_group_bwd;
@@ -42,7 +41,7 @@ map<NCAT,string> model_map_skill_bwd;
 void exit_with_help();
 void parse_arguments(int argc, char **argv, char *input_file_name, char *model_file_name, char *predict_file_name);
 void read_predict_data(const char *filename);
-void read_model(const char *filename);
+//void read_model(const char *filename);
 static char* readline(FILE *fid);
 void predict(const char *predict_file, HMMProblem *hmm);
 
@@ -57,41 +56,67 @@ int main (int argc, char ** argv) {
 	
 	parse_arguments(argc, argv, input_file, model_file, predict_file);
     param.predictions = 1; // force it on, since we, you know, predictinng :)
-    //
-    // create hmm Object
-    //
-    switch(param.structure)
-    {
-        case STRUCTURE_SKILL: // Conjugate Gradient Descent
-        case STRUCTURE_GROUP: // Conjugate Gradient Descent
-            hmm = new HMMProblem(param);
-            break;
-            //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
-            //                hmm = new HMMProblemPiG(&param);
-            //                break;
-        case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-            hmm = new HMMProblemPiGK(param);
-            break;
-        case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-            hmm = new HMMProblemPiAGK(param);
-            break;
-        case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
-            hmm = new HMMProblemAGK(param);
-            break;
-            //            case BKT_GD_T: // Gradient Descent with Transfer
-            //                hmm = new HMMProblemKT(&param);
-            //                break;
-    }
-    hmm->readModel(model_file)
-    
+
+    // read data
     if(param.binaryinput==0) {
         InputUtil::readTxt(input_file, &param);
     } else {
         InputUtil::readBin(input_file, &param);
     }
+    
+    // read model header
+	FILE *fid = fopen(model_file,"r");
+	if(fid == NULL)
+	{
+		fprintf(stderr,"Can't read model file %s\n",model_file);
+		exit(1);
+	}
+	int max_line_length = 1024;
+	char *line = Malloc(char,max_line_length);
+	NDAT line_no = 0;
+    struct param initparam;
+    set_param_defaults(&initparam);
+    bool overwrite = false;
+//    if(overwrite)
+        readSolverInfo(fid, &param, &line_no);
+//    else
+//        readSolverInfo(fid, &initparam, &line_no);
+    
 	
+    //
+    // create hmm Object
+    //
+    HMMProblem *hmm;
+    switch(param.structure)
+    {
+        case STRUCTURE_SKILL: // Conjugate Gradient Descent
+        case STRUCTURE_GROUP: // Conjugate Gradient Descent
+            hmm = new HMMProblem(&param);
+            break;
+            //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
+            //                hmm = new HMMProblemPiG(&param);
+            //                break;
+        case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+            hmm = new HMMProblemPiGK(&param);
+            break;
+        case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+            hmm = new HMMProblemPiAGK(&param);
+            break;
+        case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
+            hmm = new HMMProblemAGK(&param);
+            break;
+            //            case BKT_GD_T: // Gradient Descent with Transfer
+            //                hmm s= new HMMProblemKT(&param);
+            //                break;
+    }
+    // read model body
+    hmm->readModelBody(fid, &param, &line_no, overwrite);
+  	fclose(fid);
+	free(line);
+//    hmm->readModel(model_file, false /* read and upload but not overwrite*/);
+    
 	if(param.quiet == 0)
-		printf("input read, nO=%d, nG=%d, nK=%d\n",param.nO, param.nG, param.nK);
+        printf("input read, nO=%d, nG=%d, nK=%d, nI=%d\n",param.nO, param.nG, param.nK, param.nI);
 	
 	clock_t tm = clock();
     if(param.metrics>0 || param.predictions>0) {
@@ -133,7 +158,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 	// parse command line options, starting from 1 (0 is path to executable)
 	// go in pairs, looking at whether first in pair starts with '-', if not, stop parsing arguments
 	int i;
-    char * ch;
+//    char * ch;
 	for(i=1;i<argc;i++)
 	{
 		if(argv[i][0] != '-') break; // end of options stop parsing
@@ -199,63 +224,63 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 	}
 }
 
-void read_model(const char *filename, struct param *param, HMMProblem *hmm) {
-	FILE *fid = fopen(filename,"r");
-	if(fid == NULL)
-	{
-		fprintf(stderr,"Can't read model file %s\n",filename);
-		exit(1);
-	}
-	max_line_length = 1024;
-	line = Malloc(char,max_line_length);
-	NDAT line_no = 0;
-    //
-    // read solver info
-    //
-    readSolverInfo(fid, param, &line_no);
-    
-    //
-    // create hmm Object
-    //
-    switch(param.structure)
-    {
-        case STRUCTURE_SKILL: // Conjugate Gradient Descent
-        case STRUCTURE_GROUP: // Conjugate Gradient Descent
-            hmm = new HMMProblem(param);
-            break;
-            //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
-            //                hmm = new HMMProblemPiG(&param);
-            //                break;
-        case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-            hmm = new HMMProblemPiGK(param);
-            break;
-        case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-            hmm = new HMMProblemPiAGK(param);
-            break;
-        case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
-            hmm = new HMMProblemAGK(param);
-            break;
-            //            case BKT_GD_T: // Gradient Descent with Transfer
-            //                hmm = new HMMProblemKT(&param);
-            //                break;
-    }
-    //
-    // read model
-    //
-    hmm->readModelBody(fid, &line_no);
-    
-	
-    //	k=0;
-    //	map<NCAT,string>::iterator it;
-    //	for(k=0; k<param.nK; k++) {
-    //		it	= model_map_skill_bwd.find(k);
-    //		printf("%d %d %s \n", k, it->first, it->second.c_str());
-    //	}
-	
-	fclose(fid);
-	free(line);
-}
-
+//void read_model(const char *filename, struct param *param, HMMProblem *hmm) {
+//	FILE *fid = fopen(filename,"r");
+//	if(fid == NULL)
+//	{
+//		fprintf(stderr,"Can't read model file %s\n",filename);
+//		exit(1);
+//	}
+//	max_line_length = 1024;
+//	line = Malloc(char,max_line_length);
+//	NDAT line_no = 0;
+//    //
+//    // read solver info
+//    //
+//    readSolverInfo(fid, param, &line_no);
+//    
+//    //
+//    // create hmm Object
+//    //
+//    switch(param->structure)
+//    {
+//        case STRUCTURE_SKILL: // Conjugate Gradient Descent
+//        case STRUCTURE_GROUP: // Conjugate Gradient Descent
+//            hmm = new HMMProblem(param);
+//            break;
+//            //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
+//            //                hmm = new HMMProblemPiG(&param);
+//            //                break;
+//        case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+//            hmm = new HMMProblemPiGK(param);
+//            break;
+//        case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+//            hmm = new HMMProblemPiAGK(param);
+//            break;
+//        case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
+//            hmm = new HMMProblemAGK(param);
+//            break;
+//            //            case BKT_GD_T: // Gradient Descent with Transfer
+//            //                hmm = new HMMProblemKT(&param);
+//            //                break;
+//    }
+//    //
+//    // read model
+//    //
+//    hmm->readModelBody(fid, param, &line_no, false /* read and upload but not overwrite*/);
+//    
+//	
+//    //	k=0;
+//    //	map<NCAT,string>::iterator it;
+//    //	for(k=0; k<param.nK; k++) {
+//    //		it	= model_map_skill_bwd.find(k);
+//    //		printf("%d %d %s \n", k, it->first, it->second.c_str());
+//    //	}
+//	
+//	fclose(fid);
+//	free(line);
+//}
+//
 void predict(const char *predict_file, HMMProblem *hmm) {
 	FILE *fid = fopen(predict_file,"w");
 	if(fid == NULL)

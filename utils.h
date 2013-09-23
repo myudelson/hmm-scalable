@@ -31,17 +31,15 @@ using namespace std;
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-#define NPAR_MAX  SCHAR_MAX
-#define NCAT_MAX  SHRT_MAX
-#define NCAT2_MAX INT_MAX
-#define NDAT_MAX  UINT_MAX
+#define NPAR_MAX SCHAR_MAX
+#define NCAT_MAX INT_MAX
+#define NDAT_MAX UINT_MAX
 //http://stackoverflow.com/questions/2053843/min-and-max-value-of-data-type-in-c
 
 #define COLUMNS 4
 
 typedef signed char NPAR;    // number of observations or states, now 128 max, KEEP THIS SIGNED, we need -1 code for NULL
-typedef short NCAT;          // number of categories, groups or skills, now 32K max; LEAVE THIS UNSIGNED, we need -1 code for NULL
-typedef int NCAT2;           // number of categories 2 (larger), items, now 2 bill max
+typedef int NCAT;            // number of categories, groups or skills, now 32K max; LEAVE THIS UNSIGNED, we need -1 code for NULL
 typedef unsigned int NDAT;   // number of data rows, now 4 bill max
 typedef double NUMBER;       // numeric float format
 
@@ -140,7 +138,7 @@ struct param {
     StripedArray<NPAR> *dat_obs;
     StripedArray<NCAT> *dat_group;
     StripedArray<NCAT> *dat_skill;
-    StripedArray<NCAT2> *dat_item;
+    StripedArray<NCAT> *dat_item;
     StripedArray< NCAT* > *dat_multiskill;
     StripedArray<int> *dat_time;
 	// derived from data
@@ -149,7 +147,7 @@ struct param {
 	NPAR  nO;		// number of unique observations
 	NCAT  nG;       // number of subjects (sequences, groups)
 	NCAT  nK;		// number of skills (subproblems)
-	NCAT2 nI;		// number of items (problems)
+	NCAT nI;		// number of items (problems)
     // null-skill data by student
     NDAT N_null; // total number of null skill instances
     struct data *null_skills;
@@ -168,8 +166,8 @@ struct param {
     // vocabilaries
     map<string,NCAT> *map_group_fwd; // string to id
     map<NCAT,string> *map_group_bwd; // id to string
-    map<string,NCAT2> *map_step_fwd; // string to id
-    map<NCAT2,string> *map_step_bwd; // id to string
+    map<string,NCAT> *map_step_fwd; // string to id
+    map<NCAT,string> *map_step_bwd; // id to string
     map<string,NCAT> *map_skill_fwd; // string to id
     map<NCAT,string> *map_skill_bwd; // id to string
 	// fitting specific
@@ -181,6 +179,12 @@ struct param {
     // coord descend
     NPAR first_iteration_qualify; // at what iteration to start considering parameter for "graduating" (converging) >=0
     NPAR iterations_to_qualify;   // how many interations of stable parameter values qualify it for "graduating" (converging)
+    // experimental and temporary
+    NPAR block_fitting[3]; // array of flags to block PI, A, B in this order
+    bool per_kc_rmse_acc; // experimental
+    NUMBER *kc_rmse;  // per-kc RMSE
+    NUMBER *kc_acc;  // per-kc Accuracy
+    NDAT *kc_counts;// number of kc datapoints
 };
 
 void destroy_input_data(struct param *param);
@@ -193,6 +197,8 @@ void readSolverInfo(FILE *fid, struct param *param, NDAT *line_no);
 int compareNumber (const void * a, const void * b);
 void qsortNumber(NUMBER* ar, NPAR size);
 void qsortNumberRev(NUMBER* ar, NPAR size);
+int compareNcat (const void * a, const void * b);
+void qsortNcat(NCAT* ar, NPAR size);
 void projsimplex(NUMBER* ar, NPAR size);
 
 // projection of my own

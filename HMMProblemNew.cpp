@@ -428,7 +428,7 @@ bool HMMProblem::checkPIABConstraints(NUMBER* a_PI, NUMBER** a_A, NUMBER** a_B) 
 }
 
 // still works in skill-ordered array
-NUMBER HMMProblem::getSumLogPOPara(NCAT2 ix1, NCAT2 n, struct data* data) {
+NUMBER HMMProblem::getSumLogPOPara(NCAT ix1, NCAT n, struct data* data) {
 	NUMBER result = 0.0;
     //	for(NCAT x=0; x<xndat; x++) result += (x_data[x]->tag==0)?x_data[x]->p_O_param:0; << WAS JUST PLANE WRONG (due to massive find replace most surely)
 	for(NCAT x=0; x<n; x++) result -= safelog(data[ix1+x].p_O_param); // tag != 0, but p_O_param still summed (it's 0 by default, or pre-computed already)
@@ -1277,7 +1277,7 @@ void HMMProblem::setGradB (NPAR o, NDAT t, NDAT ix, NUMBER p_O_param, bool is_mu
     }
 }
 
-//void HMMProblem::computeGradients(NCAT2 ix1, NCAT2 n, struct data* data, FitBit *fb, NCAT target_k){//,  NUMBER *a_gradPI, NUMBER** a_gradA, NUMBER **a_gradB)
+//void HMMProblem::computeGradients(NCAT ix1, NCAT n, struct data* data, FitBit *fb, NCAT target_k){//,  NUMBER *a_gradPI, NUMBER** a_gradA, NUMBER **a_gradB)
 //    fb->toZero(FBS_GRAD);
 ////    clock_t tm = clock();
 ////    for(int i=0;i<100; i++)
@@ -1809,7 +1809,7 @@ void HMMProblem::computeLogLikRMSENullSkill(NUMBER* loglik_rmse, bool keep_SE) {
     if(!keep_SE) loglik_rmse[1] = sqrt(loglik_rmse[1]/count_all_null_skill);
 }
 
-FitResult HMMProblem::GradientDescentBit(NCAT2 ix1, NCAT2 n, struct data* data, NCAT k_target, NPAR kg_flag, FitBit *fb, bool is1SkillForAll) {
+FitResult HMMProblem::GradientDescentBit(NCAT ix1, NCAT n, struct data* data, NCAT k_target, NPAR kg_flag, FitBit *fb, bool is1SkillForAll) {
     FitResult fr;
     fr.iter = 1;
     fr.pO0  = 0.0;
@@ -2171,7 +2171,7 @@ NUMBER HMMProblem::BaumWelchSkill() {
     return 0;
 }
 
-NUMBER HMMProblem::doLinearStep(NCAT2 ix1, NCAT2 ndat, struct data* data, NCAT k_target, FitBit *fb, NCAT copy) {//NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB) {
+NUMBER HMMProblem::doLinearStep(NCAT ix1, NCAT ndat, struct data* data, NCAT k_target, FitBit *fb, NCAT copy) {//NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB) {
 //	NPAR i,j,m;
 //    NPAR nS = this->p->nS, nO = this->p->nO;
 //	// first scale down gradients
@@ -2337,7 +2337,7 @@ NUMBER HMMProblem::doLinearStep(NCAT k, FitBit *fb) {//NUMBER *a_PI, NUMBER **a_
     return e;
 } // doLinearStep
 
-NUMBER HMMProblem::doConjugateLinearStep(NCAT2 ix1, NCAT2 n, struct data* data, NCAT k_target, FitBit *fb, NCAT copy) {
+NUMBER HMMProblem::doConjugateLinearStep(NCAT ix1, NCAT n, struct data* data, NCAT k_target, FitBit *fb, NCAT copy) {
 //	NPAR i,j,m;
 //    NPAR nS = this->p->nS, nO = this->p->nO;
 //	// first scale down gradients
@@ -3080,7 +3080,7 @@ void HMMProblem::readModelBody(FILE *fid, NDAT *line_no) {
 	NPAR i,j,m;
 	NCAT k = 0;
 	string s;
-    char col[1024];
+    char col[2048];
     //
     readNullObsRatio(fid, line_no);
     //

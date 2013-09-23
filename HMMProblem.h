@@ -54,6 +54,7 @@ public:
     virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
     void predict(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled);
     void readModel(const char *filename, bool overwrite);
+    virtual void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);
 protected:
 	//
 	// Givens
@@ -102,7 +103,6 @@ protected:
     FitResult GradientDescentBit(NCAT x, NCAT xndat, struct data** x_data, NPAR kg_flag, FitBit *fb, bool is1SkillForAll); // for 1 skill or 1 group, all 1 skill for all data
     virtual NUMBER GradientDescent(); // return -LL for the model
     void readNullObsRatio(FILE *fid, struct param* param, NDAT *line_no);
-    virtual void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);
 	bool checkPIABConstraints(NUMBER* a_PI, NUMBER** a_A, NUMBER** a_B); // all constraints, inc row sums
 private:
     // fitting methods (hidden)

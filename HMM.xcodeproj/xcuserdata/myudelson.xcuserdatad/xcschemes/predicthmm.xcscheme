@@ -76,6 +76,14 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "-b"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "1"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "toy_data_test.txt"
             isEnabled = "NO">
          </CommandLineArgument>
@@ -89,10 +97,30 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx_hmm_uskts.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "uopx_hmm_uskts_single.bin"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "uopx_hmm_uskts_multi.bin"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "uopx_CLI_model_shrt.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "uopx_model_uskts_multi5.2skilled.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "a89_kts_train_multi.bin"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "uopx_CLI_model.txt"
+            argument = "2008_CT_model_a89shrt.txt"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -100,55 +128,15 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "uopx_model_uskts_single.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "uopx_predictP.txt"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "data/a89_kts_train.txt"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "a89_kts_model_CLIdelim.txt"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "a89_ukts_train.txt"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "a89_ukts_CLIdelim_model.txt"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "a89_uskts_train.txt"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "a89_uskts_CLIdelim_model.txt"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "b89_kts_train.txt"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "b89_kts_CLIdelim_model.txt"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "b89_ukts_train.txt"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "b89_ukts_CLIdelim_model.txt"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "b89_uskts_train.txt"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "b89_uskts_CLIdelim_model.txt"
             isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>

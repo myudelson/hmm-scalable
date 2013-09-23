@@ -41,7 +41,7 @@ using namespace std;
 
 typedef signed char NPAR;    // number of observations or states, now 128 max, KEEP THIS SIGNED, we need -1 code for NULL
 typedef short NCAT;          // number of categories, groups or skills, now 32K max; LEAVE THIS UNSIGNED, we need -1 code for NULL
-typedef int NCAT2;           // number of categories 2 (larger), items, now 2 bill max
+typedef int NCAT;           // number of categories 2 (larger), items, now 2 bill max
 typedef unsigned int NDAT;   // number of data rows, now 4 bill max
 typedef double NUMBER;       // numeric float format
 
@@ -160,7 +160,7 @@ struct param {
     StripedArray<NCAT> *dat_group;
     StripedArray<NCAT> *dat_skill;
     StripedArray< NCAT* > *dat_multiskill;
-    StripedArray<NCAT2> *dat_item;
+    StripedArray<NCAT> *dat_item;
     StripedArray<int> *dat_time;
     data** dat_skill_seq; // array of pointers to sequences (single skill)
     data*** dat_multiskill_seq; // array of pointers to sequence arrays (single skill)
@@ -170,7 +170,7 @@ struct param {
 	NPAR  nO;		// number of unique observations
 	NCAT  nG;       // number of subjects (sequences, groups)
 	NCAT  nK;		// number of skills (subproblems)
-	NCAT2 nI;		// number of items (problems)
+	NCAT nI;		// number of items (problems)
     // null-skill data by student
 //    struct data *null_skills;
 //    NCAT n_null_skill_group; // number of groups (students) with rows not labelled by any skill
@@ -193,8 +193,8 @@ struct param {
     // vocabilaries
     map<string,NCAT> *map_group_fwd; // string to id
     map<NCAT,string> *map_group_bwd; // id to string
-    map<string,NCAT2> *map_step_fwd; // string to id
-    map<NCAT2,string> *map_step_bwd; // id to string
+    map<string,NCAT> *map_step_fwd; // string to id
+    map<NCAT,string> *map_step_bwd; // id to string
     map<string,NCAT> *map_skill_fwd; // string to id
     map<NCAT,string> *map_skill_bwd; // id to string
 	// fitting specific
@@ -360,8 +360,8 @@ NUMBER doLog10Scale2D(NUMBER **ar, NPAR size1, NPAR size2);
 NUMBER doLog10Scale1DGentle(NUMBER *grad, NUMBER *par, NPAR size);
 NUMBER doLog10Scale2DGentle(NUMBER **grad, NUMBER **par, NPAR size1, NPAR size2);
 
-void zeroTags(NCAT2 ix1, NCAT2 n, struct data* data); // for skill of group
-void zeroCounts(NCAT2 ix1, NCAT2 n, struct data* data); // for skill of group
+void zeroTags(NCAT ix1, NCAT n, struct data* data); // for skill of group
+void zeroCounts(NCAT ix1, NCAT n, struct data* data); // for skill of group
 void zeroTags(struct param* param); // set counts in all data sequences to zero
 void zeroCounts(struct param* param); 
 

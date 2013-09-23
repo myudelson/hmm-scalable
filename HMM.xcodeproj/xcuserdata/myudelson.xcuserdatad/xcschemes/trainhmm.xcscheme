@@ -96,6 +96,14 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "uopx_modelALL_uskts_pLoLLstart.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "a89_model_irt_start.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "-t"
             isEnabled = "NO">
          </CommandLineArgument>
@@ -108,7 +116,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "10,i"
+            argument = "5"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
@@ -152,6 +160,14 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "-B"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "1,0,0"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "a89_kts_train.txt"
             isEnabled = "NO">
          </CommandLineArgument>
@@ -176,32 +192,60 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "uopx_hmm_uskts.txt"
+            argument = "uopx_hmmALL_uskts_multi.bin"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "uopx_hmm_kts_single.bin"
+            argument = "uopx_hmm116208_uskts_multi.bin"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "uopx_hmm_kts_multi.bin"
+            argument = "uopx_hmm116_uskts_multi.bin"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "uopx_hmm208_uskts_multi.bin"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "a89_hmm_uskts_multi.bin"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "cli10_uskts_multi.bin"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "uopx_model_uskts_multi.txt"
-            isEnabled = "YES">
+            argument = "uopx_model_uskts_multi1.2.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "opx_modelALL_uskts_multi1.2pLoLL.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "a89_model_uskts_multi1.2.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "a89_model_uskts_multi1.2pLoIRTfx.txt"
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx_predictT.txt"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "toy_data.txt"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "model.txt"
+            argument = "cli10_uskts_multi.bin"
             isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "model.txt"
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "predictT.txt"

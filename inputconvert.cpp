@@ -20,6 +20,8 @@ void exit_with_help() {
 		   "options:\n"
 		   "-s : source file format 't' - text, 'b' - binary  (default is 't' - text)\n"
 		   "-t : target file format 't' - text, 'b' - binary  (default is 'b' - binary)\n"
+           "-d : delimiter for multiple skills per observation; 0-single skill per\n"
+           "     observation (default), otherwise -- delimiter character, e.g. '-d ~'.\n"
 		   );
 	exit(1);
 }
@@ -93,12 +95,14 @@ int main (int argc, char ** argv) {
     
     if( source_format=='t') {
         InputUtil::readTxt(input_file, &param);
+        printf("reading done\n");
         InputUtil::toBin(&param, output_file);
+        printf("writing done\n");
     }
     else {
         InputUtil::readBin(input_file, &param);
     }
-    
+    printf("before destroy\n");
 	// free data
 	destroy_input_data(&param);
 	

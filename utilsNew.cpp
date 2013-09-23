@@ -545,12 +545,12 @@ NUMBER doLog10Scale2DGentle(NUMBER **grad, NUMBER **par, NPAR size1, NPAR size2)
 
 
 // for skill of group
-void zeroTags(NCAT2 ix1, NCAT2 n, struct data* data) { // set counts in data sequences to zero
+void zeroTags(NCAT ix1, NCAT n, struct data* data) { // set counts in data sequences to zero
 	for(NCAT q=0; q<n; q++)
 		data[ix1+q].tag = 0;
 }
 
-void zeroCounts(NCAT2 ix1, NCAT2 n, struct data* data) {
+void zeroCounts(NCAT ix1, NCAT n, struct data* data) {
 	for(NCAT q=0; q<n; q++)
 		data[ix1+q].cnt = 0;
 }

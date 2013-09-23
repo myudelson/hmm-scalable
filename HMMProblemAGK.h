@@ -19,7 +19,7 @@
 class HMMProblemAGK : public HMMProblem {
 public:
 	HMMProblemAGK(struct param *param); // sizes=={nK, nK, nK} by default
-    virtual ~HMMProblemAGK();
+    ~HMMProblemAGK();
 	NUMBER** getPI();
 	NUMBER*** getA();
 	NUMBER*** getAk();
@@ -30,13 +30,14 @@ public:
 	NUMBER** getAg(NCAT g);
 	NUMBER** getB(NCAT k);
     // getters for computing alpha, beta, gamma
-    virtual NUMBER getPI(struct data* dt, NPAR i);         // to be redefined
-    virtual NUMBER getA (struct data* dt, NPAR i, NPAR j); // same
-    virtual NUMBER getB (struct data* dt, NPAR i, NPAR m); // same
-    virtual void setGradA (struct data* dt, FitBit *fb, NPAR kg_flag);
+    NUMBER getPI(struct data* dt, NPAR i);         // to be redefined
+    NUMBER getA (struct data* dt, NPAR i, NPAR j); // same
+    NUMBER getB (struct data* dt, NPAR i, NPAR m); // same
+    void setGradA (struct data* dt, FitBit *fb, NPAR kg_flag);
 	void toFile(const char *filename);
     // fitting (the only public method)
     void fit(); // return -LL for the model
+    void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);
 protected:
 	//
 	// Givens
@@ -45,11 +46,10 @@ protected:
 	//
 	// Derived
 	//
-    virtual void init(struct param *param); // non-fit specific initialization
-	virtual void destroy(); // non-fit specific descruction
+    void init(struct param *param); // non-fit specific initialization
+	void destroy(); // non-fit specific descruction
 //	void initGrad();
-    virtual NUMBER GradientDescent(); // fit alternating
-    virtual void readModelBody(FILE *fid, struct param* param, NDAT *line_no);
+    NUMBER GradientDescent(); // fit alternating
 private:
 };
 

@@ -29,6 +29,16 @@ void qsortNumberRev(NUMBER* ar, NPAR size) {
 	qsort (ar, size, sizeof(NUMBER), compareNumberRev);
 }
 
+int compareNcat (const void * a, const void * b) {
+	int cmp = ( *(NCAT*)a - *(NCAT*)b );
+	return -1*(cmp<0) + 0 + (cmp>0)*1;
+}
+
+
+void qsortNcat(NCAT* ar, NPAR size) {
+	qsort (ar, size, sizeof(NCAT), compareNcat);
+}
+
 // refer to http://arxiv.org/abs/1101.6081 for source
 void projsimplex(NUMBER* y, NPAR size) {
     
@@ -444,6 +454,11 @@ void set_param_defaults(struct param *param) {
     // coord descend
     param->first_iteration_qualify = 0;
     param->iterations_to_qualify   = 2;
+    // temporary experimenta;
+    param->block_fitting[0] = 0; // no bocking fitting for PI
+    param->block_fitting[1] = 0; // no bocking fitting for A
+    param->block_fitting[2] = 0; // no bocking fitting for B
+    param->per_kc_rmse_acc = false;
     
 }
 
@@ -454,12 +469,12 @@ void destroy_input_data(struct param *param) {
 	if(param->param_hi != NULL) free(param->param_hi);
 	
     // data - checks if pointers to data are null anyway (whether we delete linear columns of data or not)
-	if(param->dat_obs != NULL) free(param->dat_obs);
-	if(param->dat_group != NULL) free(param->dat_group);
-	if(param->dat_item != NULL) free(param->dat_item);
-	if(param->dat_skill != NULL) free(param->dat_skill);
-	if(param->dat_multiskill != NULL) free(param->dat_multiskill);
-	if(param->dat_time != NULL) free(param->dat_time);
+	if(param->dat_obs != NULL) delete param->dat_obs;
+	if(param->dat_group != NULL) delete param->dat_group;
+	if(param->dat_item != NULL) delete param->dat_item;
+	if(param->dat_skill != NULL) delete param->dat_skill;
+	if(param->dat_multiskill != NULL) delete param->dat_multiskill;
+	if(param->dat_time != NULL) delete param->dat_time;
     
     // not null skills
     for(NDAT kg=0;kg<param->nSeq; kg++) {
@@ -524,10 +539,10 @@ void readSolverInfo(FILE *fid, struct param *param, NDAT *line_no) {
     }
     (*line_no)++;
 	// nK
-    fscanf(fid,"nK\t%hi\n",&param->nK);
+    fscanf(fid,"nK\t%i\n",&param->nK);
     (*line_no)++;
     // nG
-    fscanf(fid,"nG\t%hi\n",&param->nG);
+    fscanf(fid,"nG\t%i\n",&param->nG);
     (*line_no)++;
     // nS
     fscanf(fid,"nS\t%hhu\n",&param->nS);

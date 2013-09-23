@@ -303,6 +303,7 @@ NUMBER HMMProblemPiABGK::getB(struct data* dt, NPAR i, NPAR m) {
 }
 
 void HMMProblemPiABGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
+    if(this->p->block_fitting[0]>0) return;
     NDAT t = 0;
     NPAR i, o;
     NUMBER combined, deriv_logit;
@@ -324,6 +325,7 @@ void HMMProblemPiABGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
 }
 
 void HMMProblemPiABGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
+    if(this->p->block_fitting[1]>0) return;
     NDAT t;
     NPAR o, i, j;
     NUMBER combined, deriv_logit;
@@ -353,6 +355,7 @@ void HMMProblemPiABGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
 }
 
 void HMMProblemPiABGK::setGradB (struct data* dt, FitBit *fb, NPAR kg_flag){
+    if(this->p->block_fitting[2]>0) return;
     NDAT t;
     NPAR o, i;
     NUMBER combined, deriv_logit;
@@ -553,20 +556,23 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
     return loglik;
 }
 
-void HMMProblemPiABGK::readModelBody(FILE *fid, struct param* param, NDAT *line_no) {
+void HMMProblemPiABGK::readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite) {
 	NPAR i,j,m;
-	NCAT k = 0, g = 0;
+	NCAT k = 0, g = 0, idxk = 0, idxg = 0;
 	string s;
-    char col[1024];
+    char col[2048];
+    std::map<std::string,NCAT>::iterator it;
     //
     readNullObsRatio(fid, param, line_no);
     //
     // init param
     //
-    this->p->map_group_fwd = new map<string,NCAT>();
-    this->p->map_group_bwd = new map<NCAT,string>();
-    this->p->map_skill_fwd = new map<string,NCAT>();
-    this->p->map_skill_bwd = new map<NCAT,string>();
+    if(overwrite) {
+        this->p->map_group_fwd = new map<string,NCAT>();
+        this->p->map_group_bwd = new map<NCAT,string>();
+        this->p->map_skill_fwd = new map<string,NCAT>();
+        this->p->map_skill_bwd = new map<NCAT,string>();
+    }
 	//
 	// read grouped PIg, Ag, and Bg
 	//
@@ -575,17 +581,30 @@ void HMMProblemPiABGK::readModelBody(FILE *fid, struct param* param, NDAT *line_
         fscanf(fid,"%*s\t%[^\n]\n",col);
         s = string( col );
         (*line_no)++;
-		this->p->map_group_fwd->insert(pair<string,NCAT>(s, this->p->map_group_fwd->size()));
-		this->p->map_group_bwd->insert(pair<NCAT,string>(this->p->map_group_bwd->size(), s));
+        if(overwrite) {
+            this->p->map_group_fwd->insert(pair<string,NCAT>(s, this->p->map_group_fwd->size()));
+            this->p->map_group_bwd->insert(pair<NCAT,string>(this->p->map_group_bwd->size(), s));
+            idxg = g;
+        } else {
+            it = this->p->map_group_fwd->find(s);
+            if( it==this->p->map_group_fwd->end() ) { // not found, skip 3 lines and continue
+                fscanf(fid,"%*s\n");
+                fscanf(fid,"%*s\n");
+                fscanf(fid,"%*s\n");
+                continue; // skip this iteration
+            }
+            else
+                idxg =it->second;
+        }
         
         // read PIg
         fscanf(fid,"PIg\t");
         for(i=0; i<(this->p->nS-1); i++) { // read 1 less then necessary
             fscanf(fid,"%[^\t]\t",col);
-            this->PIg[k][i] = atof(col);
+            this->PIg[idxg][i] = atof(col);
         }
         fscanf(fid,"%[^\n]\n",col);// read last one
-        this->PIg[k][i] = atof(col);
+        this->PIg[idxg][i] = atof(col);
         (*line_no)++;
 		// read Ag
         fscanf(fid,"Ag\t");
@@ -593,11 +612,11 @@ void HMMProblemPiABGK::readModelBody(FILE *fid, struct param* param, NDAT *line_
 			for(j=0; j<this->p->nS; j++) {
                 if(i==(this->p->nS-1) && j==(this->p->nS-1)) {
                     fscanf(fid,"%[^\n]\n", col); // last one;
-                    this->Ag[k][i][j] = atof(col);
+                    this->Ag[idxg][i][j] = atof(col);
                 }
                 else {
                     fscanf(fid,"%[^\t]\t", col); // not las one
-                    this->Ag[k][i][j] = atof(col);
+                    this->Ag[idxg][i][j] = atof(col);
                 }
 			}
 		// read Bg
@@ -606,11 +625,11 @@ void HMMProblemPiABGK::readModelBody(FILE *fid, struct param* param, NDAT *line_
 			for(m=0; m<this->p->nO; m++) {
                 if(i==(this->p->nS-1) && m==(this->p->nO-1)) {
                     fscanf(fid,"%[^\n]\n", col); // last one;
-                    this->Bg[k][i][m] = atof(col);
+                    this->Bg[idxg][i][m] = atof(col);
                 }
                 else {
                     fscanf(fid,"%[^\t]\t", col); // not las one
-                    this->Bg[k][i][m] = atof(col);
+                    this->Bg[idxg][i][m] = atof(col);
                 }
 			}
         (*line_no)++;
@@ -623,17 +642,30 @@ void HMMProblemPiABGK::readModelBody(FILE *fid, struct param* param, NDAT *line_
         fscanf(fid,"%*s\t%[^\n]\n",col);
         s = string( col );
         (*line_no)++;
-		this->p->map_skill_fwd->insert(pair<string,NCAT>(s, this->p->map_skill_fwd->size()));
-		this->p->map_skill_bwd->insert(pair<NCAT,string>(this->p->map_skill_bwd->size(), s));
+        if(overwrite) {
+            this->p->map_skill_fwd->insert(pair<string,NCAT>(s, this->p->map_skill_fwd->size()));
+            this->p->map_skill_bwd->insert(pair<NCAT,string>(this->p->map_skill_bwd->size(), s));
+            idxk = k;
+        } else {
+            it = this->p->map_skill_fwd->find(s);
+            if( it==this->p->map_skill_fwd->end() ) { // not found, skip 3 lines and continue
+                fscanf(fid,"%*s\n");
+                fscanf(fid,"%*s\n");
+                fscanf(fid,"%*s\n");
+                continue; // skip this iteration
+            }
+            else
+                idxk =it->second;
+        }
         
         // read PI
         fscanf(fid,"PIk\t");
         for(i=0; i<(this->p->nS-1); i++) { // read 1 less then necessary
             fscanf(fid,"%[^\t]\t",col);
-            this->PI[k][i] = atof(col);
+            this->PI[idxk][i] = atof(col);
         }
         fscanf(fid,"%[^\n]\n",col);// read last one
-        this->PI[k][i] = atof(col);
+        this->PI[idxk][i] = atof(col);
         (*line_no)++;
 		// read A
         fscanf(fid,"Ak\t");
@@ -641,11 +673,11 @@ void HMMProblemPiABGK::readModelBody(FILE *fid, struct param* param, NDAT *line_
 			for(j=0; j<this->p->nS; j++) {
                 if(i==(this->p->nS-1) && j==(this->p->nS-1)) {
                     fscanf(fid,"%[^\n]\n", col); // last one;
-                    this->A[k][i][j] = atof(col);
+                    this->A[idxk][i][j] = atof(col);
                 }
                 else {
                     fscanf(fid,"%[^\t]\t", col); // not las one
-                    this->A[k][i][j] = atof(col);
+                    this->A[idxk][i][j] = atof(col);
                 }
 			}
         (*line_no)++;
@@ -655,11 +687,11 @@ void HMMProblemPiABGK::readModelBody(FILE *fid, struct param* param, NDAT *line_
 			for(m=0; m<this->p->nS; m++) {
                 if(i==(this->p->nS-1) && m==(this->p->nS-1)) {
                     fscanf(fid,"%[^\n]\n", col); // last one;
-                    this->B[k][i][m] = atof(col);
+                    this->B[idxk][i][m] = atof(col);
                 }
                 else {
                     fscanf(fid,"%[^\t]\t", col); // not las one
-                    this->B[k][i][m] = atof(col);
+                    this->B[idxk][i][m] = atof(col);
                 }
 			}
         (*line_no)++;

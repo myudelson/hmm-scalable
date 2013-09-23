@@ -12,7 +12,8 @@
 #define __HMM__InputUtil__
 
 #include "utils.h"
-#define bin_input_file_verstion 1
+//#define bin_input_file_verstion 1
+#define bin_input_file_verstion 2 // increase number of skills students to 4 bytes
 
 class InputUtil {
 public:
@@ -23,6 +24,6 @@ private:
     static void writeString(FILE *f, string str);
     static string readString(FILE *f);
     static unsigned long writeMultiSkill(FILE *f, struct param * param);
-    static unsigned long  readMultiSkill(FILE *f, struct param * param);
+    static unsigned long  readMultiSkill(FILE *f, struct param * param, char version);
 };
 #endif /* defined(__HMM__InputUtil__) */
