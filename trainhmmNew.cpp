@@ -165,7 +165,7 @@ int main (int argc, char ** argv) {
             
             if(param.metrics>0 || param.predictions>0) {
                 fprintf(stderr,"Prediction is not yet implemented");
-//                NUMBER* metrics = Calloc(NUMBER, 7); // LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
+//                NUMBER* metrics = Calloc(NUMBER, (size_t)7); // LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
 //                if(param.predictions>0) {
 //                    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
 //                } else {
@@ -180,7 +180,7 @@ int main (int argc, char ** argv) {
             delete hmm;
         } else { // cross-validation
             tm = clock();
-            NUMBER* metrics = Calloc(NUMBER, 7); // Loglik, AIC, BIC, RMSE, RMSE no null, Accuracy, Accuracy no null
+            NUMBER* metrics = Calloc(NUMBER, (size_t)7); // Loglik, AIC, BIC, RMSE, RMSE no null, Accuracy, Accuracy no null
             switch (param.cv_strat) {
                 case CV_GROUP:
                     cross_validate(metrics, predict_file);
@@ -392,7 +392,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 					n += (argv[i][j]==',')?(NPAR)1:(NPAR)0;
 				// init params
 				free(param.param_lo);
-				param.param_lo = Calloc(NUMBER, n);
+				param.param_lo = Calloc(NUMBER, (size_t)n);
 				// read params and write to params
 				param.param_lo[0] = atof( strtok(argv[i],",\t\n\r") );
 				for(int j=1; j<n; j++)
@@ -406,7 +406,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 					n += (argv[i][j]==',')?(NPAR)1:(NPAR)0;
 				// init params
 				free(param.param_hi);
-				param.param_hi = Calloc(NUMBER, n);
+				param.param_hi = Calloc(NUMBER, (size_t)n);
 				// read params and write to params
 				param.param_hi[0] = atof( strtok(argv[i],",\t\n\r") );
 				for(int j=1; j<n; j++)
@@ -549,11 +549,11 @@ bool structure_data(const char *filename) {
 	NPAR o;
     int n;
 	NPAR **skill_group_map = init2D<NPAR>(param.nK+1, param.nG); // binary map of (skills+1) to groups, +1 for null skill groups
-	param.k_nG = Calloc(NCAT, param.nK + 1); //  +1 for null skill groups
-	param.k_N = Calloc(NDAT, param.nK+1); // +1 for null skills
-//	param.g_numk = Calloc(NCAT, param.nG);
-//    NDAT *count_null_skill_group = Calloc(NDAT, param.nG); // count null skill occurences per group
-//    NCAT *index_null_skill_group = Calloc(NCAT, param.nG); // index of group in compressed array
+	param.k_nG = Calloc(NCAT, (size_t)param.nK + 1); //  +1 for null skill groups
+	param.k_N = Calloc(NDAT, (size_t)param.nK+1); // +1 for null skills
+//	param.g_numk = Calloc(NCAT, (size_t)param.nG);
+//    NDAT *count_null_skill_group = Calloc(NDAT, (size_t)param.nG); // count null skill occurences per group
+//    NCAT *index_null_skill_group = Calloc(NCAT, (size_t)param.nG); // index of group in compressed array
     
     //
 	// Pass A: determine what skill (k) - group (g) combinations are there
@@ -603,15 +603,15 @@ bool structure_data(const char *filename) {
     // build k_Gs - array of arrays of Gs
     // build nK+1 array structure for t indexes per each skil, nK+1st is null
     NDAT idx = 0;
-    NCAT **k_Gs = Calloc(NCAT *, param.nK+1); // +1 for nulls
-    param.k_t = Calloc(NDAT *, param.nK+1); // +1 for nulls
-    param.k_ix1stSeq = Calloc(NDAT, param.nK+1); // +1 for nulls
+    NCAT **k_Gs = Calloc(NCAT *, (size_t)param.nK+1); // +1 for nulls
+    param.k_t = Calloc(NDAT *, (size_t)param.nK+1); // +1 for nulls
+    param.k_ix1stSeq = Calloc(NDAT, (size_t)param.nK+1); // +1 for nulls
     for(k=0; k<(param.nK+1); k++) {
         param.k_ix1stSeq[k] = idx;
         idx += param.k_nG[k];
         // k_Gs
-        k_Gs[k] = Calloc(NCAT, param.k_nG[k]);
-        param.k_t[k]  = Calloc(NDAT, param.k_N[k]);
+        k_Gs[k] = Calloc(NCAT, (size_t)param.k_nG[k]);
+        param.k_t[k]  = Calloc(NDAT, (size_t)param.k_N[k]);
         NCAT idxb = 0;
         for(g=0; g<param.nG; g++) // if not zero, record in the array of Gs for k
             if( skill_group_map[k][g]>0 )
@@ -620,12 +620,12 @@ bool structure_data(const char *filename) {
     
     
     // allocate all sequences
-    param.all_seq = Calloc(struct data, param.nSeq+param.nSeqNull);
+    param.all_seq = Calloc(struct data, (size_t)param.nSeq+param.nSeqNull);
     for(q=0; q<param.nSeq; q++)
         initDat( &param.all_seq[q] );
 //	param.k_g_data = Malloc(struct data **, param.nK);
 //	param.k_data = Malloc(struct data *, param.nSeq);
-//	param.g_k_data = Calloc(struct data **, param.nG);
+//	param.g_k_data = Calloc(struct data **, (size_t)param.nG);
 //	param.g_data = Malloc(struct data *, param.nSeq);
 //	param.null_skills = Malloc(struct data, param.n_null_skill_group);
     // index compressed array of null-skill-BY-group
@@ -633,9 +633,9 @@ bool structure_data(const char *filename) {
 //	for(g=0; g<param.nG; g++)
 //        if( count_null_skill_group[g] >0 ) index_null_skill_group[g] = idx++;
     if(param.multiskill)
-        param.dat_multiskill_seq = Calloc(data **, param.N);
+        param.dat_multiskill_seq = Calloc(data **, (size_t)param.N);
     else
-        param.dat_skill_seq = Calloc(data *, param.N);
+        param.dat_skill_seq = Calloc(data *, (size_t)param.N);
     // End of Pass A
     
     //
@@ -643,8 +643,8 @@ bool structure_data(const char *filename) {
     //          in each sequence
     //
     
-//	NDAT *k_countg = Calloc(NDAT, param.nK); // track current group in skill
-////	NDAT *g_countk = Calloc(NDAT, param.nG); // track current skill in group
+//	NDAT *k_countg = Calloc(NDAT, (size_t)param.nK); // track current group in skill
+////	NDAT *g_countk = Calloc(NDAT, (size_t)param.nG); // track current skill in group
 //    // set k_countg and g_countk pointers to relative positions
 //    NDAT sumk=0;//, sumg=0;
 //    for(k=0; k<param.nK; k++) {

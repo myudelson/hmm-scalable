@@ -28,7 +28,7 @@ HMMProblemPiAGK::HMMProblemPiAGK(struct param *param) {
 void HMMProblemPiAGK::init(struct param *param) {
 	this->p = param;
 	this->non01constraints = true;
-    this->null_obs_ratio = Calloc(NUMBER, this->p->nO);
+    this->null_obs_ratio = Calloc(NUMBER, (size_t)this->p->nO);
     this->neg_log_lik = 0;
     this->null_skill_obs = 0;
     this->null_skill_obs_prob = 0;
@@ -414,10 +414,10 @@ NUMBER HMMProblemPiAGK::GradientDescent() {
 	// Main fit
 	//
     if( this->p->single_skill!=2 ) { // if not "force single skill"
-        int first_iteration_qualify = (int)this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
-        int iterations_to_qualify = (int)this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
-        NPAR* iter_qual_skill = Calloc(NPAR, nK);
-        NPAR* iter_qual_group = Calloc(NPAR, nG);
+        NCAT first_iteration_qualify = (int)this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
+        NCAT iterations_to_qualify = (int)this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
+        NCAT* iter_qual_skill = Calloc(NCAT, (size_t)nK);
+        NCAT* iter_qual_group = Calloc(NCAT, (size_t)nG);
         int skip_k = 0, skip_g = 0;
         
         int i = 0; // count runs
@@ -522,8 +522,8 @@ void HMMProblemPiAGK::readModelBody(FILE *fid, struct param* param, NDAT *line_n
         s = string( col );
         (*line_no)++;
         if(overwrite) {
-            this->p->map_group_fwd->insert(pair<string,NCAT>(s, this->p->map_group_fwd->size()));
-            this->p->map_group_bwd->insert(pair<NCAT,string>(this->p->map_group_bwd->size(), s));
+            this->p->map_group_fwd->insert(pair<string,NCAT>(s, (NCAT)this->p->map_group_fwd->size()));
+            this->p->map_group_bwd->insert(pair<NCAT,string>((NCAT)this->p->map_group_bwd->size(), s));
             idxg = g;
         } else {
             it = this->p->map_group_fwd->find(s);
@@ -570,8 +570,8 @@ void HMMProblemPiAGK::readModelBody(FILE *fid, struct param* param, NDAT *line_n
         s = string( col );
         (*line_no)++;
         if(overwrite) {
-            this->p->map_skill_fwd->insert(pair<string,NCAT>(s, this->p->map_skill_fwd->size()));
-            this->p->map_skill_bwd->insert(pair<NCAT,string>(this->p->map_skill_bwd->size(), s));
+            this->p->map_skill_fwd->insert(pair<string,NCAT>(s, (NCAT)this->p->map_skill_fwd->size()));
+            this->p->map_skill_bwd->insert(pair<NCAT,string>((NCAT)this->p->map_skill_bwd->size(), s));
             idxk = k;
         } else {
             it = this->p->map_skill_fwd->find(s);

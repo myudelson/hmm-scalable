@@ -39,40 +39,40 @@ FitBit::~FitBit() {
 //    if(this->A != NULL) free2D<NUMBER>(this->A, this->nS); // these are usually linked
 //    if(this->B != NULL) free2D<NUMBER>(this->B, this->nS); // these are usually linked
     if(this->PIm1 != NULL) free(this->PIm1);
-    if(this->Am1 != NULL) free2D<NUMBER>(this->Am1, this->nS);
-    if(this->Bm1 != NULL) free2D<NUMBER>(this->Bm1, this->nS);
+    if(this->Am1 != NULL) free2D<NUMBER>(this->Am1, (NDAT)this->nS);
+    if(this->Bm1 != NULL) free2D<NUMBER>(this->Bm1, (NDAT)this->nS);
     if(this->gradPI != NULL) free(this->gradPI);
-    if(this->gradA != NULL) free2D<NUMBER>(this->gradA, this->nS);
-    if(this->gradB != NULL) free2D<NUMBER>(this->gradB, this->nS);
+    if(this->gradA != NULL) free2D<NUMBER>(this->gradA, (NDAT)this->nS);
+    if(this->gradB != NULL) free2D<NUMBER>(this->gradB, (NDAT)this->nS);
     if(this->gradPIm1 != NULL) free(this->gradPIm1);
-    if(this->gradAm1 != NULL) free2D<NUMBER>(this->gradAm1, this->nS);
-    if(this->gradBm1 != NULL) free2D<NUMBER>(this->gradBm1, this->nS);
+    if(this->gradAm1 != NULL) free2D<NUMBER>(this->gradAm1, (NDAT)this->nS);
+    if(this->gradBm1 != NULL) free2D<NUMBER>(this->gradBm1, (NDAT)this->nS);
     if(this->PIcopy != NULL) free(this->PIcopy);
-    if(this->Acopy != NULL) free2D<NUMBER>(this->Acopy, this->nS);
-    if(this->Bcopy != NULL) free2D<NUMBER>(this->Bcopy, this->nS);
+    if(this->Acopy != NULL) free2D<NUMBER>(this->Acopy, (NDAT)this->nS);
+    if(this->Bcopy != NULL) free2D<NUMBER>(this->Bcopy, (NDAT)this->nS);
     if(this->dirPIm1 != NULL) free(this->dirPIm1);
-    if(this->dirAm1 != NULL) free2D<NUMBER>(this->dirAm1, this->nS);
-    if(this->dirBm1 != NULL) free2D<NUMBER>(this->dirBm1, this->nS);
+    if(this->dirAm1 != NULL) free2D<NUMBER>(this->dirAm1, (NDAT)this->nS);
+    if(this->dirBm1 != NULL) free2D<NUMBER>(this->dirBm1, (NDAT)this->nS);
 }
 
 void FitBit::init(NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B) {
 //    if(this->PI != NULL) {
         if(a_PI == NULL)
-            a_PI = init1D<NUMBER>(this->nS); // init1DNumber(this->nS);
+            a_PI = init1D<NUMBER>((NDAT)this->nS); // init1DNumber(this->nS);
         else
-            toZero1D<NUMBER>(a_PI, this->nS);
+            toZero1D<NUMBER>(a_PI, (NDAT)this->nS);
 //    }
 //    if(this->A  != NULL) {
         if(a_A == NULL)
-            a_A  = init2D<NUMBER>(this->nS, this->nS);
+            a_A  = init2D<NUMBER>((NDAT)this->nS, (NDAT)this->nS);
         else
-            toZero2D<NUMBER>(a_A,  this->nS, this->nS);
+            toZero2D<NUMBER>(a_A,  (NDAT)this->nS, (NDAT)this->nS);
 //    }
 //    if(this->B  != NULL) {
         if(a_B == NULL)
-            a_B  = init2D<NUMBER>(this->nS, this->nO);
+            a_B  = init2D<NUMBER>((NDAT)this->nS, (NDAT)this->nO);
         else
-            toZero2D<NUMBER>(a_B,  this->nS, this->nO);
+            toZero2D<NUMBER>(a_B, (NDAT)this->nS, (NDAT)this->nO);
 //    }
 }
 
@@ -83,15 +83,15 @@ void FitBit::linkPar(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B) {
 }
 
 void FitBit::toZero(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B) {
-    if(this->PI != NULL && a_PI != NULL) toZero1D<NUMBER>(a_PI, this->nS);
-    if(this->A  != NULL && a_A  != NULL) toZero2D<NUMBER>(a_A,  this->nS, this->nS);
-    if(this->B  != NULL && a_B  != NULL) toZero2D<NUMBER>(a_B,  this->nS, this->nO);
+    if(this->PI != NULL && a_PI != NULL) toZero1D<NUMBER>(a_PI, (NDAT)this->nS);
+    if(this->A  != NULL && a_A  != NULL) toZero2D<NUMBER>(a_A,  (NDAT)this->nS, (NDAT)this->nS);
+    if(this->B  != NULL && a_B  != NULL) toZero2D<NUMBER>(a_B,  (NDAT)this->nS, (NDAT)this->nO);
 }
 
 void FitBit::copy(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB){
-    if(this->PI != NULL) cpy1D<NUMBER>(soursePI, targetPI, this->nS);
-    if(this->A  != NULL) cpy2D<NUMBER>(sourseA,  targetA,  this->nS, this->nS);
-    if(this->B  != NULL) cpy2D<NUMBER>(sourseB,  targetB,  this->nS, this->nO);
+    if(this->PI != NULL) cpy1D<NUMBER>(soursePI, targetPI, (NDAT)this->nS);
+    if(this->A  != NULL) cpy2D<NUMBER>(sourseA,  targetA,  (NDAT)this->nS, (NDAT)this->nS);
+    if(this->B  != NULL) cpy2D<NUMBER>(sourseB,  targetB,  (NDAT)this->nS, (NDAT)this->nO);
 }
 
 void FitBit::add(NUMBER *soursePI, NUMBER **sourseA, NUMBER **sourseB, NUMBER *targetPI, NUMBER **targetA, NUMBER **targetB){
@@ -102,8 +102,8 @@ void FitBit::add(NUMBER *soursePI, NUMBER **sourseA, NUMBER **sourseB, NUMBER *t
 
 void FitBit::destroy(NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B) {
     if(this->PI != NULL && a_PI != NULL) free(a_PI);
-    if(this->A  != NULL && a_A  != NULL) free2D<NUMBER>(a_A, this->nS);
-    if(this->B  != NULL && a_B  != NULL) free2D<NUMBER>(a_B, this->nS);
+    if(this->A  != NULL && a_A  != NULL) free2D<NUMBER>(a_A, (NDAT)this->nS);
+    if(this->B  != NULL && a_B  != NULL) free2D<NUMBER>(a_B, (NDAT)this->nS);
     a_PI = NULL;
     a_A  = NULL;
     a_B  = NULL;

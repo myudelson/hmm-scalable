@@ -26,7 +26,7 @@ HMMProblemAGKi::~HMMProblemAGKi() {
 void HMMProblemAGKi::init(struct param *param) {
 	this->p = param;
 	this->non01constraints = true;
-    this->null_obs_ratio = Calloc(NUMBER, this->p->nO);
+    this->null_obs_ratio = Calloc(NUMBER, (size_t)this->p->nO);
     this->neg_log_lik = 0;
     this->null_skill_obs = 0;
     this->null_skill_obs_prob = 0;
@@ -77,24 +77,24 @@ void HMMProblemAGKi::init(struct param *param) {
     
     // mass produce PI's, A's, B's
 	if( checkPIABConstraints(a_PI, a_A, a_B) ) {
-		this->PI = init2D<NUMBER>(this->sizes[0], nS);
-		this->A =  init3D<NUMBER>(this->sizes[1], nS, nS);
-		this->B =  init3D<NUMBER>(this->sizes[2], nS, nO);
+		this->PI = init2D<NUMBER>(this->sizes[0], (NDAT)nS);
+		this->A =  init3D<NUMBER>(this->sizes[1], (NDAT)nS, (NDAT)nS);
+		this->B =  init3D<NUMBER>(this->sizes[2], (NDAT)nS, (NDAT)nO);
         NCAT x;
 		for(x=0; x<this->sizes[0]; x++)
-			cpy1D<NUMBER>(a_PI, this->PI[x], nS);
+			cpy1D<NUMBER>(a_PI, this->PI[x], (NDAT)nS);
 		for(x=0; x<this->sizes[1]; x++)
-			cpy2D<NUMBER>(a_A, this->A[x], nS, nS);
+			cpy2D<NUMBER>(a_A, this->A[x], (NDAT)nS, (NDAT)nS);
 		for(x=0; x<this->sizes[2]; x++)
-			cpy2D<NUMBER>(a_B, this->B[x], nS, nO);
+			cpy2D<NUMBER>(a_B, this->B[x], (NDAT)nS, (NDAT)nO);
 	} else {
 		fprintf(stderr,"params do not meet constraints.\n");
 		exit(1);
 	}
     // destroy setup params
 	free(a_PI);
-	free2D<NUMBER>(a_A, nS);
-	free2D<NUMBER>(a_B, nS);
+	free2D<NUMBER>(a_A, (NDAT)nS);
+	free2D<NUMBER>(a_B, (NDAT)nS);
 	
     // if needs be -- read in init params from a file
     if(param->initfile[0]!=0)
@@ -207,8 +207,8 @@ NUMBER HMMProblemAGKi::GradientDescent() {
     if( this->p->single_skill!=2 ) { // if not "force single skill"
         int first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
         int iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
-        NPAR* iter_qual_skill = Calloc(NPAR, nK);
-        NPAR* iter_qual_group = Calloc(NPAR, nG);
+        NPAR* iter_qual_skill = Calloc(NPAR, (size_t)nK);
+        NPAR* iter_qual_group = Calloc(NPAR, (size_t)nG);
         int skip_k = 0, skip_g = 0;
         
         int i = 0; // count runs

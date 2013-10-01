@@ -46,7 +46,7 @@ HMMProblem::HMMProblem(struct param *param) {
 void HMMProblem::init(struct param *param) {
 	this->p = param;
 	this->non01constraints = true;
-    this->null_obs_ratio = Calloc(NUMBER, this->p->nO);
+    this->null_obs_ratio = Calloc(NUMBER, (size_t)this->p->nO);
     this->neg_log_lik = 0;
     this->null_skill_obs = 0;
     this->null_skill_obs_prob = 0;
@@ -97,24 +97,24 @@ void HMMProblem::init(struct param *param) {
     
     // mass produce PI's, A's, B's
 	if( checkPIABConstraints(a_PI, a_A, a_B) ) {
-		this->PI = init2D<NUMBER>(this->sizes[0], nS);
-		this->A =  init3D<NUMBER>(this->sizes[1], nS, nS);
-		this->B =  init3D<NUMBER>(this->sizes[2], nS, nO);
+		this->PI = init2D<NUMBER>((NDAT)this->sizes[0], (NDAT)nS);
+		this->A =  init3D<NUMBER>((NDAT)this->sizes[1], (NDAT)nS, (NDAT)nS);
+		this->B =  init3D<NUMBER>((NDAT)this->sizes[2], (NDAT)nS, (NDAT)nO);
         NCAT x;
 		for(x=0; x<this->sizes[0]; x++)
-			cpy1D<NUMBER>(a_PI, this->PI[x], nS);
+			cpy1D<NUMBER>(a_PI, this->PI[x], (NDAT)nS);
 		for(x=0; x<this->sizes[1]; x++)
-			cpy2D<NUMBER>(a_A, this->A[x], nS, nS);
+			cpy2D<NUMBER>(a_A, this->A[x], (NDAT)nS, (NDAT)nS);
 		for(x=0; x<this->sizes[2]; x++)
-			cpy2D<NUMBER>(a_B, this->B[x], nS, nO);
+			cpy2D<NUMBER>(a_B, this->B[x], (NDAT)nS, (NDAT)nO);
 	} else {
 		fprintf(stderr,"params do not meet constraints.\n");
 		exit(1);
 	}
     // destroy setup params
 	free(a_PI);
-	free2D<NUMBER>(a_A, nS);
-	free2D<NUMBER>(a_B, nS);
+	free2D<NUMBER>(a_A, (NDAT)nS);
+	free2D<NUMBER>(a_B, (NDAT)nS);
     
     // if needs be -- read in init params from a file
     if(param->initfile[0]!=0)
@@ -340,9 +340,9 @@ void HMMProblem::initAlpha(NCAT xndat, struct data** x_data) {
 		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
 		// alpha
 		if( x_data[x]->alpha == NULL ) {
-			x_data[x]->alpha = Calloc(NUMBER*, x_data[x]->n);
+			x_data[x]->alpha = Calloc(NUMBER*, (size_t)x_data[x]->n);
 			for(t=0; t<x_data[x]->n; t++)
-				x_data[x]->alpha[t] = Calloc(NUMBER, nS);
+				x_data[x]->alpha[t] = Calloc(NUMBER, (size_t)nS);
 			
 		} else {
 			for(t=0; t<x_data[x]->n; t++)
@@ -354,7 +354,7 @@ void HMMProblem::initAlpha(NCAT xndat, struct data** x_data) {
 		x_data[x]->loglik = 0.0;
         // c - scaling
 		if( x_data[x]->c == NULL ) {
-            x_data[x]->c = Calloc(NUMBER, x_data[x]->n);
+            x_data[x]->c = Calloc(NUMBER, (size_t)x_data[x]->n);
         } else {
 			for(t=0; t<x_data[x]->n; t++)
                 x_data[x]->c[t] = 0.0;
@@ -370,9 +370,9 @@ void HMMProblem::initGamma(NCAT xndat, struct data** x_data) {
 		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
 		// alpha
 		if( x_data[x]->gamma == NULL ) {
-			x_data[x]->gamma = Calloc(NUMBER*, x_data[x]->n);
+			x_data[x]->gamma = Calloc(NUMBER*, (size_t)x_data[x]->n);
 			for(t=0; t<x_data[x]->n; t++)
-				x_data[x]->gamma[t] = Calloc(NUMBER, nS);
+				x_data[x]->gamma[t] = Calloc(NUMBER, (size_t)nS);
 			
 		} else {
 			for(t=0; t<x_data[x]->n; t++)
@@ -390,11 +390,11 @@ void HMMProblem::initXi(NCAT xndat, struct data** x_data) {
 		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
 		// alpha
 		if( x_data[x]->xi == NULL ) {
-			x_data[x]->xi = Calloc(NUMBER**, x_data[x]->n);
+			x_data[x]->xi = Calloc(NUMBER**, (size_t)x_data[x]->n);
 			for(t=0; t<x_data[x]->n; t++) {
-				x_data[x]->xi[t] = Calloc(NUMBER*, nS);
+				x_data[x]->xi[t] = Calloc(NUMBER*, (size_t)nS);
 				for(i=0; i<nS; i++)
-					x_data[x]->xi[t][i] = Calloc(NUMBER, nS);
+					x_data[x]->xi[t][i] = Calloc(NUMBER, (size_t)nS);
 			}
 			
 		} else {
@@ -414,9 +414,9 @@ void HMMProblem::initBeta(NCAT xndat, struct data** x_data) {
 		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
 		// beta
 		if( x_data[x]->beta == NULL ) {
-			x_data[x]->beta = Calloc(NUMBER*, x_data[x]->n);
+			x_data[x]->beta = Calloc(NUMBER*, (size_t)x_data[x]->n);
 			for(t=0; t<x_data[x]->n; t++)
-				x_data[x]->beta[t] = Calloc(NUMBER, nS);
+				x_data[x]->beta[t] = Calloc(NUMBER, (size_t)nS);
 			
 		} else {
 			for(t=0; t<x_data[x]->n; t++)
@@ -1118,27 +1118,27 @@ void HMMProblem::FitNullSkill(NUMBER* loglik_rmse, bool keep_SE) {
 //}
 
 void HMMProblem::init3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO) {
-    PI = init1D<NUMBER>(nS);
-    A  = init2D<NUMBER>(nS, nS);
-    B  = init2D<NUMBER>(nS, nO);
+    PI = init1D<NUMBER>((NDAT)nS);
+    A  = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
+    B  = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
 }
 
 void HMMProblem::toZero3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO) {
-    toZero1D<NUMBER>(PI, nS);
-    toZero2D<NUMBER>(A,  nS, nS);
-    toZero2D<NUMBER>(B,  nS, nO);
+    toZero1D<NUMBER>(PI, (NDAT)nS);
+    toZero2D<NUMBER>(A,  (NDAT)nS, (NDAT)nS);
+    toZero2D<NUMBER>(B,  (NDAT)nS, (NDAT)nO);
 }
 
 void HMMProblem::cpy3Params(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB, NPAR nS, NPAR nO) {
-    cpy1D<NUMBER>(soursePI, targetPI, nS);
-    cpy2D<NUMBER>(sourseA,  targetA,  nS, nS);
-    cpy2D<NUMBER>(sourseB,  targetB,  nS, nO);
+    cpy1D<NUMBER>(soursePI, targetPI, (NDAT)nS);
+    cpy2D<NUMBER>(sourseA,  targetA,  (NDAT)nS, (NDAT)nS);
+    cpy2D<NUMBER>(sourseB,  targetB,  (NDAT)nS, (NDAT)nO);
 }
 
 void HMMProblem::free3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS) {
     free(PI);
-    free2D<NUMBER>(A, nS);
-    free2D<NUMBER>(B, nS);
+    free2D<NUMBER>(A, (NDAT)nS);
+    free2D<NUMBER>(B, (NDAT)nS);
     PI = NULL;
     A  = NULL;
     B  = NULL;
@@ -1615,9 +1615,9 @@ NUMBER HMMProblem::doBarzalaiBorweinStep(NCAT xndat, struct data** x_data, NUMBE
 	doLog10Scale2DGentle(a_gradB,  a_B,  nS, nO);
     
     // compute s_k_m1
-  	NUMBER *s_k_m1_PI = init1D<NUMBER>(nS);
-	NUMBER **s_k_m1_A = init2D<NUMBER>(nS,nS);
-	NUMBER **s_k_m1_B = init2D<NUMBER>(nS,nS);
+  	NUMBER *s_k_m1_PI = init1D<NUMBER>((NDAT)nS);
+	NUMBER **s_k_m1_A = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
+	NUMBER **s_k_m1_B = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
 	for(i=0; i<nS; i++)
 	{
 		s_k_m1_PI[i] = a_PI[i] - a_PI_m1[i];
@@ -1682,11 +1682,11 @@ void HMMProblem::doBaumWelchStep(NCAT xndat, struct data** x_data, FitBit *fb) {
 	HMMProblem::computeXi(xndat, x_data);
 	HMMProblem::computeGamma(xndat, x_data);
 	
-	NUMBER * b_PI = init1D<NUMBER>(this->p->nS);
-	NUMBER ** b_A_num = init2D<NUMBER>(this->p->nS, this->p->nS);
-	NUMBER ** b_A_den = init2D<NUMBER>(this->p->nS, this->p->nS);
-	NUMBER ** b_B_num = init2D<NUMBER>(this->p->nS, this->p->nO);
-	NUMBER ** b_B_den = init2D<NUMBER>(this->p->nS, this->p->nO);
+	NUMBER * b_PI = init1D<NUMBER>((NDAT)this->p->nS);
+	NUMBER ** b_A_num = init2D<NUMBER>((NDAT)this->p->nS, (NDAT)this->p->nS);
+	NUMBER ** b_A_den = init2D<NUMBER>((NDAT)this->p->nS, (NDAT)this->p->nS);
+	NUMBER ** b_B_num = init2D<NUMBER>((NDAT)this->p->nS, (NDAT)this->p->nO);
+	NUMBER ** b_B_den = init2D<NUMBER>((NDAT)this->p->nS, (NDAT)this->p->nO);
 	// compute sums PI
 	NUMBER sum_p_O_param = 0;
 	for(x=0; x<xndat; x++) {
@@ -1998,7 +1998,7 @@ void HMMProblem::readNullObsRatio(FILE *fid, struct param* param, NDAT *line_no)
 	// read null skill ratios
 	//
     fscanf(fid, "Null skill ratios\t");
-    this->null_obs_ratio =Calloc(NUMBER, this->p->nO);
+    this->null_obs_ratio =Calloc(NUMBER, (size_t)this->p->nO);
     this->null_skill_obs      = 0;
     this->null_skill_obs_prob = 0;
 	for(i=0; i<param->nO; i++) {
@@ -2023,7 +2023,7 @@ void HMMProblem::readModel(const char *filename, bool overwrite) {
 		exit(1);
 	}
 	int max_line_length = 1024;
-	char *line = Malloc(char,max_line_length);
+	char *line = Malloc(char,(size_t)max_line_length);
 	NDAT line_no = 0;
     struct param initparam;
     set_param_defaults(&initparam);
@@ -2070,8 +2070,8 @@ void HMMProblem::readModelBody(FILE *fid, struct param* param, NDAT *line_no, bo
         s = string( col );
         (*line_no)++;
         if(overwrite) {
-            this->p->map_skill_fwd->insert(pair<string,NCAT>(s, this->p->map_skill_fwd->size()));
-            this->p->map_skill_bwd->insert(pair<NCAT,string>(this->p->map_skill_bwd->size(), s));
+            this->p->map_skill_fwd->insert(pair<string,NCAT>(s, (NCAT)this->p->map_skill_fwd->size()));
+            this->p->map_skill_bwd->insert(pair<NCAT,string>((NCAT)this->p->map_skill_bwd->size(), s));
             idxk = k;
         } else {
             it = this->p->map_skill_fwd->find(s);

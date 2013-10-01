@@ -41,8 +41,6 @@ map<NCAT,string> model_map_skill_bwd;
 void exit_with_help();
 void parse_arguments(int argc, char **argv, char *input_file_name, char *model_file_name, char *predict_file_name);
 void read_predict_data(const char *filename);
-//void read_model(const char *filename);
-static char* readline(FILE *fid);
 void predict(const char *predict_file, HMMProblem *hmm);
 
 int main (int argc, char ** argv) {
@@ -72,7 +70,7 @@ int main (int argc, char ** argv) {
 		exit(1);
 	}
 	int max_line_length = 1024;
-	char *line = Malloc(char,max_line_length);
+	char *line = Malloc(char,(size_t)max_line_length);
 	NDAT line_no = 0;
     struct param initparam;
     set_param_defaults(&initparam);
@@ -120,7 +118,7 @@ int main (int argc, char ** argv) {
 	
 	clock_t tm = clock();
     if(param.metrics>0 || param.predictions>0) {
-        metrics = Calloc(NUMBER, 7);// LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
+        metrics = Calloc(NUMBER, (size_t)7);// LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
     }
     hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*only unlabelled*/);
 //    predict(predict_file, hmm);
@@ -167,7 +165,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 		switch(argv[i-1][1])
 		{
 			case 'q':
-				param.quiet = atoi(argv[i]);
+				param.quiet = (NPAR)atoi(argv[i]);
 				if(param.quiet!=0 && param.quiet!=1) {
 					fprintf(stderr,"ERROR! Quiet param should be 0 or 1\n");
 					exit_with_help();

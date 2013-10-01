@@ -17,26 +17,28 @@
 #ifndef STRIPEDARRAY_H
 #define STRIPEDARRAY_H
 
+typedef signed int NDAT;  // number of data rows, now 4 bill max
+
 template <typename T>
 class StripedArray {
 public:
 	StripedArray();
-	StripedArray(unsigned int _size, bool a_complex); // predefined size
-	StripedArray(FILE *f, unsigned long N);
+	StripedArray(NDAT _size, bool a_complex); // predefined size
+	StripedArray(FILE *f, NDAT N);
 	StripedArray(bool a_complex);
 	~StripedArray();
-	unsigned long getSize();
+	NDAT getSize();
 	void add(T value);
-	T& operator [] (unsigned long idx);
-	T get(unsigned long idx);
-	void set(unsigned long idx, T value);
+	T& operator [] (NDAT idx);
+	T get(NDAT idx);
+	void set(NDAT idx, T value);
 	void clear();
-    unsigned long toBinFile(FILE* f);
+    NDAT toBinFile(FILE* f);
 private:
-	unsigned long size; // linear
-	unsigned long stripe_size;
-	unsigned long nstripes;
-	unsigned long size_last_stripe;
+	NDAT size; // linear
+	NDAT stripe_size;
+	NDAT nstripes;
+	NDAT size_last_stripe;
     bool complex; // element stored is a pointer to an array (should be deleted further)
 	T** stripes;
 	void addStripe();
@@ -55,35 +57,35 @@ StripedArray<T>::StripedArray() {
 
 // predefined size
 template <typename T>
-StripedArray<T>::StripedArray(unsigned int _size, bool a_complex) {
+StripedArray<T>::StripedArray(NDAT _size, bool a_complex) {
 	stripe_size = 20000;
     complex = a_complex;
 	size = _size;
-	nstripes = (unsigned long)ceil((double)size/stripe_size);
-	size_last_stripe = (unsigned long)fmod(size, stripe_size);
-	stripes = (T **) calloc(nstripes, sizeof(T*));
-    unsigned long num;
-    for(unsigned long i=0; i<nstripes; i++) {
+	nstripes = (NDAT)ceil((double)size/stripe_size);
+	size_last_stripe = (NDAT)fmod(size, (size_t)stripe_size);
+	stripes = (T **) calloc((size_t)nstripes, sizeof(T*));
+    NDAT num;
+    for(NDAT i=0; i<nstripes; i++) {
         num = (i<(nstripes-1)?stripe_size:size_last_stripe);
-        stripes[i] = (T*)calloc(num, sizeof(T)); // alloc data
+        stripes[i] = (T*)calloc((size_t)num, sizeof(T)); // alloc data
     }
 }
 
 // from file
 template <typename T>
-StripedArray<T>::StripedArray(FILE *f, unsigned long N) {
+StripedArray<T>::StripedArray(FILE *f, NDAT N) {
 	stripe_size = 20000;
     complex = false;
 	size = N;
-	nstripes = (unsigned long)ceil((double)N/stripe_size);
-	size_last_stripe = (unsigned long)fmod(N, stripe_size);
-	stripes = (T **) calloc(nstripes, sizeof(T*));
-    unsigned long num;
-    unsigned long nread;
-    for(unsigned long i=0; i<nstripes; i++) {
+	nstripes = (NDAT)ceil((double)N/stripe_size);
+	size_last_stripe = (NDAT)fmod(N, stripe_size);
+	stripes = (T **) calloc((size_t)nstripes, sizeof(T*));
+    NDAT num;
+    NDAT nread;
+    for(NDAT i=0; i<nstripes; i++) {
         num = (i<(nstripes-1)?stripe_size:size_last_stripe);
-        stripes[i] = (T*)calloc(num, sizeof(T)); // alloc data
-        nread = fread (stripes[i], sizeof(T), num, f);
+        stripes[i] = (T*)calloc((size_t)num, sizeof(T)); // alloc data
+        nread = (NDAT)fread (stripes[i], sizeof(T), (size_t)num, f);
         if(nread != num) {
             fprintf(stderr,"Error reading data from file\n");
             return;
@@ -103,14 +105,14 @@ StripedArray<T>::StripedArray(bool a_complex) {
 
 template <typename T>
 StripedArray<T>::~StripedArray() {
-	for(unsigned long i=0; i<this->nstripes;i++) {
+	for(NDAT i=0; i<this->nstripes;i++) {
         if(this->complex)
-            for(unsigned long j=0; j<( (i<(this->nstripes-1))?this->stripe_size:this->size_last_stripe );j++)
+            for(NDAT j=0; j<( (i<(this->nstripes-1))?this->stripe_size:this->size_last_stripe );j++)
                 free(  (void *)(this->stripes[i][j]) );
 		free(this->stripes[i]);
     }
 	free(this->stripes);
-//	for(unsigned long i=0; i<this->nstripes;i++)
+//	for(NDAT i=0; i<this->nstripes;i++)
 //		delete [] this->stripes[i];
 //	delete [] this->stripes;
 }
@@ -132,7 +134,7 @@ void StripedArray<T>::add(T value) {
 
 template <typename T>
 void StripedArray<T>::clear() {
-	for(unsigned long i=0; i<this->nstripes;i++)
+	for(NDAT i=0; i<this->nstripes;i++)
 		free(this->stripes[i]);
 	free(this->stripes);
 	this->size = 0;
@@ -143,13 +145,13 @@ void StripedArray<T>::clear() {
 }
 
 template <typename T>
-T& StripedArray<T>::operator [](unsigned long idx) {
+T& StripedArray<T>::operator [](NDAT idx) {
 	if(idx>(this->size-1)) {
 		fprintf(stderr, "   %d exceeds array size %d.\n",idx,this->size);
 		return NULL;
 	}
-	unsigned long idx_stripe = idx / this->stripe_size;
-	unsigned long idx_within = idx % this->stripe_size;
+	NDAT idx_stripe = idx / this->stripe_size;
+	NDAT idx_within = idx % this->stripe_size;
 //	if(idx_within>(this->size_last_stripe-1)) {
 //		fprintf(stderr, "Exception! Element index in last stripe %d exceeds sltipe size %d.\n",idx_within,this->size_last_stripe);
 //		return NULL;
@@ -158,13 +160,13 @@ T& StripedArray<T>::operator [](unsigned long idx) {
 }
 
 template <typename T>
-T StripedArray<T>::get(unsigned long idx) {
+T StripedArray<T>::get(NDAT idx) {
 	if(idx>(this->size-1)) {
-		fprintf(stderr, "Exception! Element index %lu exceeds array size %lu\n",idx,this->size);
-		return NULL;
+		fprintf(stderr, "Exception! Element index %u exceeds array size %u\n",idx,this->size);
+		return (T)0;
 	}
-	unsigned long idx_stripe = idx / this->stripe_size;
-	unsigned long idx_within = idx % this->stripe_size;
+	NDAT idx_stripe = idx / this->stripe_size;
+	NDAT idx_within = idx % this->stripe_size;
 //	if(idx_within>(this->size_last_stripe-1)) {
 //		fprintf(stderr, "Exception! Element index in last stripe %d exceeds sltipe size %d\n",idx_within,this->size_last_stripe);
 //		return NULL;
@@ -173,13 +175,13 @@ T StripedArray<T>::get(unsigned long idx) {
 }
 
 template <typename T>
-void StripedArray<T>::set(unsigned long idx, T value) {
+void StripedArray<T>::set(NDAT idx, T value) {
 	if(idx>(this->size-1)) {
-		fprintf(stderr, "Exception! Element index %lu exceeds array size %lu\n",idx,this->size);
+		fprintf(stderr, "Exception! Element index %u exceeds array size %u\n",idx,this->size);
 		return;
 	}
-	unsigned long idx_stripe = idx / this->stripe_size;
-	unsigned long idx_within = idx % this->stripe_size;
+	NDAT idx_stripe = idx / this->stripe_size;
+	NDAT idx_within = idx % this->stripe_size;
     //	if(idx_within>(this->size_last_stripe-1)) {
     //		fprintf(stderr, "Exception! Element index in last stripe %d exceeds sltipe size %d\n",idx_within,this->size_last_stripe);
     //		return NULL;
@@ -189,7 +191,7 @@ void StripedArray<T>::set(unsigned long idx, T value) {
 
 
 template <typename T>
-unsigned long StripedArray<T>::getSize() {
+NDAT StripedArray<T>::getSize() {
 	return this->size;
 }
 
@@ -200,7 +202,7 @@ void StripedArray<T>::addStripe() {
 		return;
 	}
 	
-	this->stripes = (T **) realloc(this->stripes,(++this->nstripes)*sizeof(T*)); // add pointer
+	this->stripes = (T **) realloc(this->stripes,(size_t)(++this->nstripes)*sizeof(T*)); // add pointer
 //	T** new_stripes = Calloc(T*, (this->nstripes));
 //	memcpy(new_stripes, this->stripes, sizeof(T*)*this->nstripes );
 //	free(this->stripes);
@@ -209,22 +211,22 @@ void StripedArray<T>::addStripe() {
 //	this->nstripes++;
 //	free(new_stripes);
 	
-//	this->stripes[this->nstripes-1] = Calloc(T, this->stripe_size); // alloc data
-	this->stripes[this->nstripes-1] = (T*)calloc(this->stripe_size, sizeof(T)); // alloc data
+//	this->stripes[this->nstripes-1] = Calloc(T, (size_t)this->stripe_size); // alloc data
+	this->stripes[this->nstripes-1] = (T*)calloc((size_t)this->stripe_size, sizeof(T)); // alloc data
 	this->size_last_stripe = 0; // reset counter
 }
 
 template <typename T>
-unsigned long StripedArray<T>::toBinFile(FILE *f) {
-    unsigned long num;
-    unsigned long nwrit;
-    unsigned long all_nwrit = 0;
-    for(unsigned long i=0; i<nstripes; i++) {
-        num = (unsigned int)(i<(nstripes-1))?stripe_size:size_last_stripe;
-        nwrit = fwrite (stripes[i] , sizeof(T), num, f);
+NDAT StripedArray<T>::toBinFile(FILE *f) {
+    NDAT num;
+    NDAT nwrit;
+    NDAT all_nwrit = 0;
+    for(NDAT i=0; i<nstripes; i++) {
+        num = (NDAT)(i<(nstripes-1))?stripe_size:size_last_stripe;
+        nwrit = (NDAT)fwrite (stripes[i] , sizeof(T), (size_t)num, f);
         all_nwrit += nwrit;
         if(num != nwrit) {
-            fprintf(stderr, "Error writing. Attempted to write %lu but %lu were written.\n",num, nwrit);
+            fprintf(stderr, "Error writing. Attempted to write %u but %u were written.\n",num, nwrit);
             return 0;
         }
     }

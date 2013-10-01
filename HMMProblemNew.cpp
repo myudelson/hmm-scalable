@@ -46,7 +46,7 @@ HMMProblem::HMMProblem(struct param *param) {
 void HMMProblem::init(struct param *param) {
 	this->p = param;
 	this->non01constraints = true;
-    this->null_obs_ratio = Calloc(NUMBER, this->p->nO);
+    this->null_obs_ratio = Calloc(NUMBER, (size_t)this->p->nO);
     this->neg_log_lik = 0;
     this->null_skill_obs = 0;
     this->null_skill_obs_prob = 0;
@@ -55,9 +55,9 @@ void HMMProblem::init(struct param *param) {
         
     NPAR nS = this->p->nS, nO = this->p->nO;
     NUMBER *a_PI, ** a_A, ** a_B;
-    a_PI = init1D<NUMBER>(nS);
-    a_A  = init2D<NUMBER>(nS, nS);
-    a_B  = init2D<NUMBER>(nS, nO);
+    a_PI = init1D<NUMBER>((NDAT)nS);
+    a_A  = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
+    a_B  = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
     
     //
     // setup params
@@ -99,24 +99,24 @@ void HMMProblem::init(struct param *param) {
     
     // mass produce PI's, A's, B's
 	if( checkPIABConstraints(a_PI, a_A, a_B) ) {
-		this->PI = init2D<NUMBER>(this->sizes[0], nS);
-		this->A =  init3D<NUMBER>(this->sizes[1], nS, nS);
-		this->B =  init3D<NUMBER>(this->sizes[2], nS, nO);
+		this->PI = init2D<NUMBER>(this->sizes[0], (NDAT)nS);
+		this->A =  init3D<NUMBER>(this->sizes[1], (NDAT)nS, (NDAT)nS);
+		this->B =  init3D<NUMBER>(this->sizes[2], (NDAT)nS, (NDAT)nO);
         NCAT x;
 		for(x=0; x<this->sizes[0]; x++)
-			cpy1D<NUMBER>(a_PI, this->PI[x], nS);
+			cpy1D<NUMBER>(a_PI, this->PI[x], (NDAT)nS);
 		for(x=0; x<this->sizes[1]; x++)
-			cpy2D<NUMBER>(a_A, this->A[x], nS, nS);
+			cpy2D<NUMBER>(a_A, this->A[x], (NDAT)nS, (NDAT)nS);
 		for(x=0; x<this->sizes[2]; x++)
-			cpy2D<NUMBER>(a_B, this->B[x], nS, nO);
+			cpy2D<NUMBER>(a_B, this->B[x], (NDAT)nS, (NDAT)nO);
 	} else {
 		fprintf(stderr,"params do not meet constraints.\n");
 		exit(1);
 	}
     // destroy setup params
 	free(a_PI);
-	free2D<NUMBER>(a_A, nS);
-	free2D<NUMBER>(a_B, nS);
+	free2D<NUMBER>(a_A, (NDAT)nS);
+	free2D<NUMBER>(a_B, (NDAT)nS);
 	
     
     // populate boundaries
@@ -2011,8 +2011,8 @@ NUMBER HMMProblem::GradientDescent() {
 	//
     
     // init fit results fit bits and link them to skill parameters
-    FitBit   **fbs = Calloc(FitBit*,   this->p->nK);
-    FitResult *frs = Calloc(FitResult, this->p->nK);
+    FitBit   **fbs = Calloc(FitBit*,   (size_t)this->p->nK);
+    FitResult *frs = Calloc(FitResult, (size_t)this->p->nK);
     for(k=0; k<this->p->nK; k++) {
         fbs[k] = new FitBit(nS, nO, nK, nG, tol);
         fbs[k]->init(FBS_PARm1);
@@ -3058,7 +3058,7 @@ void HMMProblem::readNullObsRatio(FILE *fid, NDAT *line_no) {
 	// read null skill ratios
 	//
     fscanf(fid, "Null skill ratios\t");
-    this->null_obs_ratio =Calloc(NUMBER, this->p->nO);
+    this->null_obs_ratio =Calloc(NUMBER, (size_t)this->p->nO);
     this->null_skill_obs      = 0;
     this->null_skill_obs_prob = 0;
 	for(i=0; i<this->p->nO; i++) {

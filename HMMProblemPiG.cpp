@@ -250,8 +250,8 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
 	// Main fit
 	//
     // this is a loop of repeated fits of PI(user), and A,B(skill)
-    NPAR* mask_skill = Calloc(NPAR, nK);
-    NPAR* mask_group = Calloc(NPAR, nG);
+    NPAR* mask_skill = Calloc(NPAR, (size_t)nK);
+    NPAR* mask_group = Calloc(NPAR, (size_t)nG);
     int first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
     int iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
     int skip_k = 0, skip_g = 0;

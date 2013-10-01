@@ -27,7 +27,7 @@ HMMProblemAGK::HMMProblemAGK(struct param *param) {
 void HMMProblemAGK::init(struct param *param) {
 	this->p = param;
 	this->non01constraints = true;
-    this->null_obs_ratio = Calloc(NUMBER, this->p->nO);
+    this->null_obs_ratio = Calloc(NUMBER, (size_t)this->p->nO);
     this->neg_log_lik = 0;
     this->null_skill_obs = 0;
     this->null_skill_obs_prob = 0;
@@ -75,15 +75,15 @@ void HMMProblemAGK::init(struct param *param) {
     
     // mass produce PI's/PIg's, A's, B's
 	if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-		this->PI  = init2D<NUMBER>(nK, nS);
-		this->A   = init3D<NUMBER>(nK, nS, nS);
-		this->Ag  = init3D<NUMBER>(nG, nS, nS);
-		this->B   = init3D<NUMBER>(nK, nS, nO);
+		this->PI  = init2D<NUMBER>((NDAT)nK, (NDAT)nS);
+		this->A   = init3D<NUMBER>((NDAT)nK, (NDAT)nS, (NDAT)nS);
+		this->Ag  = init3D<NUMBER>((NDAT)nG, (NDAT)nS, (NDAT)nS);
+		this->B   = init3D<NUMBER>((NDAT)nK, (NDAT)nS, (NDAT)nO);
         NCAT x;
 		for(x=0; x<nK; x++) {
-			cpy1D<NUMBER>(a_PI, this->PI[x], nS);
-			cpy2D<NUMBER>(a_A,  this->A[x],  nS, nS);
-			cpy2D<NUMBER>(a_B,  this->B[x],  nS, nO);
+			cpy1D<NUMBER>(a_PI, this->PI[x], (NDAT)nS);
+			cpy2D<NUMBER>(a_A,  this->A[x],  (NDAT)nS, (NDAT)nS);
+			cpy2D<NUMBER>(a_B,  this->B[x],  (NDAT)nS, (NDAT)nO);
         }
         // PIg start with "no-effect" params,PI[i] = 1/nS
 		for(x=0; x<nG; x++) {
@@ -98,8 +98,8 @@ void HMMProblemAGK::init(struct param *param) {
 	}
     // destroy setup params
 	free(a_PI);
-	free2D<NUMBER>(a_A, nS);
-	free2D<NUMBER>(a_B, nS);
+	free2D<NUMBER>(a_A, (NDAT)nS);
+	free2D<NUMBER>(a_B, (NDAT)nS);
 	
     // if needs be -- read in init params from a file
     if(param->initfile[0]!=0)
@@ -348,10 +348,10 @@ NUMBER HMMProblemAGK::GradientDescent() {
 	// Main fit
 	//
     if( this->p->single_skill!=2 ) { // if not "force single skill"
-        int first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
-        int iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
-        NPAR* iter_qual_skill = Calloc(NPAR, nK);
-        NPAR* iter_qual_group = Calloc(NPAR, nG);
+        NCAT first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
+        NCAT iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
+        NCAT* iter_qual_skill = Calloc(NCAT, (size_t)nK);
+        NCAT* iter_qual_group = Calloc(NCAT, (size_t)nG);
         int skip_k = 0, skip_g = 0;
         
         int i = 0; // count runs
@@ -456,8 +456,8 @@ void HMMProblemAGK::readModelBody(FILE *fid, struct param *param, NDAT *line_no,
         s = string( col );
         (*line_no)++;
         if(overwrite) {
-            this->p->map_group_fwd->insert(pair<string,NCAT>(s, this->p->map_group_fwd->size()));
-            this->p->map_group_bwd->insert(pair<NCAT,string>(this->p->map_group_bwd->size(), s));
+            this->p->map_group_fwd->insert(pair<string,NCAT>(s, (NCAT)this->p->map_group_fwd->size()));
+            this->p->map_group_bwd->insert(pair<NCAT,string>((NCAT)this->p->map_group_bwd->size(), s));
             idxg = g;
         } else {
             it = this->p->map_group_fwd->find(s);
@@ -495,8 +495,8 @@ void HMMProblemAGK::readModelBody(FILE *fid, struct param *param, NDAT *line_no,
         s = string( col );
         (*line_no)++;
         if(overwrite) {
-            this->p->map_skill_fwd->insert(pair<string,NCAT>(s, this->p->map_skill_fwd->size()));
-            this->p->map_skill_bwd->insert(pair<NCAT,string>(this->p->map_skill_bwd->size(), s));
+            this->p->map_skill_fwd->insert(pair<string,NCAT>(s, (NCAT)this->p->map_skill_fwd->size()));
+            this->p->map_skill_bwd->insert(pair<NCAT,string>((NCAT)this->p->map_skill_bwd->size(), s));
             idxk = k;
         } else {
             it = this->p->map_skill_fwd->find(s);

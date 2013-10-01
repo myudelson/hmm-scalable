@@ -22,11 +22,11 @@ int compareNumberRev (const void * a, const void * b) {
 }
 
 void qsortNumber(NUMBER* ar, NPAR size) {
-	qsort (ar, size, sizeof(NUMBER), compareNumber);
+	qsort (ar, (size_t)size, sizeof(NUMBER), compareNumber);
 }
 
 void qsortNumberRev(NUMBER* ar, NPAR size) {
-	qsort (ar, size, sizeof(NUMBER), compareNumberRev);
+	qsort (ar, (size_t)size, sizeof(NUMBER), compareNumberRev);
 }
 
 int compareNcat (const void * a, const void * b) {
@@ -36,15 +36,15 @@ int compareNcat (const void * a, const void * b) {
 
 
 void qsortNcat(NCAT* ar, NPAR size) {
-	qsort (ar, size, sizeof(NCAT), compareNcat);
+	qsort (ar, (size_t)size, sizeof(NCAT), compareNcat);
 }
 
 // refer to http://arxiv.org/abs/1101.6081 for source
 void projsimplex(NUMBER* y, NPAR size) {
     
 	bool bget = false;
-	NUMBER *s = init1D<NUMBER>(size);
-	cpy1D<NUMBER>(y, s, size);
+	NUMBER *s = init1D<NUMBER>((NDAT)size);
+	cpy1D<NUMBER>(y, s, (NDAT)size);
 	
 	qsortNumberRev(s, size);
 	NUMBER tmpsum = 0, tmax = 0;
@@ -89,8 +89,8 @@ bool issimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 
 void projectsimplex(NUMBER* ar, NPAR size) {
 	NPAR i, num_at_hi, num_at_lo; // number of elements at lower,upper boundary
-	NPAR *at_hi = Calloc(NPAR, size);
-	NPAR *at_lo = Calloc(NPAR, size);
+	NPAR *at_hi = Calloc(NPAR, (size_t)size);
+	NPAR *at_lo = Calloc(NPAR, (size_t)size);
 	NUMBER err, lambda;
 	while( !issimplex(ar, size)) {
         lambda = 0;
@@ -121,8 +121,8 @@ void projectsimplex(NUMBER* ar, NPAR size) {
 
 void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 	NPAR i, num_at_hi, num_at_lo; // number of elements at lower,upper boundary
-	NPAR *at_hi = Calloc(NPAR, size);
-	NPAR *at_lo = Calloc(NPAR, size);
+	NPAR *at_hi = Calloc(NPAR, (size_t)size);
+	NPAR *at_lo = Calloc(NPAR, (size_t)size);
 	NUMBER err, lambda;
 	while( !issimplexbounded(ar, lb, ub, size)) {
         lambda = 0;
@@ -403,16 +403,16 @@ void set_param_defaults(struct param *param) {
     param->binaryinput           = 0;
 	param->C                     = 0;
     param->initfile[0]           = 0; // 1st bit is 0 - no file
-	param->init_params			 = Calloc(NUMBER, 5);
+	param->init_params			 = Calloc(NUMBER, (size_t)5);
 	param->init_params[0] = 0.5; // PI[0]
 	param->init_params[1] = 1.0; // p(not forget)
 	param->init_params[2] = 0.4; // p(learn)
 	param->init_params[3] = 0.8; // p(not slip)
 	param->init_params[4] = 0.2; // p(guess)
-	param->param_lo				= Calloc(NUMBER, 10);
+	param->param_lo				= Calloc(NUMBER, (size_t)10);
 	param->param_lo[0] = 0; param->param_lo[1] = 0; param->param_lo[2] = 1; param->param_lo[3] = 0; param->param_lo[4] = 0;
 	param->param_lo[5] = 0; param->param_lo[6] = 0; param->param_lo[7] = 0; param->param_lo[8] = 0; param->param_lo[9] = 0;
-	param->param_hi				= Calloc(NUMBER, 10);
+	param->param_hi				= Calloc(NUMBER, (size_t)10);
 	param->param_hi[0] = 1.0; param->param_hi[1] = 1.0; param->param_hi[2] = 1.0; param->param_hi[3] = 0.0; param->param_hi[4] = 1.0;
 	param->param_hi[5] = 1.0; param->param_hi[6] = 1.0; param->param_hi[7] = 0.3; param->param_hi[8] = 0.3; param->param_hi[9] = 1.0;
 	param->cv_folds = 0;
@@ -435,7 +435,7 @@ void set_param_defaults(struct param *param) {
 	param->nI = 0;
 	// data
     param->all_data = NULL;
-    param->nSeq = NULL;
+    param->nSeq = 0;
 	param->k_numg = NULL;
 	param->k_data = NULL;
 	param->k_g_data = NULL;
@@ -589,7 +589,7 @@ void RecycleFitData(NCAT xndat, struct data** x_data, struct param *param) {
 		}
 		if( x_data[x][0].xi != NULL ) {
 			for(t=0;t<x_data[x][0].n; t++)
-				free2D<NUMBER>(x_data[x][0].xi[t],  param->nS); // only free data here
+				free2D<NUMBER>(x_data[x][0].xi[t],  (NDAT)param->nS); // only free data here
 			x_data[x][0].xi = NULL;
 		}
 	}

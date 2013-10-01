@@ -38,10 +38,10 @@ using namespace std;
 
 #define COLUMNS 4
 
-typedef signed char NPAR;    // number of observations or states, now 128 max, KEEP THIS SIGNED, we need -1 code for NULL
-typedef int NCAT;            // number of categories, groups or skills, now 32K max; LEAVE THIS UNSIGNED, we need -1 code for NULL
-typedef unsigned int NDAT;   // number of data rows, now 4 bill max
-typedef double NUMBER;       // numeric float format
+typedef signed char NPAR; // number of observations or states, now 128 max, KEEP THIS SIGNED, we need -1 code for NULL
+typedef signed int NCAT;  // number of categories, groups or skills, now 32K max; LEAVE THIS UNSIGNED, we need -1 code for NULL
+typedef signed int NDAT;  // number of data rows, now 4 bill max
+typedef double NUMBER;    // numeric float format
 
 //enum SOLVER { // deprecating
 //    BKT_NULL     =  0, // 0 unassigned
@@ -231,24 +231,24 @@ template<typename T> void toZero3D(T*** ar, NDAT size1, NDAT size2, NDAT size3) 
 
 
 template<typename T> T* init1D(NDAT size) {
-    T* ar = Calloc(T, size);
+    T* ar = Calloc(T, (size_t)size);
     return ar;
 }
 
 template<typename T> T** init2D(NDAT size1, NDAT size2) {
-	T** ar = (T **)Calloc(T *,size1);
+	T** ar = (T **)Calloc(T *, (size_t)size1);
 	for(NDAT i=0; i<size1; i++)
-		ar[i] = (T *)Calloc(T, size2);
+		ar[i] = (T *)Calloc(T, (size_t)size2);
 	return ar;
 }
 
 template<typename T> T*** init3D(NDAT size1, NDAT size2, NDAT size3) {
 	NDAT i,j;
-	T*** ar = Calloc(T **, size1);
+	T*** ar = Calloc(T **, (size_t)size1);
 	for(i=0; i<size1; i++) {
-		ar[i] = Calloc(T*, size2);
+		ar[i] = Calloc(T*, (size_t)size2);
 		for(j=0; j<size2; j++)
-			ar[i][j] = Calloc(T, size3);
+			ar[i][j] = Calloc(T, (size_t)size3);
 	}
 	return ar;
 }
@@ -279,16 +279,16 @@ template<typename T> void free3D(T*** ar, NDAT size1, NDAT size2) {
 //void free2DNCat(NCAT **ar, NCAT size1);
 
 template<typename T> void cpy1D(T* source, T* target, NDAT size) {
-    memcpy( target, source, sizeof(T)*size );
+    memcpy( target, source, sizeof(T)*(size_t)size );
 }
 template<typename T> void cpy2D(T** source, T** target, NDAT size1, NDAT size2) {
 	for(NDAT i=0; i<size1; i++)
-		memcpy( target[i], source[i], sizeof(T)*size2 );
+		memcpy( target[i], source[i], sizeof(T)*(size_t)size2 );
 }
 template<typename T> void cpy3D(T*** source, T*** target, NDAT size1, NDAT size2, NDAT size3) {
 	for(NDAT t=0; t<size1; t++)
         for(NDAT i=0; i<size2; i++)
-            memcpy( target[t][i], source[t][i], sizeof(T)*size3 );
+            memcpy( target[t][i], source[t][i], sizeof(T)*(size_t)size3 );
 }
 
 //void cpy1DNumber(NUMBER* source, NUMBER* target, NDAT size);
@@ -297,9 +297,9 @@ template<typename T> void cpy3D(T*** source, T*** target, NDAT size1, NDAT size2
 
 template<typename T> void swap1D(T* source, T* target, NDAT size) {
     T* buffer = init1D<T>(size); // init1<NUMBER>(size);
-	memcpy( target, buffer, sizeof(T)*size );
-	memcpy( source, target, sizeof(T)*size );
-	memcpy( buffer, source, sizeof(T)*size );
+	memcpy( target, buffer, sizeof(T)*(size_t)size );
+	memcpy( source, target, sizeof(T)*(size_t)size );
+	memcpy( buffer, source, sizeof(T)*(size_t)size );
     free(buffer);
 }
 template<typename T> void swap2D(T** source, T** target, NDAT size1, NDAT size2) {
