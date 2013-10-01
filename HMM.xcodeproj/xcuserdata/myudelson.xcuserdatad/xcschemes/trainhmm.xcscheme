@@ -212,7 +212,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "cli10_uskts_multi.bin"
+            argument = "uopx_hmm116208_uskts_multi.bin"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

@@ -756,7 +756,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
 	NPAR i, j, m, o, isTarget;
     NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
 	NUMBER *local_pred = init1D<NUMBER>(nO); // local prediction
-	char local_know[1024];
+//	char local_know[1024];
 	NUMBER pLe[nS];// p(L|evidence);
 	NUMBER pLe_denom; // p(L|evidence) denominator
 	NUMBER ***group_skill_map = init3D<NUMBER>(nG, nK, nS);
@@ -777,7 +777,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
 	
     // temporary experimental: IRT-like for fitting pLo in liblinear
     /*
-    FILE *fid0 = fopen("irt.txt","w");
+    FILE *fid0 = fopen("uopx_irt.txt","w");
     NPAR **group_skill_mask = init2D<NPAR>(nG, nK);
     NCAT g_k;
     data *dat;
@@ -887,20 +887,19 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
                         group_skill_map[g][k][j] += pLe[i] * getA(dt,i,j);
             }// ibservations
         }
-        local_know[0] = 0;
-        for(int l=0; l<n; l++)
-            sprintf(local_know,"%s%s%10.8f",local_know,(strlen(local_know)>0)?",":"",group_skill_map[g][ ar[l] ][0]);
+//        local_know[0] = 0;
+//        for(int l=0; l<n; l++)
+//            sprintf(local_know,"%s%s%10.8f",local_know,(strlen(local_know)>0)?"\t":"",group_skill_map[g][ ar[l] ][0]);
         if(this->p->predictions>0 && output_this) { // write predictions file if it was opened
             for(m=0; m<nO; m++)
                 fprintf(fid,"%10.8f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
             if(this->p->predictions==2) { // if we print out states of KC's as welll
-                for(int l=0; l<n; l++) // all KC here
-                    for(NPAR i=0; i<nS; i++) // all states
-                        fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][i], (l==(n-1) && i==(nS-1))?"\n":"\t"); // if end of all states: end line
+                for(int l=0; l<n; l++) { // all KC here
+//                    for(NPAR i=0; i<nS; i++) // all states
+//                        fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][i], (l==(n-1) && i==(nS-1))?"\n":"\t"); // if end of all states: end line
+                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line
+                }
             }
-            //            fprintf(fid,"%s\n",local_know);
-            //            for(i=0; i<nS; i++)
-            //                fprintf(fid,"%10.8f%s",local_know[i],(i<(nS-1))?"\t":"\n");
         }
         if(!only_unlabeled) { // this means we were not predicting in the first place
             rmse += pow(isTarget-local_pred[this->p->metrics_target_obs],2);

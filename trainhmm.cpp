@@ -18,24 +18,34 @@
 #include "HMMProblemPiABGK.h"
 ////#include "HMMProblemKT.h"
 #include "StripedArray.h"
+//#include "SparseArray2D.h"
 using namespace std;
 
 struct param param;
-static char *line = NULL;
-static int max_line_length;
-
 void exit_with_help();
 void parse_arguments(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name);
 bool read_and_structure_data(const char *filename);
-//bool read_predict_data(const char *filename);
-static char* readline(FILE *fid);
 void cross_validate(NUMBER* metrics, const char *filename);
 void cross_validate_item(NUMBER* metrics, const char *filename);
 void cross_validate_nstrat(NUMBER* metrics, const char *filename);
 
 int main (int argc, char ** argv) {
     
-//    int c = (unsigned long)ceil((double)34600/20000);
+//    int array[] = {1, 2, 3, 4, 5, 6, 7};
+//    NDAT lim = 0;
+//    int v = 5;
+//    NDAT ix = binsearch(&v, array, 7, sizeof(int)); // SparseArray2D<int>::binsearch(&v, array, 7, &lim);
+//    fprintf(stderr,"%d found=%d, lim=%d\n",v, ix, lim);
+//    
+//    v = 8;
+//    ix = SparseArray2D<int>::binsearch(&v, array, 7, &lim);
+//    fprintf(stderr,"%d found=%d, lim=%d\n",v, ix, lim);
+//    
+//    v = 0;
+//    ix = SparseArray2D<int>::binsearch(&v, array, 7, &lim);
+//    fprintf(stderr,"%d found=%d, lim=%d\n",v, ix, lim);
+//    
+////    int c = (unsigned long)ceil((double)34600/20000);
     
 	clock_t tm0 = clock();
 	char input_file[1024];
@@ -99,7 +109,7 @@ int main (int argc, char ** argv) {
 
     if(param.cv_folds==0) { // not cross-validation
         // create problem
-        HMMProblem *hmm;
+        HMMProblem *hmm = NULL;
         switch(param.structure)
         {
             case STRUCTURE_SKILL: // Conjugate Gradient Descent
@@ -237,23 +247,6 @@ void exit_with_help() {
            "     fit. E.g., '-B 0,0,0 (default) blocks none, '-B 1,0,0' blocks PI (priors).\n"
 		   );
 	exit(1);
-}
-
-static char* readline(FILE *fid) {
-	int length = 0;
-	
-	if(fgets(line,max_line_length,fid) == NULL)
-		return NULL;
-	
-	while(strrchr(line,'\n') == NULL)
-	{
-		max_line_length *= 2;
-		line = (char *) realloc(line,max_line_length);
-		length = (int) strlen(line);
-		if(fgets(line+length,max_line_length-length,fid) == NULL)
-			break;
-	}
-	return line;
 }
 
 void parse_arguments(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name) {
@@ -838,7 +831,7 @@ void cross_validate(NUMBER* metrics, const char *filename) {
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
-    FILE *fid; // file for storing prediction should that be necessary
+    FILE *fid = NULL; // file for storing prediction should that be necessary
     if(param.predictions>0) {  // if we have to write the predictions file
         fid = fopen(filename,"w");
         if(fid == NULL)
@@ -1018,7 +1011,7 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
     NCAT g,k;
     NCAT I; // item
     NDAT t;
-    FILE *fid; // file for storing prediction should that be necessary
+    FILE *fid = NULL; // file for storing prediction should that be necessary
     if(param.predictions>0) {  // if we have to write the predictions file
         fid = fopen(filename,"w");
         if(fid == NULL)
@@ -1194,7 +1187,7 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
     NCAT g,k;
     NCAT I; // item
     NDAT t;
-    FILE *fid; // file for storing prediction should that be necessary
+    FILE *fid = NULL; // file for storing prediction should that be necessary
     if(param.predictions>0) {  // if we have to write the predictions file
         fid = fopen(filename,"w");
         if(fid == NULL)

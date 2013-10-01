@@ -117,11 +117,15 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "a89_kts_train_multi.bin"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "uopx_hmm116_uskts_multi.bin"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "2008_CT_model_a89shrt.txt"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx_model_uskts_multi.txt"
@@ -138,6 +142,14 @@
          <CommandLineArgument
             argument = "data/a89_kts_train.txt"
             isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "uopx_CLI_model_shrt.txt"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "uopx_CLI_predict_116.txt"
+            isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
       <AdditionalOptions>

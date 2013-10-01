@@ -22,6 +22,9 @@
 		715BD81E17AD968000C9B6D3 /* HMMProblemPiAGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBD201DE15F8DD3F003E97BF /* HMMProblemPiAGK.cpp */; };
 		715BD81F17AD968500C9B6D3 /* HMMProblemPiABGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71F5217C173D4583008EE451 /* HMMProblemPiABGK.cpp */; };
 		715BD82017AD969300C9B6D3 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D234AA17540AE7006985EB /* utils.cpp */; };
+		715EE5B217F0BF290079E646 /* SparseArray2D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 715EE5B017F0BF290079E646 /* SparseArray2D.cpp */; };
+		715EE5B317F0BF290079E646 /* SparseArray2D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 715EE5B017F0BF290079E646 /* SparseArray2D.cpp */; };
+		715EE5B417F0BF290079E646 /* SparseArray2D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 715EE5B017F0BF290079E646 /* SparseArray2D.cpp */; };
 		71602EF717BAC1630001BF2B /* InputUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D4587D17972C0400356EE4 /* InputUtil.cpp */; };
 		7186A257178A19A70031A73E /* predicthmm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB32E9C7157F9D2E002F3FFB /* predicthmm.cpp */; };
 		71A39CB2179DB05F000F9610 /* StripedArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB5D902A158B7C8C007ECB58 /* StripedArray.cpp */; };
@@ -49,6 +52,8 @@
 
 /* Begin PBXFileReference section */
 		08FB7796FE84155DC02AAC07 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		715EE5B017F0BF290079E646 /* SparseArray2D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SparseArray2D.cpp; sourceTree = "<group>"; };
+		715EE5B117F0BF290079E646 /* SparseArray2D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SparseArray2D.h; sourceTree = "<group>"; };
 		71602EF817BBA3270001BF2B /* readme.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = readme.txt; sourceTree = "<group>"; };
 		717B9D4F1791E1C9004FBE94 /* HMMProblemAGKi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMMProblemAGKi.h; sourceTree = "<group>"; };
 		717B9D501791E1D3004FBE94 /* HMMProblemAGKi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HMMProblemAGKi.cpp; sourceTree = "<group>"; };
@@ -169,6 +174,8 @@
 				EB7C55331552F7EC005DC9FC /* utilsNew.cpp */,
 				71D234A917540AE0006985EB /* utils.h */,
 				71D234AA17540AE7006985EB /* utils.cpp */,
+				715EE5B117F0BF290079E646 /* SparseArray2D.h */,
+				715EE5B017F0BF290079E646 /* SparseArray2D.cpp */,
 				EB5D9029158B7C8C007ECB58 /* StripedArray.h */,
 				EB5D902A158B7C8C007ECB58 /* StripedArray.cpp */,
 				EB994B9316288D0D0098D5ED /* FitBit.h */,
@@ -284,6 +291,7 @@
 				71A39CB3179DB063000F9610 /* utils.cpp in Sources */,
 				71A39CB4179DB071000F9610 /* inputconvert.cpp in Sources */,
 				71A39CB5179DB074000F9610 /* InputUtil.cpp in Sources */,
+				715EE5B417F0BF290079E646 /* SparseArray2D.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,6 +310,7 @@
 				715BD81F17AD968500C9B6D3 /* HMMProblemPiABGK.cpp in Sources */,
 				715BD82017AD969300C9B6D3 /* utils.cpp in Sources */,
 				71602EF717BAC1630001BF2B /* InputUtil.cpp in Sources */,
+				715EE5B317F0BF290079E646 /* SparseArray2D.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -320,6 +329,7 @@
 				715BD81617AD95DD00C9B6D3 /* HMMProblemPiABGK.cpp in Sources */,
 				715BD81717AD95E100C9B6D3 /* trainhmm.cpp in Sources */,
 				715BD81817AD95EF00C9B6D3 /* utils.cpp in Sources */,
+				715EE5B217F0BF290079E646 /* SparseArray2D.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

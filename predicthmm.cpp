@@ -55,7 +55,7 @@ int main (int argc, char ** argv) {
 	char predict_file[1024];
 	
 	parse_arguments(argc, argv, input_file, model_file, predict_file);
-    param.predictions = 1; // force it on, since we, you know, predictinng :)
+    param.predictions = 2; // force it on, since we, you know, predictinng :)
 
     // read data
     if(param.binaryinput==0) {
