@@ -29,6 +29,49 @@ void cross_validate(NUMBER* metrics, const char *filename);
 void cross_validate_item(NUMBER* metrics, const char *filename);
 void cross_validate_nstrat(NUMBER* metrics, const char *filename);
 
+// temporary experimental: IRT-like for fitting pLo in liblinear
+void write_pLo_irt() {
+    FILE *fid0 = fopen("uopx_irt.txt","w");
+    NPAR **group_skill_mask = init2D<NPAR>(param.nG, param.nK);
+    NCAT g_k, g, k;
+    NDAT t;
+    data *dat;
+    NPAR obs;
+    for(g=0; g<param.nG; g++) {
+        g_k = param.g_numk[g];
+        for(k=0; k<g_k; k++) {
+            dat = param.g_k_data[g][ k ];
+            t = dat->ix[0];
+            NCAT *ar;
+            int n = 0;
+            if(param.multiskill==0) {
+                k = param.dat_skill->get(t);
+                ar = &k;
+                n = 1;
+            } else {
+                ar = &param.dat_multiskill->get(t)[1];
+                n = param.dat_multiskill->get(t)[0];
+                qsortNcat(ar, (NPAR)n);
+            }
+            obs = param.dat_obs->get( dat->ix[0] );
+            NPAR count = 0; // 557687 -> 499117
+            for(int l=0; l<n; l++)
+                count += group_skill_mask[g][ ar[l] ] == 1;
+                if(count<n) {
+                    fprintf(fid0,"%s %u:1", ((1-obs)==0)?"-1":"+1",dat->g+1);
+                    
+                    for(int l=0; l<n; l++) {
+                        fprintf(fid0, " %u:1",ar[l]+param.nG+1);
+                        group_skill_mask[g][ ar[l] ] = 1;
+                    }
+                    fprintf(fid0,"\n");
+                }
+        }
+    }
+    fclose(fid0);
+    free2D(group_skill_mask, param.nG);
+}
+
 int main (int argc, char ** argv) {
     
 //    int array[] = {1, 2, 3, 4, 5, 6, 7};
@@ -60,7 +103,9 @@ int main (int argc, char ** argv) {
         printf("trainhmm starting...\n");
 	if( ! read_and_structure_data(input_file) )
         return 0;
-    printf("data read\n");
+    
+//    write_pLo_irt();
+    
     
 //    //
 //    // read item mean % correct

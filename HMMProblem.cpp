@@ -20,6 +20,29 @@
 
 //#include "liblinear/linear.h"
 
+//// temporary experimental vvvvv
+//static int max_line_length;
+//static char * line;
+//
+//static char* readline(FILE *fid) {
+//	int length = 0;
+//	
+//	if(fgets(line,max_line_length,fid) == NULL)
+//		return NULL;
+//	
+//	while(strrchr(line,'\n') == NULL && strrchr(line,'\r') == NULL) // do take both line endings
+//	{
+//		max_line_length *= 2;
+//		line = (char *) realloc(line, (size_t)max_line_length);
+//		length = (int) strlen(line);
+//		if(fgets(line+length,max_line_length-length,fid) == NULL)
+//			break;
+//	}
+//	return line;
+//}
+//// temporary experimental ^^^^^
+
+
 HMMProblem::HMMProblem() {
 }
 
@@ -774,49 +797,6 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
     }
 	// initialize
     struct data* dt = new data;
-	
-    // temporary experimental: IRT-like for fitting pLo in liblinear
-    /*
-    FILE *fid0 = fopen("uopx_irt.txt","w");
-    NPAR **group_skill_mask = init2D<NPAR>(nG, nK);
-    NCAT g_k;
-    data *dat;
-    NPAR obs;
-	for(g=0; g<nG; g++) {
-        g_k = this->p->g_numk[g];
-		for(k=0; k<g_k; k++) {
-            dat = this->p->g_k_data[g][ k ];
-            t = dat->ix[0];
-            NCAT *ar;
-            int n = 0;
-            if(this->p->multiskill==0) {
-                k = dat_skill->get(t);
-                ar = &k;
-                n = 1;
-            } else {
-                ar = &dat_multiskill->get(t)[1];
-                n = dat_multiskill->get(t)[0];
-                qsortNcat(ar, n);
-            }
-            obs = this->p->dat_obs->get( dat->ix[0] );
-            NPAR count = 0; // 557687 -> 499117
-            for(int l=0; l<n; l++)
-                count += group_skill_mask[g][ ar[l] ] == 1;
-            if(count<n) {
-                fprintf(fid0,"%s %u:1", ((1-obs)==0)?"-1":"+1",dat->g+1);
-                
-                for(int l=0; l<n; l++) {
-                    fprintf(fid0, " %u:1",ar[l]+nG+1);
-                    group_skill_mask[g][ ar[l] ] = 1;
-                }
-                fprintf(fid0,"\n");
-            }
-        }
-    }
-    fclose(fid0);
-    free2D(group_skill_mask, nG);
-    // ^^
-    */
     
 	for(g=0; g<nG; g++)
 		for(k=0; k<nK; k++) {
@@ -825,6 +805,85 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
 			for(i=0; i<nO; i++)
                 group_skill_map[g][k][i] =  getPI(dt,i);//PI[i];
 		}
+    
+    // temporary experimental vvvvv
+    // handle the bump-up for skills
+    /*
+    FILE *buf = fopen("uopx_bumpup.txt","r");
+    if( buf == NULL) {
+        fprintf(stderr,"Could not read bump-up file uopx_bumpup.txt.\n");
+    } else {
+        char *col;
+        string s;
+        NDAT count = 0, updates = 0;
+        std::map<std::string,NCAT>::iterator it;
+        max_line_length = 1024;
+        line = (char *)malloc((size_t)max_line_length);
+        NUMBER epsilon = 0.001;
+        while( readline(buf)!=NULL ) {
+            // student
+            col = strtok(line,"\t\n\r");
+            if(col == NULL) {
+                fprintf(stderr,"Error reading student from bump-up file on line %d. Stopping the read.\n",count+1);
+                break;
+            }
+            s = string(col);
+            it = this->p->map_group_fwd->find(s);
+            if( it==this->p->map_group_fwd->end() ) { // not found
+//                fprintf(stderr,"Student '%s' not found in bump-up file on line %d. Continuong the read.\n",s.c_str(),count+1);
+                count++;
+                continue;
+            } else {
+                g = it->second;
+            }
+            // skill
+            col = strtok(NULL,"\t\n\r");
+            if(col == NULL) {
+                fprintf(stderr,"Error reading skill from bump-up file on line %d. Stopping the read.\n",count+1);
+                break;
+            }
+            s = string(col);
+            it = this->p->map_skill_fwd->find(s);
+            if( it==this->p->map_skill_fwd->end() ) { // not found
+//                fprintf(stderr,"Skill '%s' not found in bump-up file on line %d. Continuong the read.\n",s.c_str(), count+1);
+                count++;
+                continue;
+            } else {
+                k = it->second;
+            }
+            // old pInit
+            col = strtok(NULL,"\t\n\r");
+            if(col == NULL) {
+                fprintf(stderr,"Error reading aporiori pInit from bump-up file on line %d. Stopping the read.\n",count+1);
+                break;
+            }
+            NUMBER old_pi1 = (NUMBER)(atof( col ));
+            // only for shipped parameters
+            bool apriori_diff = false;
+            if( fabs(group_skill_map[g][k][0] - old_pi1)>epsilon ) {
+                fprintf(stderr,"Actual apriori PI[0] (%f) and bump-up apriori PI[0] (%f) for skill '%s' are different.\n",group_skill_map[g][k][0],old_pi1,s.c_str());
+                apriori_diff = true;
+            }
+            // new pInit
+            col = strtok(NULL,"\t\n\r");
+            if(col == NULL) {
+                fprintf(stderr,"Error reading aposteriori pInit from bump-up file on line %d. Stopping the read.\n",count+1);
+                break;
+            }
+            NUMBER new_pi1 = (NUMBER)(atof( col ));
+            if( !(group_skill_map[g][k][0] > new_pi1 && apriori_diff) ) {
+                group_skill_map[g][k][0] = new_pi1;
+                for(i=1; i<nO; i++)
+                    group_skill_map[g][k][i] =  (NUMBER)(1-new_pi1)/(nO-1); // the rest are uniformly split
+            }
+            count++;
+            updates++;
+        }
+        fclose(buf);
+        free(line);
+    }
+    */
+    // temporary experimental ^^^^^
 	
 	for(t=0; t<this->p->N; t++) {
         output_this = true;
@@ -861,6 +920,15 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
         }
         // produce prediction and copy to result
         producePCorrect(group_skill_map, local_pred, ar, n, dt);
+        if(this->p->predictions>0 && output_this) { // write predictions file if it was opened
+            for(m=0; m<nO; m++)
+                fprintf(fid,"%10.8f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+            if(this->p->predictions==2) { // if we print out states of KC's as welll
+                for(int l=0; l<n; l++) { // all KC here
+                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line
+                }
+            }
+        }
         // update pL
         for(int l=0; l<n; l++) {
             //for(m=0; m<nO; m++) local_pred_inner[m] = 0.0;
@@ -886,20 +954,6 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
                     for(i=0; i<nS; i++)
                         group_skill_map[g][k][j] += pLe[i] * getA(dt,i,j);
             }// ibservations
-        }
-//        local_know[0] = 0;
-//        for(int l=0; l<n; l++)
-//            sprintf(local_know,"%s%s%10.8f",local_know,(strlen(local_know)>0)?"\t":"",group_skill_map[g][ ar[l] ][0]);
-        if(this->p->predictions>0 && output_this) { // write predictions file if it was opened
-            for(m=0; m<nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
-            if(this->p->predictions==2) { // if we print out states of KC's as welll
-                for(int l=0; l<n; l++) { // all KC here
-//                    for(NPAR i=0; i<nS; i++) // all states
-//                        fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][i], (l==(n-1) && i==(nS-1))?"\n":"\t"); // if end of all states: end line
-                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line
-                }
-            }
         }
         if(!only_unlabeled) { // this means we were not predicting in the first place
             rmse += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
@@ -2044,7 +2098,7 @@ void HMMProblem::readModel(const char *filename, bool overwrite) {
 	free(line);
 }
 
-void HMMProblem::readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite) {
+void HMMProblem::readModelBody(FILE *fid, struct param* param, NDAT *line_no,  bool overwrite) {
 	NPAR i,j,m;
 	NCAT k = 0, idxk = 0;
     std::map<std::string,NCAT>::iterator it;
@@ -2076,9 +2130,10 @@ void HMMProblem::readModelBody(FILE *fid, struct param* param, NDAT *line_no, bo
         } else {
             it = this->p->map_skill_fwd->find(s);
             if( it==this->p->map_skill_fwd->end() ) { // not found, skip 3 lines and continue
-                fscanf(fid,"%*s\n");
-                fscanf(fid,"%*s\n");
-                fscanf(fid,"%*s\n");
+                fscanf(fid, "%*[^\n]\n", NULL);
+                fscanf(fid, "%*[^\n]\n", NULL);
+                fscanf(fid, "%*[^\n]\n", NULL);
+                (*line_no)+=3;
                 continue; // skip this iteration
             }
             else

@@ -24,18 +24,18 @@ For each skill BKT has four parameters.
 4) pGuess or pG - is a probability that unknown skill will be applied correctly.
 
 There is no forgetting in BKT and it's pForget or pF is set to zero. In
-addition, there is a pKnown or pL parameters, which is a running estimate of the
+addition, there is a pKnown or pL parameter, which is a running estimate of the
 skill mastery.
 
 For more details on BKT refer to [1]. [2], among other things, discusses how
-a gradient-based fitting of HMM can be implemented. [3, 4] cover additional
-some of the consideration for implementation.
+a gradient-based fitting of HMM can be implemented. [3, 4] covers additional
+topics relevant for the implementation.
 
 = Compilation =
 
 If you are on a Linux or Mac OS X system, simply use 'make all' command. If you
 are on Windows, you might need to install cygwin and have g++/gcc compiler
-available.
+available and be sure to install 'make' command with cygwin.
 
 = Data =
 
@@ -47,16 +47,32 @@ you prefer. Skill is a string label. Multiple skill labels should be delimited
 by a character of your choice (do not use tab). An example of few lines of input
 is below.
 
--- data file --
+-- input file --
 2   student_001 unit1-secion1-problem5-step1  addition~multiplication
 1   student_001 unit1-secion1-problem5-step2  multiplication
 1   student_001 unit1-secion1-problem5-step3  addition
--- data file --
+-- input file --
 
 If there is no skill label for a particular row of data use '.' (dot) symbol.
 In test data, the utility will use known observations for training and will
 produce predictions for missing observations that should have '.' (dot) instead
 of observation code (1, 2, or otherwise).
+
+Output data consists of model predictions for each row of the input file.
+Depending on the output option (see parameter specifications below), you can
+print out probability distribution for student's response (probability of
+correct and probability of incorrect, if the observation node is binarye) and,
+additionally, print out probability distributions of the mastery states for all
+skills specified for the data point. The probability values are tab separated.
+See example of a simple output file below.
+
+-- output file --
+0.73    0.27
+0.88    0.12
+0.94    0.06
+0.99    0.01
+-- output file --
+
 
 = Training BKT models =
 

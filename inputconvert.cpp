@@ -86,7 +86,6 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 int main (int argc, char ** argv) {
     
 	clock_t tm0 = clock();
-    printf("starting conversion...\n");
 	char input_file[1024];
 	char output_file[1024];
     
@@ -95,14 +94,11 @@ int main (int argc, char ** argv) {
     
     if( source_format=='t') {
         InputUtil::readTxt(input_file, &param);
-        printf("reading done\n");
         InputUtil::toBin(&param, output_file);
-        printf("writing done\n");
     }
     else {
         InputUtil::readBin(input_file, &param);
     }
-    printf("before destroy\n");
 	// free data
 	destroy_input_data(&param);
 	

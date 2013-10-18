@@ -247,7 +247,7 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
     //
     
 	//
-	// Main fit 
+	// Main fit
 	//
     // this is a loop of repeated fits of PI(user), and A,B(skill)
     NPAR* mask_skill = Calloc(NPAR, (size_t)nK);

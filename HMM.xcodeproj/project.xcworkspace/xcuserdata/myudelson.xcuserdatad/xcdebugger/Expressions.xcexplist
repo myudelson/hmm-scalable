@@ -452,6 +452,9 @@
             <PersistentString
                value = "classof(hmm)">
             </PersistentString>
+            <PersistentString
+               value = "param_model">
+            </PersistentString>
          </PersistentStrings>
       </ContextState>
       <ContextState
@@ -582,12 +585,7 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
-         contextName = "HMMProblem::readModelBody(__sFILE*, unsigned int*):HMMProblem.cpp">
-         <PersistentStrings>
-            <PersistentString
-               value = "this-&gt;p-&gt;map_group_fwd">
-            </PersistentString>
-         </PersistentStrings>
+         contextName = "readSolverInfo(__sFILE*, param*, int*):utils.cpp">
       </ContextState>
       <ContextState
          contextName = "StripedArray&lt;signed char&gt;::addStripe():StripedArray.h">
@@ -603,6 +601,14 @@
             </PersistentString>
             <PersistentString
                value = "this-&gt;size_last_stripe">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::readModelBody(__sFILE*, unsigned int*):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;p-&gt;map_group_fwd">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -763,13 +769,13 @@
          contextName = "HMMProblem::readModelBody(__sFILE*, param*, unsigned int*, bool):HMMProblem.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "col">
+               value = "(*line_no)">
             </PersistentString>
             <PersistentString
                value = "this-&gt;p-&gt;map_skill_fwd-&gt;size()">
             </PersistentString>
             <PersistentString
-               value = "(*line_no)">
+               value = "col">
             </PersistentString>
             <PersistentString
                value = "this-&gt;p-&gt;map_skill_bwd-&gt;size()">
@@ -789,6 +795,26 @@
       </ContextState>
       <ContextState
          contextName = "double** init2D&lt;double&gt;(unsigned int, unsigned int):utils.h">
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::readModelBody(__sFILE*, param*, int*, bool):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;A[idxk][i][j]">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;p">
+            </PersistentString>
+            <PersistentString
+               value = "string(col)">
+            </PersistentString>
+            <PersistentString
+               value = "s">
+            </PersistentString>
+            <PersistentString
+               value = "this-&gt;PI[idxk][i]">
+            </PersistentString>
+         </PersistentStrings>
       </ContextState>
       <ContextState
          contextName = "FitBit::init(FIT_BIT_SLOT):FitBit.cpp">
@@ -935,13 +961,22 @@
                value = "pLe[0]">
             </PersistentString>
             <PersistentString
-               value = " group_skill_map[g][k][0]">
+               value = "pLe[1]">
             </PersistentString>
             <PersistentString
                value = " group_skill_map[g][k][1]">
             </PersistentString>
             <PersistentString
-               value = "pLe[1]">
+               value = "pLe[i]">
+            </PersistentString>
+            <PersistentString
+               value = "getA(dt,i,j)">
+            </PersistentString>
+            <PersistentString
+               value = " group_skill_map[g][k][0]">
+            </PersistentString>
+            <PersistentString
+               value = "updates">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -1016,7 +1051,7 @@
          contextName = "HMMProblem::readModel(char const*, bool):HMMProblem.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "this-&gt;p-&gt;initfile">
+               value = "this-&gt;p">
             </PersistentString>
          </PersistentStrings>
       </ContextState>

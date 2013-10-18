@@ -96,7 +96,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "uopx_modelALL_uskts_pLoLLstart.txt"
+            argument = "uopx_model208_uskts_pLoLLstart.txt"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
@@ -161,11 +161,11 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-B"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "1,0,0"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "a89_kts_train.txt"
@@ -212,7 +212,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "uopx_hmm116208_uskts_multi.bin"
+            argument = "uopx_hmm208_uskts_multi.bin"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -244,7 +244,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "model.txt"
+            argument = "uopx_model208_uskts_multi1.2.txt"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

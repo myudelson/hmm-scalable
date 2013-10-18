@@ -72,11 +72,11 @@ int main (int argc, char ** argv) {
 	int max_line_length = 1024;
 	char *line = Malloc(char,(size_t)max_line_length);
 	NDAT line_no = 0;
-    struct param initparam;
-    set_param_defaults(&initparam);
+    struct param param_model;
+    set_param_defaults(&param_model);
     bool overwrite = false;
 //    if(overwrite)
-        readSolverInfo(fid, &param, &line_no);
+        readSolverInfo(fid, &param_model, &line_no);
 //    else
 //        readSolverInfo(fid, &initparam, &line_no);
     
@@ -108,7 +108,7 @@ int main (int argc, char ** argv) {
             //                break;
     }
     // read model body
-    hmm->readModelBody(fid, &param, &line_no, overwrite);
+    hmm->readModelBody(fid, &param_model, &line_no, overwrite);
   	fclose(fid);
 	free(line);
 //    hmm->readModel(model_file, false /* read and upload but not overwrite*/);
