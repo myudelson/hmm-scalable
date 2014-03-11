@@ -31,7 +31,7 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename);
 
 // temporary experimental: IRT-like for fitting pLo in liblinear
 void write_pLo_irt() {
-    FILE *fid0 = fopen("uopx_irt.txt","w");
+    FILE *fid0 = fopen("uopx12_irt.txt","w");
     NPAR **group_skill_mask = init2D<NPAR>(param.nG, param.nK);
     NCAT g_k, g, k;
     NDAT t;
@@ -186,8 +186,8 @@ int main (int argc, char ** argv) {
         tm = clock();
         hmm->fit();
         
-        if(param.quiet == 0)
-            printf("fitting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
+//        if(param.quiet == 0)
+        printf("fitting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
         
         // write model
         hmm->toFile(output_file);
@@ -204,7 +204,7 @@ int main (int argc, char ** argv) {
             }
             
             hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
-            if( param.metrics>0 && !param.quiet) {
+            if( param.metrics>0 /*&& !param.quiet*/) {
                 printf("trained model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]);
             }
             free(metrics);
@@ -238,15 +238,15 @@ int main (int argc, char ** argv) {
                 
                 break;
         }
-        if(!param.quiet)
-            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f) computed in %8.6f seconds\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], (NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
+//        if(!param.quiet)
+        printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f) computed in %8.6f seconds\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], (NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
         free(metrics);
     }
 	// free data
 	destroy_input_data(&param);
 	
-	if(param.quiet == 0)
-		printf("overall time running is %8.6f seconds\n",(NUMBER)(clock()-tm0)/CLOCKS_PER_SEC);
+//	if(param.quiet == 0)
+    printf("overall time running is %8.6f seconds\n",(NUMBER)(clock()-tm0)/CLOCKS_PER_SEC);
     return 0;
 }
 

@@ -120,7 +120,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "uopx_hmm208_uskts_multi.bin"
+            argument = "uopx12_hmm208_uskts_multi.bin"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -145,6 +145,10 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx_CLI_model_shrt208.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "uopx12_usktsCLI_model_shrt.txt"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -153,6 +157,10 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx_CLI_predict_208.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "uopx_predictP.txt"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

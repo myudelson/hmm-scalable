@@ -88,6 +88,10 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "monet208/monet208_usktsCLI_model_shrt.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "0.5,1.0,0.4,0.8,0.2"
             isEnabled = "NO">
          </CommandLineArgument>
@@ -132,7 +136,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "0.03125"
+            argument = "1"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
@@ -145,11 +149,11 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-b"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "1"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-d"
@@ -161,11 +165,11 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-B"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "1,0,0"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "a89_kts_train.txt"
@@ -212,8 +216,20 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "uopx_hmm208_uskts_multi.bin"
+            argument = "monet208/monet208_hmm_uskts.bin"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "&quot;allen park shs-48101.txt&quot;"
             isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "cli10_hmm_uskts_multi.bin"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "cli10_hmm_usktsSuburb_muti.bin"
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx_model_uskts_multi1.2.txt"
@@ -244,8 +260,20 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "uopx_model208_uskts_multi1.2.txt"
+            argument = "model.txt"
             isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "monet208/monet208_uskts_model_multi1.2CLI.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "cli10_model_uskts_1.2.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "cli10_model_usktsSuburb_1.2.txt"
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "predictT.txt"

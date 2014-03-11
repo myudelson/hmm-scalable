@@ -21,26 +21,26 @@
 //#include "liblinear/linear.h"
 
 //// temporary experimental vvvvv
-//static int max_line_length;
-//static char * line;
-//
-//static char* readline(FILE *fid) {
-//	int length = 0;
-//	
-//	if(fgets(line,max_line_length,fid) == NULL)
-//		return NULL;
-//	
-//	while(strrchr(line,'\n') == NULL && strrchr(line,'\r') == NULL) // do take both line endings
-//	{
-//		max_line_length *= 2;
-//		line = (char *) realloc(line, (size_t)max_line_length);
-//		length = (int) strlen(line);
-//		if(fgets(line+length,max_line_length-length,fid) == NULL)
-//			break;
-//	}
-//	return line;
-//}
-//// temporary experimental ^^^^^
+static int max_line_length;
+static char * line;
+
+static char* readline(FILE *fid) {
+	int length = 0;
+	
+	if(fgets(line,max_line_length,fid) == NULL)
+		return NULL;
+	
+	while(strrchr(line,'\n') == NULL && strrchr(line,'\r') == NULL) // do take both line endings
+	{
+		max_line_length *= 2;
+		line = (char *) realloc(line, (size_t)max_line_length);
+		length = (int) strlen(line);
+		if(fgets(line+length,max_line_length-length,fid) == NULL)
+			break;
+	}
+	return line;
+}
+// temporary experimental ^^^^^
 
 
 HMMProblem::HMMProblem() {
@@ -574,7 +574,7 @@ void HMMProblem::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
     //        o = dt->obs[t];
     o = this->p->dat_obs->get( dt->ix[t] );
     for(i=0; i<this->p->nS; i++) {
-        fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,getPI(dt,i)); // PENALTY
+        fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,getPI(dt,i), 0.5); // PENALTY differentiated
     }
     //    }
 }
@@ -589,7 +589,7 @@ void HMMProblem::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
         o = this->p->dat_obs->get( dt->ix[t] );
         for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++)
             for(j=0; j<this->p->nS; j++)
-                fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,getA(dt,i,j)); // PENALTY
+                fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,getA(dt,i,j), 0.5); // PENALTY differentiated
     }
     //    }
 }
@@ -605,7 +605,7 @@ void HMMProblem::setGradB (struct data* dt, FitBit *fb, NPAR kg_flag){
         if(o<0) // if no observation -- skip
             continue;
         for(i=0; i<this->p->nS /*&& fitparam[2]>0*/; i++)
-            fb->gradB[i][o] -= dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o)) + L2penalty(this->p,getB(dt,i,o)); // PENALTY
+            fb->gradB[i][o] -= dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o)) + L2penalty(this->p,getB(dt,i,o), 0.0); // PENALTY differentiated
     }
     //    }
 }
@@ -773,6 +773,32 @@ void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, 
     free(local_pred_inner);
 }
 
+void HMMProblem::producePCorrect(boost::numeric::ublas::mapped_matrix<NUMBER*> *group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt) {
+    NPAR m, i;
+    NCAT k;
+    NUMBER *local_pred_inner = init1D<NUMBER>(this->p->nO);
+    for(m=0; m<this->p->nO; m++) local_pred[m] = 0.0;
+    for(int l=0; l<nks; l++) {
+        for(m=0; m<this->p->nO; m++) local_pred_inner[m] = 0.0;
+        k = ks[l];
+        dt->k = k;
+        NUMBER *pLbit = (*group_skill_map)(dt->g,k);
+        for(m=0; m<this->p->nO; m++)
+            for(i=0; i<this->p->nS; i++)
+                local_pred_inner[m] += pLbit[i] * getB(dt,i,m);//B[i][m];
+        for(m=0; m<this->p->nO; m++)
+            local_pred[m] += local_pred_inner[m]; // local_pred[m] = 0.0;
+    }
+    if(nks>1) {
+        for(m=0; m<this->p->nO; m++)
+            local_pred[m] /= nks;
+        //            projectsimplex(local_pred, this->p->nO);
+    }
+    free(local_pred_inner);
+}
+
+
+
 void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled) {
 	NDAT t;
 	NCAT g, k;
@@ -782,7 +808,10 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
 //	char local_know[1024];
 	NUMBER pLe[nS];// p(L|evidence);
 	NUMBER pLe_denom; // p(L|evidence) denominator
-	NUMBER ***group_skill_map = init3D<NUMBER>(nG, nK, nS);
+//	NUMBER ***group_skill_map = init3D<NUMBER>(nG, nK, nS);
+    ::boost::numeric::ublas::mapped_matrix<NUMBER*> gsm (nG, nK);
+//    fprintf(stderr,"declared GSM\n");
+    
     NUMBER ll = 0.0, rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NUMBER p;
     FILE *fid; // file for storing prediction should that be necessary
@@ -795,21 +824,34 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
             exit(1);
         }
     }
+//    NUMBER *z = gsm(0,0); // returns NULL for non-existen data
+    
 	// initialize
     struct data* dt = new data;
-    
-	for(g=0; g<nG; g++)
-		for(k=0; k<nK; k++) {
-            dt->k = k;
-            dt->g = g;
-			for(i=0; i<nO; i++)
-                group_skill_map[g][k][i] =  getPI(dt,i);//PI[i];
-		}
+    NDAT count = 0;
+    // moved to the the algorithm, filling-in on demand
+//    for(k=0; k<nK; k++) { // all k
+//        for(g=0; g<this->p->k_numg[k]; g++) // only relevant g
+//        {
+//            dt->k = k;
+//            dt->g = this->p->k_g_data[k][g]->g;
+//            NUMBER * pLbit = Calloc(NUMBER, nS);
+//			for(i=0; i<nS; i++) {
+////                group_skill_map[g][k][i] = getPI(dt,i);//PI[i];
+//                pLbit[i] = getPI(dt,i);//PI[i];
+//                count++;
+//            }
+//            gsm(dt->g,k) = pLbit;
+////            if(count % 10000 == 0) {
+////                fprintf(stderr,"inited %u pLo's\n",count);
+////            }
+//		}
+//    }
     
     // temporary experimental vvvvv
     // handle the bump-up for skills
     /*
-    FILE *buf = fopen("uopx_bumpup.txt","r");
+    FILE *buf = fopen("uopx12_bumpup.txt","r");
     if( buf == NULL) {
         fprintf(stderr,"Could not read bump-up file uopx_bumpup.txt.\n");
     } else {
@@ -860,8 +902,26 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
             NUMBER old_pi1 = (NUMBER)(atof( col ));
             // only for shipped parameters
             bool apriori_diff = false;
-            if( fabs(group_skill_map[g][k][0] - old_pi1)>epsilon ) {
-                fprintf(stderr,"Actual apriori PI[0] (%f) and bump-up apriori PI[0] (%f) for skill '%s' are different.\n",group_skill_map[g][k][0],old_pi1,s.c_str());
+            
+            // check if {g,k}'s were initialized
+            NUMBER *z = gsm(g,k);
+            if( z==NULL ) { // pLo/pL not set
+                dt->k = k;
+                NUMBER * pLbit = Calloc(NUMBER, nS);
+                for(i=0; i<nS; i++) {
+                    //                    group_skill_map[g][k][i] = getPI(dt,i);//PI[i];
+                    pLbit[i] = getPI(dt,i);
+                    count++;
+                }
+                gsm(g,k) = pLbit;
+            }// pLo/pL not set
+            
+//            if( fabs(group_skill_map[g][k][0] - old_pi1)>epsilon ) {
+//                fprintf(stderr,"Actual apriori PI[0] (%f) and bump-up apriori PI[0] (%f) for skill '%s' are different.\n",group_skill_map[g][k][0],old_pi1,s.c_str());
+//                apriori_diff = true;
+//            }
+            if( fabs(gsm(g,k)[0] - old_pi1)>epsilon ) {
+                fprintf(stderr,"Actual apriori PI[0] (%f) and bump-up apriori PI[0] (%f) for skill '%s' are different.\n",gsm(g,k)[0],old_pi1,s.c_str());
                 apriori_diff = true;
             }
             // new pInit
@@ -871,10 +931,15 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
                 break;
             }
             NUMBER new_pi1 = (NUMBER)(atof( col ));
-            if( !(group_skill_map[g][k][0] > new_pi1 && apriori_diff) ) {
-                group_skill_map[g][k][0] = new_pi1;
+//            if( !(group_skill_map[g][k][0] > new_pi1 && apriori_diff) ) {
+//                group_skill_map[g][k][0] = new_pi1;
+//                for(i=1; i<nO; i++)
+//                    group_skill_map[g][k][i] =  (NUMBER)(1-new_pi1)/(nO-1); // the rest are uniformly split
+//            }
+            if( !(gsm(g,k)[0] > new_pi1 && apriori_diff) ) {
+                gsm(g,k)[0] = new_pi1;
                 for(i=1; i<nO; i++)
-                    group_skill_map[g][k][i] =  (NUMBER)(1-new_pi1)/(nO-1); // the rest are uniformly split
+                    gsm(g,k)[i] =  (NUMBER)(1-new_pi1)/(nO-1); // the rest are uniformly split
             }
             count++;
             updates++;
@@ -918,42 +983,61 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
                     fprintf(fid,"%10.8f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
             continue;
         }
-        // produce prediction and copy to result
-        producePCorrect(group_skill_map, local_pred, ar, n, dt);
-        if(this->p->predictions>0 && output_this) { // write predictions file if it was opened
-            for(m=0; m<nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
-            if(this->p->predictions==2) { // if we print out states of KC's as welll
-                for(int l=0; l<n; l++) { // all KC here
-                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line
+        // check if {g,k}'s were initialized
+        for(int l=0; l<n; l++) {
+            k = ar[l];
+            NUMBER *z = gsm(g,k); // boost
+            if( z==NULL ) { // pLo/pL not set // boost
+                dt->k = k;
+                NUMBER * pLbit = Calloc(NUMBER, nS);
+                for(i=0; i<nS; i++) {
+//                    group_skill_map[g][k][i] = getPI(dt,i);//PI[i]; // nonboost
+                    pLbit[i] = getPI(dt,i);
+                    count++;
                 }
-            }
-        }
+                gsm(g,k) = pLbit; // boost
+            }// pLo/pL not set// boost
+        }// for all skills at this transaction
+        
+        // produce prediction and copy to result
+//        producePCorrect(group_skill_map, local_pred, ar, n, dt); // non boost
+        producePCorrect(&gsm, local_pred, ar, n, dt); // boost
         // update pL
         for(int l=0; l<n; l++) {
             //for(m=0; m<nO; m++) local_pred_inner[m] = 0.0;
             k = ar[l];
             dt->k = k;
-            
+            NUMBER* pLbit = gsm(g,k); // boost
             if(o>-1) { // known observations
                 // update p(L)
                 pLe_denom = 0.0;
                 // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
-                for(i=0; i<nS; i++) pLe_denom += group_skill_map[g][k][i] * getB(dt,i,o);
-                for(i=0; i<nS; i++) pLe[i] = group_skill_map[g][k][i] * getB(dt,i,o) / safe0num(pLe_denom);
+                for(i=0; i<nS; i++) pLe_denom += /*group_skill_map[g][k][i]*/pLbit[i]/**/ * getB(dt,i,o); // boostify
+                for(i=0; i<nS; i++) pLe[i] = /*group_skill_map[g][k][i]*/pLbit[i]/**/ * getB(dt,i,o) / safe0num(pLe_denom); // boostify
                 // 2. L = (pLe'*A)';
-                for(i=0; i<nS; i++) group_skill_map[g][k][i] = 0.0;
+                for(i=0; i<nS; i++) /*group_skill_map[g][k][i]*/pLbit[i]/**/= 0.0; // boostify
                 for(j=0; j<nS; j++)
                     for(i=0; i<nS; i++)
-                        group_skill_map[g][k][j] += pLe[i] * getA(dt,i,j);//A[i][j];
+                        /*group_skill_map[g][k][j]*/pLbit[j]/**/ += pLe[i] * getA(dt,i,j);//A[i][j]; // boostify
             } else { // unknown observation
                 // 2. L = (pL'*A)';
-                for(i=0; i<nS; i++) pLe[i] = group_skill_map[g][k][i]; // copy first;
-                for(i=0; i<nS; i++) group_skill_map[g][k][i] = 0.0; // erase old value
+                for(i=0; i<nS; i++) pLe[i] = /*group_skill_map[g][k][i]*/pLbit[i]/**/; // copy first; // boostify
+                for(i=0; i<nS; i++) /*group_skill_map[g][k][i]*/pLbit[i]/**/ = 0.0; // erase old value // boostify
                 for(j=0; j<nS; j++)
                     for(i=0; i<nS; i++)
-                        group_skill_map[g][k][j] += pLe[i] * getA(dt,i,j);
+                        /*group_skill_map[g][k][j]*/pLbit[j]/**/ += pLe[i] * getA(dt,i,j);
             }// ibservations
+        }
+        // write prediction out (after update)  
+        if(this->p->predictions>0 && output_this) { // write predictions file if it was opened
+            for(m=0; m<nO; m++)
+                fprintf(fid,"%10.8f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+            if(this->p->predictions==2) { // if we print out states of KC's as welll
+                for(int l=0; l<n; l++) { // all KC here
+//                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line
+                    fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line // boost
+                }
+            }
         }
         if(!only_unlabeled) { // this means we were not predicting in the first place
             rmse += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
@@ -980,11 +1064,19 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, StripedArray<NPA
         this->p->kc_acc[k]  =      this->p->kc_acc[k]  / this->p->kc_counts[k];
     }
     
-    
     delete(dt);
 	free(local_pred);
-    //	free(local_pred_inner);
-    free3D<NUMBER>(group_skill_map, nG, nK);
+//	free(local_pred_inner);
+//    free3D<NUMBER>(group_skill_map, nG, nK); // non boost
+    
+    gsm.clear();
+    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator1 it1_t;
+    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator2 it2_t;
+    for (it1_t itgsm1 = gsm.begin1(); itgsm1 != gsm.end1(); itgsm1++)
+        for (it2_t itgsm2 = itgsm1.begin(); itgsm2 != itgsm1.end(); itgsm2++)
+            free( gsm( itgsm2.index1(), itgsm2.index2() ) );
+
+    
     if(!only_unlabeled) { // this means we were not predicting in the first place
         rmse = sqrt(rmse / this->p->N);
         rmse_no_null = sqrt(rmse_no_null / (this->p->N - this->p->N_null));

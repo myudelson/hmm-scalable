@@ -313,14 +313,14 @@ void HMMProblemPiABGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( this->PI[ dt->k ][i] * (1-this->PI[ dt->k ][i]) );
-			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PI[ dt->k ][i]); // ;
+			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PI[ dt->k ][i], 0.5); // ;
         }
     }
     else  // by group
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( this->PIg[ dt->g ][i] * (1-this->PIg[ dt->g ][i]) );
-			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PIg[ dt->g ][i]); // ;
+			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PIg[ dt->g ][i], 0.5); // ;
         }
 }
 
@@ -337,7 +337,7 @@ void HMMProblemPiABGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
                 for(j=0; j<this->p->nS; j++) {
                     combined = getA(dt,i,j);
                     deriv_logit = 1 / safe0num( this->A[ dt->k ][i][j] * (1-this->A[ dt->k ][i][j]) );
-                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,this->A[ dt->k ][i][j]); // PENALTY
+                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,this->A[ dt->k ][i][j], 0.5); // PENALTY
                 }
         }
     }
@@ -349,7 +349,7 @@ void HMMProblemPiABGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
                 for(j=0; j<this->p->nS; j++) {
                     combined = getA(dt,i,j);
                     deriv_logit = 1 / safe0num( this->Ag[ dt->g ][i][j] * (1-this->Ag[ dt->g ][i][j]) );
-                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,this->Ag[ dt->g ][i][j]); // PENALTY
+                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,this->Ag[ dt->g ][i][j], 0.5); // PENALTY
                 }
         }
 }
@@ -368,7 +368,7 @@ void HMMProblemPiABGK::setGradB (struct data* dt, FitBit *fb, NPAR kg_flag){
             for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++) {
                 combined = getB(dt,i,o);
                 deriv_logit = 1 / safe0num( this->B[ dt->k ][i][o] * (1-this->B[ dt->k ][i][o]) );
-                fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o)) + L2penalty(this->p,this->B[ dt->k ][i][o]); // PENALTY
+                fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o)) + L2penalty(this->p,this->B[ dt->k ][i][o], 0.0); // PENALTY
             }
         }
     }
@@ -381,7 +381,7 @@ void HMMProblemPiABGK::setGradB (struct data* dt, FitBit *fb, NPAR kg_flag){
             for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++) {
                 combined = getB(dt,i,o);
                 deriv_logit = 1 / safe0num( this->Bg[ dt->g ][i][o] * (1-this->Bg[ dt->g ][i][o]) );
-                fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o)) + L2penalty(this->p,this->Bg[ dt->g ][i][o]); // PENALTY
+                fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o)) + L2penalty(this->p,this->Bg[ dt->g ][i][o], 0.0); // PENALTY
             }
         }
 }

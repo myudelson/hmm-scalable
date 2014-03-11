@@ -149,7 +149,7 @@ void HMMProblemAGKi::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
                     combined = getA(dt,i,j);
                     deriv_logit = (1 + logit(this->Ag[ dt->g ][i][j])/*ADDITION*/) / safe0num( this->A[ dt->k ][i][j] * (1-this->A[ dt->k ][i][j]) );
                     fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] /
-                        safe0num(dt->p_O_param) + L2penalty(this->p,this->A[ dt->k ][i][j]); // PENALTY
+                        safe0num(dt->p_O_param) + L2penalty(this->p,this->A[ dt->k ][i][j], 0.5); // PENALTY
                 }
         }
     }
@@ -162,7 +162,7 @@ void HMMProblemAGKi::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
                     combined = getA(dt,i,j);
                     deriv_logit = ( 1 + logit(this->A[ dt->k ][i][j])/*ADDITION*/) / safe0num( this->Ag[ dt->g ][i][j] * (1-this->Ag[ dt->g ][i][j]) );
                     fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i]
-                        / safe0num(dt->p_O_param) + L2penalty(this->p,this->Ag[ dt->g ][i][j]); // PENALTY
+                        / safe0num(dt->p_O_param) + L2penalty(this->p,this->Ag[ dt->g ][i][j], 0.5); // PENALTY
                 }
         }
 }

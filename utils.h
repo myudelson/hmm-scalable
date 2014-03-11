@@ -370,6 +370,7 @@ void write_time_interval_data(param* param, const char *file_name);
 // penalties
 //NUMBER penalty_offset = 0.5;
 NUMBER L2penalty(param* param, NUMBER w);
+NUMBER L2penalty(param* param, NUMBER w, NUMBER penalty_offset);
 
 
 #endif

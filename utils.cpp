@@ -454,7 +454,7 @@ void set_param_defaults(struct param *param) {
     // coord descend
     param->first_iteration_qualify = 0;
     param->iterations_to_qualify   = 2;
-    // temporary experimenta;
+    // temporary experimental;
     param->block_fitting[0] = 0; // no bocking fitting for PI
     param->block_fitting[1] = 0; // no bocking fitting for A
     param->block_fitting[2] = 0; // no bocking fitting for B
@@ -683,8 +683,15 @@ void write_time_interval_data(param* param, const char *file_name) {
 }
 
 // penalties
+
+// uniform
 NUMBER L2penalty(param* param, NUMBER w) {
     NUMBER penalty_offset = 0.5;
-    return (param->C > 0)? 0.5*param->C*fabs((w-penalty_offset)) : 0;
+    return (param->C != 0)? 0.5*param->C*fabs((w-penalty_offset)) : 0;
+}
+
+// pre-specified
+NUMBER L2penalty(param* param, NUMBER w, NUMBER penalty_offset) {
+    return (param->C != 0)? 0.5*param->C*fabs((w-penalty_offset)) : 0;
 }
 
