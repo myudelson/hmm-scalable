@@ -1,12 +1,14 @@
-//
-//  HMMProblemPiGKPloGK.cpp
-//  HMM
-//
-//  Created by Mikhail Yudelson on 8/31/12.
-//
-//
+/*
+ *  HMMProblemPiGKww.h
+ *  HMM
+ *  ww  - version with weighling of student and skill components (both global)
+ *
+ *  Created by Mikhail Yudelson on 11/3/14.
+ *  Copyright 2014 __MyCompanyName__. All rights reserved.
+ *
+ */
 
-#include "HMMProblemPiGK.h"
+#include "HMMProblemPiGKww.h"
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,140 +18,39 @@
 #include <math.h>
 #include <map>
 
-HMMProblemPiGK::HMMProblemPiGK(struct param *param) {
-    for(NPAR i=0; i<3; i++) this->sizes[i] = param->nK;
-//    this->sizes = {param->nK, param->nK, param->nK};
-    this->n_params = param->nK * 4 + param->nG;
+HMMProblemPiGKww::HMMProblemPiGKww(struct param *param) : HMMProblemPiGK(param) {
     init(param);
 }
 
-void HMMProblemPiGK::init(struct param *param) {
-	this->p = param;
-    NPAR nS = this->p->nS, nO = this->p->nO; //NCAT nK = this->p->nK, nG = this->p->nG;
-	this->non01constraints = true;
-    this->null_obs_ratio = Calloc(NUMBER, (size_t)this->p->nO);
-    this->neg_log_lik = 0;
-    this->null_skill_obs = 0;
-    this->null_skill_obs_prob = 0;
-    
-    NUMBER *a_PI, ** a_A, ** a_B;
-    init3Params(a_PI, a_A, a_B, nS, nO);
-    
-    //
-    // setup params
-    //
-	NPAR i, j, idx, offset;
-	NUMBER sumPI = 0;
-	NUMBER sumA[this->p->nS];
-	NUMBER sumB[this->p->nS];
-	for(i=0; i<this->p->nS; i++) {
-		sumA[i] = 0;
-		sumB[i] = 0;
-	}
-	// populate PI
-	for(i=0; i<((this->p->nS)-1); i++) {
-		a_PI[i] = this->p->init_params[i];
-		sumPI  += this->p->init_params[i];
-	}
-	a_PI[this->p->nS-1] = 1 - sumPI;
-	// populate A
-	offset = this->p->nS-1;
-	for(i=0; i<this->p->nS; i++) {
-		for(j=0; j<((this->p->nS)-1); j++) {
-			idx = offset + i*((this->p->nS)-1) + j;
-			a_A[i][j] = this->p->init_params[idx];
-			sumA[i]  += this->p->init_params[idx];
-		}
-		a_A[i][((this->p->nS)-1)]  = 1 - sumA[i];
-	}
-	// polupale B
-	offset = (this->p->nS-1) + this->p->nS*(this->p->nS-1);
-	for(i=0; i<this->p->nS; i++) {
-		for(j=0; j<((this->p->nO)-1); j++) {
-			idx = offset + i*((this->p->nO)-1) + j;
-			a_B[i][j] = this->p->init_params[idx];
-			sumB[i] += this->p->init_params[idx];
-		}
-		a_B[i][((this->p->nO)-1)]  = 1 - sumB[i];
-	}
-    
-    // mass produce PI's/PIg's, A's, B's
-	if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-		this->PI  = init2D<NUMBER>(this->p->nK, this->p->nS);
-		this->A   = init3D<NUMBER>(this->p->nK, this->p->nS, this->p->nS);
-		this->B   = init3D<NUMBER>(this->p->nK, this->p->nS, this->p->nO);
-		this->PIg = init2D<NUMBER>(this->p->nG, this->p->nS);
-        NCAT x;
-		for(x=0; x<this->p->nK; x++) {
-			cpy1D<NUMBER>(a_PI, this->PI[x], this->p->nS);
-			cpy2D<NUMBER>(a_A,  this->A[x],  this->p->nS, this->p->nS);
-			cpy2D<NUMBER>(a_B,  this->B[x],  this->p->nS, this->p->nO);
-        }
-        // PIg start with same params
-		for(x=0; x<this->p->nG; x++)
-			cpy1D<NUMBER>(a_PI, this->PIg[x], this->p->nS);
-	} else {
-		fprintf(stderr,"params do not meet constraints.\n");
-		exit(1);
-	}
-    // destroy setup params
-	free(a_PI);
-	free2D<NUMBER>(a_A, this->p->nS);
-	free2D<NUMBER>(a_B, this->p->nS);
-	
-    // if needs be -- read in init params from a file
-    if(param->initfile[0]!=0)
-        this->readModel(param->initfile, false /* read and upload but not overwrite*/);
-    
-    // populate boundaries
-	// populate lb*/ub*
-	// *PI
-    init3Params(this->lbPI, this->lbA, this->lbB, nS, nO);
-    init3Params(this->ubPI, this->ubA, this->ubB, nS, nO);
-	for(i=0; i<this->p->nS; i++) {
-		lbPI[i] = this->p->param_lo[i];
-		ubPI[i] = this->p->param_hi[i];
-	}
-	// *A
-	offset = this->p->nS;
-	for(i=0; i<this->p->nS; i++)
-		for(j=0; j<this->p->nS; j++) {
-			idx = offset + i*this->p->nS + j;
-			lbA[i][j] = this->p->param_lo[idx];
-			ubA[i][j] = this->p->param_hi[idx];
-		}
-	// *B
-	offset = this->p->nS + this->p->nS*this->p->nS;
-	for(i=0; i<this->p->nS; i++)
-		for(j=0; j<this->p->nO; j++) {
-			idx = offset + i*this->p->nS + j;
-			lbB[i][j] = this->p->param_lo[idx];
-			ubB[i][j] = this->p->param_hi[idx];
-		}
+void HMMProblemPiGKww::init(struct param *param) {
+//    HMMProblemPiGK::init(param);
+    this->ww = init1D<NUMBER>(3);
+	this->ww[0] = 1;
+	this->ww[1] = 1;
+    this->ww[2] = 0;
 }
 
-HMMProblemPiGK::~HMMProblemPiGK() {
-    destroy();
+HMMProblemPiGKww::~HMMProblemPiGKww() {
+    // no double destroy
+    if(this->ww  != NULL) free(this->ww);
 }
 
-void HMMProblemPiGK::destroy() {
-	// destroy additional model data
-	free2D<NUMBER>(this->PIg, this->p->nG);
-}// ~HMMProblemPiGK
-
-//NUMBER** HMMProblemPiGK::getPI() { // same as getPIk
+//void HMMProblemPiGKww::destroy() {
+//}// ~HMMProblemPiGKww
+//
+//NUMBER** HMMProblemPiGKww::getPI() { // same as getPIk
 //	return this->PI;
 //}
 
-NUMBER** HMMProblemPiGK::getPIk() {
-	return this->PI;
-}
-
-NUMBER** HMMProblemPiGK::getPIg() {
-	return this->PIg;
-}
-
-//NUMBER* HMMProblemPiGK::getPI(NCAT x) { // same as getPIk(x)
+//NUMBER** HMMProblemPiGKww::getPIk() {
+//	return this->PI;
+//}
+//
+//NUMBER** HMMProblemPiGKww::getPIg() {
+//	return this->PIg;
+//}
+//
+//NUMBER* HMMProblemPiGKww::getPI(NCAT x) { // same as getPIk(x)
 //	if( x > (this->p->nK-1) ) {
 //		fprintf(stderr,"While accessing PI_k, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
 //		exit(1);
@@ -157,86 +58,109 @@ NUMBER** HMMProblemPiGK::getPIg() {
 //	return this->PI[x];
 //}
 //
-//NUMBER** HMMProblemPiGK::getA(NCAT x) {
+//NUMBER** HMMProblemPiGKww::getA(NCAT x) {
 //	if( x > (this->p->nK-1) ) {
 //		fprintf(stderr,"While accessing A, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
 //		exit(1);
 //	}
 //	return this->A[x];
 //}
-//
-//NUMBER** HMMProblemPiGK::getB(NCAT x) {
+
+//NUMBER** HMMProblemPiGKww::getB(NCAT x) {
 //	if( x > (this->p->nK-1) ) {
 //		fprintf(stderr,"While accessing B, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
 //		exit(1);
 //	}
 //	return this->B[x];
 //}
+//
+//NUMBER* HMMProblemPiGKww::getPIk(NCAT x) {
+//	if( x > (this->p->nK-1) ) {
+//		fprintf(stderr,"While accessing PI_k, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
+//		exit(1);
+//	}
+//	return this->PI[x];
+//}
+//
+//NUMBER* HMMProblemPiGKww::getPIg(NCAT x) {
+//	if( x > (this->p->nG-1) ) {
+//		fprintf(stderr,"While accessing PI_g, skill index %d exceeded last index of the data %d.\n", x, this->p->nG-1);
+//		exit(1);
+//	}
+//	return this->PIg[x];
+//}
 
-NUMBER* HMMProblemPiGK::getPIk(NCAT x) {
-	if( x > (this->p->nK-1) ) {
-		fprintf(stderr,"While accessing PI_k, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
-		exit(1);
-	}
-	return this->PI[x];
-}
+NUMBER HMMProblemPiGKww::getPI(struct data* dt, NPAR i) {
+//    NUMBER p = this->PI[dt->k][i] * 2 * this->ww[0][i], q = this->PIg[dt->g][i] * 2 * this->ww[1][i];
+//    return 1/( 1 + (1-p)*(1-q)/(p*q) );
 
-NUMBER* HMMProblemPiGK::getPIg(NCAT x) {
-	if( x > (this->p->nG-1) ) {
-		fprintf(stderr,"While accessing PI_g, skill index %d exceeded last index of the data %d.\n", x, this->p->nG-1);
-		exit(1);
-	}
-	return this->PIg[x];
-}
-
-NUMBER HMMProblemPiGK::getPI(struct data* dt, NPAR i) {
-    NUMBER p = this->PI[dt->k][i], q = this->PIg[dt->g][i];
-    return 1/( 1 + (1-p)*(1-q)/(p*q) );
-
+//    NUMBER lw0 = logit(this->ww[0][i]), lw1 = logit(this->ww[1][i]);
 //    NUMBER p = this->PI[dt->k][i], q = this->PIg[dt->g][i];
-//    NUMBER item = this->p->item_complexity[ this->p->dat_item->get( dt->ix[0] ) ];
-//    NUMBER v = 1/( 1 + (1-p)*(1-q)*(1-item)/(p*q*item) );
-//    return v;
+//    return 1/( 1 + pow(1-p,lw0)*pow(1-q,lw1)/(pow(p,lw0)*pow(q,lw1)) );
     
+//    NUMBER p = this->PI[dt->k][i] * 2 * this->ww[0], q = this->PIg[dt->g][i] * 2 * this->ww[1];
+//    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+
+    NUMBER p = pow((1-this->PI[dt->k][i])/safe0num(this->PI[dt->k][i]), this->ww[0]), q = pow((1-this->PIg[dt->g][i])/safe0num(this->PIg[dt->g][i]), this->ww[1]);
+    return 1/( 1 + p*q/exp(this->ww[2]) );
 }
 
-// getters for computing alpha, beta, gamma
-NUMBER HMMProblemPiGK::getA(struct data* dt, NPAR i, NPAR j) {
-    return this->A[dt->k][i][j];
-}
+//// getters for computing alpha, beta, gamma
+//NUMBER HMMProblemPiGKww::getA(struct data* dt, NPAR i, NPAR j) {
+//    return this->A[dt->k][i][j];
+//}
+//
+//// getters for computing alpha, beta, gamma
+//NUMBER HMMProblemPiGKww::getB(struct data* dt, NPAR i, NPAR m) {
+//    // special attention for "unknonw" observations, i.e. the observation was there but we do not know what it is
+//    // in this case we simply return 1, effectively resulting in no change in \alpha or \beta vatiables
+//    if(m<0)
+//        return 1;
+//    return this->B[dt->k][i][m];
+//}
 
-// getters for computing alpha, beta, gamma
-NUMBER HMMProblemPiGK::getB(struct data* dt, NPAR i, NPAR m) {
-    // special attention for "unknonw" observations, i.e. the observation was there but we do not know what it is
-    // in this case we simply return 1, effectively resulting in no change in \alpha or \beta vatiables
-    if(m<0)
-        return 1;
-    return this->B[dt->k][i][m];
-}
-
-void HMMProblemPiGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
+void HMMProblemPiGKww::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
     if(this->p->block_fitting[0]>0) return;
     NDAT t = 0;
     NPAR i, o;
     NUMBER combined, deriv_logit;
-//    o = dt->obs[t];
+    //    o = dt->obs[t];
     o = this->p->dat_obs->get( dt->ix[t] );
     if(kg_flag == 0) { // k
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
-            deriv_logit = 1 / safe0num( this->PI[ dt->k ][i] * (1-this->PI[ dt->k ][i]) );
+            deriv_logit = this->ww[0] / safe0num( this->PI[ dt->k ][i] * ( 1 - this->PI[ dt->k ][i] ) );
 			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PI[ dt->k ][i], 0.5); // PENALTY;
         }
     }
-    else
+    else // g
         for(i=0; i<this->p->nS; i++) {
-            combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
-            deriv_logit = 1 / safe0num( this->PIg[ dt->g ][i] * (1-this->PIg[ dt->g ][i]) );
-			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PIg[ dt->g ][i], 0.5); // PENALTY;;
+            combined = getPI(dt,i);
+            deriv_logit = this->ww[1] / safe0num( this->PIg[ dt->g ][i] * ( 1 - this->PIg[ dt->g ][i] ) );
+			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PIg[ dt->g ][i], 0.5); // PENALTY;
         }
 }
 
-void HMMProblemPiGK::toFile(const char *filename) {
+void HMMProblemPiGKww::setGradWW(struct data* dt, FitBit *fb, NPAR kg_flag){
+    if(this->p->block_fitting[0]>0) return;
+    NDAT t = 0;
+    NPAR i, o;
+    NUMBER combined;//, deriv_logit;
+    //    o = dt->obs[t];
+    o = this->p->dat_obs->get( dt->ix[t] );
+    if(kg_flag < 2 || kg_flag > 2 ) { // k,g
+        fprintf(stderr,"Error! We were supposed to set gradient of student/skill balance weights");
+    }
+    else // g
+        for(i=0; i<this->p->nS; i++) {
+            combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
+            fb->gradPI[0] -= combined * (1-combined) * logit( this->PI [ dt->k ][i] ) * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
+            fb->gradPI[1] -= combined * (1-combined) * logit( this->PIg[ dt->g ][i] ) * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
+            fb->gradPI[2] -= combined * (1-combined) * 1                              * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
+        }
+}
+
+void HMMProblemPiGKww::toFile(const char *filename) {
 	FILE *fid = fopen(filename,"w");
 	if(fid == NULL) {
 		fprintf(stderr,"Can't write output model file %s\n",filename);
@@ -249,6 +173,10 @@ void HMMProblemPiGK::toFile(const char *filename) {
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
 		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
+    /*vvdiffvv*/
+	fprintf(fid,"Student and skill component ratios\t");
+	fprintf(fid,"%10.7f\t%10.7f\t%10.7f\n",this->ww[0],this->ww[1],this->ww[2]);
+    /*^^diff^^*/
 	NCAT k, g;
     NPAR i,j,m;
 	std::map<NCAT,std::string>::iterator it;
@@ -277,10 +205,10 @@ void HMMProblemPiGK::toFile(const char *filename) {
 	fclose(fid);
 }
 
-void HMMProblemPiGK::fit() {
+void HMMProblemPiGKww::fit() {
     NUMBER* loglik_rmse = init1D<NUMBER>(2);
     FitNullSkill(loglik_rmse, false /*do not need RMSE/SE*/);
-    if(this->p->structure == STRUCTURE_PIgk) {
+    if(this->p->structure == STRUCTURE_PIgkww) {
         loglik_rmse[0] += GradientDescent();
     } else {
         fprintf(stderr,"Solver specified is not supported.\n");
@@ -289,9 +217,33 @@ void HMMProblemPiGK::fit() {
     free(loglik_rmse);
 }
 
-NUMBER HMMProblemPiGK::GradientDescent() {
+void HMMProblemPiGKww::computeGradients(NCAT xndat, struct data** x_data, FitBit *fb, NPAR kg_flag){
+    fb->toZero(FBS_GRAD);
+    
+    computeAlphaAndPOParam(xndat, x_data);
+    computeBeta(xndat, x_data);
+
+	NCAT x;
+    struct data *dt;
+    
+	for(x=0; x<xndat; x++) {
+        dt = x_data[x];
+		if( dt->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
+        
+        /*vv diff vv*/
+        if(fb->PI != NULL && this->p->block_fitting[0]==0 && kg_flag<2 ) setGradPI(dt, fb, kg_flag);
+        if(fb->PI != NULL && this->p->block_fitting[0]==0 && kg_flag==2) setGradWW(dt, fb, kg_flag);
+        /*^^ diff ^^*/
+
+        if(fb->A  != NULL && this->p->block_fitting[1]==0 && kg_flag<2 ) setGradA(dt, fb, kg_flag);
+        if(fb->B  != NULL && this->p->block_fitting[2]==0 && kg_flag<2 ) setGradB(dt, fb, kg_flag);
+    }// for all sequences
+} // computeGradients()
+
+
+NUMBER HMMProblemPiGKww::GradientDescent() {
 	NCAT k, g;
-    /*NPAR nS = this->p->nS, nO = this->p->nO;*/ NCAT nK = this->p->nK, nG = this->p->nG;
+    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
     NUMBER loglik = 0;
     FitResult fr;
     FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
@@ -301,7 +253,23 @@ NUMBER HMMProblemPiGK::GradientDescent() {
         fb->init(FBS_GRADm1);
         fb->init(FBS_DIRm1);
     }
-	//
+    
+    NUMBER ** copyPI = init2D<NUMBER>((NDAT)this->sizes[0], (NDAT)nS);
+    NUMBER ** copyPIg = init2D<NUMBER>(nG, (NDAT)nS);
+    NUMBER *** copyA =  init3D<NUMBER>((NDAT)this->sizes[1], (NDAT)nS, (NDAT)nS);
+    NUMBER *** copyB =  init3D<NUMBER>((NDAT)this->sizes[2], (NDAT)nS, (NDAT)nO);
+
+    // fit bit and fir result for ww
+    FitResult frww;
+    FitBit *fbww = new FitBit(3, this->p->nO, this->p->nK, this->p->nG, this->p->tol, 0/*do not project to simplex*/);
+    fbww->init(FBS_PARm1);
+    fbww->init(FBS_GRAD);
+    if(this->p->solver==METHOD_CGD) {
+        fbww->init(FBS_GRADm1);
+        fbww->init(FBS_DIRm1);
+    }
+    
+    //
 	// fit all as 1 skill first, set group gradients to 0, and do not fit them
 	//
 	if(this->p->single_skill>0) {
@@ -310,6 +278,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
         if( !this->p->quiet )
             printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
     }
+    
 	//
 	// Main fit
 	//
@@ -320,28 +289,9 @@ NUMBER HMMProblemPiGK::GradientDescent() {
         NCAT* iter_qual_group = Calloc(NCAT, (size_t)nG);
         int skip_k = 0, skip_g = 0;
         
-//        NUMBER **cpyPI;
-////        NUMBER **cpyPIg;
-//        NUMBER ***cpyA;
-//        NUMBER ***cpyB;
-//        if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//            cpyPI  = init2D<NUMBER>(this->p->nK, this->p->nS);
-//            cpyA   = init3D<NUMBER>(this->p->nK, this->p->nS, this->p->nS);
-//            cpyB   = init3D<NUMBER>(this->p->nK, this->p->nS, this->p->nO);
-////            cpyPIg = init2D<NUMBER>(this->p->nG, this->p->nS);
-//            NCAT x;
-//            for(x=0; x<nK; x++) {
-//                cpy1D<NUMBER>(this->getPI(x), cpyPI[x], this->p->nS);
-//                cpy2D<NUMBER>(this->getA(x),  cpyA[x],  this->p->nS, this->p->nS);
-//                cpy2D<NUMBER>(this->getB(x),  cpyB[x],  this->p->nS, this->p->nO);
-//            }
-////            // PIg start with same params
-////            for(x=0; x<nG; x++)
-////                cpy1D<NUMBER>(cpyPIg[x], this->PIg[x], this->p->nS);
-//        }
-
+        
         int i = 0; // count runs
-        while(skip_k<nK || skip_g<nG) {
+        while(skip_k<nK || skip_g<nG || frww.conv==0) {
             //
             // Skills first
             //
@@ -352,6 +302,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                 struct data** x_data = this->p->k_g_data[k];
                 // link and fit
                 fb->linkPar( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k));// link skill 0 (we'll copy fit parameters to others
+                cpy1D<NUMBER>(this->PI[k],copyPI[k],nS); /*prep hide*/
                 fr = GradientDescentBit(k/*use skill x*/, xndat, x_data, 0/*skill*/, fb, false /*is1SkillForAll*/);
                 // decide on convergence
                 if(i>=first_iteration_qualify) {
@@ -369,24 +320,17 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                     else
                         iter_qual_skill[k]=0;
                 } // decide on convergence
-//                //
-//                // make copies of parameters to do gradient descend, link to copies, but grads computed from actual params
-//                //
-//                if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//                    swap1D<NUMBER>(cpyPI[k], this->getPI(k), this->p->nS);
-//                    swap2D<NUMBER>(cpyA[k],   this->getA(k), this->p->nS, this->p->nS);
-//                    swap2D<NUMBER>(cpyB[k],   this->getB(k), this->p->nS, this->p->nO);
-//                }
+                swap1D<NUMBER>(this->PI[k],copyPI[k],nS); /*hide*/
             } // for all skills
             //
             // PIg second
             //
-//            int z = 0;
             for(g=0; g<nG && skip_g<nG; g++) { // for all PI-by-user
                 if(iter_qual_group[g]==iterations_to_qualify)
                     continue;
                 NCAT xndat = this->p->g_numk[g];
                 struct data** x_data = this->p->g_k_data[g];
+                cpy1D<NUMBER>(this->PIg[g],copyPIg[g],nS); /*prep hide*/
                 // vvvvvvvvvvvvvvvvvvvvv ONLY PART THAT IS DIFFERENT FROM others
                 fb->linkPar(this->getPIg(g), NULL, NULL);
                 // ^^^^^^^^^^^^^^^^^^^^^
@@ -407,42 +351,78 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                     else
                         iter_qual_group[g]=0;
                 } // decide on convergence
-//                //
-//                // make copies of parameters to do gradient descend, link to copies, but grads computed from actual params
-//                //
-//                if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//                    swap1D<NUMBER>(this->PIg[g], cpyPIg[g], this->p->nS);
-//                }
+                swap1D<NUMBER>(this->PIg[g],copyPIg[g],nS); /*hide*/
             } // for all groups
+            
+//            // vvv temporary explorative
+//            NCAT xndat = this->p->nSeq;
+//            struct data** x_data = this->p->k_data;
+//            
+//            this->ww[0]=1; this->ww[1]=1; this->ww[2]=0;
+//            computeAlphaAndPOParam(xndat, x_data);
+//            NUMBER l1 = loglik = getSumLogPOPara(this->p->nSeq, this->p->k_data);
+//            
+//            this->ww[0]=1.01; this->ww[1]=1; this->ww[2]=0;
+//            computeAlphaAndPOParam(xndat, x_data);
+//            NUMBER l2 = loglik = getSumLogPOPara(this->p->nSeq, this->p->k_data);
+//
+//            this->ww[0]=1.05; this->ww[1]=1; this->ww[2]=0;
+//            computeAlphaAndPOParam(xndat, x_data);
+//            NUMBER l3 = loglik = getSumLogPOPara(this->p->nSeq, this->p->k_data);
+//            // ^^^ temporary explorative
+//            
+            
+            
+            //
+            // ww third
+            //
+            fbww->linkPar(this->ww, NULL, NULL);
+            NCAT xndat = this->p->nSeq;
+            struct data** x_data = this->p->k_data;
+            frww = GradientDescentBit(0/*doesn't matter here*/, xndat, x_data, 2/*WW*/, fbww, false /*is1SkillForAll*/);
             loglik = getSumLogPOPara(this->p->nSeq, this->p->k_data);
+            
+            // unhide
+            cpy2D<NUMBER>(copyPI,this->PI,nK,nS);
+            cpy2D<NUMBER>(copyPIg,this->PIg,nG,nS);
+            cpy3D<NUMBER>(copyA,this->A,nK,nS,nS);
+            cpy3D<NUMBER>(copyB,this->B,nK,nS,nS);
             i++;
         }
         // recycle qualifications
         if( iter_qual_skill != NULL ) free(iter_qual_skill);
         if( iter_qual_group != NULL) free(iter_qual_group);
-
-//        if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//            free2D<NUMBER>(cpyPI, nK);
-//            free3D<NUMBER>(cpyA,  nK, this->p->nS);
-//            free3D<NUMBER>(cpyB,  nK, this->p->nS);
-////            free2D<NUMBER>(cpyPIg, this->p->nG);
-//        }
     } // if not "force single skill
     
     delete fb;
+    delete fbww;
     // compute loglik
     loglik = getSumLogPOPara(this->p->nSeq, this->p->k_data);
     return loglik;
+
+    if(copyPI!=NULL) free2D(copyPI,(NDAT)this->sizes[0]);
+    if(copyPIg!=NULL) free2D(copyPIg,(NDAT)nG);
+    if(copyA !=NULL) free3D(copyA, (NDAT)this->sizes[1], (NDAT)nS);
+    if(copyB !=NULL) free3D(copyB, (NDAT)this->sizes[2], (NDAT)nS);
 }
 
-void HMMProblemPiGK::readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite) {
+void HMMProblemPiGKww::readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite) {
 	NPAR i,j,m;
 	NCAT k = 0, g = 0, idxk = 0, idxg = 0;
 	string s;
     std::map<std::string,NCAT>::iterator it;
     char col[2048];
-    //
+    // null skill ratios
     readNullObsRatio(fid, param, line_no);
+    // ww weights
+    fscanf(fid, "Student and skill component ratios\t");
+    this->ww[0] = 1;
+    this->ww[1] = 1;
+    this->ww[2] = 0;
+    fscanf(fid,"%lf\t",&this->ww[0] );
+    fscanf(fid,"%lf\t",&this->ww[1] );
+    fscanf(fid,"%lf\n",&this->ww[2] );
+    (*line_no)++;
     //
     // init param
     //

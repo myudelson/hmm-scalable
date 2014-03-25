@@ -12,6 +12,7 @@
 #include "HMMProblem.h"
 ////#include "HMMProblemPiG.h"
 #include "HMMProblemPiGK.h"
+#include "HMMProblemPiGKww.h"
 #include "HMMProblemAGK.h"
 //#include "HMMProblemAGKi.h"
 #include "HMMProblemPiAGK.h"
@@ -166,6 +167,9 @@ int main (int argc, char ** argv) {
                 //                break;
             case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
                 hmm = new HMMProblemPiGK(&param);
+                break;
+            case STRUCTURE_PIgkww: // Gradient Descent, pLo=f(K,G), other by K
+                hmm = new HMMProblemPiGKww(&param);
                 break;
             case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
                 hmm = new HMMProblemPiAGK(&param);
@@ -372,7 +376,8 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
                 if( param.structure != STRUCTURE_SKILL && param.structure != STRUCTURE_GROUP &&
                    param.structure != STRUCTURE_PIg   && param.structure != STRUCTURE_PIgk  &&
                    param.structure != STRUCTURE_PIAgk && param.structure != STRUCTURE_Agk &&
-                   param.structure != STRUCTURE_PIABgk && param.structure != STRUCTURE_Agki   ) {
+                   param.structure != STRUCTURE_PIABgk && param.structure != STRUCTURE_Agki &&
+                   param.structure != STRUCTURE_PIgkww) {
                     fprintf(stderr, "Model Structure specified (%d) is out of range of allowed values\n",param.structure);
 					exit_with_help();
                 }
@@ -905,6 +910,9 @@ void cross_validate(NUMBER* metrics, const char *filename) {
 //                break;
             case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
                 hmms[f] = new HMMProblemPiGK(&param);
+                break;
+            case STRUCTURE_PIgkww: // Gradient Descent, pLo=f(K,G), other by K
+                hmms[f] = new HMMProblemPiGKww(&param);
                 break;
             case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
                 hmms[f] = new HMMProblemPiAGK(&param);

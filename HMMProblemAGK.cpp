@@ -130,13 +130,6 @@ void HMMProblemAGK::init(struct param *param) {
 			lbB[i][j] = this->p->param_lo[idx];
 			ubB[i][j] = this->p->param_hi[idx];
 		}
-    
-    //	this->gradPI = NULL;
-    //	this->gradA = NULL;
-    //	this->gradB = NULL;
-//    this->fitK = NULL;
-//    this->fitG = NULL;
-//    fitK_countG = NULL;
 }
 
 HMMProblemAGK::~HMMProblemAGK() {
@@ -149,16 +142,6 @@ void HMMProblemAGK::destroy() {
         free3D<NUMBER>(this->Ag, this->p->nG, this->p->nS);
         this->Ag = NULL;
     }
-//	// destroy fitting data
-//	if ( this->gradAg != NULL) {
-//		free3D<NUMBER>(this->gradAg, this->p->nG, this->p->nS);
-//		this->gradAg = NULL;
-//	}
-    // free fit flags
-//    if(this->fitK != NULL)        free(this->fitK);
-//    if(this->fitG != NULL)        free(this->fitG);
-//    if(this->fitK_countG != NULL) free(this->fitK_countG);
-    
 }// ~HMMProblemAGK
 
 NUMBER** HMMProblemAGK::getPI() { // same as getPIk

@@ -1507,7 +1507,7 @@ NUMBER HMMProblem::BaumWelchSkill() {
 
 NUMBER HMMProblem::doLinearStep(NCAT xndat, struct data** x_data, FitBit *fb, NCAT copy) {//NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB) {
 	NPAR i,j,m;
-    NPAR nS = this->p->nS, nO = this->p->nO;
+    NPAR nS = fb->nS, nO = this->p->nO;
 	// first scale down gradients
     fb->doLog10ScaleGentle(FBS_GRAD);
     //	doLog10Scale1DGentle(fb->gradPI, fb->PI, nS);
@@ -1549,20 +1549,24 @@ NUMBER HMMProblem::doLinearStep(NCAT xndat, struct data** x_data, FitBit *fb, NC
                 for(m=0; m<nO; m++)
                     fb->B[i][m] = fb->Bcopy[i][m] - e * fb->gradB[i][m];
 		}
-		// scale
-		if( !this->hasNon01Constraints() ) {
-			if(fb->PI != NULL) projectsimplex(fb->PI, nS);
-			for(i=0; i<nS; i++) {
-				if(fb->A  != NULL) projectsimplex(fb->A[i], nS);
-				if(fb->B  != NULL) projectsimplex(fb->B[i], nS);
-			}
-		} else {
-			if(fb->PI != NULL) projectsimplexbounded(fb->PI, this->getLbPI(), this->getUbPI(), nS);
-			for(i=0; i<nS; i++) {
-				if(fb->A  != NULL) projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
-				if(fb->B  != NULL) projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
-			}
-		}
+        // project parameters to simplex if needs be
+        if(fb->projecttosimplex==1) {
+            // scale
+            if( !this->hasNon01Constraints() ) {
+                if(fb->PI != NULL) projectsimplex(fb->PI, nS);
+                for(i=0; i<nS; i++) {
+                    if(fb->A  != NULL) projectsimplex(fb->A[i], nS);
+                    if(fb->B  != NULL) projectsimplex(fb->B[i], nS);
+                }
+            } else {
+                if(fb->PI != NULL) projectsimplexbounded(fb->PI, this->getLbPI(), this->getUbPI(), nS);
+                for(i=0; i<nS; i++) {
+                    if(fb->A  != NULL) projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
+                    if(fb->B  != NULL) projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
+                }
+            }
+        }
+        
         if(copy >= 0) { // copy parameters from position 'copy' to others
             for(NCAT x=0; (fb->PI != NULL) && x<sizes[0]; x++)
                 if(x!=copy)

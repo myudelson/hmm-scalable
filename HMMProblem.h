@@ -26,12 +26,12 @@ public:
 	HMMProblem();
 	HMMProblem(struct param *param); // sizes=={nK, nK, nK} by default
     virtual ~HMMProblem();
-	virtual NUMBER** getPI();
-	virtual NUMBER*** getA();
-	virtual NUMBER*** getB();
-	virtual NUMBER* getPI(NCAT k);
-	virtual NUMBER** getA(NCAT k);
-	virtual NUMBER** getB(NCAT k);
+    NUMBER** getPI();
+	NUMBER*** getA();
+	NUMBER*** getB();
+	NUMBER* getPI(NCAT k);
+	NUMBER** getA(NCAT k);
+	NUMBER** getB(NCAT k);
 	NUMBER* getLbPI();
 	NUMBER** getLbA();
 	NUMBER** getLbB();

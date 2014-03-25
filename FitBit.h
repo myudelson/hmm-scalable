@@ -29,6 +29,8 @@ enum FIT_BIT_VAR {
 
 class FitBit {
 public:
+    NPAR nO, nS; // copies
+    NCAT nG, nK; // copies
     NUMBER *PI; // usually pointer #1
     NUMBER **A; // usually pointer
     NUMBER **B; // usually pointer
@@ -47,8 +49,10 @@ public:
     NUMBER *dirPIm1; // previous step direction #6
     NUMBER **dirAm1; // previous step direction
     NUMBER **dirBm1; // previous step direction
+    NPAR projecttosimplex; // whether projection to simplex should be done
     
     FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol);
+    FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_projecttosimplex);
     ~FitBit();
     void init(enum FIT_BIT_SLOT fbs);
     void linkPar(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B);
@@ -59,8 +63,6 @@ public:
     bool checkConvergence();
     void doLog10ScaleGentle(enum FIT_BIT_SLOT fbs);
 private:
-    NPAR nO, nS;
-    NCAT nG, nK; // copies
     NUMBER tol;
 
     void init(NUMBER* &PI, NUMBER** &A, NUMBER** &B);

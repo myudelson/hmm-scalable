@@ -64,7 +64,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "1.2"
+            argument = "10.3.1"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -105,6 +105,14 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "a89_model_irt_start.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-r"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "4,3"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
@@ -149,11 +157,11 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-b"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "1"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-d"
@@ -213,7 +221,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "a89_hmm_uskts_multi.bin"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "monet208/monet208_hmm_uskts.bin"
@@ -221,7 +229,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "&quot;allen park shs-48101.txt&quot;"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "cli10_hmm_uskts_multi.bin"
@@ -248,6 +256,10 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "a89_model_uskts_multi10.2.txt"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "uopx_predictT.txt"
             isEnabled = "NO">
          </CommandLineArgument>
@@ -261,7 +273,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "model.txt"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "monet208/monet208_uskts_model_multi1.2CLI.txt"
