@@ -77,6 +77,7 @@ enum STRUCTURE {
     STRUCTURE_GROUP   = 2,  // 2 - all by group (user)
     STRUCTURE_PIg     = 3,  // 3 - PI by group, A,B by skill
     STRUCTURE_PIgk    = 4,  // 4 - PI by skll&group, A,B by skill
+    STRUCTURE_PIgkww  = 10, // 4 - PI by skll&group with weights, A,B by skill
     STRUCTURE_PIAgk   = 5,  // 5 - PI, A by skll&group, B by skill
     STRUCTURE_Agk     = 6,  // 6 - A by skll&group, PI,B by skill
     STRUCTURE_PIABgk  = 7,  // 5 - PI, A, B by skll&group
@@ -297,23 +298,23 @@ template<typename T> void cpy3D(T*** source, T*** target, NDAT size1, NDAT size2
 
 template<typename T> void swap1D(T* source, T* target, NDAT size) {
     T* buffer = init1D<T>(size); // init1<NUMBER>(size);
-	memcpy( target, buffer, sizeof(T)*(size_t)size );
-	memcpy( source, target, sizeof(T)*(size_t)size );
-	memcpy( buffer, source, sizeof(T)*(size_t)size );
+	memcpy( buffer, target, sizeof(T)*(size_t)size ); // reversed order, destination then source
+	memcpy( target, source , sizeof(T)*(size_t)size );
+	memcpy( source, buffer, sizeof(T)*(size_t)size );
     free(buffer);
 }
 template<typename T> void swap2D(T** source, T** target, NDAT size1, NDAT size2) {
     T** buffer = init2D<T>(size1, size2);
-    cpy2D<T>(target, buffer, size1, size2);
-    cpy2D<T>(source, target, size1, size2);
-    cpy2D<T>(buffer, source, size1, size2);
+    cpy2D<T>(buffer, target, size1, size2);
+    cpy2D<T>(target, source, size1, size2);
+    cpy2D<T>(source, buffer, size1, size2);
     free2D<T>(buffer, size1);
 }
 template<typename T> void swap3D(T*** source, T*** target, NDAT size1, NDAT size2, NDAT size3) {
     T*** buffer = init3D<T>(size1, size2, size3);
-    cpy3D<T>(target, buffer, size1, size2, size3);
-    cpy3D<T>(source, target, size1, size2, size3);
-    cpy3D<T>(buffer, source, size1, size2, size3);
+    cpy3D<T>(buffer, target, size1, size2, size3);
+    cpy3D<T>(target, source, size1, size2, size3);
+    cpy3D<T>(source, buffer, size1, size2, size3);
     free3D<T>(buffer, size1, size2);
 }
 
