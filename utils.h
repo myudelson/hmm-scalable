@@ -373,6 +373,15 @@ void write_time_interval_data(param* param, const char *file_name);
 NUMBER L2penalty(param* param, NUMBER w);
 NUMBER L2penalty(param* param, NUMBER w, NUMBER penalty_offset);
 
+// for fitting larger portions first
+struct sortbit {
+    NDAT id; // true id of k or g
+    NDAT n; // number of sequences
+    NDAT ndat; // number of datapoints
+};
+
+int compareSortBitInv(const void * a, const void * b);
+
 
 #endif
 

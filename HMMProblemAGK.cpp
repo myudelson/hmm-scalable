@@ -232,12 +232,15 @@ void HMMProblemAGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
                 for(j=0; j<this->p->nS; j++) {
                     combined = getA(dt,i,j);
                     deriv_logit = 1 / safe0num( this->A[ dt->k ][i][j] * (1-this->A[ dt->k ][i][j]) );
-                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] /
-                        safe0num(dt->p_O_param) + L2penalty(this->p,this->A[ dt->k ][i][j], 0.5); // PENALTY
+                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
                 }
         }
+        // penalty
+        for(i=0; i<this->p->nS && this->p->C!=0; i++)
+            for(j=0; j<this->p->nS; j++)
+                fb->gradA[i][j] += L2penalty(this->p,this->A[ dt->k ][i][j], 0.5); // PENALTY
     }
-    else
+    else {
         for(t=1; t<dt->n; t++) {
 //            o = dt->obs[t];
             o = this->p->dat_obs->get( dt->ix[t] );
@@ -245,10 +248,14 @@ void HMMProblemAGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
                 for(j=0; j<this->p->nS; j++) {
                     combined = getA(dt,i,j);
                     deriv_logit = 1 / safe0num( this->Ag[ dt->g ][i][j] * (1-this->Ag[ dt->g ][i][j]) );
-                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i]
-                        / safe0num(dt->p_O_param) + L2penalty(this->p,this->Ag[ dt->g ][i][j], 0.5); // PENALTY
+                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
                 }
         }
+        // penalty
+        for(i=0; i<this->p->nS && this->p->C!=0; i++)
+            for(j=0; j<this->p->nS; j++)
+                fb->gradA[i][j] += L2penalty(this->p,this->Ag[ dt->g ][i][j], 0.5); // PENALTY
+    }
 }
 
 void HMMProblemAGK::toFile(const char *filename) {

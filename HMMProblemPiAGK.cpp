@@ -265,15 +265,22 @@ void HMMProblemPiAGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( this->PI[ dt->k ][i] * (1-this->PI[ dt->k ][i]) );
-			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PI[ dt->k ][i], 0.5); // ;
+			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
+        // penalty
+        for(i=0; i<this->p->nS && this->p->C!=0; i++)
+            fb->gradPI[i] += L2penalty(this->p,this->PI[dt->k][i], 0.5);
     }
-    else
+    else {
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( this->PIg[ dt->g ][i] * (1-this->PIg[ dt->g ][i]) );
-			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PIg[ dt->g ][i], 0.5); // ;
+			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
+        // penalty
+        for(i=0; i<this->p->nS && this->p->C!=0; i++)
+            fb->gradPI[i] += L2penalty(this->p,this->PIg[dt->g][i], 0.5);
+    }
 }
 
 void HMMProblemPiAGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){

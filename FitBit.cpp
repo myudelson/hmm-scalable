@@ -35,7 +35,30 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol) {
     this->projecttosimplex = 1;
 }
 
-FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_projecttosimplex) : FitBit(a_nS, a_nO, a_nK, a_nG, a_tol) {
+FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_projecttosimplex){
+    this->nS = a_nS;
+    this->nO = a_nO;
+    this->nG = a_nG;
+    this->nK = a_nK;
+    this->tol = a_tol;
+    this->PI = NULL;
+    this->A = NULL;
+    this->B = NULL;
+    this->PIm1 = NULL;
+    this->Am1 = NULL;
+    this->Bm1 = NULL;
+    this->gradPI = NULL;
+    this->gradA = NULL;
+    this->gradB = NULL;
+    this->gradPIm1 = NULL;
+    this->gradAm1 = NULL;
+    this->gradBm1 = NULL;
+    this->PIcopy = NULL;
+    this->Acopy = NULL;
+    this->Bcopy = NULL;
+    this->dirPIm1 = NULL;
+    this->dirAm1 = NULL;
+    this->dirBm1 = NULL;
     this->projecttosimplex = a_projecttosimplex;
 }
 

@@ -188,6 +188,8 @@ void HMMProblem::destroy() {
 	if(this->ubA!=NULL) free2D<NUMBER>(this->ubA, this->p->nS);
 	if(this->lbB!=NULL) free2D<NUMBER>(this->lbB, this->p->nS);
 	if(this->ubB!=NULL) free2D<NUMBER>(this->ubB, this->p->nS);
+	if(this->sortstrip_k!=NULL) free(this->sortstrip_k);
+	if(this->sortstrip_g!=NULL) free(this->sortstrip_g);
 }// ~HMMProblem
 
 bool HMMProblem::hasNon01Constraints() {
@@ -574,9 +576,11 @@ void HMMProblem::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
     //        o = dt->obs[t];
     o = this->p->dat_obs->get( dt->ix[t] );
     for(i=0; i<this->p->nS; i++) {
-        fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,getPI(dt,i), 0.5); // PENALTY differentiated
+        fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
     }
-    //    }
+    // penalty
+    for(i=0; i<this->p->nS && this->p->C!=0; i++)
+        fb->gradPI[i] += L2penalty(this->p,getPI(dt,i), 0.5);
 }
 
 void HMMProblem::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
@@ -589,15 +593,18 @@ void HMMProblem::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
         o = this->p->dat_obs->get( dt->ix[t] );
         for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++)
             for(j=0; j<this->p->nS; j++)
-                fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,getA(dt,i,j), 0.5); // PENALTY differentiated
+                fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
     }
-    //    }
+    // penalty
+    for(i=0; i<this->p->nS && this->p->C!=0; i++)
+        for(j=0; j<this->p->nS; j++)
+            fb->gradA[i][j] += L2penalty(this->p,getA(dt,i,j));
 }
 
 void HMMProblem::setGradB (struct data* dt, FitBit *fb, NPAR kg_flag){
     if(this->p->block_fitting[2]>0) return;
     NDAT t;
-    NPAR o, i;
+    NPAR o, i, m;
     //    if(kg_flag == 0) { // k THIS PARAM DOESN'T MATTER HERE
     for(t=0; t<dt->n; t++) {
         //            o = dt->obs[t];
@@ -605,9 +612,12 @@ void HMMProblem::setGradB (struct data* dt, FitBit *fb, NPAR kg_flag){
         if(o<0) // if no observation -- skip
             continue;
         for(i=0; i<this->p->nS /*&& fitparam[2]>0*/; i++)
-            fb->gradB[i][o] -= dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o)) + L2penalty(this->p,getB(dt,i,o), 0.0); // PENALTY differentiated
+            fb->gradB[i][o] -= dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o));
     }
-    //    }
+    // penalty
+    for(i=0; i<this->p->nS && this->p->C!=0; i++)
+        for(m=0; m<this->p->nO; m++)
+            fb->gradB[i][m] += L2penalty(this->p,getB(dt,i,m));
 }
 
 void HMMProblem::computeGradients(NCAT xndat, struct data** x_data, FitBit *fb, NPAR kg_flag){//,  NUMBER *a_gradPI, NUMBER** a_gradA, NUMBER **a_gradB)
@@ -2273,4 +2283,45 @@ void HMMProblem::readModelBody(FILE *fid, struct param* param, NDAT *line_no,  b
 			}
         (*line_no)++;
 	} // for all k
+}
+
+
+/*place larger skill and group sequences closer to the beginning*/
+void HMMProblem::reorderSequences(NDAT *newnK, NDAT *newnG) {
+    NDAT i;
+    NCAT k, g;
+    
+    // k, g
+    sortstrip_k = Calloc(sortbit, this->p->nK);
+    sortstrip_g = Calloc(sortbit, this->p->nG);
+    for(i=0; i<this->p->nSeq; i++) {
+        k = this->p->k_data[i]->k;
+        sortstrip_k[k].id=k;
+        sortstrip_k[k].n++;
+        sortstrip_k[k].ndat+=this->p->k_data[i]->n;
+
+        g = this->p->k_data[i]->g;
+        sortstrip_g[g].id=g;
+        sortstrip_g[g].n++;
+        sortstrip_g[g].ndat+=this->p->k_data[i]->n;
+    }
+    for(k=0; k<this->p->nK; k++)
+        if(sortstrip_k[k].ndat>0) (*newnK)++;
+//        fprintf(stdout, "%i element, k=%i\n",k,sortstrip_k[k].id);
+//    fprintf(stdout, "\n");
+    for(g=0; g<this->p->nG; g++)
+        if(sortstrip_g[g].ndat>0) (*newnG)++;
+//        fprintf(stdout, "%i element, g=%i\n",g,sortstrip_g[g].id);
+    qsort(sortstrip_k, (size_t)this->p->nK, sizeof(sortbit), compareSortBitInv);
+    qsort(sortstrip_g, (size_t)this->p->nG, sizeof(sortbit), compareSortBitInv);
+
+    //    // vv reshuffle
+//    struct data ***k_g_data_sorted = Malloc(struct data **, (size_t)this->p->nK);
+//    struct data ***k_g_data_old = this->p->k_g_data;
+//    for(i=0; i<this->p->nK; i++)
+//        k_g_data_sorted[i] = this->p->k_g_data[ sortstrip[i].id ];
+//    this->p->k_g_data = k_g_data_sorted;
+//    free(k_g_data_old);
+//    // ^^ reshuffle
+//    free(sortstrip);
 }

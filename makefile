@@ -6,7 +6,7 @@ OS = $(shell uname)
 #LIBS = blas/blas.a
 #LIBS = -lblas
 
-all: train predict input
+all: train predict input tidy
 
 # lib: linear.o tron.o blas/blas.a
 #	if [ "$(OS)" = "Darwin" ]; then \
@@ -20,11 +20,11 @@ all: train predict input
 #train: tron.o linear.o utils.o StripedArray.o FitBit.o HMMProblem.o HMMProblemKT.o HMMProblemPiG.o HMMProblemPiGK.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o trainhmm.cpp blas/blas.a
 #	$(CXX) $(CFLAGS) -o trainhmm trainhmm.cpp tron.o linear.o utils.o HMMProblem.o HMMProblemKT.o HMMProblemPiG.o HMMProblemPiGK.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o $(LIBS)
 
-train: utils.o StripedArray.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o InputUtil.o trainhmm.cpp
-	$(CXX) $(CFLAGS) -o trainhmm trainhmm.cpp utils.o FitBit.o InputUtil.o HMMProblem.o HMMProblemPiGK.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o StripedArray.o 
+train: utils.o StripedArray.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o InputUtil.o trainhmm.cpp
+	$(CXX) $(CFLAGS) -o trainhmm trainhmm.cpp utils.o FitBit.o InputUtil.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o StripedArray.o
 
-predict: utils.o StripedArray.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o InputUtil.o predicthmm.cpp
-	$(CXX) $(CFLAGS) -o predicthmm predicthmm.cpp utils.o FitBit.o InputUtil.o HMMProblem.o HMMProblemPiGK.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o StripedArray.o 
+predict: utils.o StripedArray.o FitBit.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o InputUtil.o predicthmm.cpp
+	$(CXX) $(CFLAGS) -o predicthmm predicthmm.cpp utils.o FitBit.o InputUtil.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o StripedArray.o
 
 input: utils.o StripedArray.o InputUtil.o inputconvert.cpp
 	$(CXX) $(CFLAGS) -o inputconvert inputconvert.cpp utils.o StripedArray.o InputUtil.o
@@ -58,6 +58,8 @@ HMMProblem.o: HMMProblem.cpp HMMProblem.h
 #	$(CXX) $(CFLAGS) -c -o HMMProblemPiG.o HMMProblemPiG.cpp
 HMMProblemPiGK.o: HMMProblemPiGK.cpp HMMProblemPiGK.h
 	$(CXX) $(CFLAGS) -c -o HMMProblemPiGK.o HMMProblemPiGK.cpp
+HMMProblemPiGKww.o: HMMProblemPiGKww.cpp HMMProblemPiGKww.h
+	$(CXX) $(CFLAGS) -c -o HMMProblemPiGKww.o HMMProblemPiGKww.cpp
 HMMProblemAGK.o: HMMProblemAGK.cpp HMMProblemAGK.h
 	$(CXX) $(CFLAGS) -c -o HMMProblemAGK.o HMMProblemAGK.cpp
 HMMProblemPiAGK.o: HMMProblemPiAGK.cpp HMMProblemPiAGK.h
@@ -68,3 +70,7 @@ HMMProblemPiABGK.o: HMMProblemPiABGK.cpp HMMProblemPiABGK.h
 clean:
 	#make -C blas clean
 	rm -f *.o trainhmm predicthmm inputconvert
+
+tidy:
+	rm -f *.o
+

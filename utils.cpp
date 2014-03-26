@@ -695,3 +695,7 @@ NUMBER L2penalty(param* param, NUMBER w, NUMBER penalty_offset) {
     return (param->C != 0)? 0.5*param->C*fabs((w-penalty_offset)) : 0;
 }
 
+// for fitting larger portions first
+int compareSortBitInv (const void * a, const void * b) {
+    return -( ((sortbit*)a)->ndat - ((sortbit*)b)->ndat );
+}

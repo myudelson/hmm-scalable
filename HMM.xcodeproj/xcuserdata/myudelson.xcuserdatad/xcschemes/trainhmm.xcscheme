@@ -64,7 +64,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "10.3.1"
+            argument = "4.2"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -220,6 +220,10 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "a89_hmm_uskts_train.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "a89_hmm_uskts_multi.bin"
             isEnabled = "YES">
          </CommandLineArgument>
@@ -289,6 +293,10 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "predictT.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "a89_hmm_uskts_multi.bin"
             isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>

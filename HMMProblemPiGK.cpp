@@ -225,15 +225,22 @@ void HMMProblemPiGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( this->PI[ dt->k ][i] * (1-this->PI[ dt->k ][i]) );
-			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PI[ dt->k ][i], 0.5); // PENALTY;
+			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
+        // penalty
+        for(i=0; i<this->p->nS && this->p->C!=0; i++)
+            fb->gradPI[i] += L2penalty(this->p,this->PI[dt->k][i], 0.5);
     }
-    else
+    else {
         for(i=0; i<this->p->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( this->PIg[ dt->g ][i] * (1-this->PIg[ dt->g ][i]) );
-			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) + L2penalty(this->p,this->PIg[ dt->g ][i], 0.5); // PENALTY;;
+			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
+        // penalty
+        for(i=0; i<this->p->nS && this->p->C!=0; i++)
+            fb->gradPI[i] += L2penalty(this->p,this->PIg[dt->g][i], 0.5);
+    }
 }
 
 void HMMProblemPiGK::toFile(const char *filename) {
@@ -290,7 +297,7 @@ void HMMProblemPiGK::fit() {
 }
 
 NUMBER HMMProblemPiGK::GradientDescent() {
-	NCAT k, g;
+	NCAT k, ki, g, gi;
     /*NPAR nS = this->p->nS, nO = this->p->nO;*/ NCAT nK = this->p->nK, nG = this->p->nG;
     NUMBER loglik = 0;
     FitResult fr;
@@ -340,12 +347,19 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 ////                cpy1D<NUMBER>(cpyPIg[x], this->PIg[x], this->p->nS);
 //        }
 
+        // utilize fitting larger data first
+        NDAT newnK=0, newnG=0;
+        this->reorderSequences(&newnK, &newnG);
+        
+
         int i = 0; // count runs
-        while(skip_k<nK || skip_g<nG) {
+        while(skip_k<newnK || skip_g<newnG) {
             //
             // Skills first
             //
-            for(k=0; k<nK && skip_k<nK; k++) { // for all A,B-by-skill
+            for(ki=0; ki<newnK && skip_k<newnK; ki++) { // for all A,B-by-skill
+                k = sortstrip_k[ki].id; // grab reordered k
+                
                 if(iter_qual_skill[k]==iterations_to_qualify)
                     continue;
                 NCAT xndat = this->p->k_numg[k];
@@ -355,10 +369,10 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                 fr = GradientDescentBit(k/*use skill x*/, xndat, x_data, 0/*skill*/, fb, false /*is1SkillForAll*/);
                 // decide on convergence
                 if(i>=first_iteration_qualify) {
-                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG) { // converged quick, or don't care (others all converged
+                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==newnG) { // converged quick, or don't care (others all converged
                         iter_qual_skill[k]++;
-                        if(iter_qual_skill[k]==iterations_to_qualify || skip_g==nG) {// criterion met, or don't care (others all converged)
-                            if(skip_g==nG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
+                        if(iter_qual_skill[k]==iterations_to_qualify || skip_g==newnG) {// criterion met, or don't care (others all converged)
+                            if(skip_g==newnG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
                             skip_k++;
                             if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
                                 computeAlphaAndPOParam(xndat, x_data);
@@ -382,21 +396,30 @@ NUMBER HMMProblemPiGK::GradientDescent() {
             // PIg second
             //
 //            int z = 0;
-            for(g=0; g<nG && skip_g<nG; g++) { // for all PI-by-user
+            for(gi=0; gi<newnG && skip_g<newnG; gi++) { // for all PI-by-user
+                g = sortstrip_g[gi].id; // grab reordered g
+
                 if(iter_qual_group[g]==iterations_to_qualify)
                     continue;
                 NCAT xndat = this->p->g_numk[g];
+                if(xndat==0) {
+                    int z = 0;
+                }
                 struct data** x_data = this->p->g_k_data[g];
                 // vvvvvvvvvvvvvvvvvvvvv ONLY PART THAT IS DIFFERENT FROM others
                 fb->linkPar(this->getPIg(g), NULL, NULL);
                 // ^^^^^^^^^^^^^^^^^^^^^
                 // decide on convergence
                 fr = GradientDescentBit(g/*use group x*/, xndat, x_data, 1/*group*/, fb, false /*is1SkillForAll*/);
-                if(i>=first_iteration_qualify) {
-                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==nK) { // converged quick, or don't care (others all converged
+                if(i>=first_iteration_qualify || xndat==0) { //can qualify or  student had no skill labelled rows
+                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==newnK || xndat==0) { // converged quick, or don't care (others all converged), or  student had no skill labelled rows
                         iter_qual_group[g]++;
-                        if(iter_qual_group[g]==iterations_to_qualify || skip_k==nK) {// criterion met, or don't care (others all converged)
-                            if(skip_k==nK) iter_qual_group[g]=iterations_to_qualify; // K not changing anymore
+                        if(xndat==0) {
+                            iter_qual_group[g]=iterations_to_qualify;
+                            fr.conv = 1;
+                        }
+                        if(iter_qual_group[g]==iterations_to_qualify || skip_k==newnK) {// criterion met, or don't care (others all converged)
+                            if(skip_k==newnK) iter_qual_group[g]=iterations_to_qualify; // K not changing anymore
                             skip_g++;
                             if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
                                 computeAlphaAndPOParam(xndat, x_data);
