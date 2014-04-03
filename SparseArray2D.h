@@ -56,12 +56,12 @@ NDAT SparseArray2D<T>::binsearch(
                const void *base0,
                NDAT nmemb, NDAT *lim) {
     
-	register const char *base = (const char*)base0;
-	register const char *base00 = base;
-//	register NDAT lim;
-    register NDAT size = sizeof(T);
-	register int cmp;
-	register const void *p;
+	const char *base = (const char*)base0;
+	const char *base00 = base;
+//	NDAT lim;
+    NDAT size = sizeof(T);
+	int cmp;
+	const void *p;
     
 	for (*lim = nmemb; *lim != 0; *lim >>= 1) {
 		p = base + (*lim >> 1) * size;

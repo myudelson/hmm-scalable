@@ -254,63 +254,52 @@ NUMBER HMMProblemPiAGK::getB(struct data* dt, NPAR i, NPAR m) {
     return this->B[dt->k][i][m];
 }
 
-void HMMProblemPiAGK::setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag){
+void HMMProblemPiAGK::setGradPI(FitBit *fb){
     if(this->p->block_fitting[0]>0) return;
     NDAT t = 0;
     NPAR i, o;
     NUMBER combined, deriv_logit;
 //    o = dt->obs[t];
-    o = this->p->dat_obs->get( dt->ix[t] );
-    if(kg_flag == 0) { // k
-        for(i=0; i<this->p->nS; i++) {
+    struct data* dt;
+    for(NCAT x=0; x<fb->xndat; x++) {
+        dt = fb->x_data[x];
+        if( dt->cnt!=0 ) continue;
+        o = this->p->dat_obs->get( dt->ix[t] );
+        for(i=0; i<fb->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
-            deriv_logit = 1 / safe0num( this->PI[ dt->k ][i] * (1-this->PI[ dt->k ][i]) );
+            deriv_logit = 1 / safe0num( fb->PI[i] * (1-fb->PI[i]) );
 			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
         // penalty
-        for(i=0; i<this->p->nS && this->p->C!=0; i++)
-            fb->gradPI[i] += L2penalty(this->p,this->PI[dt->k][i], 0.5);
-    }
-    else {
-        for(i=0; i<this->p->nS; i++) {
-            combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
-            deriv_logit = 1 / safe0num( this->PIg[ dt->g ][i] * (1-this->PIg[ dt->g ][i]) );
-			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
-        }
-        // penalty
-        for(i=0; i<this->p->nS && this->p->C!=0; i++)
-            fb->gradPI[i] += L2penalty(this->p,this->PIg[dt->g][i], 0.5);
+        for(i=0; i<fb->nS && this->p->C!=0; i++)
+            fb->gradPI[i] += L2penalty(this->p,fb->PI[i], 0.5);
     }
 }
 
-void HMMProblemPiAGK::setGradA (struct data* dt, FitBit *fb, NPAR kg_flag){
+void HMMProblemPiAGK::setGradA (FitBit *fb){
     if(this->p->block_fitting[1]>0) return;
     NDAT t;
     NPAR o, i, j;
     NUMBER combined, deriv_logit;
-    if(kg_flag == 0) { // k
+    struct data* dt;
+    for(NCAT x=0; x<fb->xndat; x++) {
+        dt = fb->x_data[x];
+        if( dt->cnt!=0 ) continue;
         for(t=1; t<dt->n; t++) {
 //            o = dt->obs[t];
             o = this->p->dat_obs->get( dt->ix[t] );
-            for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++)
-                for(j=0; j<this->p->nS; j++) {
+            for(i=0; i<fb->nS /*&& fitparam[1]>0*/; i++)
+                for(j=0; j<fb->nS; j++) {
                     combined = getA(dt,i,j);
-                    deriv_logit = 1 / safe0num( this->A[ dt->k ][i][j] * (1-this->A[ dt->k ][i][j]) );
-                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,this->A[ dt->k ][i][j], 0.5); // PENALTY
+                    deriv_logit = 1 / safe0num( fb->A[i][j] * (1-fb->A[i][j]) );
+                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
                 }
         }
+        // penalty
+        for(i=0; i<fb->nS && this->p->C!=0; i++)
+            for(j=0; j<fb->nS; j++)
+                fb->gradA[i][j] += L2penalty(this->p,fb->A[i][j], 0.5); // PENALTY
     }
-    else
-        for(t=1; t<dt->n; t++) {
-//            o = dt->obs[t];
-            o = this->p->dat_obs->get( dt->ix[t] );
-            for(i=0; i<this->p->nS /*&& fitparam[1]>0*/; i++)
-                for(j=0; j<this->p->nS; j++) {
-                    combined = getA(dt,i,j);
-                    deriv_logit = 1 / safe0num( this->Ag[ dt->g ][i][j] * (1-this->Ag[ dt->g ][i][j]) );
-                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) + L2penalty(this->p,this->Ag[ dt->g ][i][j], 0.5); // PENALTY
-                }
-        }
 }
 
 void HMMProblemPiAGK::toFile(const char *filename) {
@@ -387,8 +376,8 @@ NUMBER HMMProblemPiAGK::GradientDescent() {
 	// fit all as 1 skill first, set group gradients to 0, and do not fit them
 	//
 	if(this->p->single_skill>0) {
-        fb->linkPar( this->getPI(0), this->getA(0), this->getB(0));// link skill 0 (we'll copy fit parameters to others
-        fr = GradientDescentBit(0/*use skill 0*/, this->p->nSeq, this->p->k_data, 0/* by skill*/, fb, true /*is1SkillForAll*/);
+        fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
+        fr = GradientDescentBit(fb, true /*is1SkillForAll*/);
         printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
     }
 	
@@ -410,11 +399,11 @@ NUMBER HMMProblemPiAGK::GradientDescent() {
             for(k=0; k<nK && skip_k<nK; k++) { // for all A,B-by-skill
                 if(iter_qual_skill[k]==iterations_to_qualify)
                     continue;
-                NCAT xndat = this->p->k_numg[k];
-                struct data** x_data = this->p->k_g_data[k];
+//                NCAT xndat = this->p->k_numg[k];
+//                struct data** x_data = this->p->k_g_data[k];
                 // link and fit
-                fb->linkPar( this->getPI(k), this->getA(k), this->getB(k));// link skill 0 (we'll copy fit parameters to others
-                fr = GradientDescentBit(k/*use skill x*/, xndat, x_data, 0/*skill*/, fb, false /*is1SkillForAll*/);
+                fb->link( this->getPI(k), this->getA(k), this->getB(k),this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
+                fr = GradientDescentBit(fb, false /*is1SkillForAll*/);
                 // decide on convergence
                 if(i>=first_iteration_qualify) {
                     if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG) { // converged quick, or don't care (others all converged
@@ -423,7 +412,7 @@ NUMBER HMMProblemPiAGK::GradientDescent() {
                             if(skip_g==nG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
                             skip_k++;
                             if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
-                                computeAlphaAndPOParam(xndat, x_data);
+                                computeAlphaAndPOParam(fb->xndat, fb->x_data);
                                 printf("run %2d skipK %4d skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_k,k,fr.iter,fr.pO0,fr.pO,fr.conv);
                             }
                         }
@@ -438,13 +427,13 @@ NUMBER HMMProblemPiAGK::GradientDescent() {
             for(g=0; g<nG && skip_g<nG; g++) { // for all PI-by-user
                 if(iter_qual_group[g]==iterations_to_qualify)
                     continue;
-                NCAT xndat = this->p->g_numk[g];
-                struct data** x_data = this->p->g_k_data[g];
+//                NCAT xndat = this->p->g_numk[g];
+//                struct data** x_data = this->p->g_k_data[g];
                 // vvvvvvvvvvvvvvvvvvvvv ONLY PART THAT IS DIFFERENT FROM others
-                fb->linkPar(this->getPIg(g), this->getAg(g), NULL);
+                fb->link(this->getPIg(g), this->getAg(g), NULL, this->p->g_numk[g], this->p->g_k_data[g]);
                 // ^^^^^^^^^^^^^^^^^^^^^
                 // decide on convergence
-                fr = GradientDescentBit(g/*use group x*/, xndat, x_data, 1/*group*/, fb, false /*is1SkillForAll*/);
+                fr = GradientDescentBit(fb, false /*is1SkillForAll*/);
                 if(i>=first_iteration_qualify) {
                     if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==nK) { // converged quick, or don't care (others all converged
                         iter_qual_group[g]++;
@@ -452,7 +441,7 @@ NUMBER HMMProblemPiAGK::GradientDescent() {
                             if(skip_k==nK) iter_qual_group[g]=iterations_to_qualify; // K not changing anymore
                             skip_g++;
                             if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
-                                computeAlphaAndPOParam(xndat, x_data);
+                                computeAlphaAndPOParam(fb->xndat, fb->x_data);
                                 printf("run %2d skipG %4d group %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_g,g,fr.iter,fr.pO0,fr.pO,fr.conv);
                             }
                         }

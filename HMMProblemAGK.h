@@ -33,7 +33,7 @@ public:
     NUMBER getPI(struct data* dt, NPAR i);         // to be redefined
     NUMBER getA (struct data* dt, NPAR i, NPAR j); // same
     NUMBER getB (struct data* dt, NPAR i, NPAR m); // same
-    void setGradA (struct data* dt, FitBit *fb, NPAR kg_flag);
+    void setGradA (FitBit *fb);
 	void toFile(const char *filename);
     // fitting (the only public method)
     void fit(); // return -LL for the model

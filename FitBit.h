@@ -49,13 +49,15 @@ public:
     NUMBER *dirPIm1; // previous step direction #6
     NUMBER **dirAm1; // previous step direction
     NUMBER **dirBm1; // previous step direction
+    NCAT xndat; // number of sequences of data
+    struct data** x_data; // sequences of data
     NPAR projecttosimplex; // whether projection to simplex should be done
     
     FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol);
     FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_projecttosimplex);
     ~FitBit();
     void init(enum FIT_BIT_SLOT fbs);
-    void linkPar(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B);
+    void link(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NCAT a_xndat, struct data** a_x_data);
     void toZero(enum FIT_BIT_SLOT fbs);
     void destroy(enum FIT_BIT_SLOT fbs);
     void copy(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs);

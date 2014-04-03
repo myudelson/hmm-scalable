@@ -206,10 +206,16 @@ int main (int argc, char ** argv) {
                 param.kc_rmse = Calloc(NUMBER, (size_t)param.nK);
                 param.kc_acc  = Calloc(NUMBER, (size_t)param.nK);
             }
-            
+
+            NUMBER l1 = hmm->getSumLogPOPara(param.nSeq, param.k_data);
+            printf("hmm-style ll_no_null %15.7f\n",l1);
             hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
             if( param.metrics>0 /*&& !param.quiet*/) {
-                printf("trained model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]);
+                printf("trained model LL=%15.7f (%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",
+                       metrics[0], metrics[1], // ll's
+                       2*hmm->getNparams() + 2*metrics[0], hmm->getNparams()*safelog(param.N) + 2*metrics[0],
+                       metrics[2], metrics[3], // rmse's
+                       metrics[4], metrics[5]); // acc's
             }
             free(metrics);
 

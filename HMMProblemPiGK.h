@@ -33,7 +33,7 @@ public:
     virtual NUMBER getA (struct data* dt, NPAR i, NPAR j); // same
     virtual NUMBER getB (struct data* dt, NPAR i, NPAR m); // same
     // getters for computing gradients of alpha, beta, gamma
-    virtual void setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag);
+    virtual void setGradPI(FitBit *fb);
 	void toFile(const char *filename);
     // fitting (the only public method)
     virtual void fit(); // return -LL for the model
@@ -48,7 +48,10 @@ protected:
 	//
 	void init(struct param *param); // non-fit specific initialization
 	void destroy(); // non-fit specific descruction
-    NUMBER GradientDescent(); // fit alternating
+    virtual NUMBER GradientDescent(); // fit alternating
+    virtual struct data*** getExdendedData(NCAT xndat, struct data** x_data, NPAR kg_flag, NCAT* xxndat);
+//    virtual NUMBER GradientDescentX(); // fit alternating
+    virtual void computeGradientsBig(FitBit **fbs, NCAT nfbs);// global, for all
 private:
 };
 

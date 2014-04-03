@@ -10,7 +10,6 @@
 		715BD81117AD95BD00C9B6D3 /* HMMProblem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D234A417540A7C006985EB /* HMMProblem.cpp */; };
 		715BD81217AD95CD00C9B6D3 /* HMMProblemPiGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBD201D615F103CD003E97BF /* HMMProblemPiGK.cpp */; };
 		715BD81317AD95D100C9B6D3 /* HMMProblemAGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBADDC9F160211F000C6865E /* HMMProblemAGK.cpp */; };
-		715BD81417AD95D500C9B6D3 /* HMMProblemAGKi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 717B9D501791E1D3004FBE94 /* HMMProblemAGKi.cpp */; };
 		715BD81517AD95D900C9B6D3 /* HMMProblemPiAGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBD201DE15F8DD3F003E97BF /* HMMProblemPiAGK.cpp */; };
 		715BD81617AD95DD00C9B6D3 /* HMMProblemPiABGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71F5217C173D4583008EE451 /* HMMProblemPiABGK.cpp */; };
 		715BD81717AD95E100C9B6D3 /* trainhmm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D234A717540AB6006985EB /* trainhmm.cpp */; };
@@ -18,7 +17,6 @@
 		715BD81A17AD966B00C9B6D3 /* HMMProblem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D234A417540A7C006985EB /* HMMProblem.cpp */; };
 		715BD81B17AD967700C9B6D3 /* HMMProblemPiGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBD201D615F103CD003E97BF /* HMMProblemPiGK.cpp */; };
 		715BD81C17AD967A00C9B6D3 /* HMMProblemAGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBADDC9F160211F000C6865E /* HMMProblemAGK.cpp */; };
-		715BD81D17AD967D00C9B6D3 /* HMMProblemAGKi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 717B9D501791E1D3004FBE94 /* HMMProblemAGKi.cpp */; };
 		715BD81E17AD968000C9B6D3 /* HMMProblemPiAGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBD201DE15F8DD3F003E97BF /* HMMProblemPiAGK.cpp */; };
 		715BD81F17AD968500C9B6D3 /* HMMProblemPiABGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71F5217C173D4583008EE451 /* HMMProblemPiABGK.cpp */; };
 		715BD82017AD969300C9B6D3 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D234AA17540AE7006985EB /* utils.cpp */; };
@@ -56,8 +54,6 @@
 		715EE5B017F0BF290079E646 /* SparseArray2D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SparseArray2D.cpp; sourceTree = "<group>"; };
 		715EE5B117F0BF290079E646 /* SparseArray2D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SparseArray2D.h; sourceTree = "<group>"; };
 		71602EF817BBA3270001BF2B /* readme.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = readme.txt; sourceTree = "<group>"; };
-		717B9D4F1791E1C9004FBE94 /* HMMProblemAGKi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMMProblemAGKi.h; sourceTree = "<group>"; };
-		717B9D501791E1D3004FBE94 /* HMMProblemAGKi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HMMProblemAGKi.cpp; sourceTree = "<group>"; };
 		719E18D318CF8C99004ED5C4 /* HMMProblemPiGKww.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMMProblemPiGKww.h; sourceTree = "<group>"; };
 		719E18D418CF8CA3004ED5C4 /* HMMProblemPiGKww.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HMMProblemPiGKww.cpp; sourceTree = "<group>"; };
 		71A39C9F179DAAC6000F9610 /* inputconvert.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = inputconvert.cpp; sourceTree = "<group>"; };
@@ -225,8 +221,6 @@
 				719E18D418CF8CA3004ED5C4 /* HMMProblemPiGKww.cpp */,
 				EBADDCA0160211F000C6865E /* HMMProblemAGK.h */,
 				EBADDC9F160211F000C6865E /* HMMProblemAGK.cpp */,
-				717B9D4F1791E1C9004FBE94 /* HMMProblemAGKi.h */,
-				717B9D501791E1D3004FBE94 /* HMMProblemAGKi.cpp */,
 				EBD201DF15F8DD3F003E97BF /* HMMProblemPiAGK.h */,
 				EBD201DE15F8DD3F003E97BF /* HMMProblemPiAGK.cpp */,
 				71F5217D173D4583008EE451 /* HMMProblemPiABGK.h */,
@@ -436,7 +430,6 @@
 				715BD81A17AD966B00C9B6D3 /* HMMProblem.cpp in Sources */,
 				715BD81B17AD967700C9B6D3 /* HMMProblemPiGK.cpp in Sources */,
 				715BD81C17AD967A00C9B6D3 /* HMMProblemAGK.cpp in Sources */,
-				715BD81D17AD967D00C9B6D3 /* HMMProblemAGKi.cpp in Sources */,
 				715BD81E17AD968000C9B6D3 /* HMMProblemPiAGK.cpp in Sources */,
 				715BD81F17AD968500C9B6D3 /* HMMProblemPiABGK.cpp in Sources */,
 				715BD82017AD969300C9B6D3 /* utils.cpp in Sources */,
@@ -456,7 +449,6 @@
 				719E18D518CF8CA3004ED5C4 /* HMMProblemPiGKww.cpp in Sources */,
 				715BD81217AD95CD00C9B6D3 /* HMMProblemPiGK.cpp in Sources */,
 				715BD81317AD95D100C9B6D3 /* HMMProblemAGK.cpp in Sources */,
-				715BD81417AD95D500C9B6D3 /* HMMProblemAGKi.cpp in Sources */,
 				715BD81517AD95D900C9B6D3 /* HMMProblemPiAGK.cpp in Sources */,
 				715BD81617AD95DD00C9B6D3 /* HMMProblemPiABGK.cpp in Sources */,
 				715BD81717AD95E100C9B6D3 /* trainhmm.cpp in Sources */,

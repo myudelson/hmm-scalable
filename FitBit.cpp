@@ -32,6 +32,8 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol) {
     this->dirPIm1 = NULL;
     this->dirAm1 = NULL;
     this->dirBm1 = NULL;
+    this->xndat = 0;
+    this->x_data = 0;
     this->projecttosimplex = 1;
 }
 
@@ -59,6 +61,8 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_
     this->dirPIm1 = NULL;
     this->dirAm1 = NULL;
     this->dirBm1 = NULL;
+    this->xndat = 0;
+    this->x_data = 0;
     this->projecttosimplex = a_projecttosimplex;
 }
 
@@ -104,10 +108,12 @@ void FitBit::init(NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B) {
 //    }
 }
 
-void FitBit::linkPar(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B) {
+void FitBit::link(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NCAT a_xndat, struct data** a_x_data) {
     this->PI = a_PI;
     this->A  = a_A;
     this->B  = a_B;
+    this->xndat = a_xndat;
+    this->x_data = a_x_data;
 }
 
 void FitBit::toZero(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B) {

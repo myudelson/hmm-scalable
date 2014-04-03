@@ -64,7 +64,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "4.2"
+            argument = "1.2"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -144,7 +144,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "1"
+            argument = "4"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument

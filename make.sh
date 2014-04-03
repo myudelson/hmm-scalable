@@ -178,3 +178,11 @@ sed -i ''  's/<TAB>-1/<TAB>0/' a89_kts_train01_recess.txt
 # not vocabulary
 awk -F'\t' '{ a[$2]++; c[$2]+=$3 } END { for (i in a) { print i"\t"c[i]/a[i] } }' a89_kts_train01_recess.txt > a89_kts_train01_voc_i.txt
 # mean=1, sd - measure, z-score, convert to probability treating as logit
+
+
+# PiGKww
+./trainhmm -s 1.2 -m 1 -b 1 -d ~ a89_hmm_uskts_multi.bin a89_model_uskts_multi1.2.txt | tee a89_out_uskts_multi1.2.txt
+./trainhmm -s 4.2 -m 1 -b 1 -d ~ a89_hmm_uskts_multi.bin a89_model_uskts_multi4.2.txt | tee a89_out_uskts_multi4.2.txt
+./trainhmm -s 10.2 -m 1 -b 1 -d ~ a89_hmm_uskts_multi.bin a89_model_uskts_multi10.2.txt | tee a89_out_uskts_multi10.2.txt
+
+

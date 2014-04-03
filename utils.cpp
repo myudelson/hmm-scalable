@@ -161,7 +161,8 @@ NUMBER safe01num(NUMBER val) {
 
 NUMBER safe0num(NUMBER val) {
     //    return (fabs(val)<SAFETY)?(SAFETY*(val>=0) + SAFETY*(val<0)*(-1)):val;
-    return (val<SAFETY)?SAFETY:val;
+    NUMBER a_sign = (val<0)?-1:1;
+    return (fabs(val)<SAFETY)?a_sign*SAFETY:val;
 }
 
 NUMBER itself(NUMBER val) {

@@ -43,9 +43,9 @@ public:
     NUMBER getB (struct data* dt, NPAR i, NPAR m); // same
 	void toFile(const char *filename);
     // fitting (the only public method)
-    void setGradPI(struct data* dt, FitBit *fb, NPAR kg_flag);
-    void setGradA (struct data* dt, FitBit *fb, NPAR kg_flag);
-    void setGradB (struct data* dt, FitBit *fb, NPAR kg_flag);
+    void setGradPI(FitBit *fb);
+    void setGradA (FitBit *fb);
+    void setGradB (FitBit *fb);
     void fit(); // return -LL for the model
     void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);
 protected:
