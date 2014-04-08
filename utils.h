@@ -34,14 +34,17 @@ using namespace std;
 #define NPAR_MAX SCHAR_MAX
 #define NCAT_MAX INT_MAX
 #define NDAT_MAX UINT_MAX
+
 //http://stackoverflow.com/questions/2053843/min-and-max-value-of-data-type-in-c
 
 #define COLUMNS 4
+
 
 typedef signed char NPAR; // number of observations or states, now 128 max, KEEP THIS SIGNED, we need -1 code for NULL
 typedef signed int NCAT;  // number of categories, groups or skills, now 32K max; LEAVE THIS UNSIGNED, we need -1 code for NULL
 typedef signed int NDAT;  // number of data rows, now 4 bill max
 typedef double NUMBER;    // numeric float format
+const NUMBER pi = 3.141592653589793;
 
 //enum SOLVER { // deprecating
 //    BKT_NULL     =  0, // 0 unassigned
@@ -91,6 +94,7 @@ struct FitResult {
     NUMBER pO0; // starting log-likelihood
     NUMBER pO;  // final log-likelihood
     int conv;   // converged? (maybe just went to max-iter)
+    NDAT ndat;
 };
 
 // a sequence of observations (usually belonging to a student practicing a skill)

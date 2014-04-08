@@ -73,6 +73,16 @@ bool issimplex(NUMBER* ar, NPAR size) {
 		if( ar[i] < 0 || ar[i] > 1)
 			return false;
 	}
+//    for(NPAR i=0; i<size && fabs(sum)<SAFETY && fabs(sum)>0; i++) {
+//        if( (ar[i]+sum) >=0 ) {
+//            ar[i]+=sum;
+//            break;
+//        }
+//        if( (ar[i]+sum) <=1 ) {
+//            ar[i]+=sum;
+//            break;
+//        }
+//    }
 	return fabs(sum)<SAFETY;
 }
 
@@ -83,6 +93,16 @@ bool issimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 		if( ar[i] < lb[i] || ar[i] > ub[i])
 			return false;
 	}
+//    for(NPAR i=0; i<size && fabs(sum)<SAFETY && fabs(sum)>0; i++) {
+//        if( (ar[i]+sum) >=lb[i] ) {
+//            ar[i]+=sum;
+//            break;
+//        }
+//        if( (ar[i]+sum) <=ub[i] ) {
+//            ar[i]+=sum;
+//            break;
+//        }
+//    }
 	return fabs(sum)<SAFETY;
 }
 
@@ -115,6 +135,14 @@ void projectsimplex(NUMBER* ar, NPAR size) {
 			ar[i] -= (at_lo[i]==0 && at_hi[i]==0)?lambda:0;
 		
 	} // until satisfied
+    // force last to be 1 - sum of all but last
+    err = 1;
+    for(i=0; i<(size-1); i++) err -= ar[i];
+    ar[size-1] = err;
+    err = 1;
+    for(i=1; i<(size-0); i++) err -= ar[i];
+    ar[0] = err;
+
 	free(at_hi);
 	free(at_lo);
 }
@@ -143,10 +171,19 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 		}
 		if (size > (num_at_hi + num_at_lo) )
 			lambda = err / (size - (num_at_hi + num_at_lo));
+        
 		for(i=0; i<size; i++)
 			ar[i] -= (at_lo[i]==0 && at_hi[i]==0)?lambda:0;
 		
 	} // until satisfied
+    // force last to be 1 - sum of all but last
+    err = 1;
+    for(i=0; i<(size-1); i++) err -= ar[i];
+    ar[size-1] = err;
+    err = 1;
+    for(i=1; i<(size-0); i++) err -= ar[i];
+    ar[0] = err;
+    
 	free(at_hi);
 	free(at_lo);
 }

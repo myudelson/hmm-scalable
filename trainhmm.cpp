@@ -879,6 +879,7 @@ bool read_and_structure_data(const char *filename) {
             param.g_k_data[g][k]->cnt = 0;
     for(NCAT x=0; x<param.n_null_skill_group; x++)
         param.null_skills[x].cnt = 0;
+
     return true;
 }
 

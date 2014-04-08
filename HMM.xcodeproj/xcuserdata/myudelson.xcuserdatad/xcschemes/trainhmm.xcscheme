@@ -116,11 +116,11 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "-t"
+            argument = "-e"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "0.001"
+            argument = "0.01"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
@@ -149,11 +149,11 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-f"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "1"
-            isEnabled = "NO">
+            argument = "2"
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-b"

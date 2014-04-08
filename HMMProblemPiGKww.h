@@ -51,7 +51,7 @@ protected:
 	//
 	void init(struct param *param); // non-fit specific initialization
 //	void destroy(); // non-fit specific descruction
-	virtual void computeGradients(FitBit *fb);// NUMBER *a_gradPI, NUMBER** a_gradA, NUMBER **a_gradB);
+	virtual NDAT computeGradients(FitBit *fb);// NUMBER *a_gradPI, NUMBER** a_gradA, NUMBER **a_gradB);
     NUMBER GradientDescent(); // fit alternating
 private:
 };

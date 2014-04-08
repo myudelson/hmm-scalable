@@ -416,7 +416,7 @@ void HMMProblemPiABGK::fit() {
 }
 
 NUMBER HMMProblemPiABGK::GradientDescent() {
-	NCAT k, g;
+	NCAT k, g, x;
     /*NPAR nS = this->p->nS, nO = this->p->nO;*/ NCAT nK = this->p->nK, nG = this->p->nG;
     FitResult fr;
     FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
@@ -431,7 +431,11 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
 	//
 	if(this->p->single_skill>0) {
         fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
-        fr = GradientDescentBit(fb, true /*is1SkillForAll*/);
+        NCAT* original_ks = Calloc(NCAT, this->p->nSeq);
+        for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save progonal k's
+        fr = GradientDescentBit(fb);
+        for(x=0; x<this->p->nSeq; x++) { this->p->all_data[x].k = original_ks[x]; } // restore original k's
+        free(original_ks);
         printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
     }
 	
@@ -457,7 +461,7 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
 //                struct data** x_data = this->p->k_g_data[k];
                 // link and fit
                 fb->link( this->getPI(k), this->getA(k), this->getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
-                fr = GradientDescentBit(fb, false /*is1SkillForAll*/);
+                fr = GradientDescentBit(fb);
                 // decide on convergence
                 if(i>=first_iteration_qualify) {
                     if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG) { // converged quick, or don't care (others all converged
@@ -487,7 +491,7 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                 fb->link(this->getPIg(g), this->getAg(g), this->getBg(g), this->p->g_numk[g], this->p->g_k_data[g]);
                 // ^^^^^^^^^^^^^^^^^^^^^
                 // decide on convergence
-                fr = GradientDescentBit(fb, false /*is1SkillForAll*/);
+                fr = GradientDescentBit(fb);
                 if(i>=first_iteration_qualify) {
                     if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==nK) { // converged quick, or don't care (others all converged
                         iter_qual_group[g]++;

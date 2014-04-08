@@ -2001,7 +2001,11 @@ NUMBER HMMProblem::GradientDescent() {
 //	//
 //	if(this->p->single_skill>0) {
 //        fb->linkPar( this->getPI(0), this->getA(0), this->getB(0));// link skill 0 (we'll copy fit parameters to others
-//        fr = GradientDescentBit(0/*start at squence 0*/, this->p->nSeq/*for all sequences*/, this->p->all_seq, 0/*use skill 0*/, 0/* by skill*/, fb, true /*is1SkillForAll*/);
+//    NCAT* original_ks = Calloc(NCAT, this->p->nSeq);
+//    for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save progonal k's
+//    fr = GradientDescentBit(fb);
+//    for(x=0; x<this->p->nSeq; x++) { this->p->all_data[x].k = original_ks[x]; } // restore original k's
+//    free(original_ks);
 //        if( !this->p->quiet )
 //            printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
 //	}

@@ -60,7 +60,7 @@ public:
     void predict(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled);
     void readModel(const char *filename, bool overwrite);
     virtual void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);
-    virtual void reorderSequences(NDAT *newnK, NDAT *newnG); /*place larger skill and group sequences closer to the beginning*/
+    virtual void reorderSequences(NDAT *newnK, NDAT *newnG, bool sort); /*place larger skill and group sequences closer to the beginning*/
 protected:
 	//
 	// Givens
@@ -93,7 +93,7 @@ protected:
 	void initXi(NCAT xndat, struct data** x_data); // generic
 	void initGamma(NCAT xndat, struct data** x_data); // generic
 	void initBeta(NCAT xndat, struct data** x_data); // generic
-	void computeAlphaAndPOParam(NCAT xndat, struct data** x_data);
+	NDAT computeAlphaAndPOParam(NCAT xndat, struct data** x_data);
 	void computeBeta(NCAT xndat, struct data** x_data);
 	void computeGamma(NCAT xndat, struct data** x_data);
 	void computeXi(NCAT xndat, struct data** x_data);
@@ -103,16 +103,21 @@ protected:
     void toZero3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO);
     void free3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS);
     void cpy3Params(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB, NPAR nS, NPAR nO);
+
     // predicting
-	virtual void computeGradients(FitBit *fb);// NUMBER *a_gradPI, NUMBER** a_gradA, NUMBER **a_gradB);
-	virtual void computeGradientsBig(FitBit **fbs, NCAT nfbs);// global, for all
-    virtual NUMBER doLinearStep(FitBit *fb, NCAT copy);
-    void doLinearStepBig(FitBit **fbs, FitResult *frs, NCAT nfbs);
-    NUMBER doConjugateLinearStep(FitBit *fb, NCAT copy);
-    NUMBER doConjugateLinearStepBig(NCAT xndat, struct data** x_data, FitBit *fb, NCAT copy);
+	virtual NDAT computeGradients(FitBit *fb);// NUMBER *a_gradPI, NUMBER** a_gradA, NUMBER **a_gradB);
+    virtual NUMBER doLinearStep(FitBit *fb);
+    NUMBER doConjugateLinearStep(FitBit *fb);
+    FitResult GradientDescentBit(FitBit *fbs); // for 1 skill or 1 group, all 1 skill for all data
+	// predicting big
+    virtual NDAT computeGradientsBig(FitBit **fbs, NCAT nfbs);// global, for all ::  NO NEED TO EXTENDED
+    NUMBER doLinearStepBig(FitBit **fbs, NCAT nfbs); //                          ::  NO NEED TO EXTENDED
+    NUMBER doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs); //                   ::  NOT READY
+    FitResult GradientDescentBitBig(FitBit **fbs, NCAT nfbs); //                 ::  NO NEED TO EXTENDED 
+    bool checkConvergenceBig0(FitBit** fbs, NCAT nfbs, NUMBER tol, NUMBER *criterion);
+    bool checkConvergenceBig(FitBit** fbs, NCAT nfbs, NUMBER tol, NUMBER *criterion);
+    
     NUMBER doBarzalaiBorweinStep(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1);
-    FitResult GradientDescentBit(FitBit *fbs, bool is1SkillForAll); // for 1 skill or 1 group, all 1 skill for all data
-    void GradientDescentBigBit(FitBit **fbs, FitResult *frs, NCAT nfbs); // for 1 skill or 1 group, all 1 skill for all data, for non-coord descent, global
     virtual NUMBER GradientDescent(); // return -LL for the model
     void readNullObsRatio(FILE *fid, struct param* param, NDAT *line_no);
 	bool checkPIABConstraints(NUMBER* a_PI, NUMBER** a_A, NUMBER** a_B); // all constraints, inc row sums

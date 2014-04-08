@@ -51,7 +51,7 @@ protected:
     virtual NUMBER GradientDescent(); // fit alternating
     virtual struct data*** getExdendedData(NCAT xndat, struct data** x_data, NPAR kg_flag, NCAT* xxndat);
 //    virtual NUMBER GradientDescentX(); // fit alternating
-    virtual void computeGradientsBig(FitBit **fbs, NCAT nfbs);// global, for all
+
 private:
 };
 

@@ -284,10 +284,10 @@ void HMMProblemPiGKww::fit() {
     free(loglik_rmse);
 }
 
-void HMMProblemPiGKww::computeGradients(FitBit *fb){
+NDAT HMMProblemPiGKww::computeGradients(FitBit *fb){
     fb->toZero(FBS_GRAD);
     
-    computeAlphaAndPOParam(fb->xndat, fb->x_data);
+    NDAT ndat = computeAlphaAndPOParam(fb->xndat, fb->x_data);
     computeBeta(fb->xndat, fb->x_data);
 
     /*vv diff vv*/
@@ -297,10 +297,11 @@ void HMMProblemPiGKww::computeGradients(FitBit *fb){
 
     if(fb->A  != NULL && this->p->block_fitting[1]==0) setGradA(fb);
     if(fb->B  != NULL && this->p->block_fitting[2]==0) setGradB(fb);
+    return ndat;
 } // computeGradients()
 
 NUMBER HMMProblemPiGKww::GradientDescent() {
-	NCAT k, g;
+	NCAT k, g, x;
     NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
     NUMBER loglik = 0;
     FitResult fr;
@@ -333,7 +334,11 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
 	//
 	if(this->p->single_skill>0) {
         fb->link( HMMProblem::getPI(0), HMMProblem::getA(0), HMMProblem::getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
-        fr = GradientDescentBit(fb, true /*is1SkillForAll*/);
+        NCAT* original_ks = Calloc(NCAT, this->p->nSeq);
+        for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save progonal k's
+        fr = GradientDescentBit(fb);
+        for(x=0; x<this->p->nSeq; x++) { this->p->all_data[x].k = original_ks[x]; } // restore original k's
+        free(original_ks);
         if( !this->p->quiet )
             printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
     }
@@ -362,7 +367,7 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
                 // link and fit
                 fb->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
 //                cpy1D<NUMBER>(this->PI[k],copyPI[k],nS); /*prep hide*/
-                fr = GradientDescentBit(fb, false /*is1SkillForAll*/);
+                fr = GradientDescentBit(fb);
                 // decide on convergence
                 if(i>=first_iteration_qualify) {
                     if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG) { // converged quick, or don't care (others all converged
@@ -394,7 +399,7 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
                 fb->link(this->getPIg(g), NULL, NULL, this->p->g_numk[g], this->p->g_k_data[g]);
                 // ^^^^^^^^^^^^^^^^^^^^^
                 // decide on convergence
-                fr = GradientDescentBit(fb, false /*is1SkillForAll*/);
+                fr = GradientDescentBit(fb);
                 if(i>=first_iteration_qualify) {
                     if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==nK) { // converged quick, or don't care (others all converged
                         iter_qual_group[g]++;
@@ -442,7 +447,7 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
 //            loglik = getSumLogPOPara(this->p->nSeq, this->p->k_data);
             bool non01constraints = this->non01constraints;
             this->non01constraints = false;
-            frww = GradientDescentBit(fbww, false /*is1SkillForAll*/);
+            frww = GradientDescentBit(fbww);
             this->non01constraints = non01constraints;
 //            loglik = getSumLogPOPara(this->p->nSeq, this->p->k_data);
             
