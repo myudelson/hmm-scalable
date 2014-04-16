@@ -12,6 +12,7 @@
 #define __HMM__InputUtil__
 
 #include "utils.h"
+
 //#define bin_input_file_verstion 1
 #define bin_input_file_verstion 2 // increase number of skills students to 4 bytes
 

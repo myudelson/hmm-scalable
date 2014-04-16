@@ -75,13 +75,13 @@ void HMMProblemAGK::init(struct param *param) {
     
     // mass produce PI's/PIg's, A's, B's
 	if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-		this->PI  = init2D<NUMBER>((NDAT)nK, (NDAT)nS);
+		this->pi  = init2D<NUMBER>((NDAT)nK, (NDAT)nS);
 		this->A   = init3D<NUMBER>((NDAT)nK, (NDAT)nS, (NDAT)nS);
 		this->Ag  = init3D<NUMBER>((NDAT)nG, (NDAT)nS, (NDAT)nS);
 		this->B   = init3D<NUMBER>((NDAT)nK, (NDAT)nS, (NDAT)nO);
         NCAT x;
 		for(x=0; x<nK; x++) {
-			cpy1D<NUMBER>(a_PI, this->PI[x], (NDAT)nS);
+			cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
 			cpy2D<NUMBER>(a_A,  this->A[x],  (NDAT)nS, (NDAT)nS);
 			cpy2D<NUMBER>(a_B,  this->B[x],  (NDAT)nS, (NDAT)nO);
         }
@@ -145,7 +145,7 @@ void HMMProblemAGK::destroy() {
 }// ~HMMProblemAGK
 
 NUMBER** HMMProblemAGK::getPI() { // same as getPIk
-	return this->PI;
+	return this->pi;
 }
 
 NUMBER*** HMMProblemAGK::getA() { // same as getPIk
@@ -165,7 +165,7 @@ NUMBER* HMMProblemAGK::getPI(NCAT x) { // same as getPIk(x)
 		fprintf(stderr,"While accessing PI_k, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
 		exit(1);
 	}
-	return this->PI[x];
+	return this->pi[x];
 }
 
 NUMBER** HMMProblemAGK::getA(NCAT x) {
@@ -201,7 +201,7 @@ NUMBER** HMMProblemAGK::getAg(NCAT x) {
 }
 
 NUMBER HMMProblemAGK::getPI(struct data* dt, NPAR i) {
-    return this->PI[dt->k][i];
+    return this->pi[dt->k][i];
 }
 
 // getters for computing alpha, beta, gamma
@@ -274,7 +274,7 @@ void HMMProblemAGK::toFile(const char *filename) {
 		fprintf(fid,"%d\t%s\n",k,it->second.c_str());
 		fprintf(fid,"PI\t");
 		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%10.8f%s",this->PI[k][i],(i==(this->p->nS-1))?"\n":"\t");
+			fprintf(fid,"%10.8f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"Ak\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
@@ -316,7 +316,7 @@ NUMBER HMMProblemAGK::GradientDescent() {
 	//
 	if(this->p->single_skill>0) {
         fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
-        NCAT* original_ks = Calloc(NCAT, this->p->nSeq);
+        NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save progonal k's
         fr = GradientDescentBit(fb);
         for(x=0; x<this->p->nSeq; x++) { this->p->all_data[x].k = original_ks[x]; } // restore original k's
@@ -489,10 +489,10 @@ void HMMProblemAGK::readModelBody(FILE *fid, struct param *param, NDAT *line_no,
         fscanf(fid,"PI\t");
         for(i=0; i<(this->p->nS-1); i++) { // read 1 less then necessary
             fscanf(fid,"%[^\t]\t",col);
-            this->PI[idxk][i] = atof(col);
+            this->pi[idxk][i] = atof(col);
         }
         fscanf(fid,"%[^\n]\n",col);// read last one
-        this->PI[idxk][i] = atof(col);
+        this->pi[idxk][i] = atof(col);
         (*line_no)++;
 		// read A
         fscanf(fid,"Ak\t");

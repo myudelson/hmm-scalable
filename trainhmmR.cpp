@@ -1,3 +1,10 @@
+/*
+ * trainhmm script for R
+ */
+
+#include <R.h>
+#include <Rdefines.h>
+
 #include <string.h>
 #include <iostream>
 #include <fstream>
@@ -10,16 +17,7 @@
 #include "utils.h"
 #include "InputUtil.h"
 #include "HMMProblem.h"
-////#include "HMMProblemPiG.h"
-#include "HMMProblemPiGK.h"
-#include "HMMProblemPiGKww.h"
-#include "HMMProblemAGK.h"
-//#include "HMMProblemAGKi.h"
-#include "HMMProblemPiAGK.h"
-#include "HMMProblemPiABGK.h"
-////#include "HMMProblemKT.h"
 #include "StripedArray.h"
-//#include "SparseArray2D.h"
 using namespace std;
 
 struct param param;
@@ -30,49 +28,12 @@ void cross_validate(NUMBER* metrics, const char *filename);
 void cross_validate_item(NUMBER* metrics, const char *filename);
 void cross_validate_nstrat(NUMBER* metrics, const char *filename);
 
-// temporary experimental: IRT-like for fitting pLo in liblinear
-void write_pLo_irt() {
-    FILE *fid0 = fopen("uopx12_irt.txt","w");
-    NPAR **group_skill_mask = init2D<NPAR>(param.nG, param.nK);
-    NCAT g_k, g, k;
-    NDAT t;
-    data *dat;
-    NPAR obs;
-    for(g=0; g<param.nG; g++) {
-        g_k = param.g_numk[g];
-        for(k=0; k<g_k; k++) {
-            dat = param.g_k_data[g][ k ];
-            t = dat->ix[0];
-            NCAT *ar;
-            int n = 0;
-            if(param.multiskill==0) {
-                k = param.dat_skill->get(t);
-                ar = &k;
-                n = 1;
-            } else {
-                ar = &param.dat_multiskill->get(t)[1];
-                n = param.dat_multiskill->get(t)[0];
-                qsortNcat(ar, (NPAR)n);
-            }
-            obs = param.dat_obs->get( dat->ix[0] );
-            NPAR count = 0; // 557687 -> 499117
-            for(int l=0; l<n; l++)
-                count += group_skill_mask[g][ ar[l] ] == 1;
-                if(count<n) {
-                    fprintf(fid0,"%s %u:1", ((1-obs)==0)?"-1":"+1",dat->g+1);
-                    
-                    for(int l=0; l<n; l++) {
-                        fprintf(fid0, " %u:1",ar[l]+param.nG+1);
-                        group_skill_mask[g][ ar[l] ] = 1;
-                    }
-                    fprintf(fid0,"\n");
-                }
-        }
-    }
-    fclose(fid0);
-    free2D(group_skill_mask, param.nG);
-}
 
+// N size
+SEXP trainhmmR(SEXP dat_obs, SEXP dat_group, SEXP dat_item, SEXP dat_skill)
+
+
+// temporary experimental: IRT-like for fitting pLo in liblinear
 int main (int argc, char ** argv) {
     
 //    int array[] = {1, 2, 3, 4, 5, 6, 7};
@@ -208,7 +169,7 @@ int main (int argc, char ** argv) {
             }
 
             // NUMBER l1 = hmm->getSumLogPOPara(param.nSeq, param.k_data);
-//            printf("hmm-style ll_no_null %15.7f\n",l1);
+            // printf("hmm-style ll_no_null %15.7f\n",l1);
             hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
             if( param.metrics>0 /*&& !param.quiet*/) {
                 printf("trained model LL=%15.7f (%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",
@@ -765,7 +726,6 @@ bool read_and_structure_data(const char *filename) {
                 param.all_data[n_all_data].gamma = NULL;
                 param.all_data[n_all_data].xi = NULL;
                 param.all_data[n_all_data].c = NULL;
-                param.all_data[n_all_data].C_T = 1;
                 param.all_data[n_all_data].p_O_param = 0.0;
                 param.all_data[n_all_data].loglik = 0.0;
                 k_countg[k]++; // count

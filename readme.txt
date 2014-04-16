@@ -140,7 +140,7 @@ To fit a BKT model of this data using an EM algorithm run the following command:
 
 sh> ./trainhmm -s 1.1 -m 1 -p 1 toy_data.txt model.txt predict.txt
 
-The model will have 90% accuracy and root mean squared error (RMSE) = 0.3227and
+The model will have 90% accuracy and root mean squared error (RMSE) = 0.3227 and
 the recovered BKT parameters would be: pLo=0.50, pT=0.17, pS=0.00, pG=0.00 .
 
 If we fit BKT model using Conjugate Gradient method using '-s 1.2' argument, the

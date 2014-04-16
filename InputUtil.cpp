@@ -317,10 +317,6 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
         
 		// count lines
 		param->N++;	// increase line count
-//        if(param->N % 100000 == 0) {
-//            fprintf(stdout,"%d rows read\n",param->N);
-//        }
-        //        fprintf(stdout,"Line %d\n",param->N);
 	}// reading loop
 	if(wrong_no_columns) {
 		fprintf(stderr,"Wrong number of columns in line %u. Expected %d, found %d\n",param->N+1,COLUMNS+param->time, number_columns);

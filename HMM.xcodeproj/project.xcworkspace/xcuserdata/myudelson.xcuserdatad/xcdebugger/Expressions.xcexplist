@@ -44,7 +44,7 @@
                value = "fb-&gt;gradA[1][0]">
             </PersistentString>
             <PersistentString
-               value = "fb-&gt;gradA[0][1]">
+               value = "this-&gt;ww[1][0]">
             </PersistentString>
             <PersistentString
                value = "this-&gt;ww[0][0]">
@@ -56,7 +56,7 @@
                value = "this-&gt;getPI(x_data[0],0)">
             </PersistentString>
             <PersistentString
-               value = "this-&gt;ww[1][0]">
+               value = "fb-&gt;gradA[0][1]">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -67,19 +67,19 @@
                value = "(int)o">
             </PersistentString>
             <PersistentString
-               value = "this-&gt;p-&gt;dat_obs-&gt;stripes[0][10]">
+               value = "((int)o)&gt;=0">
             </PersistentString>
             <PersistentString
-               value = "dat-&gt;idx[t]">
+               value = "((int)o)&lt;0">
             </PersistentString>
             <PersistentString
                value = "this-&gt;Ag[0][0][0]">
             </PersistentString>
             <PersistentString
-               value = "((int)o)&gt;=0">
+               value = "this-&gt;p-&gt;dat_obs-&gt;stripes[0][10]">
             </PersistentString>
             <PersistentString
-               value = "((int)o)&lt;0">
+               value = "dat-&gt;idx[t]">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -124,10 +124,7 @@
                value = "at_lo[2]">
             </PersistentString>
             <PersistentString
-               value = "ar[1]">
-            </PersistentString>
-            <PersistentString
-               value = "at_hi[0]">
+               value = "at_hi[2]">
             </PersistentString>
             <PersistentString
                value = "(1-ar[0])==ar[1]">
@@ -139,16 +136,19 @@
                value = "at_lo[1]">
             </PersistentString>
             <PersistentString
-               value = "1-ar[1]">
-            </PersistentString>
-            <PersistentString
-               value = "at_hi[2]">
+               value = "at_hi[1]">
             </PersistentString>
             <PersistentString
                value = "at_lo[0]">
             </PersistentString>
             <PersistentString
-               value = "at_hi[1]">
+               value = "1-ar[1]">
+            </PersistentString>
+            <PersistentString
+               value = "at_hi[0]">
+            </PersistentString>
+            <PersistentString
+               value = "ar[1]">
             </PersistentString>
             <PersistentString
                value = "(1-ar[1])==ar[0]">
@@ -222,13 +222,13 @@
          contextName = "HMMProblemOld::doLinearStep(short, data**, FitBit*, short):HMMProblemOld.cpp">
          <PersistentStrings>
             <PersistentString
+               value = "fb">
+            </PersistentString>
+            <PersistentString
                value = "x_data[0]-&gt;alpha[0][0]">
             </PersistentString>
             <PersistentString
                value = "x_data[0]-&gt;alpha[0][1]">
-            </PersistentString>
-            <PersistentString
-               value = "fb">
             </PersistentString>
             <PersistentString
                value = "this">
@@ -332,7 +332,7 @@
                value = "source[1][1]">
             </PersistentString>
             <PersistentString
-               value = "target[1][0]">
+               value = "source[0][1]">
             </PersistentString>
             <PersistentString
                value = "target[0][1]">
@@ -350,7 +350,7 @@
                value = "target[0][0]">
             </PersistentString>
             <PersistentString
-               value = "source[0][1]">
+               value = "target[1][0]">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -396,6 +396,32 @@
          <PersistentStrings>
             <PersistentString
                value = "this-&gt;p-&gt;map_group_fwd">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "HMMProblem::computeBeta(int, data**):HMMProblem.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "x_data[x]-&gt;C_T">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[x]-&gt;beta[0][0]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[x]-&gt;c[13]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[x]-&gt;beta[0][1]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[x]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[x]-&gt;p_O_param">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[x]-&gt;loglik">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -508,16 +534,16 @@
          contextName = "HMMProblem::readModelBody(__sFILE*, param*, unsigned int*, bool):HMMProblem.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "(*line_no)">
+               value = "this-&gt;p-&gt;map_skill_bwd-&gt;size()">
             </PersistentString>
             <PersistentString
                value = "this-&gt;p-&gt;map_skill_fwd-&gt;size()">
             </PersistentString>
             <PersistentString
-               value = "col">
+               value = "(*line_no)">
             </PersistentString>
             <PersistentString
-               value = "this-&gt;p-&gt;map_skill_bwd-&gt;size()">
+               value = "col">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -655,13 +681,13 @@
                value = "ar[3]">
             </PersistentString>
             <PersistentString
-               value = "param-&gt;dat_multiskill-&gt;getSize()">
-            </PersistentString>
-            <PersistentString
                value = "ar[6]">
             </PersistentString>
             <PersistentString
                value = "ar[1]">
+            </PersistentString>
+            <PersistentString
+               value = "param-&gt;dat_multiskill-&gt;getSize()">
             </PersistentString>
             <PersistentString
                value = "ar[4]">
@@ -823,10 +849,10 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
-         contextName = "read_data(char const*):trainhmm.cpp">
+         contextName = "HMMProblem::GradientDescentBit(FitBit*, bool):HMMProblem.cpp">
       </ContextState>
       <ContextState
-         contextName = "HMMProblem::GradientDescentBit(FitBit*, bool):HMMProblem.cpp">
+         contextName = "read_data(char const*):trainhmm.cpp">
       </ContextState>
       <ContextState
          contextName = "HMMProblem::computeBeta(unsigned int, short):HMMProblem.cpp">
@@ -841,13 +867,13 @@
                value = "dats[l]-&gt;ix1st">
             </PersistentString>
             <PersistentString
-               value = "dats[l]-&gt;n">
+               value = "this-&gt;beta[ix][i]">
             </PersistentString>
             <PersistentString
                value = "dats[l]-&gt;cnt">
             </PersistentString>
             <PersistentString
-               value = "this-&gt;beta[ix][i]">
+               value = "dats[l]-&gt;n">
             </PersistentString>
             <PersistentString
                value = "this-&gt;p-&gt;NN">
@@ -869,7 +895,7 @@
          contextName = "HMMProblem::computeMetrics(double*):HMMProblem.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "this-&gt;p-&gt;nK">
+               value = "metrics[3]">
             </PersistentString>
             <PersistentString
                value = "metrics[5]">
@@ -878,7 +904,7 @@
                value = "this-&gt;p-&gt;N">
             </PersistentString>
             <PersistentString
-               value = "metrics[3]">
+               value = "this-&gt;p-&gt;nK">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -978,7 +1004,7 @@
                value = "dats[l]">
             </PersistentString>
             <PersistentString
-               value = "t">
+               value = "this-&gt;alpha[ix-1][i]">
             </PersistentString>
             <PersistentString
                value = "n">
@@ -987,7 +1013,7 @@
                value = "dats[l]-&gt;cnt">
             </PersistentString>
             <PersistentString
-               value = "this-&gt;alpha[ix-1][i]">
+               value = "t">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -1003,13 +1029,13 @@
          contextName = "HMMProblemOld::computeGradients(short, data**, FitBit*, signed char):HMMProblemOld.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "fb-&gt;gradPI[0]">
-            </PersistentString>
-            <PersistentString
                value = "this-&gt;p-&gt;k_data[2]">
             </PersistentString>
             <PersistentString
                value = "x_data[29]">
+            </PersistentString>
+            <PersistentString
+               value = "fb-&gt;gradPI[0]">
             </PersistentString>
             <PersistentString
                value = "fb-&gt;gradPI[1]">
@@ -1023,10 +1049,10 @@
                value = "k">
             </PersistentString>
             <PersistentString
-               value = "this-&gt;sortstrip_k[0]">
+               value = "skip_g">
             </PersistentString>
             <PersistentString
-               value = "skip_g">
+               value = "this-&gt;sortstrip_k[0]">
             </PersistentString>
             <PersistentString
                value = "skip_k">
@@ -1099,10 +1125,10 @@
          contextName = "HMMProblem::computeGradients(int, data**, FitBit*, signed char):HMMProblem.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "fb-&gt;gradPI[1]">
+               value = "fb-&gt;gradPI[0]">
             </PersistentString>
             <PersistentString
-               value = "fb-&gt;gradPI[0]">
+               value = "fb-&gt;gradPI[1]">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -1130,10 +1156,10 @@
          contextName = "HMMProblemPiGKww::setGradPI(data*, FitBit*, signed char):HMMProblemPiGKww.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "fb-&gt;gradPI[1]">
+               value = "fb-&gt;gradPI[0]">
             </PersistentString>
             <PersistentString
-               value = "fb-&gt;gradPI[0]">
+               value = "fb-&gt;gradPI[1]">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -1153,13 +1179,13 @@
                value = "fb-&gt;gradPI[0]">
             </PersistentString>
             <PersistentString
-               value = "fb-&gt;PI[2]">
+               value = "((HMMProblemPiGKww*)this)-&gt;ww[0][0]">
             </PersistentString>
             <PersistentString
                value = "((HMMProblemPiGKww*)this)-&gt;ww[1][0]">
             </PersistentString>
             <PersistentString
-               value = "((HMMProblemPiGKww*)this)-&gt;ww[0][0]">
+               value = "fb-&gt;PI[2]">
             </PersistentString>
             <PersistentString
                value = "fb-&gt;gradPI[1]">
@@ -1242,7 +1268,7 @@
                value = "fb-&gt;gradA[1][0]">
             </PersistentString>
             <PersistentString
-               value = "fb-&gt;gradA[0][1]">
+               value = "fb-&gt;gradPI[1]">
             </PersistentString>
             <PersistentString
                value = "fb-&gt;gradB[0][1]">
@@ -1260,7 +1286,7 @@
                value = "fb-&gt;gradB[1][1]">
             </PersistentString>
             <PersistentString
-               value = "fb-&gt;gradPI[1]">
+               value = "fb-&gt;gradA[0][1]">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -1268,10 +1294,10 @@
          contextName = "HMMProblem::doConjugateLinearStepBig(FitBit**, int):HMMProblem.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "fbs[0]-&gt;gradPI[0]">
+               value = "fbs[0]-&gt;dirPIm1[1]">
             </PersistentString>
             <PersistentString
-               value = "beta_grad">
+               value = "fbs[0]-&gt;gradPIm1[1]">
             </PersistentString>
             <PersistentString
                value = "fbs[0]-&gt;gradPI[1]">
@@ -1286,13 +1312,13 @@
                value = "fbs[0]-&gt;dirPIm1[0]">
             </PersistentString>
             <PersistentString
+               value = "beta_grad">
+            </PersistentString>
+            <PersistentString
                value = "fbs[0]-&gt;gradPIm1[0]">
             </PersistentString>
             <PersistentString
-               value = "fbs[0]-&gt;dirPIm1[1]">
-            </PersistentString>
-            <PersistentString
-               value = "fbs[0]-&gt;gradPIm1[1]">
+               value = "fbs[0]-&gt;gradPI[0]">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -1331,10 +1357,10 @@
          contextName = "HMMProblemPiGKww::setGradWW(data*, FitBit*, signed char):HMMProblemPiGKww.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "safe0num(-0.25 + this-&gt;ww[2] * this-&gt;ww[2])">
+               value = "this-&gt;PIg[ dt-&gt;g][i]">
             </PersistentString>
             <PersistentString
-               value = "this-&gt;PIg[ dt-&gt;g][i]">
+               value = "safe0num(-0.25 + this-&gt;ww[2] * this-&gt;ww[2])">
             </PersistentString>
             <PersistentString
                value = "fb-&gt;gradPI[2]">
@@ -1524,10 +1550,10 @@
          contextName = "HMMProblemAGK::init(param*):HMMProblemAGK.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "this-&gt;Ag[0][0][0]">
+               value = "(NUMBER)1/nS">
             </PersistentString>
             <PersistentString
-               value = "(NUMBER)1/nS">
+               value = "this-&gt;Ag[0][0][0]">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -1535,40 +1561,31 @@
          contextName = "HMMProblem::computeAlphaAndPOParam(int, data**):HMMProblem.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "x_data[x]-&gt;alpha[t][1]">
+               value = "this-&gt;B[x_data[x]-&gt;k][0][0]">
             </PersistentString>
             <PersistentString
-               value = "getPI(x_data[x],1)">
+               value = "this-&gt;A[x_data[x]-&gt;k][1][0]">
+            </PersistentString>
+            <PersistentString
+               value = "x_data[x]-&gt;alpha[t][1]">
             </PersistentString>
             <PersistentString
                value = "x_data[x]-&gt;c[t]">
             </PersistentString>
             <PersistentString
-               value = "(this-&gt;PI[x_data[x]-&gt;k][0]+this-&gt;PI[x_data[x]-&gt;k][1])==1">
+               value = "this-&gt;pi[x_data[x]-&gt;k][0]">
             </PersistentString>
             <PersistentString
-               value = "getB(x_data[x],0,o)">
+               value = "x_data[x]-&gt;beta[13][1]">
             </PersistentString>
             <PersistentString
-               value = "getB(x_data[x],1,o)">
+               value = "x_data[x]-&gt;k">
             </PersistentString>
             <PersistentString
-               value = "getPI(x_data[x],i)">
-            </PersistentString>
-            <PersistentString
-               value = "this-&gt;PI[x_data[x]-&gt;k][1]">
+               value = "this-&gt;B[x_data[x]-&gt;k][1][0]">
             </PersistentString>
             <PersistentString
                value = "x_data[x]">
-            </PersistentString>
-            <PersistentString
-               value = "-safelog(x_data[x]-&gt;p_O_param)">
-            </PersistentString>
-            <PersistentString
-               value = "getPI(x_data[x],0)">
-            </PersistentString>
-            <PersistentString
-               value = "-safelog(x_data[x]-&gt;c[t])">
             </PersistentString>
             <PersistentString
                value = "x_data[x]-&gt;alpha[t][0]">
@@ -1577,7 +1594,7 @@
                value = "x_data[x]-&gt;loglik">
             </PersistentString>
             <PersistentString
-               value = "this-&gt;PI[x_data[x]-&gt;k][0]">
+               value = "x_data[x]-&gt;beta[13][0]">
             </PersistentString>
          </PersistentStrings>
       </ContextState>

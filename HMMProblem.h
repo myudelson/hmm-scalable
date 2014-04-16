@@ -6,17 +6,15 @@
  *  Copyright 2012 __MyCompanyName__. All rights reserved.
  *
  */
-#include "StripedArray.h"
 #include "utils.h"
 #include "FitBit.h"
-#include <stdio.h>
-#include <string>
+#include "StripedArray.h"
 
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/io.hpp>
-
-
-//#include "liblinear/linear.h"
+// *BOOST* tagged lines, use boost library for sparce skill-student map
+// *UNBOOST* tagged lines use dense matrix implementation
+// it is possible to switch versions by changing //*TAG* for /*TAG*/
+//*BOOST* #include <boost/numeric/ublas/matrix_sparse.hpp>
+//*BOOST* #include <boost/numeric/ublas/io.hpp>
 
 #ifndef _HMMPROBLEM_H
 #define _HMMPROBLEM_H
@@ -56,7 +54,7 @@ public:
     virtual void fit(); // return -LL for the model
     // predicting
     virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
-    virtual void producePCorrect(boost::numeric::ublas::mapped_matrix<NUMBER*> *group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
+//*BOOST*     virtual void producePCorrect(boost::numeric::ublas::mapped_matrix<NUMBER*> *group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
     void predict(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled);
     void readModel(const char *filename, bool overwrite);
     virtual void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);
@@ -71,7 +69,7 @@ protected:
     NUMBER neg_log_lik; // negative log-likelihood
     NUMBER null_skill_obs; // if null skills are present, what's the default obs to predict
     NUMBER null_skill_obs_prob; // if null skills are present, what's the default obs probability to predict
-	NUMBER** PI; // initial state probabilities
+	NUMBER** pi; // initial state probabilities
 	NUMBER*** A; // transition matrix
 	NUMBER*** B; // observation matrix
 	NUMBER* lbPI; // lower boundary initial state probabilities
@@ -99,21 +97,21 @@ protected:
 	void computeXi(NCAT xndat, struct data** x_data);
     void FitNullSkill(NUMBER* loglik_rmse, bool keep_SE); // get loglik and RMSE
     // helpers
-    void init3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO);
-    void toZero3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO);
-    void free3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS);
+    void init3Params(NUMBER* &pi, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO);
+    void toZero3Params(NUMBER* &pi, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO);
+    void free3Params(NUMBER* &pi, NUMBER** &A, NUMBER** &B, NPAR nS);
     void cpy3Params(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB, NPAR nS, NPAR nO);
 
     // predicting
-	virtual NDAT computeGradients(FitBit *fb);// NUMBER *a_gradPI, NUMBER** a_gradA, NUMBER **a_gradB);
+	virtual NDAT computeGradients(FitBit *fb);
     virtual NUMBER doLinearStep(FitBit *fb);
     NUMBER doConjugateLinearStep(FitBit *fb);
     FitResult GradientDescentBit(FitBit *fbs); // for 1 skill or 1 group, all 1 skill for all data
 	// predicting big
-    virtual NDAT computeGradientsBig(FitBit **fbs, NCAT nfbs);// global, for all ::  NO NEED TO EXTENDED
-    NUMBER doLinearStepBig(FitBit **fbs, NCAT nfbs); //                          ::  NO NEED TO EXTENDED
-    NUMBER doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs); //                   ::  NOT READY
-    FitResult GradientDescentBitBig(FitBit **fbs, NCAT nfbs); //                 ::  NO NEED TO EXTENDED 
+    virtual NDAT computeGradientsBig(FitBit **fbs, NCAT nfbs);// global, for all
+    NUMBER doLinearStepBig(FitBit **fbs, NCAT nfbs); //
+    NUMBER doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs); //
+    FitResult GradientDescentBitBig(FitBit **fbs, NCAT nfbs); //
     bool checkConvergenceBig0(FitBit** fbs, NCAT nfbs, NUMBER tol, NUMBER *criterion);
     bool checkConvergenceBig(FitBit** fbs, NCAT nfbs, NUMBER tol, NUMBER *criterion);
     
@@ -124,7 +122,7 @@ protected:
 private:
     // fitting methods (hidden)
     NUMBER BaumWelchSkill();
-    void doBaumWelchStep(NCAT xndat, struct data** x_data, FitBit *fb);//, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B);
+    void doBaumWelchStep(NCAT xndat, struct data** x_data, FitBit *fb);
     // write model
 	void toFileSkill(const char *filename);
 	void toFileGroup(const char *filename);

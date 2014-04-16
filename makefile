@@ -1,5 +1,5 @@
 CXX ?= $(CXX) $(CFLAGS)
-CFLAGS = -Wall -Wconversion -O3 -fPIC -I boost
+CFLAGS = -Wall -Wconversion -O3 -fPIC# -I boost
 SHVER = 1
 OS = $(shell uname)
 

@@ -9,7 +9,6 @@
 #ifndef __HMM__FitBit__
 #define __HMM__FitBit__
 
-#include <iostream>
 #include "utils.h"
 
 enum FIT_BIT_SLOT {
@@ -31,22 +30,22 @@ class FitBit {
 public:
     NPAR nO, nS; // copies
     NCAT nG, nK; // copies
-    NUMBER *PI; // usually pointer #1
+    NUMBER* pi; // usually pointer
     NUMBER **A; // usually pointer
     NUMBER **B; // usually pointer
-    NUMBER *PIm1; // previous value #2
+    NUMBER *PIm1; // previous value
     NUMBER **Am1; // previous value
     NUMBER **Bm1; // previous value
-    NUMBER *gradPI; // gradient #3
+    NUMBER *gradPI; // gradient
     NUMBER **gradA; // gradient
     NUMBER **gradB; // gradient
-    NUMBER *gradPIm1; // previous gradient #4
+    NUMBER *gradPIm1; // previous gradient
     NUMBER **gradAm1; // previous gradient
     NUMBER **gradBm1; // previous gradient
-    NUMBER *PIcopy; // previous value #5
+    NUMBER *PIcopy; // previous value
     NUMBER **Acopy; // previous value
     NUMBER **Bcopy; // previous value
-    NUMBER *dirPIm1; // previous step direction #6
+    NUMBER *dirPIm1; // previous step direction
     NUMBER **dirAm1; // previous step direction
     NUMBER **dirBm1; // previous step direction
     NCAT xndat; // number of sequences of data
@@ -67,9 +66,9 @@ public:
 private:
     NUMBER tol;
 
-    void init(NUMBER* &PI, NUMBER** &A, NUMBER** &B);
-    void toZero(NUMBER *PI, NUMBER **A, NUMBER **B);
-    void destroy(NUMBER* &PI, NUMBER** &A, NUMBER** &B);
+    void init(NUMBER* &pi, NUMBER** &A, NUMBER** &B);
+    void toZero(NUMBER *pi, NUMBER **A, NUMBER **B);
+    void destroy(NUMBER* &pi, NUMBER** &A, NUMBER** &B);
     void get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B);
     void add(NUMBER *soursePI, NUMBER **sourseA, NUMBER **sourseB, NUMBER *targetPI, NUMBER **targetA, NUMBER **targetB);
     void copy(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB);
