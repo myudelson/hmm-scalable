@@ -121,11 +121,11 @@ void projectsimplex(NUMBER* ar, NPAR size) {
 		for(i=0; i<size; i++) {
 			at_lo[i] = (ar[i]<0)?1:0;
 			ar[i] = (at_lo[i]==1)?0:ar[i];
-			num_at_lo += at_lo[i];
+			num_at_lo = (NPAR)(num_at_lo + at_lo[i]);
             
 			at_hi[i] = (ar[i]>1)?1:0;
 			ar[i] = (at_hi[i]==1)?1:ar[i];
-			num_at_hi += at_hi[i];
+			num_at_hi = (NPAR)(num_at_hi + at_hi[i]);
 			
 			err += ar[i];
 		}
@@ -161,11 +161,11 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 		for(i=0; i<size; i++) {
 			at_lo[i] = (ar[i]<lb[i])?1:0;
 			ar[i] = (at_lo[i]==1)?lb[i]:ar[i];
-			num_at_lo += at_lo[i];
+			num_at_lo = (NPAR)( num_at_lo + at_lo[i] );
 			
 			at_hi[i] = (ar[i]>ub[i])?1:0;
 			ar[i] = (at_hi[i]==1)?ub[i]:ar[i];
-			num_at_hi += at_hi[i];
+			num_at_hi = (NPAR)( num_at_hi + at_hi[i] );
 			
 			err += ar[i];
 		}
@@ -428,6 +428,7 @@ void set_param_defaults(struct param *param) {
     param->item_complexity = NULL;
 	// configurable - set
 	param->tol                   = 0.01;
+	param->scaled                = 0;
 	param->time                  = 0;
 	param->maxiter               = 200;
 	param->quiet                 = 0;
@@ -507,12 +508,12 @@ void destroy_input_data(struct param *param) {
 	if(param->param_hi != NULL) free(param->param_hi);
 	
     // data - checks if pointers to data are null anyway (whether we delete linear columns of data or not)
-	if(param->dat_obs != NULL) delete param->dat_obs;
-	if(param->dat_group != NULL) delete param->dat_group;
-	if(param->dat_item != NULL) delete param->dat_item;
-	if(param->dat_skill != NULL) delete param->dat_skill;
+	if(param->dat_obs != NULL) free( param->dat_obs );
+	if(param->dat_group != NULL) free( param->dat_group );
+	if(param->dat_item != NULL) free( param->dat_item );
+	if(param->dat_skill != NULL) free( param->dat_skill );
 	if(param->dat_multiskill != NULL) delete param->dat_multiskill;
-	if(param->dat_time != NULL) delete param->dat_time;
+	if(param->dat_time != NULL) free( param->dat_time );
     
     // not null skills
     for(NDAT kg=0;kg<param->nSeq; kg++) {
@@ -712,7 +713,7 @@ void write_time_interval_data(param* param, const char *file_name) {
             for(NDAT t=1; t<dt->n; t++) {
                 //                NPAR code = sec_to_linear_interval(dt->time[t]-dt->time[t-1], time_lim_20HDWM, sizeof(time_lim_20HDWM)/sizeof(int));
                 NPAR code = sec_to_9cat(dt->time[t-1], dt->time[t], time_lim_20HDWM, sizeof(time_lim_20HDWM)/sizeof(int));
-                fprintf(fid,"%s\t%s\t%d\t%d\t%d\t%d\t%d\n", it_g->second.c_str(), it_k->second.c_str(), dt->time[t-1], dt->time[t], (dt->time[t]-dt->time[t-1]), code, 1-param->dat_obs->get( dt->ix[t] ) );
+                fprintf(fid,"%s\t%s\t%d\t%d\t%d\t%d\t%d\n", it_g->second.c_str(), it_k->second.c_str(), dt->time[t-1], dt->time[t], (dt->time[t]-dt->time[t-1]), code, 1-param->dat_obs[ dt->ix[t] ]/*->get( dt->ix[t] )*/ );
             }// for times from 2 to N
         }// for all KCs
     }// for all groups

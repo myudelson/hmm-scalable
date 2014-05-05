@@ -55,20 +55,20 @@ void HMMProblemPiABGK::init(struct param *param) {
 	}
 	a_PI[nS-1] = 1 - sumPI;
 	// populate A
-	offset = nS-1;
+	offset = (NPAR)(nS-1);
 	for(i=0; i<nS; i++) {
 		for(j=0; j<((nS)-1); j++) {
-			idx = offset + i*((nS)-1) + j;
+			idx = (NPAR)(offset + i*((nS)-1) + j);
 			a_A[i][j] = this->p->init_params[idx];
 			sumA[i]  += this->p->init_params[idx];
 		}
 		a_A[i][((nS)-1)]  = 1 - sumA[i];
 	}
 	// polupale B
-	offset = (nS-1) + nS*(nS-1);
+	offset = (NPAR)((nS-1) + nS*(nS-1));
 	for(i=0; i<nS; i++) {
 		for(j=0; j<((nO)-1); j++) {
-			idx = offset + i*((nO)-1) + j;
+			idx = (NPAR)(offset + i*((nO)-1) + j);
 			a_B[i][j] = this->p->init_params[idx];
 			sumB[i] += this->p->init_params[idx];
 		}
@@ -125,15 +125,15 @@ void HMMProblemPiABGK::init(struct param *param) {
 	offset = nS;
 	for(i=0; i<nS; i++)
 		for(j=0; j<nS; j++) {
-			idx = offset + i*nS + j;
+			idx = (NPAR)(offset + i*nS + j);
 			lbA[i][j] = this->p->param_lo[idx];
 			ubA[i][j] = this->p->param_hi[idx];
 		}
 	// *B
-	offset = nS + nS*nS;
+	offset = (NPAR)(nS + nS*nS);
 	for(i=0; i<nS; i++)
 		for(j=0; j<nO; j++) {
-			idx = offset + i*nS + j;
+			idx = (NPAR)(offset + i*nS + j);
 			lbB[i][j] = this->p->param_lo[idx];
 			ubB[i][j] = this->p->param_hi[idx];
 		}
@@ -287,7 +287,7 @@ void HMMProblemPiABGK::setGradPI(FitBit *fb){
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
-        o = this->p->dat_obs->get( dt->ix[t] );
+        o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
         for(i=0; i<fb->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->pi[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );
@@ -310,7 +310,7 @@ void HMMProblemPiABGK::setGradA (FitBit *fb){
         if( dt->cnt!=0 ) continue;
         for(t=1; t<dt->n; t++) {
             //            o = dt->obs[t];
-            o = this->p->dat_obs->get( dt->ix[t] );
+            o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
             for(i=0; i<fb->nS /*&& fitparam[1]>0*/; i++)
                 for(j=0; j<fb->nS; j++) {
                     combined = getA(dt,i,j);
@@ -328,7 +328,7 @@ void HMMProblemPiABGK::setGradA (FitBit *fb){
 void HMMProblemPiABGK::setGradB (FitBit *fb){
     if(this->p->block_fitting[2]>0) return;
     NDAT t;
-    NPAR o, i, m;
+    NPAR o=0, i, m;
     NUMBER combined, deriv_logit;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
@@ -336,7 +336,7 @@ void HMMProblemPiABGK::setGradB (FitBit *fb){
         if( dt->cnt!=0 ) continue;
         for(t=0; t<dt->n; t++) {
             //            o = dt->obs[t];
-            o = this->p->dat_obs->get( dt->ix[t] );
+            o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
             if(o<0)
                 continue;
             for(i=0; i<fb->nS /*&& fitparam[1]>0*/; i++) {

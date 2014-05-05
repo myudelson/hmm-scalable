@@ -53,20 +53,20 @@ void HMMProblemAGK::init(struct param *param) {
 	}
 	a_PI[nS-1] = 1 - sumPI;
 	// populate A
-	offset = nS-1;
+	offset = (NPAR)(nS-1);
 	for(i=0; i<nS; i++) {
 		for(j=0; j<((nS)-1); j++) {
-			idx = offset + i*((nS)-1) + j;
+			idx = (NPAR)(offset + i*((nS)-1) + j);
 			a_A[i][j] = this->p->init_params[idx];
 			sumA[i]  += this->p->init_params[idx];
 		}
 		a_A[i][((nS)-1)]  = 1 - sumA[i];
 	}
 	// polupale B
-	offset = (nS-1) + nS*(nS-1);
+	offset = (NPAR)((nS-1) + nS*(nS-1));
 	for(i=0; i<nS; i++) {
 		for(j=0; j<((nO)-1); j++) {
-			idx = offset + i*((nO)-1) + j;
+			idx = (NPAR)(offset + i*((nO)-1) + j);
 			a_B[i][j] = this->p->init_params[idx];
 			sumB[i] += this->p->init_params[idx];
 		}
@@ -118,15 +118,15 @@ void HMMProblemAGK::init(struct param *param) {
 	offset = nS;
 	for(i=0; i<nS; i++)
 		for(j=0; j<nS; j++) {
-			idx = offset + i*nS + j;
+			idx = (NPAR)(offset + i*nS + j);
 			lbA[i][j] = this->p->param_lo[idx];
 			ubA[i][j] = this->p->param_hi[idx];
 		}
 	// *B
-	offset = nS + nS*nS;
+	offset = (NPAR)(nS + nS*nS);
 	for(i=0; i<nS; i++)
 		for(j=0; j<nO; j++) {
-			idx = offset + i*nS + j;
+			idx = (NPAR)(offset + i*nS + j);
 			lbB[i][j] = this->p->param_lo[idx];
 			ubB[i][j] = this->p->param_hi[idx];
 		}
@@ -230,7 +230,7 @@ void HMMProblemAGK::setGradA (FitBit *fb){
         if( dt->cnt!=0 ) continue;
         for(t=1; t<dt->n; t++) {
 //            o = dt->obs[t];
-            o = this->p->dat_obs->get( dt->ix[t] );
+            o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
             for(i=0; i<fb->nS /*&& fitparam[1]>0*/; i++)
                 for(j=0; j<fb->nS; j++) {
                     combined = getA(dt,i,j);

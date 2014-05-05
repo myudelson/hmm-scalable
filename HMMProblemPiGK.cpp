@@ -25,7 +25,7 @@ HMMProblemPiGK::HMMProblemPiGK(struct param *param) {
 
 void HMMProblemPiGK::init(struct param *param) {
 	this->p = param;
-    NPAR nS = this->p->nS, nO = this->p->nO; //NCAT nK = this->p->nK, nG = this->p->nG;
+    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
 	this->non01constraints = true;
     this->null_obs_ratio = Calloc(NUMBER, (size_t)this->p->nO);
     this->neg_log_lik = 0;
@@ -40,50 +40,50 @@ void HMMProblemPiGK::init(struct param *param) {
     //
 	NPAR i, j, idx, offset;
 	NUMBER sumPI = 0;
-	NUMBER sumA[this->p->nS];
-	NUMBER sumB[this->p->nS];
-	for(i=0; i<this->p->nS; i++) {
+	NUMBER sumA[nS];
+	NUMBER sumB[nS];
+	for(i=0; i<nS; i++) {
 		sumA[i] = 0;
 		sumB[i] = 0;
 	}
 	// populate PI
-	for(i=0; i<((this->p->nS)-1); i++) {
+	for(i=0; i<((nS)-1); i++) {
 		a_PI[i] = this->p->init_params[i];
 		sumPI  += this->p->init_params[i];
 	}
-	a_PI[this->p->nS-1] = 1 - sumPI;
+	a_PI[nS-1] = 1 - sumPI;
 	// populate A
-	offset = this->p->nS-1;
-	for(i=0; i<this->p->nS; i++) {
-		for(j=0; j<((this->p->nS)-1); j++) {
-			idx = offset + i*((this->p->nS)-1) + j;
+	offset = (NPAR)(nS-1);
+	for(i=0; i<nS; i++) {
+		for(j=0; j<((nS)-1); j++) {
+			idx = (NPAR)(offset + i*((nS)-1) + j);
 			a_A[i][j] = this->p->init_params[idx];
 			sumA[i]  += this->p->init_params[idx];
 		}
 		a_A[i][((this->p->nS)-1)]  = 1 - sumA[i];
 	}
 	// polupale B
-	offset = (this->p->nS-1) + this->p->nS*(this->p->nS-1);
-	for(i=0; i<this->p->nS; i++) {
-		for(j=0; j<((this->p->nO)-1); j++) {
-			idx = offset + i*((this->p->nO)-1) + j;
+	offset = (NPAR)((nS-1) + nS*(nS-1));
+	for(i=0; i<nS; i++) {
+		for(j=0; j<((nO)-1); j++) {
+			idx = (NPAR)(offset + i*((nO)-1) + j);
 			a_B[i][j] = this->p->init_params[idx];
 			sumB[i] += this->p->init_params[idx];
 		}
-		a_B[i][((this->p->nO)-1)]  = 1 - sumB[i];
+		a_B[i][((nO)-1)]  = 1 - sumB[i];
 	}
     
     // mass produce PI's/PIg's, A's, B's
 	if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-		this->pi  = init2D<NUMBER>(this->p->nK, this->p->nS);
-		this->A   = init3D<NUMBER>(this->p->nK, this->p->nS, this->p->nS);
-		this->B   = init3D<NUMBER>(this->p->nK, this->p->nS, this->p->nO);
-		this->PIg = init2D<NUMBER>(this->p->nG, this->p->nS);
+		this->pi  = init2D<NUMBER>(nK, nS);
+		this->A   = init3D<NUMBER>(nK, nS, nS);
+		this->B   = init3D<NUMBER>(nK, nS, nO);
+		this->PIg = init2D<NUMBER>(nG, nS);
         NCAT x;
 		for(x=0; x<this->p->nK; x++) {
-			cpy1D<NUMBER>(a_PI, this->pi[x], this->p->nS);
-			cpy2D<NUMBER>(a_A,  this->A[x],  this->p->nS, this->p->nS);
-			cpy2D<NUMBER>(a_B,  this->B[x],  this->p->nS, this->p->nO);
+			cpy1D<NUMBER>(a_PI, this->pi[x], nS);
+			cpy2D<NUMBER>(a_A,  this->A[x],  nS, nS);
+			cpy2D<NUMBER>(a_B,  this->B[x],  nS, nO);
         }
         // PIg start with same params
 		for(x=0; x<this->p->nG; x++)
@@ -94,8 +94,8 @@ void HMMProblemPiGK::init(struct param *param) {
 	}
     // destroy setup params
 	free(a_PI);
-	free2D<NUMBER>(a_A, this->p->nS);
-	free2D<NUMBER>(a_B, this->p->nS);
+	free2D<NUMBER>(a_A, nS);
+	free2D<NUMBER>(a_B, nS);
 	
     // if needs be -- read in init params from a file
     if(param->initfile[0]!=0)
@@ -111,18 +111,18 @@ void HMMProblemPiGK::init(struct param *param) {
 		ubPI[i] = this->p->param_hi[i];
 	}
 	// *A
-	offset = this->p->nS;
-	for(i=0; i<this->p->nS; i++)
-		for(j=0; j<this->p->nS; j++) {
-			idx = offset + i*this->p->nS + j;
+	offset = nS;
+	for(i=0; i<nS; i++)
+		for(j=0; j<nS; j++) {
+			idx = (NPAR)(offset + i*nS + j);
 			lbA[i][j] = this->p->param_lo[idx];
 			ubA[i][j] = this->p->param_hi[idx];
 		}
 	// *B
-	offset = this->p->nS + this->p->nS*this->p->nS;
-	for(i=0; i<this->p->nS; i++)
-		for(j=0; j<this->p->nO; j++) {
-			idx = offset + i*this->p->nS + j;
+	offset = (NPAR)(nS + nS*nS);
+	for(i=0; i<nS; i++)
+		for(j=0; j<nO; j++) {
+			idx = (NPAR)(offset + i*nS + j);
 			lbB[i][j] = this->p->param_lo[idx];
 			ubB[i][j] = this->p->param_hi[idx];
 		}
@@ -224,7 +224,7 @@ void HMMProblemPiGK::setGradPI(FitBit *fb){
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
 //    o = dt->obs[t];
-        o = this->p->dat_obs->get( dt->ix[t] );
+        o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
         for(i=0; i<fb->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );

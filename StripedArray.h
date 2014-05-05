@@ -14,9 +14,11 @@
 #include <memory.h>
 #include <math.h>
 
+
 #ifndef STRIPEDARRAY_H
 #define STRIPEDARRAY_H
 
+#define NDAT_MAX INT_MAX
 typedef signed int NDAT;  // number of data rows, now 4 bill max
 
 template <typename T>
@@ -34,6 +36,8 @@ public:
 	void set(NDAT idx, T value);
 	void clear();
     NDAT toBinFile(FILE* f);
+    static NDAT arrayToBinFile(T* ar, NDAT size, FILE* f);
+    T* toArray();
 private:
 	NDAT size; // linear
 	NDAT stripe_size;
@@ -119,7 +123,7 @@ StripedArray<T>::~StripedArray() {
 
 template <typename T>
 void StripedArray<T>::add(T value) {
-	if(this->size == (ULONG_MAX-1)) {
+	if(this->size == (NDAT_MAX-1)) {
 		fprintf(stderr, "Error! Maximum array size reached.\n");
 		return;
 	}
@@ -231,6 +235,22 @@ NDAT StripedArray<T>::toBinFile(FILE *f) {
         }
     }
     return all_nwrit;
+}
+
+template <typename T>
+NDAT StripedArray<T>::arrayToBinFile(T* ar, NDAT size, FILE* f) {
+    return (NDAT)fwrite (ar, sizeof(T), (size_t)size, f);
+}
+
+template <typename T>
+T* StripedArray<T>::toArray() {
+    T *result = (T*)malloc( (size_t)this->size*sizeof(T));
+    for(NDAT i=0; i<this->nstripes; i++) {
+        T* dest = &result[ i*this->stripe_size ];
+        size_t sz = sizeof(T)*( (i<(this->nstripes-1))?this->stripe_size:this->size_last_stripe );
+        memcpy( dest, this->stripes[i], sz );
+    }
+    return result;
 }
 
 #endif

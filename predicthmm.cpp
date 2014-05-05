@@ -23,15 +23,12 @@
 #include "HMMProblemPiGK.h"
 #include "HMMProblemAGK.h"
 #include "HMMProblemPiAGK.h"
-//#include "HMMProblemKT.h"
 using namespace std;
 
 #define COLUMNS 4
 
 struct param param;
 static char *line = NULL;
-//static int max_line_length;
-//static NDAT global_predict_N;
 NUMBER* metrics;
 map<string,NCAT> data_map_group_fwd;
 map<NCAT,string> data_map_group_bwd;
@@ -53,7 +50,7 @@ int main (int argc, char ** argv) {
 	char predict_file[1024];
 	
 	parse_arguments(argc, argv, input_file, model_file, predict_file);
-    param.predictions = 2; // force it on, since we, you know, predictinng :)
+    // param.predictions = 2; // do not force it on
 
     // read data
     if(param.binaryinput==0) {
@@ -84,16 +81,16 @@ int main (int argc, char ** argv) {
     //
     // create hmm Object
     //
-    HMMProblem *hmm;
+    HMMProblem *hmm = NULL;
     switch(param.structure)
     {
         case STRUCTURE_SKILL: // Conjugate Gradient Descent
         case STRUCTURE_GROUP: // Conjugate Gradient Descent
             hmm = new HMMProblem(&param);
             break;
-            //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
-            //                hmm = new HMMProblemPiG(&param);
-            //                break;
+//            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
+//                hmm = new HMMProblemPiG(&param);
+//                break;
         case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
             hmm = new HMMProblemPiGK(&param);
             break;
@@ -103,31 +100,30 @@ int main (int argc, char ** argv) {
         case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
             hmm = new HMMProblemAGK(&param);
             break;
-            //            case BKT_GD_T: // Gradient Descent with Transfer
-            //                hmm s= new HMMProblemKT(&param);
-            //                break;
     }
     // read model body
     hmm->readModelBody(fid, &param_model, &line_no, overwrite);
   	fclose(fid);
 	free(line);
-//    hmm->readModel(model_file, false /* read and upload but not overwrite*/);
     
 	if(param.quiet == 0)
         printf("input read, nO=%d, nG=%d, nK=%d, nI=%d\n",param.nO, param.nG, param.nK, param.nI);
 	
 	clock_t tm = clock();
-    if(param.metrics>0 || param.predictions>0) {
+//    if(param.metrics>0 || param.predictions>0) {
         metrics = Calloc(NUMBER, (size_t)7);// LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
-    }
+//    }
     hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*only unlabelled*/);
 //    predict(predict_file, hmm);
 	if(param.quiet == 0)
 		printf("predicting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
-    // THERE IS NO METRICS, WE PREDICT UNKNOWN, however, if we force prediction of all we do
-    if( param.predictions>0 ) {
-        printf("predicted model LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]);
-    }
+    //if( param.predictions>0 ) {
+        printf("trained model LL=%15.7f (%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",
+               metrics[0], metrics[1], // ll's
+               2*hmm->getNparams() + 2*metrics[0], hmm->getNparams()*safelog(param.N) + 2*metrics[0],
+               metrics[2], metrics[3], // rmse's
+               metrics[4], metrics[5]); // acc's
+    //}
     free(metrics);
     
 	destroy_input_data(&param);
@@ -171,14 +167,6 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 					exit_with_help();
 				}
 				break;
-//			case 'n':
-//				param.nS = (NPAR)atoi(argv[i]);
-//				if(param.nS<2) {
-//					fprintf(stderr,"ERROR! Number of hidden states should be at least 2\n");
-//					exit_with_help();
-//				}
-//				//fprintf(stdout, "fit single skill=%d\n",param.quiet);
-//				break;
             case  'd':
 				param.multiskill = argv[i][0]; // just grab first character (later, maybe several)
                 break;
@@ -215,10 +203,14 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 	}
 	else {
 		strcpy(model_file_name,argv[i++]); // copy and advance
-		if(i>=argc) // no prediction file name specified
-			strcpy(predict_file_name,"predict_hmm.txt"); // the predict file too
-		else
+		if(i>=argc) {// no prediction file name specified
+			//strcpy(predict_file_name,"predict_hmm.txt"); // the predict file too
+            param.predictions = 0;
+        }
+		else {
+            param.predictions = 1;
 			strcpy(predict_file_name,argv[i]);
+        }
 	}
 }
 
@@ -310,16 +302,16 @@ void predict(const char *predict_file, HMMProblem *hmm) {
 	NDAT predict_idx = 0;
 
 	for(t=0; t<param.N; t++) {
-        o = param.dat_obs->get(t);
+        o = param.dat_obs[t];
         if(param.multiskill==0) {
-            k = param.dat_skill->get(t);
+            k = param.dat_skill[t];
             ar = &k;
             n = 1;
         } else {
             ar = &param.dat_multiskill->get(t)[1];
             n = param.dat_multiskill->get(t)[0];
         }
-        g = param.dat_group->get(t);
+        g = param.dat_group[t];
         dt.g = g;
 
 		// produce prediction and copy to result
@@ -342,7 +334,7 @@ void predict(const char *predict_file, HMMProblem *hmm) {
             if(o>-1) { // known observations
                 // update p(L)
                 pLe_denom = 0.0;
-                // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
+                // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o));
                 for(i=0; i<param.nS; i++) pLe_denom += group_skill_map[g][k][i] * hmm->getB(&dt,i,o);
                 for(i=0; i<param.nS; i++) pLe[i] = group_skill_map[g][k][i] * hmm->getB(&dt,i,o) / safe0num(pLe_denom);
                 // 2. L = (pLe'*A)';

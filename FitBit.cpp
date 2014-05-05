@@ -256,26 +256,26 @@ void FitBit::get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &
 }
 
 void FitBit::copy(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
-    NUMBER *soursePI;
-    NUMBER **sourseA;
-    NUMBER **sourseB;
+    NUMBER *soursePI = NULL;
+    NUMBER **sourseA = NULL;
+    NUMBER **sourseB = NULL;
     get(sourse_fbs, soursePI, sourseA, sourseB);
-    NUMBER *targetPI;
-    NUMBER **targetA;
-    NUMBER **targetB;
+    NUMBER *targetPI = NULL;
+    NUMBER **targetA = NULL;
+    NUMBER **targetB = NULL;
     get(target_fbs, targetPI, targetA, targetB);
     
     copy(soursePI, sourseA, sourseB, targetPI, targetA, targetB);
 }
 
 void FitBit::add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
-    NUMBER *soursePI;
-    NUMBER **sourseA;
-    NUMBER **sourseB;
+    NUMBER *soursePI = NULL;
+    NUMBER **sourseA = NULL;
+    NUMBER **sourseB = NULL;
     get(sourse_fbs, soursePI, sourseA, sourseB);
-    NUMBER *targetPI;
-    NUMBER **targetA;
-    NUMBER **targetB;
+    NUMBER *targetPI = NULL;
+    NUMBER **targetA = NULL;
+    NUMBER **targetB = NULL;
     get(target_fbs, targetPI, targetA, targetB);
     
     add(soursePI, sourseA, sourseB, targetPI, targetA, targetB);
@@ -298,9 +298,9 @@ bool FitBit::checkConvergence() {
 
 void FitBit::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
     // fbs - gradient or direction
-    NUMBER *a_PI;
-    NUMBER **a_A;
-    NUMBER **a_B;
+    NUMBER *a_PI = NULL;
+    NUMBER **a_A = NULL;
+    NUMBER **a_B = NULL;
     get(fbs, a_PI, a_A, a_B);
 	if(this->pi != NULL) doLog10Scale1DGentle(a_PI, this->pi, this->nS);
 	if(this->A  != NULL) doLog10Scale2DGentle(a_A,  this->A,  this->nS, this->nS);

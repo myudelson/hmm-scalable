@@ -145,7 +145,7 @@ void HMMProblemPiGKww::setGradPI(FitBit *fb){
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
-        o = this->p->dat_obs->get( dt->ix[t] );
+        o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
     
 //    // a logit(k) + b logit(u)
 //    if(kg_flag == 0) { // k
@@ -191,13 +191,13 @@ void HMMProblemPiGKww::setGradWW(FitBit *fb){
     if(this->p->block_fitting[0]>0) return;
     NDAT t = 0;
     NPAR i, o;
-    NUMBER combined, deriv_logit0, deriv_logit1, deriv_logit2;
+    NUMBER combined, deriv_logit0, deriv_logit1/*, deriv_logit2*/;
     //    o = dt->obs[t];
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
-        o = this->p->dat_obs->get( dt->ix[t] );
+        o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
         for(i=0; i<fb->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->pi[k][i]) + logit(this->PIg[g][i]) );
             
@@ -210,7 +210,7 @@ void HMMProblemPiGKww::setGradWW(FitBit *fb){
             // logit1(a) logit(k) + logit1(b) logit(u)
             deriv_logit0 = 1/ safe0num( this->ww[0] * (1-this->ww[0]) );
             deriv_logit1 = 1/ safe0num( this->ww[1] * (1-this->ww[1]) );
-            deriv_logit2 = 1/ safe0num( -0.25 + this->ww[2] * this->ww[2] );
+//            deriv_logit2 = 1/ safe0num( -0.25 + this->ww[2] * this->ww[2] );
             fb->gradPI[0] -= combined * (1-combined) * deriv_logit0 * logit( this->pi [ dt->k ][i] ) * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
             fb->gradPI[1] -= combined * (1-combined) * deriv_logit1 * logit( this->PIg[ dt->g ][i] ) * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
 //            fb->gradPI[2] -= combined * (1-combined) * deriv_logit2 * 1                              * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);

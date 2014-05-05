@@ -10,11 +10,8 @@
 #include "FitBit.h"
 #include "StripedArray.h"
 
-// *BOOST* tagged lines, use boost library for sparce skill-student map
-// *UNBOOST* tagged lines use dense matrix implementation
-// it is possible to switch versions by changing //*TAG* for /*TAG*/
-//*BOOST* #include <boost/numeric/ublas/matrix_sparse.hpp>
-//*BOOST* #include <boost/numeric/ublas/io.hpp>
+//#include <boost/numeric/ublas/matrix_sparse.hpp>//BOOST
+//#include <boost/numeric/ublas/io.hpp>//BOOST
 
 #ifndef _HMMPROBLEM_H
 #define _HMMPROBLEM_H
@@ -55,7 +52,7 @@ public:
     // predicting
     virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
 //*BOOST*     virtual void producePCorrect(boost::numeric::ublas::mapped_matrix<NUMBER*> *group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
-    void predict(NUMBER* metrics, const char *filename, StripedArray<NPAR> *dat_obs, StripedArray<NCAT> *dat_group, StripedArray<NCAT> *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled);
+    void predict(NUMBER* metrics, const char *filename, /*StripedArray<NPAR>*/ NPAR* dat_obs, /*StripedArray<NCAT>*/ NCAT *dat_group, /*StripedArray<NCAT>*/ NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled);
     void readModel(const char *filename, bool overwrite);
     virtual void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);
     virtual void reorderSequences(NDAT *newnK, NDAT *newnG, bool sort); /*place larger skill and group sequences closer to the beginning*/
@@ -88,13 +85,11 @@ protected:
 	virtual void init(struct param *param); // non-fit specific initialization
 	virtual void destroy(); // non-fit specific descruction
 	void initAlpha(NCAT xndat, struct data** x_data); // generic
-	void initXi(NCAT xndat, struct data** x_data); // generic
-	void initGamma(NCAT xndat, struct data** x_data); // generic
+	void initXiGamma(NCAT xndat, struct data** x_data); // generic
 	void initBeta(NCAT xndat, struct data** x_data); // generic
 	NDAT computeAlphaAndPOParam(NCAT xndat, struct data** x_data);
 	void computeBeta(NCAT xndat, struct data** x_data);
-	void computeGamma(NCAT xndat, struct data** x_data);
-	void computeXi(NCAT xndat, struct data** x_data);
+	void computeXiGamma(NCAT xndat, struct data** x_data);
     void FitNullSkill(NUMBER* loglik_rmse, bool keep_SE); // get loglik and RMSE
     // helpers
     void init3Params(NUMBER* &pi, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO);

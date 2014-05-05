@@ -16,6 +16,8 @@
 #include "StripedArray.h"
 #include <time.h>
 
+//#include <omp.h> //PAR
+
 using namespace std;
 
 #ifndef _UTILS_H
@@ -32,7 +34,7 @@ using namespace std;
 
 #define NPAR_MAX SCHAR_MAX
 #define NCAT_MAX INT_MAX
-#define NDAT_MAX UINT_MAX
+#define NDAT_MAX INT_MAX
 
 //http://stackoverflow.com/questions/2053843/min-and-max-value-of-data-type-in-c
 
@@ -103,13 +105,12 @@ struct data {
     //	NPAR *obs; // onservations array - will become the pointer array to the big data
     NDAT *ix; // these are 'ndat' indices to the through arrays (e.g. param.dat_obs and param.dat_item)
 	NUMBER *c; // nS  - scaling factor vector
-	NUMBER C_T; // C sub T - product of scaling factors
     int *time;
 	NUMBER **alpha; // ndat x nS
 	NUMBER **beta;  // ndat x nS
 	NUMBER **gamma; // ndat x nS
 	NUMBER ***xi; // ndat x nS x nS
-	NUMBER p_O_param; // ndat
+	NUMBER p_O_param; // 
     NUMBER loglik; // loglikelihood
 	NCAT k,g; // pointers to skill (k) and group (g)
 };
@@ -123,6 +124,7 @@ struct param {
 	NUMBER *param_lo;
 	NUMBER *param_hi;
 	NUMBER tol;  // tolerance of termination criterion (0.0001 by default)
+    NPAR scaled;
     NPAR time; // 1-read time data from 5th column as milliseconds since epoch (0-default)
 	int maxiter; // maximum iterations (200 by default)
 	NPAR quiet;   // quiet mode (no outputs)
@@ -140,12 +142,12 @@ struct param {
 	NPAR cv_strat; // cross-validation stratification
 	NPAR cv_target_obs; // cross-validation target observation to validate prediction of
     // data
-    StripedArray<NPAR> *dat_obs;
-    StripedArray<NCAT> *dat_group;
-    StripedArray<NCAT> *dat_skill;
-    StripedArray<NCAT> *dat_item;
+    NPAR* dat_obs;
+    NCAT* dat_group;
+    NCAT *dat_skill;
+    NCAT *dat_item;
     StripedArray< NCAT* > *dat_multiskill;
-    StripedArray<int> *dat_time;
+    int *dat_time;
 	// derived from data
     NDAT   N;       // number of ALL data rows
 	NPAR  nS;		// number of states

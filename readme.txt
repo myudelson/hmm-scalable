@@ -9,23 +9,51 @@ under BSD-new (3-clause BSD) license.
 = Bayesian Knowledge Tracing =
 
 BKT is a user modeling approach in wide use in the area of Intelligent Tutoring
-Systems. The goal of BKT is to infer whether student has mastered a skill or not
-from a pattern of successful or unsuccessful attempts to apply the skill. It is
-a special case of Hidden Markov Model (HMM). In BKT there are two types of
+Systems. The goal of BKT is to infer whether the student has mastered a skill or
+not from a pattern of successful or unsuccessful attempts to apply the skill. It
+is a special case of Hidden Markov Model (HMM). In BKT there are two types of
 nodes: binary state nodes capture skill mastery (mastered or not) and binary
 observation nodes (correct or incorrect application of a skill).
 
 For each skill BKT has four parameters.
 
 1) pInit or pLo - is a probability the skill was known a priori,
-2) pLearn or pT - is a probability the skill with transition into "mastered"
+2) pLearn or pT - is a probability the skill will transition into "mastered"
     state upon practice attempt,
-3) pSlip or PS - is a probability that a known skill is applied incorrectly, and
+3) pSlip or pS - is a probability that a known skill is applied incorrectly, and
 4) pGuess or pG - is a probability that unknown skill will be applied correctly.
 
 There is no forgetting in BKT and it's pForget or pF is set to zero. In
 addition, there is a pKnown or pL parameter, which is a running estimate of the
 skill mastery.
+
+Parameters of the BKT can be represented in the matrix form. Priors -- \pi --
+are a vector 1*N, where N is the number of states. Traditionally, for a 2-state
+BKT, we assume that the first element of the \pi vector is the apriory
+probability of knowing the skill. pLearn is part of the transitions matrix A
+that captures probabilities of state chages from row to column and is N*N. No
+forgetting is captured by setting A[1,2] = 0 (from mastered to unmastered).
+pLearn corresponds to A[2,1] - from unmastered to mastered. pGuess and pSlip are
+specified in B -- observation matrix N*M, where M is the number of observations.
+First column corresponds to correct observation, second -- incorrect. For two
+onservations, typical for BKT, pGuess is B[2,1] -- mastered skill but a correct
+response, and pSlip is B[1,2] - mastered skill but incorrect response.
+
+\pi .-------------------.
+    |   pLo   | 1 - pLo |
+    .-------------------.
+
+A   .-------------------.
+    |    1    |    0    |
+    |-------------------|
+    |    pT   | 1 - pT  |
+    .-------------------.
+    
+B   .-------------------.
+    | 1 - pS  |    pS   |
+    |-------------------|
+    |    pG   | 1 - pG  |
+    .-------------------.
 
 For more details on BKT refer to [1]. [2], among other things, discusses how
 a gradient-based fitting of HMM can be implemented. [3, 4] covers additional
@@ -42,10 +70,10 @@ available and be sure to install 'make' command with cygwin.
 Input file data format is quite simple. Four tab separated columns: observation,
 student, problem/problem step, skill(s). Observation is a 1-started integer. For
 the two-state BKT, we advise to use 1 for 'correct' and 2 for 'incorrect'.
-Student is a string label, so as problem or problem step, whatever granularity
+Student is a string label, so is problem or problem step, whatever granularity
 you prefer. Skill is a string label. Multiple skill labels should be delimited
 by a character of your choice (do not use tab). An example of few lines of input
-is below.
+is below where tilde symbol '~' is used as delimiter.
 
 -- input file --
 2   student_001 unit1-secion1-problem5-step1  addition~multiplication
@@ -58,27 +86,52 @@ In test data, the utility will use known observations for training and will
 produce predictions for missing observations that should have '.' (dot) instead
 of observation code (1, 2, or otherwise).
 
-Output data consists of model predictions for each row of the input file.
-Depending on the output option (see parameter specifications below), you can
-print out probability distribution for student's response (probability of
-correct and probability of incorrect, if the observation node is binarye) and,
-additionally, print out probability distributions of the mastery states for all
-skills specified for the data point. The probability values are tab separated.
-See example of a simple output file below.
+Output files are the model and the predictions file. Model file contains
+general information about the data, e.g., number of observations, number of
+skills and number of problems/problem steps; as well as the model parameters.
 
--- output file --
+Prediction file consists of model predictions for each row of the input file.
+Depending on the option (see parameter specifications below), you can print out
+probability distribution for student's response (probability of correct and
+probability of incorrect, if the observation node is binarye) and, additionally,
+print out probability distributions over the values of the hidden state for all
+skills specified for the data point. The probability values are tab separated.
+See examples of a outputs file below.
+
+-- model file --
+SolverId	1.1
+nK	1
+nG	1
+nS	2
+nO	2
+Null skill ratios	  1.0000000	  0.0000000
+0	multiplication-skill
+PI	0.50000000	0.50000000
+A	1.00000000  0.00000000	0.40000000	0.60000000
+B	0.80000000	0.20000000	0.20000000	0.80000000
+-- model file --
+
+In the model file example above, we see a specification of the solver algorithm
+(to be discussed below), one skill (nK=1), one student in the data (nG=1), two
+hidden states and 2 observations (nS and nO respectively). Skill numbering is
+zero started. Skill name is "multiplication-skill". Rows prefixed with PI, A,
+and B correspond to priors, transition, and observation matrices written row by
+row. Thus, first element of PI is pLo, 3rd element of A is pT, 2nd and 3rd
+elements of B are pS and pG respectively.
+
+-- prediction file --
 0.73    0.27
 0.88    0.12
 0.94    0.06
 0.99    0.01
--- output file --
+-- prediction file --
 
 
 = Training BKT models =
 
 trainhmm utility has the following launch signature:
 
-trainhmm [options] input_file [[output_file] predicted_response_file]
+trainhmm [options] input_file [[model_file] prediction_file]
 options:
 -s : structure.solver[.solver setting], structures: 1-by skill, 2-by user;
      solvers: 1-Baum-Welch, 2-Gradient Descent, 3-Conjugate Gradient Descent;
@@ -87,13 +140,16 @@ options:
      For example '-s 1.3.1' would be by skill structure (classical) with
      Conjugate Gradient Descent and Hestenes-Stiefel formula, '-s 2.1' would be
      by student structure fit using Baum-Welch method.
--t : tolerance of termination criterion (0.01 default)
--i : maximum iterations (200 by default)
+-S : perform scaling of forward/backward variables: 0 - off (default), 1 - on.
+     Only allowed for Baum-Welch solver ('-s 1.1' setting), otherwise auto-set
+     to off.
+-e : tolerance of termination criterion (0.01 default)
+-i : maximum number of iterations (200 by default)
 -q : quiet mode, without output, 0-no (default), or 1-yes
 -n : number of hidden states, should be 2 or more (default 2)
 -0 : initial parameters comma-separated for priors, transition, and emission
      probabilities skipping the last value from each vector (matrix row) since
-     they sum up to 1; default 0.5,1.0,0.4,0.8,0.2
+     they should sum up to 1; default 0.5,1.0,0.4,0.8,0.2
 -l : lower boundaries for parameters, comma-separated for priors, transition,
      and emission probabilities (without skips); default 0,0,1,0,0,0,0,0,0,0
 -u : upper boundaries for params, comma-separated for priors, transition,
@@ -104,16 +160,22 @@ options:
 -m : report model fitting metrics (AIC, BIC, RMSE) 0-no (default), 1-yes. To 
      specify observation for which metrics to be reported, list it after ','.
      For example '-m 0', '-m 1' (by default, observation 1 is assumed), '-m 1,2'
-     (compute metrics for observation 2). Incompatible with-v option.
--v : cross-validation folds and target state to validate against, perform
-     subject-stratified cross-validation, default 0 (no cross-validation),
-     examples '-v 5,2' - 5 fold, predict state 2, '-v 10' - 10-fold predict
-     state 1 by default.
+     (compute metrics for observation 2). Incompatible with '-v' option.
+-v : cross-validation folds, stratification, and target state to validate
+     against, default 0 (no cross-validation),
+     examples '-v 5,i,2' - 5 fold, item-stratified c.-v., predict state 2,
+     '-v 10' - 10-fold subject-stratified c.-v. predict state 1 by default,
+     alternatively '-v 10,g,1', and finally '-v 5,n,2,' - 5-fold unstratified
+     c.-v. predicting state 1.
 -p : report model predictions on the train set 0-no (default), 1-yes; 2-yes,
      plus output state probability; works with -v and -m parameters.
 -d : delimiter for multiple skills per observation; 0-single skill per
      observation (default), otherwise -- delimiter character, e.g. '-d ~'.
--b : treat input file as binary input file (specifications TBA).
+-b : treat input file as binary input file created from text file by
+     inputconvert utility.
+-B : block re-estimation of prior, transitions, or emissions parameters
+     respectively (defailt is '-B 0,0,0'), to block re-estimation of transition
+     probabilities specify '-B 0,1,0'.
 
 
 = Using models for prediction =
@@ -129,7 +191,8 @@ options:
      (compute metrics for observation 2). Incompatible with-v option.
 -d : delimiter for multiple skills per observation; 0-single skill per
      observation (default), otherwise -- delimiter character, e.g. '-d ~'.
--b : treat input file as binary input file (specifications TBA).
+-b : treat input file as binary input file  created from text file by
+     inputconvert utility.
 
 = Examples =
 

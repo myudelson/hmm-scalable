@@ -12,17 +12,12 @@
 		<key>inputconvert.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>5</integer>
+			<integer>3</integer>
 		</dict>
 		<key>predicthmm.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>2</integer>
-		</dict>
-		<key>sselog.xcscheme</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>3</integer>
 		</dict>
 		<key>trainhmm.xcscheme</key>
 		<dict>
@@ -38,6 +33,11 @@
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
 		<key>71A39CA8179DB04F000F9610</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>71A6DFBC190DBEB800E699E4</key>
 		<dict>
 			<key>primary</key>
 			<true/>

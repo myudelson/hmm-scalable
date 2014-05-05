@@ -1,5 +1,7 @@
-CXX ?= $(CXX) $(CFLAGS)
-CFLAGS = -Wall -Wconversion -O3 -fPIC# -I boost
+CC=g++#PAR
+CXX=g++ #PAR
+#CXX ?= $(CXX) $(CFLAGS) #SEQ
+CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp # -I boost
 SHVER = 1
 OS = $(shell uname)
 

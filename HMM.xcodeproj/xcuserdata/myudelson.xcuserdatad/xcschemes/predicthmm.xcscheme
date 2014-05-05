@@ -61,11 +61,11 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "-p"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "1"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-d"
@@ -77,11 +77,11 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-b"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "1"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "toy_data_test.txt"
@@ -121,6 +121,10 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx12_hmm208_uskts_multi.bin"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "cgowwardallmm_1_1t.txt"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -149,6 +153,10 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx12_usktsCLI_model_shrt.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "cgowwardallmm_1_1f_model.txt"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -161,7 +169,11 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx_predictP.txt"
-            isEnabled = "YES">
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "cgowwardallmm_1_1f_predict.txt"
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "uopx_predict208_uskts_multi1.2pLoLLfx.txt"

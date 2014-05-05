@@ -64,7 +64,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "1.2"
+            argument = "1.1"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -77,14 +77,18 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-p"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "1"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-0"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "0.51316,0.47468,0.51656,0.03735,0.03408,0.03455,0.03828,0.03782,0.03922,0.03688,0.03408,0.03875,0.04062,0.03735,0.03968,0.03548,0.03735,0.04062,0.03595,0.03641,0.03408,0.04062,0.03548,0.03922,0.04062,0.03455,0.03595,0.03408,0.03408,0.03909,0.03537,0.03537,0.03909,0.03583,0.0363,0.04048,0.03537,0.03816,0.03909,0.0349,0.03723,0.03537,0.03909,0.03397,0.03397,0.03816,0.03676,0.04048,0.03443,0.03537,0.03955,0.03816,0.03723,0.03769,0.03955"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
@@ -121,6 +125,10 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "0.01"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "0.000000001"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
@@ -180,6 +188,22 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "-l"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-u"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "a89_kts_train.txt"
             isEnabled = "NO">
          </CommandLineArgument>
@@ -228,8 +252,20 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "student_step_originalKC_geometry.txt"
+            argument = "SSSS_76_471.txt"
             isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "cgowwardallmm_1_1f.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "student_step_originalKC_geometry.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "/Users/myudelson/Downloads/A01_05_t50k_hmm.txt"
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "monet208/monet208_hmm_uskts.bin"
@@ -293,6 +329,10 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "cli10_model_usktsSuburb_1.2.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "cgowwardallmm_1_1f_model.txt"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
