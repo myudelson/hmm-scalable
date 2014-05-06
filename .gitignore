@@ -2,5 +2,6 @@
 *.xcuserstate
 *.dylib
 *.a
+omp_test.c
 
 boost/lib/*
