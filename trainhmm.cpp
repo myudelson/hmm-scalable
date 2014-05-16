@@ -402,7 +402,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 					exit_with_help();
                 }
                 if( param.solver != METHOD_BW  && param.solver != METHOD_GD &&
-                   param.solver != METHOD_CGD ) {
+                   param.solver != METHOD_CGD && param.solver != METHOD_GDL) {
                     fprintf(stderr, "Method specified (%d) is out of range of allowed values\n",param.solver);
 					exit_with_help();
                 }

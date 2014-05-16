@@ -66,7 +66,8 @@ const NUMBER pi = 3.141592653589793;
 enum METHOD {
     METHOD_BW   = 1,  // 1 - Baum Welch (expectation maximization)
     METHOD_GD   = 2,  // 2 - Gradient Descent
-    METHOD_CGD  = 3   // 3 - Conjugate Gradient Descent
+    METHOD_CGD  = 3,  // 3 - Conjugate Gradient Descent
+    METHOD_GDL  = 4   // 4 - Gradient Descent with Lagrange step
 };
 
 enum CROSS_VALIDATION {

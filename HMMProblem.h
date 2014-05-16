@@ -100,6 +100,7 @@ protected:
     // predicting
 	virtual NDAT computeGradients(FitBit *fb);
     virtual NUMBER doLinearStep(FitBit *fb);
+    virtual void doLagrangeStep(FitBit *fb);
     NUMBER doConjugateLinearStep(FitBit *fb);
     FitResult GradientDescentBit(FitBit *fbs); // for 1 skill or 1 group, all 1 skill for all data
 	// predicting big
@@ -117,7 +118,7 @@ protected:
 private:
     // fitting methods (hidden)
     NUMBER BaumWelchSkill();
-    void doBaumWelchStep(NCAT xndat, struct data** x_data, FitBit *fb);
+    void doBaumWelchStep(FitBit *fb);
     // write model
 	void toFileSkill(const char *filename);
 	void toFileGroup(const char *filename);
