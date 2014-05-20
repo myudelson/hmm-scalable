@@ -102,7 +102,9 @@ protected:
     virtual NUMBER doLinearStep(FitBit *fb);
     virtual void doLagrangeStep(FitBit *fb);
     NUMBER doConjugateLinearStep(FitBit *fb);
-    FitResult GradientDescentBit(FitBit *fbs); // for 1 skill or 1 group, all 1 skill for all data
+    void doBaumWelchStep(FitBit *fb);
+    FitResult GradientDescentBit(FitBit *fb); // for 1 skill or 1 group, all 1 skill for all data
+    FitResult BaumWelchBit(FitBit *fb);
 	// predicting big
     virtual NDAT computeGradientsBig(FitBit **fbs, NCAT nfbs);// global, for all
     NUMBER doLinearStepBig(FitBit **fbs, NCAT nfbs); //
@@ -113,12 +115,10 @@ protected:
     
     NUMBER doBarzalaiBorweinStep(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1);
     virtual NUMBER GradientDescent(); // return -LL for the model
+    NUMBER BaumWelch(); // return -LL for the model
     void readNullObsRatio(FILE *fid, struct param* param, NDAT *line_no);
 	bool checkPIABConstraints(NUMBER* a_PI, NUMBER** a_A, NUMBER** a_B); // all constraints, inc row sums
 private:
-    // fitting methods (hidden)
-    NUMBER BaumWelchSkill();
-    void doBaumWelchStep(FitBit *fb);
     // write model
 	void toFileSkill(const char *filename);
 	void toFileGroup(const char *filename);

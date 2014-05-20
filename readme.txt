@@ -225,18 +225,14 @@ Algebra I set that has about 9 million transactions of over 3300 students. The
 training file should be trimmed to the tool's format. See shell commands below
 that do that.
 
-sh> gawk '-F\t' 'BEGIN{OFS=""} {print ".","\t",$2,"\t",$3,"__",$4,"\t",tolower($20)}' algebra_2008_2009_train.txt > tmp1.txt
-sh> sed 1d tmp1.txt
-sh> rm tmp1.txt
-sh> awk '-F\t' 'BEGIN{OFS=""} {print $1,"\t",$2,"\t",$3,"\t",((length($4)==0)?".":$4)}' tmp2.txt > a89_kts_train.txt
-sh> rm tmp2.txt
+sh> gawk '-F\t' 'BEGIN{OFS=""} {skill=tolower($20); sub(/~~/, "~", skill); skill=(skill=="")?".":skill; print 2-$14,"\t",$2,"\t",$3,"__",$4,"\t",skill}' algebra_2008_2009_train.txt > a89_kts_train.txt
 
 To fit a BKT model of this dataset using gradient descent method as well as to 
 compute fit metrics and the prediction run the following command:
 
-sh> ./trainhmm -s 1.2 -m 1 -p 1 a89_kts_train.txt model.txt predict.txt
+sh> ./trainhmm -s 1.2 -d ~ -m 1 -p 1 a89_kts_train.txt model.txt predict.txt
 
-Depending on your hardware, the model should be fit in approximately 2 minutes.
+Depending on your hardware, the model should be fit in about 1-2 minutes.
 
 = References =
 

@@ -90,8 +90,8 @@ int main (int argc, char ** argv) {
 //    
 ////    int c = (unsigned long)ceil((double)34600/20000);
     
-	clock_t tm0 = clock(); //SEQ
-//    double _tm0 = omp_get_wtime(); //PAR
+////	clock_t tm0 = clock(); //SEQ
+    double _tm0 = omp_get_wtime(); //PAR
     
 	char input_file[1024];
 	char output_file[1024];
@@ -152,8 +152,8 @@ int main (int argc, char ** argv) {
     // erase blocking labels
     zeroLabels(&param);
 
-    clock_t tm; //SEQ
-//    double _tm;//PAR
+////    clock_t tm; //SEQ
+    double _tm;//PAR
     
     if(param.cv_folds==0) { // not cross-validation
         // create problem
@@ -189,14 +189,14 @@ int main (int argc, char ** argv) {
                 //                hmm = new HMMProblemKT(&param);
                 //                break;
         }
-        clock_t tm = clock(); //SEQ
-//        _tm = omp_get_wtime(); //PAR
+////        clock_t tm = clock(); //SEQ
+        _tm = omp_get_wtime(); //PAR
         
         hmm->fit();
         
 //        if(param.quiet == 0)
-        printf("fitting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC); //SEQ
-//        printf("fitting is done in %lf seconds\n",omp_get_wtime()-_tm); //PAR
+////        printf("fitting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC); //SEQ
+        printf("fitting is done in %lf seconds\n",omp_get_wtime()-_tm); //PAR
         
         // write model
         hmm->toFile(output_file);
@@ -237,8 +237,8 @@ int main (int argc, char ** argv) {
         
         delete hmm;
     } else { // cross-validation
-        tm = clock(); //SEQ
-//        _tm = omp_get_wtime(); //PAR
+////        tm = clock(); //SEQ
+        _tm = omp_get_wtime(); //PAR
         NUMBER* metrics = Calloc(NUMBER, (size_t)7); // AIC, BIC, RMSE, RMSE no null
         switch (param.cv_strat) {
             case CV_GROUP:
@@ -255,16 +255,16 @@ int main (int argc, char ** argv) {
                 break;
         }
 //        if(!param.quiet)
-        printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f) computed in %8.6f seconds\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], (NUMBER)(clock()-tm)/CLOCKS_PER_SEC); //SEQ
-//        printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f) computed in %lf seconds\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], omp_get_wtime()-_tm); //PAR
+////        printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f) computed in %8.6f seconds\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], (NUMBER)(clock()-tm)/CLOCKS_PER_SEC); //SEQ
+        printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f) computed in %lf seconds\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], omp_get_wtime()-_tm); //PAR
         free(metrics);
     }
 	// free data
 	destroy_input_data(&param);
 	
 //	if(param.quiet == 0)
-    printf("overall time running is %8.6f seconds\n",(NUMBER)(clock()-tm0)/CLOCKS_PER_SEC); //SEQ
-//    printf("overall time running is %lf seconds\n",omp_get_wtime()-_tm0); //PAR
+////    printf("overall time running is %8.6f seconds\n",(NUMBER)(clock()-tm0)/CLOCKS_PER_SEC); //SEQ
+    printf("overall time running is %lf seconds\n",omp_get_wtime()-_tm0); //PAR
     return 0;
 }
 

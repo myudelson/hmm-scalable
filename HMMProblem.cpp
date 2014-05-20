@@ -594,7 +594,6 @@ NDAT HMMProblem::computeGradients(FitBit *fb){
     fb->toZero(FBS_GRAD);
     
     NDAT ndat = computeAlphaAndPOParam(fb->xndat, fb->x_data);
-
     computeBeta(fb->xndat, fb->x_data);
 
     if(fb->pi != NULL && this->p->block_fitting[0]==0) setGradPI(fb);
@@ -969,7 +968,7 @@ void HMMProblem::fit() {
     switch(this->p->solver)
     {
         case METHOD_BW: // Conjugate Gradient Descent
-            loglik_rmse[0] += BaumWelchSkill();
+            loglik_rmse[0] += BaumWelch();
             break;
         case METHOD_GD: // Gradient Descent
         case METHOD_CGD: // Conjugate Gradient Descent
@@ -1164,22 +1163,22 @@ NUMBER HMMProblem::GradientDescent() {
         nX = this->p->nG;
     else
         exit(1);
-    FitResult fr;
-    fr.pO = 0;
+    NUMBER loglik;
 
     if(true){
-    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
-    fb->init(FBS_PARm1);
-    fb->init(FBS_GRAD);
-    if(this->p->solver==METHOD_CGD) {
-        fb->init(FBS_GRADm1);
-        fb->init(FBS_DIRm1);
-    }
-	
 	//
 	// fit all as 1 skill first
 	//
 	if(this->p->single_skill>0) {
+        FitResult fr;
+        fr.pO = 0;
+        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);//PAR
+        fb->init(FBS_PARm1);//PAR
+        fb->init(FBS_GRAD);//PAR
+        if(this->p->solver==METHOD_CGD) {//PAR
+            fb->init(FBS_GRADm1);//PAR
+            fb->init(FBS_DIRm1);//PAR
+        }//PAR
         fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save progonal k's
@@ -1196,15 +1195,16 @@ NUMBER HMMProblem::GradientDescent() {
                 cpy3Params(fb->pi, fb->A, fb->B, aPI, aA, aB, this->p->nS, this->p->nO);
             }
         }// force single skill
+        delete fb;//PAR
 	}
 	//
 	// Main fit
 	//
-//    #pragma omp parallel num_threads(3)//PAR
-    {
-//    printf("thread %i|%i\n",omp_get_thread_num(),omp_get_num_threads());//PAR
+    #pragma omp parallel//num_threads(2)//PAR
+    {//PAR
+    printf("thread %i|%i\n",omp_get_thread_num(),omp_get_num_threads());//PAR
     if(this->p->single_skill!=2){
-//        #pragma omp for //schedule(dynamic) //PAR
+        #pragma omp for schedule(dynamic) //PAR
         for(x=0; x<nX; x++) { // if not "force single skill" too
             NCAT xndat;
             struct data** x_data;
@@ -1218,16 +1218,30 @@ NUMBER HMMProblem::GradientDescent() {
                 xndat = 0;
                 x_data = NULL;
             }
+            FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+            FitResult fr;
+            fb->init(FBS_PARm1);
+            fb->init(FBS_GRAD);
+            if(this->p->solver==METHOD_CGD) {
+                fb->init(FBS_GRADm1);
+                fb->init(FBS_DIRm1);
+            }
             fb->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);// link skill 0 (we'll copy fit parameters to others
             fr = GradientDescentBit(fb);
-            if( !this->p->quiet )
-                printf("skill %4d, seq %4d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", x, xndat, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
+            delete fb;
+            
+            if( ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
+                #pragma omp critical(dataupdate) //PAR
+                { //PAR
+                    loglik += fr.pO*(fr.pO>0);
+                } //PAR
+                if(!this->p->quiet)
+                    printf("skill %4d, seq %4d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", x, xndat, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
+            }
         } // for all skills
     }// if not force single skill
-    }
-    
-    // if we fit one skill for all
-    delete fb; // that takes care of *m1, and *GRAD
+    }//#omp //PAR
+        
     }
     
     if(false){
@@ -1254,16 +1268,16 @@ NUMBER HMMProblem::GradientDescent() {
             fbs[x]->init(FBS_DIRm1);
         }
     }
-    fr=GradientDescentBitBig(fbs, nX);
+    /*FitResult fr=*/GradientDescentBitBig(fbs, nX);
     
     for(x=0;x<nX;x++) delete fbs[x];
     if(fbs!=NULL) free(fbs);
     }
     
-    return fr.pO;
+    return loglik;
 }
 
-NUMBER HMMProblem::BaumWelchSkill() {
+NUMBER HMMProblem::BaumWelch() {
 	NCAT k;
     NUMBER loglik = 0;
 	
@@ -1320,54 +1334,64 @@ NUMBER HMMProblem::BaumWelchSkill() {
 	// Main fit
 	//
     
-    //    #pragma omp parallel //PAR
-    {
-        //    printf("threads %i\n",omp_get_thread_num()); //PAR
-        //    #pragma omp for schedule(dynamic) //PAR
+    #pragma omp parallel //PAR
+    {//PAR
+        printf("threads %i\n",omp_get_thread_num()); //PAR
+        #pragma omp for schedule(dynamic) //PAR
         for(k=0; k<this->p->nK; k++) {  // for(k=218; k<219; k++) { //
             FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
             fb->init(FBS_PARm1);
-            
-            int conv = 0; // converged
-            int iter = 1; // iteration count
-            NUMBER pO0 = 0.0, pO = 0.0;
-            
             fb->link(this->getPI(k), this->getA(k), this->getB(k), this->p->k_numg[k], this->p->k_g_data[k]);
-            
-            while( !conv && iter<=this->p->maxiter ) {
-                if(iter==1) {
-                    computeAlphaAndPOParam(fb->xndat, fb->x_data);
-                    pO0 = HMMProblem::getSumLogPOPara(fb->xndat, fb->x_data);
-                }
-                
-                // copy old SAVED! values for params
-                fb->copy(FBS_PAR, FBS_PARm1);
-                
-                //			hmm->zeroLabelsK(k); // reset blocking labels // THIS IS NOT DONE HERE
-                doBaumWelchStep(fb);// PI, A, B);
-                
-                // check convergence
-                conv = fb->checkConvergence();
-                
-                if( ( /*(!conv && iter<this->p->maxiter) ||*/ (conv || iter==this->p->maxiter) )) {
-                    computeAlphaAndPOParam(fb->xndat, fb->x_data);
-                    pO = HMMProblem::getSumLogPOPara(fb->xndat, fb->x_data);
-                    //                #pragma omp critical(dataupdate) //PAR
-                    //                { //PAR
-                    loglik += pO*(pO>0);
-                    //                } //PAR
-                    if(!this->p->quiet)
-                        printf("skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",k,iter,pO0,pO,conv);
-                }
-                iter ++;
-            } // main solver loop
-            // recycle memory (Alpha, Beta, p_O_param, Xi, Gamma)
-            RecycleFitData(fb->xndat, fb->x_data, this->p);
-            // recycle
+            FitResult fr;
+            fr = BaumWelchBit(fb);
             delete fb;
+            
+            if( ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
+                #pragma omp critical(dataupdate) //PAR
+                { //PAR
+                    loglik += fr.pO*(fr.pO>0);
+                } //PAR
+                if(!this->p->quiet)
+                    printf("skill %4d, seq %4d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", k,  this->p->k_numg[k], fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
+            }
         } // for all skills
-    }
+    }//PAR
     return loglik;
+}
+
+FitResult HMMProblem::BaumWelchBit(FitBit *fb) {
+    FitResult fr;
+    fr.iter = 1;
+    fr.pO0  = 0.0;
+    fr.pO   = 0.0;
+    fr.conv = 0; // converged
+    fr.ndat = 0;
+    NCAT xndat = fb->xndat;
+    struct data **x_data = fb->x_data;
+    
+    while( !fr.conv && fr.iter<=this->p->maxiter ) {
+        fr.ndat = -1; // no accounting so far
+        if(fr.iter==1) {
+            computeAlphaAndPOParam(xndat, x_data);
+            fr.pO0 = HMMProblem::getSumLogPOPara(xndat, x_data);
+        }
+        fb->copy(FBS_PAR, FBS_PARm1);
+        doBaumWelchStep(fb);// PI, A, B);
+        
+        // check convergence
+        fr.conv = fb->checkConvergence();
+        
+        if( fr.conv || fr.iter==this->p->maxiter ) {
+            //computeAlphaAndPOParam(fb->xndat, fb->x_data);
+            fr.pO = HMMProblem::getSumLogPOPara(xndat, x_data);
+        }
+        fr.iter ++;
+    } // main solver loop
+    // recycle memory (Alpha, Beta, p_O_param, Xi, Gamma)
+    RecycleFitData(fb->xndat, fb->x_data, this->p);
+    fr.iter--;
+    return fr;
+    
 }
 
 NUMBER HMMProblem::doLinearStep(FitBit *fb) {
@@ -1412,13 +1436,13 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
                 if(fb->pi != NULL) projectsimplex(fb->pi, nS);
                 for(i=0; i<nS; i++) {
                     if(fb->A  != NULL) projectsimplex(fb->A[i], nS);
-                    if(fb->B  != NULL) projectsimplex(fb->B[i], nO);
+                    if(fb->B  != NULL) projectsimplex(fb->B[i], nS);
                 }
             } else {
                 if(fb->pi != NULL) projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
                 for(i=0; i<nS; i++) {
                     if(fb->A  != NULL) projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
-                    if(fb->B  != NULL) projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nO);
+                    if(fb->B  != NULL) projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
                 }
             }
         }
@@ -1482,13 +1506,13 @@ void HMMProblem::doLagrangeStep(FitBit *fb) {
         projectsimplex(fb->pi, nS);
         for(i=0; i<nS; i++) {
             projectsimplex(fb->A[i], nS);
-            projectsimplex(fb->B[i], nO);
+            projectsimplex(fb->B[i], nS);
         }
     } else {
         projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
         for(i=0; i<nS; i++) {
             projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
-            projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nO);
+            projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
         }
     }
 	free(b_PI);
@@ -1543,14 +1567,14 @@ NUMBER HMMProblem::doLinearStepBig(FitBit **fbs, NCAT nfbs) {
                     if(fbs[q]->pi != NULL) projectsimplex(fbs[q]->pi, fbs[q]->nS);
                     for(i=0; i<fbs[q]->nS; i++) {
                         if(fbs[q]->A  != NULL) projectsimplex(fbs[q]->A[i], fbs[q]->nS);
-                        if(fbs[q]->B  != NULL) projectsimplex(fbs[q]->B[i], fbs[q]->nO);
+                        if(fbs[q]->B  != NULL) projectsimplex(fbs[q]->B[i], fbs[q]->nS);
                     }
                 } else {
                     if(fbs[q]->pi != NULL) projectsimplexbounded(fbs[q]->pi, this->getLbPI(), this->getUbPI(), fbs[q]->nS);
                     
                     for(i=0; i<fbs[q]->nS; i++) {
                         if(fbs[q]->A  != NULL) projectsimplexbounded(fbs[q]->A[i], this->getLbA()[i], this->getUbA()[i], fbs[q]->nS);
-                        if(fbs[q]->B  != NULL) projectsimplexbounded(fbs[q]->B[i], this->getLbB()[i], this->getUbB()[i], fbs[q]->nO);
+                        if(fbs[q]->B  != NULL) projectsimplexbounded(fbs[q]->B[i], this->getLbB()[i], this->getUbB()[i], fbs[q]->nS);
                     }
                 }
             }
@@ -1696,13 +1720,13 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
 			if(fb->pi != NULL) projectsimplex(fb->pi, nS);
 			for(i=0; i<nS; i++) {
 				if(fb->A != NULL) projectsimplex(fb->A[i], nS);
-				if(fb->B != NULL) projectsimplex(fb->B[i], nO);
+				if(fb->B != NULL) projectsimplex(fb->B[i], nS);
 			}
 		} else {
 			if(fb->pi != NULL) projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
 			for(i=0; i<nS; i++) {
 				if(fb->A != NULL) projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
-				if(fb->B != NULL) projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nO);
+				if(fb->B != NULL) projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
 			}
 		}
 		// recompute alpha and p(O|param)
@@ -1992,13 +2016,13 @@ void HMMProblem::doBaumWelchStep(FitBit *fb) {
         projectsimplex(fb->pi, nS);
         for(i=0; i<nS; i++) {
             projectsimplex(fb->A[i], nS);
-            projectsimplex(fb->B[i], nO);
+            projectsimplex(fb->B[i], nS);
         }
     } else {
         projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
         for(i=0; i<nS; i++) {
             projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
-            projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nO);
+            projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
         }
     }
     // free mem

@@ -16,7 +16,7 @@
 #include "StripedArray.h"
 #include <time.h>
 
-//#include <omp.h> //PAR
+#include <omp.h> //PAR
 
 using namespace std;
 

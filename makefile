@@ -1,7 +1,7 @@
-CC=g++#PAR
-CXX=g++ #PAR
-#CXX ?= $(CXX) $(CFLAGS) #SEQ
-CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp # -I boost
+CC=g++ #//PAR
+CXX=g++ #//PAR
+#CXX ?= $(CXX) $(CFLAGS)
+CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp # -I boost # removed -g 
 SHVER = 1
 OS = $(shell uname)
 
@@ -53,7 +53,7 @@ FitBit.o: FitBit.cpp FitBit.h
 	$(CXX) $(CFLAGS) -c -o FitBit.o FitBit.cpp
 
 HMMProblem.o: HMMProblem.cpp HMMProblem.h
-	$(CXX) $(CFLAGS) -c -o 	HMMProblem.o HMMProblem.cpp 
+	$(CXX) $(CFLAGS) -c -o HMMProblem.o HMMProblem.cpp 
 #HMMProblemKT.o: HMMProblemKT.cpp HMMProblemKT.h
 #	$(CXX) $(CFLAGS) -c -o HMMProblemKT.o HMMProblemKT.cpp
 #HMMProblemPiG.o: HMMProblemPiG.cpp HMMProblemPiG.h
