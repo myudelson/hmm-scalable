@@ -2,6 +2,7 @@ HTK - Hidden Markov Model Toolkit (HTK) [for speech recognition/synthesis, handw
 HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literature
 
 == HMM todo ==
+- random runs within eath "fit bit"
 - implement weighting for student / skill pairing (work our gradients and additional fit for \beta's)
 - not just per-student & per-skill effects, but the interaction (work out gradient)
 - change per-student effects to resemble Logistic Regression: student pLo and pT

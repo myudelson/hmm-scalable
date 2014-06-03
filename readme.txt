@@ -176,6 +176,9 @@ options:
 -B : block re-estimation of prior, transitions, or emissions parameters
      respectively (defailt is '-B 0,0,0'), to block re-estimation of transition
      probabilities specify '-B 0,1,0'.
+-P : use parallel processing, defaul - 0 (no parallel processing), 1 - fit
+     separate skills/students separately, 2 - fit separate sequences within
+     skill/student separately.
 
 
 = Using models for prediction =
@@ -226,6 +229,7 @@ training file should be trimmed to the tool's format. See shell commands below
 that do that.
 
 sh> gawk '-F\t' 'BEGIN{OFS=""} {skill=tolower($20); sub(/~~/, "~", skill); skill=(skill=="")?".":skill; print 2-$14,"\t",$2,"\t",$3,"__",$4,"\t",skill}' algebra_2008_2009_train.txt > a89_kts_train.txt
+sh> sed -i '' 1d a89_kts_train.txt
 
 To fit a BKT model of this dataset using gradient descent method as well as to 
 compute fit metrics and the prediction run the following command:

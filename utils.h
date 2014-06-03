@@ -133,6 +133,7 @@ struct param {
 	NPAR structure; // whether to fit by skill, by group, or mixture of them
 	NPAR solver; // whether to first fit all skills as skingle skill, to set a starting point
 	NPAR solver_setting; // to be used by individual solver
+	NPAR parallel;   // parallelization flag
 	NUMBER C;// weight of the L1 norm penalty
 	int metrics;   // compute AIC, BIC, RMSE of training
 	int metrics_target_obs;   // target observation for RMSE of training

@@ -458,6 +458,7 @@ void set_param_defaults(struct param *param) {
 	param->cv_strat = 'g'; // default group(student)-stratified
     param->cv_target_obs = 0; // 1st state to validate agains by default, cv_folds enables cross-validation
     param->multiskill = 0; // single skill per ovservation by default
+    param->parallel = 0; // parallelization flag, no parallelization (0) by default
     // vocabilaries
     param->map_group_fwd = NULL;
     param->map_group_bwd = NULL;
