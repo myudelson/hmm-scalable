@@ -161,12 +161,13 @@ options:
      specify observation for which metrics to be reported, list it after ','.
      For example '-m 0', '-m 1' (by default, observation 1 is assumed), '-m 1,2'
      (compute metrics for observation 2). Incompatible with '-v' option.
--v : cross-validation folds, stratification, and target state to validate
-     against, default 0 (no cross-validation),
+-v : cross-validation folds, stratification, target state to validate
+     against, folds input/output file, default 0 (no cross-validation),
      examples '-v 5,i,2' - 5 fold, item-stratified c.-v., predict state 2,
      '-v 10' - 10-fold subject-stratified c.-v. predict state 1 by default,
-     alternatively '-v 10,g,1', and finally '-v 5,n,2,' - 5-fold unstratified
-     c.-v. predicting state 1.
+     alternatively '-v 10,g,1', '-v 5,n,2,folds.txt,o' - 5-fold unstratified
+     c.-v. predicting state 2, [o]output folds to 'folds.txt', and here 
+     '-v 5,n,2,folds.txt,i', folds are actually read [i]n from the file.
 -p : report model predictions on the train set 0-no (default), 1-yes; 2-yes,
      plus output state probability; works with -v and -m parameters.
 -d : delimiter for multiple skills per observation; 0-single skill per

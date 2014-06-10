@@ -433,10 +433,7 @@ NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
         NDAT t;
         NPAR i, j, o;
 		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
-//        #pragma omp critical(ndat_sum) //PAR
-//        {//PAR
-        ndat += x_data[x]->n;
-//        }//PAR
+        ndat += x_data[x]->n; // reduction'ed
 		for(t=0; t<x_data[x]->n; t++) {
 //			o = x_data[x]->obs[t];
 			o = this->p->dat_obs[ x_data[x]->ix[t] ];//->get( x_data[x]->ix[t] );
@@ -526,7 +523,7 @@ void HMMProblem::computeXiGamma(NCAT xndat, struct data** x_data){
             }
 			for(i=0; i<nS; i++) {
 				for(j=0; j<nS; j++) {
-                    x_data[x]->xi[t][i][j] = x_data[x]->alpha[t][i] * getA(x_data[x],i,j) * x_data[x]->beta[t+1][j] * getB(x_data[x],j,o_tp1) / denom ;
+                    x_data[x]->xi[t][i][j] = x_data[x]->alpha[t][i] * getA(x_data[x],i,j) * x_data[x]->beta[t+1][j] * getB(x_data[x],j,o_tp1) / ((denom>0)?denom:1); //
                     x_data[x]->gamma[t][i] += x_data[x]->xi[t][i][j];
                 }
             }
@@ -1247,10 +1244,7 @@ NUMBER HMMProblem::GradientDescent() {
             delete fb;
             
             if( ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
-//                #pragma omp critical(loglik_copute) //PAR
-//                { //PAR
-                    loglik += fr.pO*(fr.pO>0);
-//                } //PAR
+                loglik += fr.pO*(fr.pO>0); // reduction'ed
                 if(!this->p->quiet)
                     printf("skill %5d, seq %5d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", x, xndat, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
             }
@@ -1364,10 +1358,7 @@ NUMBER HMMProblem::BaumWelch() {
             delete fb;
             
             if( ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
-//                #pragma omp critical(loglik_compute) //PAR
-//                { //PAR
-                    loglik += fr.pO*(fr.pO>0);
-//                } //PAR
+                loglik += fr.pO*(fr.pO>0); // reduction'ed
                 if(!this->p->quiet)
                     printf("skill %4d, seq %4d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", k,  this->p->k_numg[k], fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
             }
@@ -2002,8 +1993,7 @@ void HMMProblem::doBaumWelchStep(FitBit *fb) {
 
 	for(x=0; x<xndat; x++) {
         if( x_data[x]->cnt!=0 ) continue;
-		for(i=0; i<nS; i++)
-			b_PI[i] += x_data[x]->gamma[0][i] / xndat;
+		for(i=0; i<nS; i++) b_PI[i] += x_data[x]->gamma[0][i] / xndat;
 		
 		for(t=0;t<(x_data[x]->n-1);t++) {
             //			o = x_data[x]->obs[t];

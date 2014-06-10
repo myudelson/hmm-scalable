@@ -26,9 +26,28 @@ struct param param;
 void exit_with_help();
 void parse_arguments(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name);
 bool read_and_structure_data(const char *filename);
-void cross_validate(NUMBER* metrics, const char *filename);
-void cross_validate_item(NUMBER* metrics, const char *filename);
-void cross_validate_nstrat(NUMBER* metrics, const char *filename);
+void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);
+void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);
+void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);
+
+static int max_line_length;
+static char * line;
+static char* readline(FILE *fid) {
+	int length = 0;
+	
+	if(fgets(line,max_line_length,fid) == NULL)
+		return NULL;
+	
+	while(strrchr(line,'\n') == NULL && strrchr(line,'\r') == NULL) // do take both line endings
+	{
+		max_line_length *= 2;
+		line = (char *) realloc(line, (size_t)max_line_length);
+		length = (int) strlen(line);
+		if(fgets(line+length,max_line_length-length,fid) == NULL)
+			break;
+	}
+	return line;
+}
 
 // temporary experimental: IRT-like for fitting pLo in liblinear
 void write_pLo_irt() {
@@ -90,8 +109,8 @@ int main (int argc, char ** argv) {
 //    
 ////    int c = (unsigned long)ceil((double)34600/20000);
     
-//	clock_t tm0 = clock();//overall time //SEQ
-  double _tm0 = omp_get_wtime(); //PAR
+//	clock_t tm_all = clock();//overall time //SEQ
+    double _tm_all = omp_get_wtime(); //PAR
     
 	char input_file[1024];
 	char output_file[1024];
@@ -103,7 +122,14 @@ int main (int argc, char ** argv) {
     
     if(!param.quiet)
         printf("trainhmm starting...\n");
-	if( ! read_and_structure_data(input_file) )
+    
+//    clock_t tm_read = clock();//overall time //SEQ
+    double _tm_read = omp_get_wtime(); //PAR
+    int red_ok = read_and_structure_data(input_file);
+//    tm_read = (NUMBER)(clock()-tm_read)/CLOCKS_PER_SEC;//SEQ
+    _tm_read = omp_get_wtime()-_tm_read;//PAR
+    
+	if( ! red_ok )
         return 0;
     
 //    write_pLo_irt();
@@ -152,8 +178,10 @@ int main (int argc, char ** argv) {
     // erase blocking labels
     zeroLabels(&param);
 
-//    clock_t tm; //SEQ
-    double _tm;//PAR
+//    clock_t tm_fit; //SEQ
+//    clock_t tm_predict; //SEQ
+    double _tm_fit;//PAR
+    double _tm_predict;//PAR
     
     if(param.cv_folds==0) { // not cross-validation
         // create problem
@@ -189,15 +217,12 @@ int main (int argc, char ** argv) {
                 //                hmm = new HMMProblemKT(&param);
                 //                break;
         }
-//        clock_t tm = clock(); //SEQ
-        _tm = omp_get_wtime(); //PAR
-        
+//        clock_t tm_fit = clock(); //SEQ
+        _tm_fit = omp_get_wtime(); //PAR
         hmm->fit();
+//        tm_fit = (NUMBER)(clock()-tm_fit)/CLOCKS_PER_SEC;//SEQ
+        _tm_fit = omp_get_wtime()-_tm_fit;//PAR
         
-        if(param.quiet == 0) {
-//            printf("fitting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC); //SEQ
-            printf("fitting is done in %lf seconds\n",omp_get_wtime()-_tm); //PAR
-        }
         // write model
         hmm->toFile(output_file);
         
@@ -214,7 +239,13 @@ int main (int argc, char ** argv) {
 
             // NUMBER l1 = hmm->getSumLogPOPara(param.nSeq, param.k_data);
 //            printf("hmm-style ll_no_null %15.7f\n",l1);
+            
+//            tm_predict = clock(); //SEQ
+            _tm_predict = omp_get_wtime(); //PAR
             hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
+//            tm_predict = (NUMBER)(clock()-tm_predict)/CLOCKS_PER_SEC;//SEQ
+            _tm_predict = omp_get_wtime()-_tm_predict;//PAR
+            
             if( param.metrics>0 /*&& !param.quiet*/) {
                 printf("trained model LL=%15.7f (%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",
                        metrics[0], metrics[1], // ll's
@@ -237,26 +268,27 @@ int main (int argc, char ** argv) {
         
         delete hmm;
     } else { // cross-validation
-//        tm = clock(); //SEQ
-        _tm = omp_get_wtime(); //PAR
         NUMBER* metrics = Calloc(NUMBER, (size_t)7); // AIC, BIC, RMSE, RMSE no null
         switch (param.cv_strat) {
             case CV_GROUP:
-                cross_validate(metrics, predict_file);
+//                cross_validate(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
+                cross_validate(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
                 break;
             case CV_ITEM:
-                cross_validate_item(metrics, predict_file);
+//                cross_validate_item(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
+                cross_validate_item(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
                 break;
             case CV_NSTR:
-                cross_validate_nstrat(metrics, predict_file);
+//                cross_validate_nstrat(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
+                cross_validate_nstrat(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
                 break;
             default:
                 
                 break;
         }
         if(!param.quiet) {
-//            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f) computed in %8.6f seconds\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], (NUMBER)(clock()-tm)/CLOCKS_PER_SEC); //SEQ
-            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f) computed in %lf seconds\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], omp_get_wtime()-_tm); //PAR
+//            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
+            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
         }
         free(metrics);
     }
@@ -264,8 +296,8 @@ int main (int argc, char ** argv) {
 	destroy_input_data(&param);
 	
 	if(param.quiet == 0)
-//        printf("overall time running is %8.6f seconds\n",(NUMBER)(clock()-tm0)/CLOCKS_PER_SEC);//SEQ
-        printf("overall time running is %lf seconds\n",omp_get_wtime()-_tm0);//PAR
+//        printf("timing: overall %lf seconds, read %lf, fit %lf, predict %lf\n",omp_get_wtime()- tm_all,  tm_read,  tm_fit,  tm_predict);//SEQ
+        printf("timing: overall %lf sec, read %lf sec, fit %lf sec, predict %lf sec\n",omp_get_wtime()-_tm_all, _tm_read, _tm_fit, _tm_predict);//PAR
     return 0;
 }
 
@@ -298,10 +330,12 @@ void exit_with_help() {
            "     specify observation for which metrics to be reported, list it after ','.\n"
            "     For example '-m 0', '-m 1' (by default, observation 1 is assumed), '-m 1,2'\n"
            "     (compute metrics for observation 2). Incompatible with-v option.\n"
-           "-v : cross-validation folds and target state to validate against, perform\n"
-           "     subject-stratified cross-validation, default 0 (no cross-validation),\n"
-           "     examples '-v 5,2' - 5 fold, predict state 2, '-v 10' - 10-fold predict\n"
-           "     state 1 by default.\n"
+           "-v : cross-validation folds, stratification, and target state to validate\n"
+           "     against, default 0 (no cross-validation),\n"
+           "     examples '-v 5,i,2' - 5 fold, item-stratified c.-v., predict state 2,\n"
+           "     '-v 10' - 10-fold subject-stratified c.-v. predict state 1 by default,\n"
+           "     alternatively '-v 10,g,1', and finally '-v 5,n,2,' - 5-fold unstratified\n"
+           "     c.-v. predicting state 1.\n"
            "-p : report model predictions on the train set 0-no (default), 1-yes; 2-yes,\n"
            "     plus output state probability; works with -v and -m parameters.\n"
            "-d : delimiter for multiple skills per observation; 0-single skill per\n"
@@ -542,9 +576,15 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
                 ch2 = strtok(NULL, ",\t\n\r");
                 if(ch2!=NULL)
                     param.cv_strat = ch2[0];
-                ch = strtok(NULL, "\t\n\r");
+                ch = strtok(NULL, ",\t\n\r");
                 if(ch!=NULL)
                     param.cv_target_obs = (NPAR)(atoi(ch)-1);
+                ch = strtok(NULL, ",\t\n\r");
+                if(ch!=NULL)
+                    strcpy(param.cv_folds_file, ch);
+                ch = strtok(NULL, ",\t\n\r");
+                if(ch!=NULL)
+                    param.cv_inout_flag = ch[0];
                 
 				if(param.cv_folds<2) {
 					fprintf(stderr,"number of cross-validation folds should be at least 2\n");
@@ -562,6 +602,11 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 					fprintf(stderr,"target observation to be cross-validated against cannot be '%d'\n",param.cv_target_obs+1);
 					exit_with_help();
 				}
+                if( param.cv_inout_flag!='i' && param.cv_inout_flag!='o') {
+					fprintf(stderr,"cross-validation folds input/output flag should be ither 'o' (out) or 'i' (in), while it is '%c'\n",param.cv_inout_flag);
+					exit_with_help();
+                }
+                
 				break;
             case  'p':
 				param.predictions = atoi(argv[i]);
@@ -609,7 +654,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
     //        fprintf(stderr,"target observation to compute metrics against cannot be '%d'\n",param.metrics_target_obs+1);
     //        exit_with_help();
     //    }
-    if(param.cv_target_obs>0 && param.metrics>0) { // correct for 0-start coding
+    if(param.cv_folds>0 && param.metrics>0) { // correct for 0-start coding
         fprintf(stderr,"values for -v and -m cannot be both non-zeros\n");
         exit_with_help();
     }
@@ -914,12 +959,16 @@ bool read_and_structure_data(const char *filename) {
     return true;
 }
 
-void cross_validate(NUMBER* metrics, const char *filename) {
+void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
+//    clock_t tm0;//SEQ
+    double _tm0;//PAR
+    char *ch;
     NPAR f;
     NCAT g,k;
     FILE *fid = NULL; // file for storing prediction should that be necessary
+    FILE *fid_folds = NULL; // file for reading/writing folds
     if(param.predictions>0) {  // if we have to write the predictions file
         fid = fopen(filename,"w");
         if(fid == NULL)
@@ -931,7 +980,48 @@ void cross_validate(NUMBER* metrics, const char *filename) {
     // produce folds
     NPAR *folds = Calloc(NPAR, (size_t)param.nG);//[param.nG];
     srand ( (unsigned int)time(NULL) );
-    for(g=0; g<param.nG; g++) folds[g] = (NPAR)(rand() % param.cv_folds);
+    // folds file
+    if(param.cv_folds_file[0] > 0) { // file is specified
+        if(param.cv_inout_flag=='i') {
+            fid_folds = fopen(param.cv_folds_file,"r");
+            if(fid_folds == NULL)
+            {
+                fprintf(stderr,"Can't open folds file %s\n",filename);
+                exit(1);
+            }
+            max_line_length = 1024;
+            line = (char *)malloc((size_t)max_line_length);// Malloc(char,max_line_length);
+        } else if(param.cv_inout_flag=='o') {
+            fid_folds = fopen(param.cv_folds_file,"w");
+            if(fid_folds == NULL)
+            {
+                fprintf(stderr,"Can't open folds file %s\n",filename);
+                exit(1);
+            }
+        }
+    }
+    for(g=0; g<param.nG; g++) {
+        if( param.cv_folds_file[0]==0 || (param.cv_folds_file[0] > 0 && param.cv_inout_flag=='o') ) { // output or default
+            folds[g] = (NPAR)(rand() % param.cv_folds);
+            if(param.cv_folds_file[0] > 0 )
+                fprintf(fid_folds,"%i\n",folds[g]); // write out
+        } else if( (param.cv_folds_file[0] > 0 && param.cv_inout_flag=='i') ) {
+            readline(fid_folds);//
+            ch = strtok(line,"\t\n\r");
+            if(ch == NULL) {
+                fprintf(stderr,"Error reading input folds file (potentialy wrong number of rows)\n");
+                exit(1);
+            }
+            folds[g] = (NPAR)(atoi(ch));
+        }
+    }
+    if(param.cv_folds_file[0] > 0) { // file is specified
+        fclose(fid_folds);
+        if(param.cv_inout_flag=='i')
+            free(line);
+    }
+
+    
     // create and fit multiple problems
     HMMProblem* hmms[param.cv_folds];
     int q = param.quiet;
@@ -976,8 +1066,14 @@ void cross_validate(NUMBER* metrics, const char *filename) {
             if( param.null_skills[x].g == f)
                 param.null_skills[x].cnt = 1;
         }
+
         // now compute
+//        tm0 = clock(); //SEQ
+        _tm0 = omp_get_wtime(); //PAR
         hmms[f]->fit();
+//        *(tm_fit) += (NUMBER)(clock()- tm0)/CLOCKS_PER_SEC;//SEQ
+        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
+        
         // UN-block respective data
         for(g=0; g<param.nG; g++) // for all groups
             if(folds[g]==f) { // if in current fold
@@ -993,6 +1089,9 @@ void cross_validate(NUMBER* metrics, const char *filename) {
             printf("fold %d is done\n",f+1);
     }
     param.quiet = (NPAR)q;
+    
+//    tm0 = clock();//SEQ
+    _tm0 = omp_get_wtime();//PAR
     // go trhough original data and predict
 	NDAT t;
 	NPAR i, j, m, o, isTarget;
@@ -1074,6 +1173,8 @@ void cross_validate(NUMBER* metrics, const char *filename) {
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
+//        *(tm_predict) += (NUMBER)(clock()- tm0)/CLOCKS_PER_SEC;//SEQ
+    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
     
     // delete problems
     NCAT n_par = 0;
@@ -1096,13 +1197,17 @@ void cross_validate(NUMBER* metrics, const char *filename) {
     metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }
 
-void cross_validate_item(NUMBER* metrics, const char *filename) {
+void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {
     NUMBER rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
     NCAT I; // item
     NDAT t;
+//    clock_t tm0;//SEQ
+    double _tm0;//PAR
+    char *ch;
     FILE *fid = NULL; // file for storing prediction should that be necessary
+    FILE *fid_folds = NULL; // file for reading/writing folds
     if(param.predictions>0) {  // if we have to write the predictions file
         fid = fopen(filename,"w");
         if(fid == NULL)
@@ -1114,9 +1219,50 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
     // produce folds
     NPAR *folds = Calloc(NPAR, (size_t)param.nI);
     NDAT *fold_counts = Calloc(NDAT, (size_t)param.cv_folds);
-    //    NDAT *fold_shortcounts = Calloc(NDAT, (size_t)param.cv_folds);
     srand ( (unsigned int)time(NULL) ); // randomize
-    for(I=0; I<param.nI; I++) folds[I] = (NPAR)(rand() % param.cv_folds); // produce folds
+
+    // folds file
+    if(param.cv_folds_file[0] > 0) { // file is specified
+        if(param.cv_inout_flag=='i') {
+            fid_folds = fopen(param.cv_folds_file,"r");
+            if(fid_folds == NULL)
+            {
+                fprintf(stderr,"Can't open folds file %s\n",filename);
+                exit(1);
+            }
+            max_line_length = 1024;
+            line = (char *)malloc((size_t)max_line_length);// Malloc(char,max_line_length);
+        } else if(param.cv_inout_flag=='o') {
+            fid_folds = fopen(param.cv_folds_file,"w");
+            if(fid_folds == NULL)
+            {
+                fprintf(stderr,"Can't open folds file %s\n",filename);
+                exit(1);
+            }
+        }
+    }
+    for(I=0; I<param.nI; I++) {
+        if( param.cv_folds_file[0]==0 || (param.cv_folds_file[0] > 0 && param.cv_inout_flag=='o') ) { // output or default
+            folds[I] = (NPAR)(rand() % param.cv_folds); // produce folds
+            if(param.cv_folds_file[0] > 0 )
+                fprintf(fid_folds,"%i\n",folds[I]); // write out
+        } else if( (param.cv_folds_file[0] > 0 && param.cv_inout_flag=='i') ) {
+            readline(fid_folds);//
+            ch = strtok(line,"\t\n\r");
+            if(ch == NULL) {
+                fprintf(stderr,"Error reading input folds file (potentialy wrong number of rows)\n");
+                exit(1);
+            }
+            folds[I] = (NPAR)(atoi(ch));
+        }
+    }
+    if(param.cv_folds_file[0] > 0) { // file is specified
+        fclose(fid_folds);
+        if(param.cv_inout_flag=='i')
+            free(line);
+    }
+    
+    
     // count number of items in each fold
     //    for(I=0; I<param.nI; I++) fold_shortcounts[ folds[I] ]++; // produce folds
     for(t=0; t<param.N; t++) fold_counts[ folds[param.dat_item[t]/*->get(t)*/] ]++;
@@ -1160,7 +1306,11 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
             }
         }
         // now compute
+//        tm0 = clock(); //SEQ
+        _tm0 = omp_get_wtime(); //PAR
         hmms[f]->fit();
+//        *(tm_fit) += (NUMBER)(clock()- tm0)/CLOCKS_PER_SEC;//SEQ
+        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
         
         // UN-block respective data
         count_saved = 0;
@@ -1173,31 +1323,36 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
     }
     free(fold_counts);
     param.quiet = (NPAR)q;
+
+//    tm0 = clock();//SEQ
+    _tm0 = omp_get_wtime();//PAR
     // go trhough original data and predict
 	NPAR i, j, m, o, isTarget;
+    NDAT count=0;
 	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
 	NUMBER pLe[param.nS];// p(L|evidence);
 	NUMBER pLe_denom; // p(L|evidence) denominator
 	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states
     NUMBER prob = 0, ll = 0;
     struct data dt;
-	// initialize
-	for(g=0; g<param.nG; g++) {
-        dt.g = g;
-        f = folds[g];
-		for(k=0; k<param.nK; k++) {
-            dt.k = k;
-			for(i=0; i<param.nO; i++)
-                group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//PI[i];
-		}
-    }
+//	// initialize
+//	for(g=0; g<param.nG; g++) {
+//        dt.g = g;
+//        f = folds[g];
+//		for(k=0; k<param.nK; k++) {
+//            dt.k = k;
+//			for(i=0; i<param.nO; i++)
+//                group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//PI[i];
+//		}
+//    }
 	// deal with null skill
 	for(t=0; t<param.N; t++) {
 		o = param.dat_obs[t];//[t]; correct: obs 1 (0 code), incorect obs 2 (1 code), hence 1-code is the conversion
         isTarget = (NPAR)(param.cv_target_obs == o);
 		g = param.dat_group[t];//
         dt.g = g;
-        f = folds[g];
+        I = param.dat_item[t];
+        f = folds[I];
         
         NCAT *ar;
         int n;
@@ -1220,6 +1375,25 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
                     fprintf(fid,"%10.8f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
             continue;
         }
+        // check if {g,k}'s were initialized
+        for(int l=0; l<n; l++) {
+            k = ar[l];
+            //          NUMBER *z = gsm(g,k); //BOOST
+            //          if( z==NULL )//BOOST
+            if( group_skill_map[g][k][0]==0)//UNBOOST
+            {
+                dt.k = k;
+                //                NUMBER * pLbit = Calloc(NUMBER, nS);//BOOST
+                
+                for(i=0; i<param.nS; i++) {
+                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
+                    //                    pLbit[i] = getPI(dt,i);//BOOST
+                    count++;
+                }
+                //              gsm(g,k) = pLbit; //BOOST
+            }// pLo/pL not set
+        }// for all skills at this transaction
+        
         hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt);
         for(int l=0; l<n; l++) {
             k = ar[l];
@@ -1249,6 +1423,9 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
+//        *(tm_predict) += (NUMBER)(clock()- tm0)/CLOCKS_PER_SEC;//SEQ
+    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
+    
     // delete problems
     NCAT n_par = 0;
     for(f=0; f<param.cv_folds; f++) {
@@ -1271,14 +1448,19 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
     metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }
 
-void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
+void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
-    NCAT I; // item
+    NCAT U; // unstratified
     NDAT t;
+    NDAT count = 0;
+//    clock_t tm0;//SEQ
+    double _tm0;//PAR
+    char *ch;
     FILE *fid = NULL; // file for storing prediction should that be necessary
+    FILE *fid_folds = NULL; // file for reading/writing folds
     if(param.predictions>0) {  // if we have to write the predictions file
         fid = fopen(filename,"w");
         if(fid == NULL)
@@ -1288,11 +1470,55 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
         }
     }
     // produce folds
-    NPAR *folds = Calloc(NPAR, (size_t)param.nI);
+    NPAR *folds = Calloc(NPAR, (size_t)param.N);
     NDAT *fold_counts = Calloc(NDAT, (size_t)param.cv_folds);
     //    NDAT *fold_shortcounts = Calloc(NDAT, (size_t)param.cv_folds);
+    
     srand ( (unsigned int)time(NULL) ); // randomize
-    for(I=0; I<param.nI; I++) folds[I] = (NPAR)(rand() % param.cv_folds); // produce folds
+//    for(I=0; I<param.nI; I++) folds[I] = (NPAR)(rand() % param.cv_folds); // produce folds
+    
+    // folds file
+    if(param.cv_folds_file[0] > 0) { // file is specified
+        if(param.cv_inout_flag=='i') {
+            fid_folds = fopen(param.cv_folds_file,"r");
+            if(fid_folds == NULL)
+            {
+                fprintf(stderr,"Can't open folds file %s\n",filename);
+                exit(1);
+            }
+            max_line_length = 1024;
+            line = (char *)malloc((size_t)max_line_length);// Malloc(char,max_line_length);
+        } else if(param.cv_inout_flag=='o') {
+            fid_folds = fopen(param.cv_folds_file,"w");
+            if(fid_folds == NULL)
+            {
+                fprintf(stderr,"Can't open folds file %s\n",filename);
+                exit(1);
+            }
+        }
+    }
+    for(U=0; U<param.N; U++) {
+        if( param.cv_folds_file[0]==0 || (param.cv_folds_file[0] > 0 && param.cv_inout_flag=='o') ) { // output or default
+            folds[U] = (NPAR)(rand() % param.cv_folds); // produce folds
+            if(param.cv_folds_file[0] > 0 )
+                fprintf(fid_folds,"%i\n",folds[U]); // write out
+        } else if( (param.cv_folds_file[0] > 0 && param.cv_inout_flag=='i') ) {
+            readline(fid_folds);//
+            ch = strtok(line,"\t\n\r");
+            if(ch == NULL) {
+                fprintf(stderr,"Error reading input folds file (potentialy wrong number of rows)\n");
+                exit(1);
+            }
+            folds[U] = (NPAR)(atoi(ch));
+        }
+    }
+    if(param.cv_folds_file[0] > 0) { // file is specified
+        fclose(fid_folds);
+        if(param.cv_inout_flag=='i')
+            free(line);
+    }
+    
+    
     // count number of items in each fold
     //    for(I=0; I<param.nI; I++) fold_shortcounts[ folds[I] ]++; // produce folds
     for(t=0; t<param.N; t++)  fold_counts[ folds[param.dat_item[t]/*->get(t)*/] ]++;
@@ -1336,7 +1562,11 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
             }
         }
         // now compute
+//        tm0 = clock(); //SEQ
+        _tm0 = omp_get_wtime(); //PAR
         hmms[f]->fit();
+//        *(tm_fit) += (NUMBER)(clock()- tm0)/CLOCKS_PER_SEC;//SEQ
+        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
         
         // UN-block respective data
         count_saved = 0;
@@ -1349,6 +1579,9 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
     }
     free(fold_counts);
     param.quiet = (NPAR)q;
+    
+//    tm0 = clock();//SEQ
+    _tm0 = omp_get_wtime();//PAR
     // go trhough original data and predict
 	NPAR i, j, m, o, isTarget;
 	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
@@ -1357,23 +1590,23 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
 	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states
     NUMBER prob = 0, ll = 0;
     struct data dt;
-	// initialize
-	for(g=0; g<param.nG; g++) {
-        dt.g = g;
-        f = folds[g];
-		for(k=0; k<param.nK; k++) {
-            dt.k = k;
-			for(i=0; i<param.nO; i++)
-                group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//PI[i];
-		}
-    }
+//	// initialize
+//	for(g=0; g<param.nG; g++) {
+//        dt.g = g;
+//        f = folds[g];
+//		for(k=0; k<param.nK; k++) {
+//            dt.k = k;
+//			for(i=0; i<param.nO; i++)
+//                group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//PI[i];
+//		}
+//    }
 	// deal with null skill
 	for(t=0; t<param.N; t++) {
 		o = param.dat_obs[t];//[t]; correct: obs 1 (0 code), incorect obs 2 (1 code), hence 1-code is the conversion
         isTarget = (NPAR)(param.cv_target_obs == o);
 		g = param.dat_group[t];
         dt.g = g;
-        f = folds[g];
+        f = folds[t]; // folds are done on all N datapoints
         
         NCAT *ar;
         int n;
@@ -1396,6 +1629,25 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
                     fprintf(fid,"%10.8f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
             continue;
         }
+        
+        // check if {g,k}'s were initialized
+        for(int l=0; l<n; l++) {
+            k = ar[l];
+            //          NUMBER *z = gsm(g,k); //BOOST
+            //          if( z==NULL )//BOOST
+            if( group_skill_map[g][k][0]==0)//UNBOOST
+            {
+                dt.k = k;
+                //                NUMBER * pLbit = Calloc(NUMBER, nS);//BOOST
+                for(i=0; i<param.nS; i++) {
+                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
+                    //                    pLbit[i] = getPI(dt,i);//BOOST
+                    count++;
+                }
+                //              gsm(g,k) = pLbit; //BOOST
+            }// pLo/pL not set
+        }// for all skills at this transaction
+        
         hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt);
         for(int l=0; l<n; l++) {
             k = ar[l];
@@ -1426,6 +1678,9 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
+//        *(tm_predict) += (NUMBER)(clock()- tm0)/CLOCKS_PER_SEC;//SEQ
+    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
+    
     // delete problems
     NCAT n_par = 0;
     for(f=0; f<param.cv_folds; f++) {

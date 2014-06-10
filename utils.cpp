@@ -457,6 +457,8 @@ void set_param_defaults(struct param *param) {
 	param->cv_folds = 0;
 	param->cv_strat = 'g'; // default group(student)-stratified
     param->cv_target_obs = 0; // 1st state to validate agains by default, cv_folds enables cross-validation
+    param->cv_folds_file[0] = 0; // empty folds file
+    param->cv_inout_flag = 'o'; // default rule, we're writing folds out
     param->multiskill = 0; // single skill per ovservation by default
     param->parallel = 0; // parallelization flag, no parallelization (0) by default
     // vocabilaries

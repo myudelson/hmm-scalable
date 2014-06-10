@@ -143,6 +143,8 @@ struct param {
 	NPAR cv_folds; // cross-validation folds
 	NPAR cv_strat; // cross-validation stratification
 	NPAR cv_target_obs; // cross-validation target observation to validate prediction of
+    char cv_folds_file[1024]; // file where to store or draw from the folds
+    NPAR cv_inout_flag; // are we writing the folds out ('o') or reading them in ('i')
     // data
     NPAR* dat_obs;
     NCAT* dat_group;
