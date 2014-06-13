@@ -26,9 +26,12 @@ struct param param;
 void exit_with_help();
 void parse_arguments(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name);
 bool read_and_structure_data(const char *filename);
-void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);
-void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);
-void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);
+void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict);//SEQ
+void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict);//SEQ
+void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict);//SEQ
+//void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
+//void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
+//void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
 
 static int max_line_length;
 static char * line;
@@ -109,8 +112,8 @@ int main (int argc, char ** argv) {
 //    
 ////    int c = (unsigned long)ceil((double)34600/20000);
     
-//	clock_t tm_all = clock();//overall time //SEQ
-    double _tm_all = omp_get_wtime(); //PAR
+	clock_t tm_all = clock();//overall time //SEQ
+//    double _tm_all = omp_get_wtime(); //PAR
     
 	char input_file[1024];
 	char output_file[1024];
@@ -123,11 +126,11 @@ int main (int argc, char ** argv) {
     if(!param.quiet)
         printf("trainhmm starting...\n");
     
-//    clock_t tm_read = clock();//overall time //SEQ
-    double _tm_read = omp_get_wtime(); //PAR
+    clock_t tm_read = clock();//overall time //SEQ
+//    double _tm_read = omp_get_wtime(); //PAR
     int red_ok = read_and_structure_data(input_file);
-//    tm_read = (NUMBER)(clock()-tm_read)/CLOCKS_PER_SEC;//SEQ
-    _tm_read = omp_get_wtime()-_tm_read;//PAR
+    tm_read = (NUMBER)(clock()-tm_read);//SEQ
+//    _tm_read = omp_get_wtime()-_tm_read;//PAR
     
 	if( ! red_ok )
         return 0;
@@ -178,10 +181,10 @@ int main (int argc, char ** argv) {
     // erase blocking labels
     zeroLabels(&param);
 
-//    clock_t tm_fit; //SEQ
-//    clock_t tm_predict; //SEQ
-    double _tm_fit;//PAR
-    double _tm_predict;//PAR
+    clock_t tm_fit; //SEQ
+    clock_t tm_predict; //SEQ
+//    double _tm_fit;//PAR
+//    double _tm_predict;//PAR
     
     if(param.cv_folds==0) { // not cross-validation
         // create problem
@@ -217,11 +220,11 @@ int main (int argc, char ** argv) {
                 //                hmm = new HMMProblemKT(&param);
                 //                break;
         }
-//        clock_t tm_fit = clock(); //SEQ
-        _tm_fit = omp_get_wtime(); //PAR
+        tm_fit = clock(); //SEQ
+//        _tm_fit = omp_get_wtime(); //PAR
         hmm->fit();
-//        tm_fit = (NUMBER)(clock()-tm_fit)/CLOCKS_PER_SEC;//SEQ
-        _tm_fit = omp_get_wtime()-_tm_fit;//PAR
+        tm_fit = clock()-tm_fit;//SEQ
+//        _tm_fit = omp_get_wtime()-_tm_fit;//PAR
         
         // write model
         hmm->toFile(output_file);
@@ -240,11 +243,11 @@ int main (int argc, char ** argv) {
             // NUMBER l1 = hmm->getSumLogPOPara(param.nSeq, param.k_data);
 //            printf("hmm-style ll_no_null %15.7f\n",l1);
             
-//            tm_predict = clock(); //SEQ
-            _tm_predict = omp_get_wtime(); //PAR
+            tm_predict = clock(); //SEQ
+//            _tm_predict = omp_get_wtime(); //PAR
             hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
-//            tm_predict = (NUMBER)(clock()-tm_predict)/CLOCKS_PER_SEC;//SEQ
-            _tm_predict = omp_get_wtime()-_tm_predict;//PAR
+            tm_predict = clock()-tm_predict;//SEQ
+//            _tm_predict = omp_get_wtime()-_tm_predict;//PAR
             
             if( param.metrics>0 /*&& !param.quiet*/) {
                 printf("trained model LL=%15.7f (%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",
@@ -271,24 +274,24 @@ int main (int argc, char ** argv) {
         NUMBER* metrics = Calloc(NUMBER, (size_t)7); // AIC, BIC, RMSE, RMSE no null
         switch (param.cv_strat) {
             case CV_GROUP:
-//                cross_validate(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
-                cross_validate(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
+                cross_validate(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
+//                cross_validate(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
                 break;
             case CV_ITEM:
-//                cross_validate_item(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
-                cross_validate_item(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
+                cross_validate_item(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
+//                cross_validate_item(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
                 break;
             case CV_NSTR:
-//                cross_validate_nstrat(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
-                cross_validate_nstrat(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
+                cross_validate_nstrat(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
+//                cross_validate_nstrat(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
                 break;
             default:
                 
                 break;
         }
         if(!param.quiet) {
-//            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
-            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
+            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
+//            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
         }
         free(metrics);
     }
@@ -296,8 +299,8 @@ int main (int argc, char ** argv) {
 	destroy_input_data(&param);
 	
 	if(param.quiet == 0)
-//        printf("timing: overall %lf seconds, read %lf, fit %lf, predict %lf\n",omp_get_wtime()- tm_all,  tm_read,  tm_fit,  tm_predict);//SEQ
-        printf("timing: overall %lf sec, read %lf sec, fit %lf sec, predict %lf sec\n",omp_get_wtime()-_tm_all, _tm_read, _tm_fit, _tm_predict);//PAR
+        printf("timing: overall %f seconds, read %f, fit %f, predict %f\n",(NUMBER)((clock()-tm_all)/CLOCKS_PER_SEC), (NUMBER)tm_read/CLOCKS_PER_SEC,  (NUMBER)tm_fit/CLOCKS_PER_SEC,  (NUMBER)tm_predict/CLOCKS_PER_SEC);//SEQ
+//        printf("timing: overall %lf sec, read %lf sec, fit %lf sec, predict %lf sec\n",omp_get_wtime()-_tm_all, _tm_read, _tm_fit, _tm_predict);//PAR
     return 0;
 }
 
@@ -959,11 +962,12 @@ bool read_and_structure_data(const char *filename) {
     return true;
 }
 
-void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {
+void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict) {//SEQ
+//void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
-//    clock_t tm0;//SEQ
-    double _tm0;//PAR
+    clock_t tm0;//SEQ
+//    double _tm0;//PAR
     char *ch;
     NPAR f;
     NCAT g,k;
@@ -1068,11 +1072,11 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
         }
 
         // now compute
-//        tm0 = clock(); //SEQ
-        _tm0 = omp_get_wtime(); //PAR
+        tm0 = clock(); //SEQ
+//        _tm0 = omp_get_wtime(); //PAR
         hmms[f]->fit();
-//        *(tm_fit) += (NUMBER)(clock()- tm0)/CLOCKS_PER_SEC;//SEQ
-        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
+        *(tm_fit) += (NUMBER)(clock()- tm0);//SEQ
+//        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
         
         // UN-block respective data
         for(g=0; g<param.nG; g++) // for all groups
@@ -1090,8 +1094,8 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
     }
     param.quiet = (NPAR)q;
     
-//    tm0 = clock();//SEQ
-    _tm0 = omp_get_wtime();//PAR
+    tm0 = clock();//SEQ
+//    _tm0 = omp_get_wtime();//PAR
     // go trhough original data and predict
 	NDAT t;
 	NPAR i, j, m, o, isTarget;
@@ -1173,8 +1177,8 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
-//        *(tm_predict) += (NUMBER)(clock()- tm0)/CLOCKS_PER_SEC;//SEQ
-    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
+        *(tm_predict) += (NUMBER)(clock()- tm0);//SEQ
+//    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
     
     // delete problems
     NCAT n_par = 0;
@@ -1197,14 +1201,15 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
     metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }
 
-void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {
+void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict) {//SEQ
+//void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
     NUMBER rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
     NCAT I; // item
     NDAT t;
-//    clock_t tm0;//SEQ
-    double _tm0;//PAR
+    clock_t tm0;//SEQ
+//    double _tm0;//PAR
     char *ch;
     FILE *fid = NULL; // file for storing prediction should that be necessary
     FILE *fid_folds = NULL; // file for reading/writing folds
@@ -1306,11 +1311,11 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
             }
         }
         // now compute
-//        tm0 = clock(); //SEQ
-        _tm0 = omp_get_wtime(); //PAR
+        tm0 = clock(); //SEQ
+//        _tm0 = omp_get_wtime(); //PAR
         hmms[f]->fit();
-//        *(tm_fit) += (NUMBER)(clock()- tm0)/CLOCKS_PER_SEC;//SEQ
-        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
+        *(tm_fit) += (NUMBER)(clock()- tm0);//SEQ
+//        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
         
         // UN-block respective data
         count_saved = 0;
@@ -1324,8 +1329,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
     free(fold_counts);
     param.quiet = (NPAR)q;
 
-//    tm0 = clock();//SEQ
-    _tm0 = omp_get_wtime();//PAR
+    tm0 = clock();//SEQ
+//    _tm0 = omp_get_wtime();//PAR
     // go trhough original data and predict
 	NPAR i, j, m, o, isTarget;
     NDAT count=0;
@@ -1423,8 +1428,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
-//        *(tm_predict) += (NUMBER)(clock()- tm0)/CLOCKS_PER_SEC;//SEQ
-    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
+        *(tm_predict) += (NUMBER)(clock()- tm0);//SEQ
+//    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
     
     // delete problems
     NCAT n_par = 0;
@@ -1448,7 +1453,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
     metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }
 
-void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {
+void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict) {//SEQ
+//void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
@@ -1456,8 +1462,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
     NCAT U; // unstratified
     NDAT t;
     NDAT count = 0;
-//    clock_t tm0;//SEQ
-    double _tm0;//PAR
+    clock_t tm0;//SEQ
+//    double _tm0;//PAR
     char *ch;
     FILE *fid = NULL; // file for storing prediction should that be necessary
     FILE *fid_folds = NULL; // file for reading/writing folds
@@ -1562,11 +1568,11 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
             }
         }
         // now compute
-//        tm0 = clock(); //SEQ
-        _tm0 = omp_get_wtime(); //PAR
+        tm0 = clock(); //SEQ
+//        _tm0 = omp_get_wtime(); //PAR
         hmms[f]->fit();
-//        *(tm_fit) += (NUMBER)(clock()- tm0)/CLOCKS_PER_SEC;//SEQ
-        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
+        *(tm_fit) += (NUMBER)(clock()- tm0);//SEQ
+//        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
         
         // UN-block respective data
         count_saved = 0;
@@ -1580,8 +1586,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
     free(fold_counts);
     param.quiet = (NPAR)q;
     
-//    tm0 = clock();//SEQ
-    _tm0 = omp_get_wtime();//PAR
+    tm0 = clock();//SEQ
+//    _tm0 = omp_get_wtime();//PAR
     // go trhough original data and predict
 	NPAR i, j, m, o, isTarget;
 	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
@@ -1678,8 +1684,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
-//        *(tm_predict) += (NUMBER)(clock()- tm0)/CLOCKS_PER_SEC;//SEQ
-    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
+        *(tm_predict) += (NUMBER)(clock()- tm0);//SEQ
+//    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
     
     // delete problems
     NCAT n_par = 0;

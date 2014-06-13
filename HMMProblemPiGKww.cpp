@@ -302,10 +302,10 @@ NDAT HMMProblemPiGKww::computeGradients(FitBit *fb){
 
 NUMBER HMMProblemPiGKww::GradientDescent() {
 	NCAT k, g, x;
-    NPAR nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
+    NPAR nS = this->p->nS; NPAR nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
     NUMBER loglik = 0;
     FitResult fr;
-    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+    FitBit *fb = new FitBit(nS, nO, nK, nG, this->p->tol);
     fb->init(FBS_PARm1);
     fb->init(FBS_GRAD);
     if(this->p->solver==METHOD_CGD) {
@@ -319,9 +319,9 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
 //    NUMBER *** copyA =  init3D<NUMBER>((NDAT)this->sizes[1], (NDAT)nS, (NDAT)nS);
 //    NUMBER *** copyB =  init3D<NUMBER>((NDAT)this->sizes[2], (NDAT)nS, (NDAT)nO);
 
-    // fit bit and fir result for ww
+    // fit bit and for result for ww
     FitResult frww;
-    FitBit *fbww = new FitBit(3, nO, nK, nG, this->p->tol, 1/*do project to simplex*/);
+    FitBit *fbww = new FitBit(nS, nO, nK, nG, this->p->tol, 1/*do project to simplex*/);
     fbww->init(FBS_PARm1);
     fbww->init(FBS_GRAD);
     if(this->p->solver==METHOD_CGD) {
