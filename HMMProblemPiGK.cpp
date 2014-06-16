@@ -292,17 +292,8 @@ void HMMProblemPiGK::fit() {
 NUMBER HMMProblemPiGK::GradientDescent() {
 	NCAT k, g, /*ki, gi, nX, */x;
     NCAT nK = this->p->nK, nG = this->p->nG;
-    FitResult fr;
 //    NUMBER ll;
     
-    if(true){
-    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
-    fb->init(FBS_PARm1);
-    fb->init(FBS_GRAD);
-    if(this->p->solver==METHOD_CGD) {
-        fb->init(FBS_GRADm1);
-        fb->init(FBS_DIRm1);
-    }
 //    NUMBER crit;
 //    NCAT q;
 //    NCAT nQ = this->p->nK + this->p->nG;
@@ -337,14 +328,22 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 	// fit all as 1 skill first, set group gradients to 0, and do not fit them
 	//
 	if(this->p->single_skill>0) {
+        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+        fb->init(FBS_PARm1);
+        fb->init(FBS_GRAD);
+        if(this->p->solver==METHOD_CGD) {
+            fb->init(FBS_GRADm1);
+            fb->init(FBS_DIRm1);
+        }
         fb->link( HMMProblem::getPI(0), HMMProblem::getA(0), HMMProblem::getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save progonal k's
-        fr = GradientDescentBit(fb);
+        FitResult fr = GradientDescentBit(fb);
         for(x=0; x<this->p->nSeq; x++) { this->p->all_data[x].k = original_ks[x]; } // restore original k's
         free(original_ks);
         if( !this->p->quiet )
             printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
+        delete fb;
     }
 	//
 	// Main fit
@@ -361,119 +360,154 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 
         int i = 0; // count runs
 //        while(skip_k<newnK || skip_g<newnG) {
+        int parallel_now = this->p->parallel==1; //PAR
+        #pragma omp parallel if(parallel_now) shared(iter_qual_group,iter_qual_skill)//PAR
+        {//PAR
         while(skip_k<nK || skip_g<nG) {
             //
             // Skills first
             //
 //            for(ki=0; ki<newnK && skip_k<newnK; ki++) { // for all A,B-by-skill
-            for(k=0; k<nK && skip_k<nK; k++) { // for all A,B-by-skill
-//                k = sortstrip_k[ki].id; // grab reordered k
-                
-                if(iter_qual_skill[k]==iterations_to_qualify)
-                    continue;
-//                NCAT xndat = this->p->k_numg[k];
-//                struct data** x_data = this->p->k_g_data[k];
-                // link and fit
-                fb->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
-                fr = GradientDescentBit(fb);
-//                fbs[k]->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
-//                fr = GradientDescentBit(fbs[k], false /*is1SkillForAll*/);
-                // decide on convergence
-                if(i>=first_iteration_qualify) {
-//                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==newnG) { // converged quick, or don't care (others all converged
-                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG) { // converged quick, or don't care (others all converged
-                        iter_qual_skill[k]++;
-//                        if(iter_qual_skill[k]==iterations_to_qualify || skip_g==newnG) {// criterion met, or don't care (others all converged)
-                        if(iter_qual_skill[k]==iterations_to_qualify || skip_g==nG) {// criterion met, or don't care (others all converged)
-//                            if(skip_g==newnG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
-                            if(skip_g==nG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
-                            skip_k++;
-                            if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
-//                                computeAlphaAndPOParam(fb->xndat, fb->x_data);
-//                                computeAlphaAndPOParam(fbs[k]->xndat, fbs[k]->x_data);
-                                printf("run %2d skipK %4d skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_k,k,fr.iter,fr.pO0,fr.pO,fr.conv);
+
+            
+            if(skip_k<nK) {
+                #pragma omp for schedule(dynamic) //PAR
+                for(k=0; k<nK; k++) { // for all A,B-by-skill
+                    if(iter_qual_skill[k]==iterations_to_qualify)
+                        continue;
+                    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                    fb->init(FBS_PARm1);
+                    fb->init(FBS_GRAD);
+                    if(this->p->solver==METHOD_CGD) {
+                        fb->init(FBS_GRADm1);
+                        fb->init(FBS_DIRm1);
+                    }
+    //                k = sortstrip_k[ki].id; // grab reordered k
+                    
+    //                NCAT xndat = this->p->k_numg[k];
+    //                struct data** x_data = this->p->k_g_data[k];
+                    // link and fit
+                    fb->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
+                    FitResult fr = GradientDescentBit(fb);
+    //                fbs[k]->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
+    //                fr = GradientDescentBit(fbs[k], false /*is1SkillForAll*/);
+                    // decide on convergence
+                    if(i>=first_iteration_qualify) {
+    //                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==newnG) { // converged quick, or don't care (others all converged
+                        if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG) { // converged quick, or don't care (others all converged
+                            iter_qual_skill[k]++;
+    //                        if(iter_qual_skill[k]==iterations_to_qualify || skip_g==newnG) {// criterion met, or don't care (others all converged)
+                            if(iter_qual_skill[k]==iterations_to_qualify || skip_g==nG) {// criterion met, or don't care (others all converged)
+    //                            if(skip_g==newnG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
+                                if(skip_g==nG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
+                                #pragma omp critical(update_skip_k)//PAR
+                                {//PAR
+                                    skip_k++;
+                                }//PAR
+                                if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
+    //                                computeAlphaAndPOParam(fb->xndat, fb->x_data);
+    //                                computeAlphaAndPOParam(fbs[k]->xndat, fbs[k]->x_data);
+                                    printf("run %2d skipK %4d skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_k,k,fr.iter,fr.pO0,fr.pO,fr.conv);
+                                }
                             }
                         }
-                    }
-                    else
-                        iter_qual_skill[k]=0;
-                } // decide on convergence
-//                //
-//                // make copies of parameters to do gradient descend, link to copies, but grads computed from actual params
-//                //
-//                if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//                    swap1D<NUMBER>(cpyPI[k], this->getPI(k), this->p->nS);
-//                    swap2D<NUMBER>(cpyA[k],   this->getA(k), this->p->nS, this->p->nS);
-//                    swap2D<NUMBER>(cpyB[k],   this->getB(k), this->p->nS, this->p->nO);
-//                }
-            } // for all skills
+                        else
+                            iter_qual_skill[k]=0;
+                    } // decide on convergence
+    //                //
+    //                // make copies of parameters to do gradient descend, link to copies, but grads computed from actual params
+    //                //
+    //                if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
+    //                    swap1D<NUMBER>(cpyPI[k], this->getPI(k), this->p->nS);
+    //                    swap2D<NUMBER>(cpyA[k],   this->getA(k), this->p->nS, this->p->nS);
+    //                    swap2D<NUMBER>(cpyB[k],   this->getB(k), this->p->nS, this->p->nO);
+    //                }
+                    delete fb;
+                } // for all skills
+            }
             //
             // PIg second
             //
 //            int z = 0;
 //            for(gi=0; gi<newnG && skip_g<newnG; gi++) { // for all PI-by-user
-            for(g=0; g<nG && skip_g<nG; g++) { // for all PI-by-user
-//                g = sortstrip_g[gi].id; // grab reordered g
+            
+            if(skip_g<nG){
+                #pragma omp for schedule(dynamic)//PAR
+                for(g=0; g<nG; g++) { // for all PI-by-user
+                    if(iter_qual_group[g]==iterations_to_qualify)
+                        continue;
+                    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                    fb->init(FBS_PARm1);
+                    fb->init(FBS_GRAD);
+                    if(this->p->solver==METHOD_CGD) {
+                        fb->init(FBS_GRADm1);
+                        fb->init(FBS_DIRm1);
+                    }
+    //                g = sortstrip_g[gi].id; // grab reordered g
 
-                if(iter_qual_group[g]==iterations_to_qualify)
-                    continue;
-//                NCAT xndat = this->p->g_numk[g];
-//                struct data** x_data = this->p->g_k_data[g];
-                fb->link(this->getPIg(g), NULL, NULL, this->p->g_numk[g], this->p->g_k_data[g]);
-                fr = GradientDescentBit(fb);
-//                fbs[nK+g]->link(this->getPIg(g), NULL, NULL, this->p->g_numk[g], this->p->g_k_data[g]);
-//                fr = GradientDescentBit(fbs[nK+g], false /*is1SkillForAll*/);
-//                if(i>=first_iteration_qualify || fbs[nK+g]->xndat==0) { //can qualify or  student had no skill labelled rows
-//                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==newnK || fbs[nK+g]->xndat==0) { // converged quick, or don't care (others all converged), or  student had no skill labelled rows
-                if(i>=first_iteration_qualify || fb->xndat==0) { //can qualify or  student had no skill labelled rows
-//                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==newnK || fb->xndat==0) { // converged quick, or don't care (others all converged), or                          iter_qual_group[g]++;
-                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==nK || fb->xndat==0) { // converged quick, or don't care (others all converged), or
-                        if(fb->xndat==0) {
-//                        if(fbs[nK+g]->xndat==0) {
-                            iter_qual_group[g]=iterations_to_qualify;
-                            fr.conv = 1;
-                        }
-//                        if(iter_qual_group[g]==iterations_to_qualify || skip_k==newnK) {// criterion met, or don't care (others all converged)
-//                            if(skip_k==newnK) iter_qual_group[g]=iterations_to_qualify; // K not changing anymore
-                    if(iter_qual_group[g]==iterations_to_qualify || skip_k==nK) {// criterion met, or don't care (others all converged)
-                        if(skip_k==nK) iter_qual_group[g]=iterations_to_qualify; // K not changing anymore
-                            skip_g++;
-                            if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
-//                                computeAlphaAndPOParam(fb->xndat, fb->x_data);
-//                                computeAlphaAndPOParam(fbs[nK+g]->xndat, fbs[nK+g]->x_data);
-                                printf("run %2d skipG %4d group %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_g,g,fr.iter,fr.pO0,fr.pO,fr.conv);
+    //                NCAT xndat = this->p->g_numk[g];
+    //                struct data** x_data = this->p->g_k_data[g];
+                    fb->link(this->getPIg(g), NULL, NULL, this->p->g_numk[g], this->p->g_k_data[g]);
+                    FitResult fr = GradientDescentBit(fb);
+    //                fbs[nK+g]->link(this->getPIg(g), NULL, NULL, this->p->g_numk[g], this->p->g_k_data[g]);
+    //                fr = GradientDescentBit(fbs[nK+g], false /*is1SkillForAll*/);
+    //                if(i>=first_iteration_qualify || fbs[nK+g]->xndat==0) { //can qualify or  student had no skill labelled rows
+    //                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==newnK || fbs[nK+g]->xndat==0) { // converged quick, or don't care (others all converged), or  student had no skill labelled rows
+                    if(i>=first_iteration_qualify || fb->xndat==0) { //can qualify or  student had no skill labelled rows
+    //                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==newnK || fb->xndat==0) { // converged quick, or don't care (others all converged), or                          iter_qual_group[g]++;
+                        if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==nK || fb->xndat==0) { // converged quick, or don't care (others all converged), or
+                            if(fb->xndat==0) {
+    //                        if(fbs[nK+g]->xndat==0) {
+                                iter_qual_group[g]=iterations_to_qualify;
+                                fr.conv = 1;
+                            }
+    //                        if(iter_qual_group[g]==iterations_to_qualify || skip_k==newnK) {// criterion met, or don't care (others all converged)
+    //                            if(skip_k==newnK) iter_qual_group[g]=iterations_to_qualify; // K not changing anymore
+                        if(iter_qual_group[g]==iterations_to_qualify || skip_k==nK) {// criterion met, or don't care (others all converged)
+                            if(skip_k==nK) iter_qual_group[g]=iterations_to_qualify; // K not changing anymore
+                                #pragma omp critical(update_skip_g)//PAR
+                                {//PAR
+                                    skip_g++;
+                                }//PAR
+                                if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
+    //                                computeAlphaAndPOParam(fb->xndat, fb->x_data);
+    //                                computeAlphaAndPOParam(fbs[nK+g]->xndat, fbs[nK+g]->x_data);
+                                    printf("run %2d skipG %4d group %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_g,g,fr.iter,fr.pO0,fr.pO,fr.conv);
+                                }
                             }
                         }
-                    }
-                    else
-                        iter_qual_group[g]=0;
-                } // decide on convergence
-//                //
-//                // make copies of parameters to do gradient descend, link to copies, but grads computed from actual params
-//                //
-//                if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//                    swap1D<NUMBER>(this->PIg[g], cpyPIg[g], this->p->nS);
-//                }
-            } // for all groups
+                        else
+                            iter_qual_group[g]=0;
+                    } // decide on convergence
+    //                //
+    //                // make copies of parameters to do gradient descend, link to copies, but grads computed from actual params
+    //                //
+    //                if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
+    //                    swap1D<NUMBER>(this->PIg[g], cpyPIg[g], this->p->nS);
+    //                }
+                    delete fb;
+                } // for all groups
+            }
 //            fr.conv = checkConvergenceBig(fbs, nK+nG, this->p->tol, &crit);
 //            
 //            computeAlphaAndPOParam(this->p->nSeq, this->p->k_data);
 //            ll = HMMProblem::getSumLogPOPara(this->p->nSeq, this->p->k_data);
 //            printf("*%i ll=%15.7f, crit=%10.7f\n",i,ll,crit);
+            #pragma omp single//PAR
+            {//PAR
             i++;
+            }//PAR
         }
+        }//PAR
         // recycle qualifications
         if( iter_qual_skill != NULL ) free(iter_qual_skill);
         if( iter_qual_group != NULL) free(iter_qual_group);
 
     } // if not "force single skill
-    
-    delete fb;
+        
 //    for(x=0;x<nX;x++) delete fbs[x];
 //    if(fbs!=NULL) free(fbs);
         
-    }
-    
     if(false){
         NCAT q, x;
         NCAT nQ = this->p->nK + this->p->nG;
@@ -501,7 +535,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                 fbs[q]->init(FBS_DIRm1);
             }
         }
-        fr=GradientDescentBitBig(fbs, nQ);
+        /*FitResult fr=*/GradientDescentBitBig(fbs, nQ);
         
         for(q=0;q<nQ;q++) delete fbs[q];
         if(fbs!=NULL) free(fbs);

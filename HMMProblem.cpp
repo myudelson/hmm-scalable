@@ -333,8 +333,8 @@ NUMBER HMMProblem::getSumLogPOPara(NCAT xndat, struct data** x_data) {
 
 void HMMProblem::initAlpha(NCAT xndat, struct data** x_data) {
 	NPAR nS = this->p->nS;
-//    int parallel_now = this->p->parallel==2; //PAR
-//    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
+    int parallel_now = this->p->parallel==2; //PAR
+    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
 	for(NCAT x=0; x<xndat; x++) {
         NDAT t;
         NPAR i;
@@ -365,8 +365,8 @@ void HMMProblem::initAlpha(NCAT xndat, struct data** x_data) {
 
 void HMMProblem::initXiGamma(NCAT xndat, struct data** x_data) {
     NPAR nS = this->p->nS;
-//    int parallel_now = this->p->parallel==2; //PAR
-//    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
+    int parallel_now = this->p->parallel==2; //PAR
+    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
 	for(NCAT x=0; x<xndat; x++) {
         NDAT t;
         NPAR i, j;
@@ -402,8 +402,8 @@ void HMMProblem::initXiGamma(NCAT xndat, struct data** x_data) {
 
 void HMMProblem::initBeta(NCAT xndat, struct data** x_data) {
 	NPAR nS = this->p->nS;
-//    int parallel_now = this->p->parallel==2; //PAR
-//    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
+    int parallel_now = this->p->parallel==2; //PAR
+    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
 	for(NCAT x=0; x<xndat; x++) {
         NDAT t;
         NPAR i;
@@ -427,8 +427,8 @@ NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
 	initAlpha(xndat, x_data);
     NPAR nS = this->p->nS;
     NDAT  ndat = 0;
-//    int parallel_now = this->p->parallel==2; //PAR
-//    #pragma omp parallel for schedule(dynamic) if(parallel_now) reduction(+:ndat) //PAR
+    int parallel_now = this->p->parallel==2; //PAR
+    #pragma omp parallel for schedule(dynamic) if(parallel_now) reduction(+:ndat) //PAR
 	for(NCAT x=0; x<xndat; x++) {
         NDAT t;
         NPAR i, j, o;
@@ -474,8 +474,8 @@ NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
 void HMMProblem::computeBeta(NCAT xndat, struct data** x_data) {
 	initBeta(xndat, x_data);
     NPAR nS = this->p->nS;
-//    int parallel_now = this->p->parallel==2; //PAR
-//    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
+    int parallel_now = this->p->parallel==2; //PAR
+    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
 	for(NCAT x=0; x<xndat; x++) {
         int t;
         NPAR i, j, o;
@@ -503,8 +503,8 @@ void HMMProblem::computeBeta(NCAT xndat, struct data** x_data) {
 void HMMProblem::computeXiGamma(NCAT xndat, struct data** x_data){
 	HMMProblem::initXiGamma(xndat, x_data);
     NPAR nS = this->p->nS;
-//    int parallel_now = this->p->parallel==2; //PAR
-//    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
+    int parallel_now = this->p->parallel==2; //PAR
+    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
 	for(NCAT x=0; x<xndat; x++) {
         NDAT t;
         NPAR i, j, o_tp1;
@@ -1207,17 +1207,17 @@ NUMBER HMMProblem::GradientDescent() {
                 cpy3Params(fb->pi, fb->A, fb->B, aPI, aA, aB, this->p->nS, this->p->nO);
             }
         }// force single skill
-//        delete fb;//PAR
+        delete fb;//PAR
 	}
 	//
 	// Main fit
 	//
-//    int parallel_now = this->p->parallel==1; //PAR
-//    #pragma omp parallel if(parallel_now) //num_threads(2)//PAR
-//    {//PAR
+    int parallel_now = this->p->parallel==1; //PAR
+    #pragma omp parallel if(parallel_now) //num_threads(2)//PAR
+    {//PAR
 //    printf("thread %i|%i\n",omp_get_thread_num(),omp_get_num_threads());//undoPAR
     if(this->p->single_skill!=2){
-//        #pragma omp for schedule(dynamic) reduction(+:loglik) //PAR
+        #pragma omp for schedule(dynamic) reduction(+:loglik) //PAR
         for(x=0; x<nX; x++) { // if not "force single skill" too
             NCAT xndat;
             struct data** x_data;
@@ -1250,7 +1250,7 @@ NUMBER HMMProblem::GradientDescent() {
             }
         } // for all skills
     }// if not force single skill
-//    }//#omp //PAR
+    }//#omp //PAR
         
     }
     
@@ -1344,11 +1344,11 @@ NUMBER HMMProblem::BaumWelch() {
 	// Main fit
 	//
     
-//    int parallel_now = this->p->parallel==1; //PAR
-//    #pragma omp parallel if(parallel_now) //num_threads(2) //PAR
-//    {//PAR
+    int parallel_now = this->p->parallel==1; //PAR
+    #pragma omp parallel if(parallel_now) //num_threads(2) //PAR
+    {//PAR
 //        printf("threads %i\n",omp_get_thread_num()); //undoPAR
-//        #pragma omp for schedule(dynamic) reduction(+:loglik) //PAR
+        #pragma omp for schedule(dynamic) reduction(+:loglik) //PAR
         for(k=0; k<this->p->nK; k++) {  // for(k=218; k<219; k++) { //
             FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
             fb->init(FBS_PARm1);
@@ -1363,7 +1363,7 @@ NUMBER HMMProblem::BaumWelch() {
                     printf("skill %4d, seq %4d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", k,  this->p->k_numg[k], fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
             }
         } // for all skills
-//    }//PAR
+    }//PAR
     return loglik;
 }
 
