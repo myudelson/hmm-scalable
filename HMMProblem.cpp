@@ -142,8 +142,6 @@ void HMMProblem::init(struct param *param) {
 			lbB[i][j] = this->p->param_lo[idx];
 			ubB[i][j] = this->p->param_hi[idx];
 		}
-    this->sortstrip_k = NULL;
-    this->sortstrip_g = NULL;
 }
 
 HMMProblem::~HMMProblem() {
@@ -162,8 +160,6 @@ void HMMProblem::destroy() {
 	if(this->ubA!=NULL) free2D<NUMBER>(this->ubA, this->p->nS);
 	if(this->lbB!=NULL) free2D<NUMBER>(this->lbB, this->p->nS);
 	if(this->ubB!=NULL) free2D<NUMBER>(this->ubB, this->p->nS);
-	if(this->sortstrip_k!=NULL) free(this->sortstrip_k);
-	if(this->sortstrip_g!=NULL) free(this->sortstrip_g);
 }// ~HMMProblem
 
 bool HMMProblem::hasNon01Constraints() {
@@ -2174,41 +2170,6 @@ void HMMProblem::readModelBody(FILE *fid, struct param* param, NDAT *line_no,  b
 	} // for all k
 }
 
-
-/*place larger skill and group sequences closer to the beginning*/
-void HMMProblem::reorderSequences(NDAT *newnK, NDAT *newnG, bool sort) {
-    NCAT k, g;
-    
-    *newnK = 0;
-    *newnG = 0;
-    
-    // k, g
-    sortstrip_k = Calloc(sortbit, (size_t)this->p->nK);
-    sortstrip_g = Calloc(sortbit, (size_t)this->p->nG);
-    
-    for(k=0; k<this->p->nK; k++) {
-        sortstrip_k[k].id=k;
-        sortstrip_k[k].n = this->p->k_numg[k];
-        for(g=0; g<this->p->k_numg[k]; g++)
-            sortstrip_k[k].ndat+=this->p->k_g_data[k][g]->n;
-    }
-    for(g=0; g<this->p->nG; g++) {
-        sortstrip_g[g].id=g;
-        sortstrip_g[g].n = this->p->g_numk[g];
-        for(k=0; k<this->p->g_numk[g]; k++)
-            sortstrip_g[g].ndat+=this->p->g_k_data[g][k]->n;
-    }
-    
-    for(k=0; k<this->p->nK; k++)
-        if(sortstrip_k[k].ndat>0) (*newnK)++;
-    for(g=0; g<this->p->nG; g++)
-        if(sortstrip_g[g].ndat>0) (*newnG)++;
-    if(sort) {
-        qsort(sortstrip_k, (size_t)this->p->nK, sizeof(sortbit), compareSortBitInv);
-        qsort(sortstrip_g, (size_t)this->p->nG, sizeof(sortbit), compareSortBitInv);
-    }
-
-}
 
 bool HMMProblem::checkConvergenceBig0(FitBit** fbs, NCAT nfbs, NUMBER tol, NUMBER *criterion) {
     for(NCAT x=0; x<nfbs; x++)

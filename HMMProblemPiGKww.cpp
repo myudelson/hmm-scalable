@@ -22,7 +22,7 @@ HMMProblemPiGKww::HMMProblemPiGKww(struct param *param) : HMMProblemPiGK(param) 
     init(param);
 }
 
-void HMMProblemPiGKww::init(struct param *param) {
+void HMMProblemPiGKww::init(struct param *param){
 //    HMMProblemPiGK::init(param);
     this->ww = init1D<NUMBER>(3);
 	this->ww[0] = 0.5;//1;

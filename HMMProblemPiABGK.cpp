@@ -416,8 +416,9 @@ void HMMProblemPiABGK::fit() {
 }
 
 NUMBER HMMProblemPiABGK::GradientDescent() {
-	NCAT k, g, x;
-    /*NPAR nS = this->p->nS, nO = this->p->nO;*/ NCAT nK = this->p->nK, nG = this->p->nG;
+	NCAT k, g, /*ki, gi, nX, */x;
+    NCAT nK = this->p->nK, nG = this->p->nG;
+    
 	//
 	// fit all as 1 skill first, set group gradients to 0, and do not fit them
 	//
@@ -429,126 +430,127 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
             fb->init(FBS_GRADm1);
             fb->init(FBS_DIRm1);
         }
-        fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
+        fb->link( HMMProblem::getPI(0), HMMProblem::getA(0), HMMProblem::getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save progonal k's
         FitResult fr = GradientDescentBit(fb);
         for(x=0; x<this->p->nSeq; x++) { this->p->all_data[x].k = original_ks[x]; } // restore original k's
         free(original_ks);
-        printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
+        if( !this->p->quiet )
+            printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
         delete fb;
     }
-	
 	//
 	// Main fit
 	//
     if( this->p->single_skill!=2 ) { // if not "force single skill"
-        NCAT first_iteration_qualify = (int)this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
-        NCAT iterations_to_qualify = (int)this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
+        NCAT first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
+        NCAT iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
         NCAT* iter_qual_skill = Calloc(NCAT, (size_t)nK);
         NCAT* iter_qual_group = Calloc(NCAT, (size_t)nG);
         int skip_k = 0, skip_g = 0;
+        // utilize fitting larger data first
         
         int i = 0; // count runs
         int parallel_now = this->p->parallel==1; //PAR
         #pragma omp parallel if(parallel_now) shared(iter_qual_group,iter_qual_skill)//PAR
         {//PAR
-        while(skip_k<nK || skip_g<nG) {
-            //
-            // Skills first
-            //
-            if(skip_k<nK) {
-                #pragma omp for schedule(dynamic) //PAR
-                for(k=0; k<nK; k++) { // for all PI,A,B-by-skill
-                    if(iter_qual_skill[k]==iterations_to_qualify)
-                        continue;
-                    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
-                    fb->init(FBS_PARm1);
-                    fb->init(FBS_GRAD);
-                    if(this->p->solver==METHOD_CGD) {
-                        fb->init(FBS_GRADm1);
-                        fb->init(FBS_DIRm1);
-                    }
-    //                NCAT xndat = this->p->k_numg[k];
-    //                struct data** x_data = this->p->k_g_data[k];
-                    // link and fit
-                    fb->link( this->getPI(k), this->getA(k), this->getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
-                    FitResult fr = GradientDescentBit(fb);
-                    // decide on convergence
-                    if(i>=first_iteration_qualify) {
-                        if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG) { // converged quick, or don't care (others all converged
-                            iter_qual_skill[k]++;
-                            if(iter_qual_skill[k]==iterations_to_qualify || skip_g==nG) {// criterion met, or don't care (others all converged)
-                                if(skip_g==nG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
-                                #pragma omp critical(update_skip_k)//PAR
-                                {//PAR
-                                    skip_k++;
-                                }//PAR
-                                if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
-                                    computeAlphaAndPOParam(fb->xndat, fb->x_data);
-                                    printf("run %2d skipK %4d skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_k,k,fr.iter,fr.pO0,fr.pO,fr.conv);
+            while(skip_k<nK || skip_g<nG) {
+                //
+                // Skills first
+                //
+                if(skip_k<nK) {
+                    #pragma omp for schedule(dynamic) //PAR
+                    for(k=0; k<nK; k++) { // for all A,B-by-skill
+                        if(iter_qual_skill[k]==iterations_to_qualify)
+                            continue;
+                        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                        fb->init(FBS_PARm1);
+                        fb->init(FBS_GRAD);
+                        if(this->p->solver==METHOD_CGD) {
+                            fb->init(FBS_GRADm1);
+                            fb->init(FBS_DIRm1);
+                        }
+                        // link and fit
+                        fb->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
+                        FitResult fr = GradientDescentBit(fb);
+                        // decide on convergence
+                        if(i>=first_iteration_qualify) {
+                            if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG) { // converged quick, or don't care (others all converged
+                                iter_qual_skill[k]++;
+                                if(iter_qual_skill[k]==iterations_to_qualify || skip_g==nG) {// criterion met, or don't care (others all converged)
+                                    if(skip_g==nG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
+                                    #pragma omp critical(update_skip_k)//PAR
+                                    {//PAR
+                                        skip_k++;
+                                    }//PAR
+                                    if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
+                                        printf("run %2d skipK %4d skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_k,k,fr.iter,fr.pO0,fr.pO,fr.conv);
+                                    }
                                 }
                             }
+                            else
+                                iter_qual_skill[k]=0;
+                        } // decide on convergence
+                        delete fb;
+                    } // for all skills
+                }
+                //
+                // PIg second
+                //
+                if(skip_g<nG){
+                    #pragma omp for schedule(dynamic)//PAR
+                    for(g=0; g<nG; g++) { // for all PI-by-user
+                        if(iter_qual_group[g]==iterations_to_qualify)
+                            continue;
+                        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                        fb->init(FBS_PARm1);
+                        fb->init(FBS_GRAD);
+                        if(this->p->solver==METHOD_CGD) {
+                            fb->init(FBS_GRADm1);
+                            fb->init(FBS_DIRm1);
                         }
-                        else
-                            iter_qual_skill[k]=0;
-                    } // decide on convergence
-                    delete fb;
-                } // for all skills
-            }
-            //
-            // PIg, Ag, Bg second
-            //
-            if(skip_g<nG){
-                #pragma omp for schedule(dynamic) //PAR
-                for(g=0; g<nG; g++) { // for all PI-by-user
-                    if(iter_qual_group[g]==iterations_to_qualify)
-                        continue;
-                    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
-                    fb->init(FBS_PARm1);
-                    fb->init(FBS_GRAD);
-                    if(this->p->solver==METHOD_CGD) {
-                        fb->init(FBS_GRADm1);
-                        fb->init(FBS_DIRm1);
-                    }
-    //                NCAT xndat = this->p->g_numk[g];
-    //                struct data** x_data = this->p->g_k_data[g];
-                    // vvvvvvvvvvvvvvvvvvvvv ONLY PART THAT IS DIFFERENT FROM others
-                    fb->link(this->getPIg(g), this->getAg(g), this->getBg(g), this->p->g_numk[g], this->p->g_k_data[g]);
-                    // ^^^^^^^^^^^^^^^^^^^^^
-                    // decide on convergence
-                    FitResult fr = GradientDescentBit(fb);
-                    if(i>=first_iteration_qualify) {
-                        if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==nK) { // converged quick, or don't care (others all converged
-                            iter_qual_group[g]++;
-                            if(iter_qual_group[g]==iterations_to_qualify || skip_k==nK) {// criterion met, or don't care (others all converged)
-                                if(skip_k==nK) iter_qual_group[g]=iterations_to_qualify; // K not changing anymore
-                                #pragma omp critical(update_skip_g)//PAR
-                                {//PAR
-                                    skip_g++;
-                                }//PAR
-                                if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
-                                    computeAlphaAndPOParam(fb->xndat, fb->x_data);
-                                    printf("run %2d skipG %4d group %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_g,g,fr.iter,fr.pO0,fr.pO,fr.conv);
+                        // link
+                        // vvvvvvvvvvvvvvvvvvvvv ONLY PART THAT IS DIFFERENT FROM HMMProblemPiGK
+                        fb->link(this->getPIg(g), this->getAg(g), this->getBg(g), this->p->g_numk[g], this->p->g_k_data[g]);
+                        // ^^^^^^^^^^^^^^^^^^^^^
+                        FitResult fr = GradientDescentBit(fb);
+                        // decide on convergence
+                        if(i>=first_iteration_qualify || fb->xndat==0) { //can qualify or  student had no skill labelled rows
+                            if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==nK || fb->xndat==0) { // converged quick, or don't care (others all converged), or
+                                iter_qual_group[g]++;
+                                if(fb->xndat==0) {
+                                    iter_qual_group[g]=iterations_to_qualify;
+                                    fr.conv = 1;
+                                }
+                                if(iter_qual_group[g]==iterations_to_qualify || skip_k==nK) {// criterion met, or don't care (others all converged)
+                                    if(skip_k==nK) iter_qual_group[g]=iterations_to_qualify; // K not changing anymore
+                                    #pragma omp critical(update_skip_g)//PAR
+                                    {//PAR
+                                        skip_g++;
+                                    }//PAR
+                                    if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
+                                        printf("run %2d skipG %4d group %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_g,g,fr.iter,fr.pO0,fr.pO,fr.conv);
+                                    }
                                 }
                             }
-                        }
-                        else
-                            iter_qual_group[g]=0;
-                    } // decide on convergence
-                    delete fb;
-                } // for all groups
+                            else
+                                iter_qual_group[g]=0;
+                        } // decide on convergence
+                        delete fb;
+                    } // for all groups
+                }
+                #pragma omp single//PAR
+                {//PAR
+                    i++;
+                }//PAR
             }
-            #pragma omp single//PAR
-            {//PAR
-                i++;
-            }//PAR
-        }
         }//PAR
         // recycle qualifications
         if( iter_qual_skill != NULL ) free(iter_qual_skill);
         if( iter_qual_group != NULL) free(iter_qual_group);
-    } // if not "force single skill"
+        
+    } // if not "force single skill
     
     // compute loglik
     return getSumLogPOPara(this->p->nSeq, this->p->k_data);

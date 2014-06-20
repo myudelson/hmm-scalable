@@ -55,7 +55,7 @@ public:
     void predict(NUMBER* metrics, const char *filename, /*StripedArray<NPAR>*/ NPAR* dat_obs, /*StripedArray<NCAT>*/ NCAT *dat_group, /*StripedArray<NCAT>*/ NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled);
     void readModel(const char *filename, bool overwrite);
     virtual void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);
-    virtual void reorderSequences(NDAT *newnK, NDAT *newnG, bool sort); /*place larger skill and group sequences closer to the beginning*/
+//    virtual void reorderSequences(NDAT *newnK, NDAT *newnG, bool sort); /*place larger skill and group sequences closer to the beginning*/
 protected:
 	//
 	// Givens
@@ -77,8 +77,6 @@ protected:
 	NUMBER** ubB; // upper boundary observation matrix
 	bool non01constraints; // whether there are lower or upper boundaries different from 0,1 respectively
 	struct param *p; // data and params
-    sortbit *sortstrip_k;
-    sortbit *sortstrip_g;
 	//
 	// Derived
 	//
