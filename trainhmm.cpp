@@ -1183,8 +1183,8 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
                 for(j=0; j<param.nS; j++)
                     for(j=0; j<param.nS; j++)
                         for(i=0; i<param.nS; i++)
-//                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getB(&dt,i,j);//A[i][j]; //UNBOOST
-                          pLbit[j] += pLe[i] * hmms[f]->getB(&dt,i,j);//A[i][j]; //BOOST
+//                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //UNBOOST
+                          pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //BOOST
             } else { // unknown observation
                 // 2. L = (pL'*A)';
                 for(i=0; i<param.nS; i++)
@@ -1195,8 +1195,8 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
                   pLbit[i] = 0.0; // erase old value //BOOST
                 for(j=0; j<param.nS; j++)
                     for(i=0; i<param.nS; i++)
-//                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getB(&dt,i,j);//UNBOOST
-               pLbit[j] += pLe[i] * hmms[f]->getB(&dt,i,j);//BOOST
+//                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//UNBOOST
+               pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//BOOST
             }// observations
         }
         // write prediction out (after update)
@@ -1466,8 +1466,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
                 for(j=0; j<param.nS; j++)
                     for(j=0; j<param.nS; j++)
                         for(i=0; i<param.nS; i++)
-//                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getB(&dt,i,j);//A[i][j]; //UNBOOST
-                          pLbit[j] += pLe[i] * hmms[f]->getB(&dt,i,j);//A[i][j]; //BOOST
+//                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //UNBOOST
+                          pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //BOOST
             } else { // unknown observation
                 // 2. L = (pL'*A)';
                 for(i=0; i<param.nS; i++)
@@ -1478,8 +1478,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
                   pLbit[i] = 0.0; // erase old value //BOOST
                 for(j=0; j<param.nS; j++)
                     for(i=0; i<param.nS; i++)
-//                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getB(&dt,i,j);//UNBOOST
-               pLbit[j] += pLe[i] * hmms[f]->getB(&dt,i,j);//BOOST
+//                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//UNBOOST
+               pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//BOOST
             }// observations
         }
         // write prediction out (after update)
@@ -1751,8 +1751,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
                 for(j=0; j<param.nS; j++)
                     for(j=0; j<param.nS; j++)
                         for(i=0; i<param.nS; i++)
-//                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getB(&dt,i,j);//A[i][j]; //UNBOOST
-                          pLbit[j] += pLe[i] * hmms[f]->getB(&dt,i,j);//A[i][j]; //BOOST
+//                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //UNBOOST
+                          pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //BOOST
             } else { // unknown observation
                 // 2. L = (pL'*A)';
                 for(i=0; i<param.nS; i++)
@@ -1763,8 +1763,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
                   pLbit[i] = 0.0; // erase old value //BOOST
                 for(j=0; j<param.nS; j++)
                     for(i=0; i<param.nS; i++)
-//                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getB(&dt,i,j);//UNBOOST
-               pLbit[j] += pLe[i] * hmms[f]->getB(&dt,i,j);//BOOST
+//                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//UNBOOST
+               pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//BOOST
             }// observations
         }
         // write prediction out (after update)
