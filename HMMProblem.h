@@ -10,8 +10,8 @@
 #include "FitBit.h"
 #include "StripedArray.h"
 
-//#include <boost/numeric/ublas/matrix_sparse.hpp>//BOOST
-//#include <boost/numeric/ublas/io.hpp>//BOOST
+#include <boost/numeric/ublas/matrix_sparse.hpp>//BOOST
+#include <boost/numeric/ublas/io.hpp>//BOOST
 
 #ifndef _HMMPROBLEM_H
 #define _HMMPROBLEM_H
@@ -51,7 +51,7 @@ public:
     virtual void fit(); // return -LL for the model
     // predicting
     virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
-//*BOOST*     virtual void producePCorrect(boost::numeric::ublas::mapped_matrix<NUMBER*> *group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
+    virtual void producePCorrectBoost(boost::numeric::ublas::mapped_matrix<NUMBER*> *group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);//BOOST
     void predict(NUMBER* metrics, const char *filename, /*StripedArray<NPAR>*/ NPAR* dat_obs, /*StripedArray<NCAT>*/ NCAT *dat_group, /*StripedArray<NCAT>*/ NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled);
     void readModel(const char *filename, bool overwrite);
     virtual void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);

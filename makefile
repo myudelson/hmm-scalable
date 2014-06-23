@@ -1,7 +1,8 @@
 CC=g++ #//PAR
 CXX=g++ #//PAR
 #CXX ?= $(CXX) $(CFLAGS)
-CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp # -I boost # removed -g 
+#CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp #UNBOOST
+CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp -I boost #BOOST
 SHVER = 1
 OS = $(shell uname)
 

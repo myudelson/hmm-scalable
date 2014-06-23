@@ -20,6 +20,8 @@
 ////#include "HMMProblemKT.h"
 #include "StripedArray.h"
 //#include "SparseArray2D.h"
+#include <boost/numeric/ublas/matrix_sparse.hpp>//BOOST
+#include <boost/numeric/ublas/io.hpp>//BOOST
 using namespace std;
 
 struct param param;
@@ -971,6 +973,7 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
     char *ch;
     NPAR f;
     NCAT g,k;
+    NDAT count=0;
     FILE *fid = NULL; // file for storing prediction should that be necessary
     FILE *fid_folds = NULL; // file for reading/writing folds
     if(param.predictions>0) {  // if we have to write the predictions file
@@ -1102,19 +1105,11 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
 	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
 	NUMBER pLe[param.nS];// p(L|evidence);
 	NUMBER pLe_denom; // p(L|evidence) denominator
-	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states
+//	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states //UNBOOST
+   ::boost::numeric::ublas::mapped_matrix<NUMBER*> gsm (param.nG, param.nK);//BOOST
     NUMBER prob = 0, ll = 0;
     struct data dt;
-	// initialize
-	for(g=0; g<param.nG; g++) {
-        dt.g = g;
-        f = folds[g];
-		for(k=0; k<param.nK; k++) {
-            dt.k = k;
-			for(i=0; i<param.nO; i++)
-                group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//PI[i];
-		}
-    }
+
 	// deal with null skill
 	for(t=0; t<param.N; t++) {
 		o = param.dat_obs[t];//[t]; correct: obs 1 (0 code), incorect obs 2 (1 code), hence 1-code is the conversion
@@ -1144,30 +1139,78 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
                     fprintf(fid,"%10.8f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
             continue;
         }
-        hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt);
+
+        // check if {g,k}'s were initialized
+        for(int l=0; l<n; l++) {
+            k = ar[l];
+          NUMBER *z = gsm(g,k); //BOOST
+          if( z==NULL )//BOOST
+//            if( group_skill_map[g][k][0]==0)//UNBOOST
+            {
+                dt.k = k;
+                NUMBER * pLbit = Calloc(NUMBER, param.nS);//BOOST
+                
+                for(i=0; i<param.nS; i++) {
+//                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
+                    pLbit[i] = hmms[f]->getPI(&dt,i);//BOOST
+                    count++;
+                }
+              gsm(g,k) = pLbit; //BOOST
+            }// pLo/pL not set
+        }// for all skills at this transaction
+        
+//        hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt); //UNBOOST
+        hmms[f]->producePCorrectBoost(&gsm, local_pred, ar, n, &dt); //BOOST
+
         for(int l=0; l<n; l++) {
             k = ar[l];
             dt.k = k;
-            //            // produce prediction and copy to result
-            //            for(m=0; m<param.nO; m++)
-            //                for(i=0; i<param.nS; i++)
-            //                    local_pred[m] += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,m);
-            // update p(L)
-            pLe_denom = 0.0;
-            // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
-            for(i=0; i<param.nS; i++) pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);
-            for(i=0; i<param.nS; i++) pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom);
-            // 2. L = (pLe'*A)';
-            for(i=0; i<param.nS; i++) group_skill_map[g][k][i] = 0.0;
-            for(j=0; j<param.nS; j++)
+            NUMBER* pLbit = gsm(g,k); //BOOST
+            if(o>-1) { // known observations
+                // update p(L)
+                pLe_denom = 0.0;
+                // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
                 for(i=0; i<param.nS; i++)
-                    group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);
+//                    pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);  ///// TODO: this is local_pred[o]!!!//UNBOOST
+                  pLe_denom += pLbit[i] * hmms[f]->getB(&dt,i,o); //BOOST
+                for(i=0; i<param.nS; i++)
+//                    pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //UNBOOST
+                  pLe[i] = pLbit[i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //BOOST
+                // 2. L = (pLe'*A)';
+                for(i=0; i<param.nS; i++)
+//                    group_skill_map[g][k][i]= 0.0; //UNBOOST
+                  pLbit[i]= 0.0; //BOOST
+                for(j=0; j<param.nS; j++)
+                    for(j=0; j<param.nS; j++)
+                        for(i=0; i<param.nS; i++)
+//                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getB(&dt,i,j);//A[i][j]; //UNBOOST
+                          pLbit[j] += pLe[i] * hmms[f]->getB(&dt,i,j);//A[i][j]; //BOOST
+            } else { // unknown observation
+                // 2. L = (pL'*A)';
+                for(i=0; i<param.nS; i++)
+//                    pLe[i] = group_skill_map[g][k][i]; // copy first; //UNBOOST
+                  pLe[i] = pLbit[i]; // copy first; //BOOST
+                for(i=0; i<param.nS; i++)
+//                    group_skill_map[g][k][i] = 0.0; // erase old value //UNBOOST
+                  pLbit[i] = 0.0; // erase old value //BOOST
+                for(j=0; j<param.nS; j++)
+                    for(i=0; i<param.nS; i++)
+//                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getB(&dt,i,j);//UNBOOST
+               pLbit[j] += pLe[i] * hmms[f]->getB(&dt,i,j);//BOOST
+            }// observations
         }
-        //        for(m=0; m<param.nO; m++)
-        //            local_pred[m] /= n;
-        if(param.predictions>0) // write predictions file if it was opened
+        // write prediction out (after update)
+        if(param.predictions>0) { // write predictions file if it was opened
             for(m=0; m<param.nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
+                fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t": ((param.predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+            if(param.predictions==2) { // if we print out states of KC's as welll
+                for(int l=0; l<n; l++) { // all KC here
+//                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+                }
+            }
+        }
+        
         rmse += pow(isTarget-local_pred[param.cv_target_obs],2);
         rmse_no_null += pow(isTarget-local_pred[param.cv_target_obs],2);
         accuracy += isTarget == (local_pred[param.cv_target_obs]>=0.5);
@@ -1189,7 +1232,15 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
     n_par /= f;
     free(folds);
     free(local_pred);
-    free3D<NUMBER>(group_skill_map, param.nG, param.nK);
+//    free3D<NUMBER>(group_skill_map, param.nG, param.nK);//UNBOOST
+    gsm.clear();//BOOST
+    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator1 it1_t;//BOOST
+    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator2 it2_t;//BOOST
+    for (it1_t itgsm1 = gsm.begin1(); itgsm1 != gsm.end1(); itgsm1++)//BOOST
+       for (it2_t itgsm2 = itgsm1.begin(); itgsm2 != itgsm1.end(); itgsm2++)//BOOST
+           free( gsm( itgsm2.index1(), itgsm2.index2() ) );//BOOST
+    
+    
     if(param.predictions>0) // close predictions file if it was opened
         fclose(fid);
     metrics[0] = ll;
@@ -1337,19 +1388,11 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
 	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
 	NUMBER pLe[param.nS];// p(L|evidence);
 	NUMBER pLe_denom; // p(L|evidence) denominator
-	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states
+//	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states //UNBOOST
+   ::boost::numeric::ublas::mapped_matrix<NUMBER*> gsm (param.nG, param.nK);//BOOST
     NUMBER prob = 0, ll = 0;
     struct data dt;
-//	// initialize
-//	for(g=0; g<param.nG; g++) {
-//        dt.g = g;
-//        f = folds[g];
-//		for(k=0; k<param.nK; k++) {
-//            dt.k = k;
-//			for(i=0; i<param.nO; i++)
-//                group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//PI[i];
-//		}
-//    }
+
 	// deal with null skill
 	for(t=0; t<param.N; t++) {
 		o = param.dat_obs[t];//[t]; correct: obs 1 (0 code), incorect obs 2 (1 code), hence 1-code is the conversion
@@ -1383,42 +1426,74 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
         // check if {g,k}'s were initialized
         for(int l=0; l<n; l++) {
             k = ar[l];
-            //          NUMBER *z = gsm(g,k); //BOOST
-            //          if( z==NULL )//BOOST
-            if( group_skill_map[g][k][0]==0)//UNBOOST
+            NUMBER *z = gsm(g,k); //BOOST
+            if( z==NULL )//BOOST
+//            if( group_skill_map[g][k][0]==0)//UNBOOST
             {
                 dt.k = k;
-                //                NUMBER * pLbit = Calloc(NUMBER, nS);//BOOST
-                
+                NUMBER * pLbit = Calloc(NUMBER, param.nS);//BOOST
+
                 for(i=0; i<param.nS; i++) {
-                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
-                    //                    pLbit[i] = getPI(dt,i);//BOOST
+//                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
+                    pLbit[i] = hmms[f]->getPI(&dt,i);//BOOST
                     count++;
                 }
-                //              gsm(g,k) = pLbit; //BOOST
+                gsm(g,k) = pLbit; //BOOST
             }// pLo/pL not set
         }// for all skills at this transaction
         
-        hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt);
+//        hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt); //UNBOOST
+      hmms[f]->producePCorrectBoost(&gsm, local_pred, ar, n, &dt); //BOOST
+
         for(int l=0; l<n; l++) {
             k = ar[l];
             dt.k = k;
-            // produce prediction and copy to result
-            pLe_denom = 0.0;
-            // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
-            for(i=0; i<param.nS; i++) pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);
-            for(i=0; i<param.nS; i++) pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom);
-            // 2. L = (pLe'*A)';
-            for(i=0; i<param.nS; i++) group_skill_map[g][k][i] = 0.0;
-            for(j=0; j<param.nS; j++)
+          NUMBER* pLbit = gsm(g,k); //BOOST
+            if(o>-1) { // known observations
+                // update p(L)
+                pLe_denom = 0.0;
+                // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
                 for(i=0; i<param.nS; i++)
-                    group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);
+//                    pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);  ///// TODO: this is local_pred[o]!!!//UNBOOST
+                  pLe_denom += pLbit[i] * hmms[f]->getB(&dt,i,o); //BOOST
+                for(i=0; i<param.nS; i++)
+//                    pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //UNBOOST
+                  pLe[i] = pLbit[i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //BOOST
+                // 2. L = (pLe'*A)';
+                for(i=0; i<param.nS; i++)
+//                    group_skill_map[g][k][i]= 0.0; //UNBOOST
+                  pLbit[i]= 0.0; //BOOST
+                for(j=0; j<param.nS; j++)
+                    for(j=0; j<param.nS; j++)
+                        for(i=0; i<param.nS; i++)
+//                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getB(&dt,i,j);//A[i][j]; //UNBOOST
+                          pLbit[j] += pLe[i] * hmms[f]->getB(&dt,i,j);//A[i][j]; //BOOST
+            } else { // unknown observation
+                // 2. L = (pL'*A)';
+                for(i=0; i<param.nS; i++)
+//                    pLe[i] = group_skill_map[g][k][i]; // copy first; //UNBOOST
+                  pLe[i] = pLbit[i]; // copy first; //BOOST
+                for(i=0; i<param.nS; i++)
+//                    group_skill_map[g][k][i] = 0.0; // erase old value //UNBOOST
+                  pLbit[i] = 0.0; // erase old value //BOOST
+                for(j=0; j<param.nS; j++)
+                    for(i=0; i<param.nS; i++)
+//                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getB(&dt,i,j);//UNBOOST
+               pLbit[j] += pLe[i] * hmms[f]->getB(&dt,i,j);//BOOST
+            }// observations
         }
-        //        for(m=0; m<param.nO; m++)
-        //            local_pred[m] /= n;
-        if(param.predictions>0) // write predictions file if it was opened
+        // write prediction out (after update)
+        if(param.predictions>0) { // write predictions file if it was opened
             for(m=0; m<param.nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
+                fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t": ((param.predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+            if(param.predictions==2) { // if we print out states of KC's as welll
+                for(int l=0; l<n; l++) { // all KC here
+//                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+                }
+            }
+        }
+        
         rmse += pow(isTarget-local_pred[param.cv_target_obs],2);
         rmse_no_null += pow(isTarget-local_pred[param.cv_target_obs],2);
         accuracy += isTarget == (local_pred[param.cv_target_obs]>=0.5);
@@ -1441,9 +1516,15 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
     free(folds);
     //    free(fold_shortcounts);
     free(local_pred);
-    free3D<NUMBER>(group_skill_map, param.nG, param.nK);
+//    free3D<NUMBER>(group_skill_map, param.nG, param.nK);//UNBOOST
     if(param.predictions>0) // close predictions file if it was opened
         fclose(fid);
+    gsm.clear();//BOOST
+    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator1 it1_t;//BOOST
+    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator2 it2_t;//BOOST
+    for (it1_t itgsm1 = gsm.begin1(); itgsm1 != gsm.end1(); itgsm1++)//BOOST
+       for (it2_t itgsm2 = itgsm1.begin(); itgsm2 != itgsm1.end(); itgsm2++)//BOOST
+           free( gsm( itgsm2.index1(), itgsm2.index2() ) );//BOOST
     metrics[0] = ll;
     metrics[1] = 2*(n_par) + 2*ll;
     metrics[2] = n_par*safelog(param.N) + 2*ll;
@@ -1593,19 +1674,11 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
 	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
 	NUMBER pLe[param.nS];// p(L|evidence);
 	NUMBER pLe_denom; // p(L|evidence) denominator
-	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states
+//	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states //UNBOOST
+    ::boost::numeric::ublas::mapped_matrix<NUMBER*> gsm (param.nG, param.nK);//BOOST
     NUMBER prob = 0, ll = 0;
     struct data dt;
-//	// initialize
-//	for(g=0; g<param.nG; g++) {
-//        dt.g = g;
-//        f = folds[g];
-//		for(k=0; k<param.nK; k++) {
-//            dt.k = k;
-//			for(i=0; i<param.nO; i++)
-//                group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//PI[i];
-//		}
-//    }
+
 	// deal with null skill
 	for(t=0; t<param.N; t++) {
 		o = param.dat_obs[t];//[t]; correct: obs 1 (0 code), incorect obs 2 (1 code), hence 1-code is the conversion
@@ -1639,42 +1712,74 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
         // check if {g,k}'s were initialized
         for(int l=0; l<n; l++) {
             k = ar[l];
-            //          NUMBER *z = gsm(g,k); //BOOST
-            //          if( z==NULL )//BOOST
-            if( group_skill_map[g][k][0]==0)//UNBOOST
+          NUMBER *z = gsm(g,k); //BOOST
+          if( z==NULL )//BOOST
+//            if( group_skill_map[g][k][0]==0)//UNBOOST
             {
                 dt.k = k;
-                //                NUMBER * pLbit = Calloc(NUMBER, nS);//BOOST
+                NUMBER * pLbit = Calloc(NUMBER, param.nS);//BOOST
                 for(i=0; i<param.nS; i++) {
-                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
-                    //                    pLbit[i] = getPI(dt,i);//BOOST
+//                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
+                    pLbit[i] = hmms[f]->getPI(&dt,i);//BOOST
                     count++;
                 }
-                //              gsm(g,k) = pLbit; //BOOST
+              gsm(g,k) = pLbit; //BOOST
             }// pLo/pL not set
         }// for all skills at this transaction
         
-        hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt);
+//        hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt); //UNBOOST
+        hmms[f]->producePCorrectBoost(&gsm, local_pred, ar, n, &dt); //BOOST
+        
         for(int l=0; l<n; l++) {
             k = ar[l];
             dt.k = k;
-            // produce prediction and copy to result
-            // update p(L)
-            pLe_denom = 0.0;
-            // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
-            for(i=0; i<param.nS; i++) pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);
-            for(i=0; i<param.nS; i++) pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom);
-            // 2. L = (pLe'*A)';
-            for(i=0; i<param.nS; i++) group_skill_map[g][k][i] = 0.0;
-            for(j=0; j<param.nS; j++)
+          NUMBER* pLbit = gsm(g,k); //BOOST
+            if(o>-1) { // known observations
+                // update p(L)
+                pLe_denom = 0.0;
+                // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
                 for(i=0; i<param.nS; i++)
-                    group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);
+//                    pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);  ///// TODO: this is local_pred[o]!!!//UNBOOST
+                  pLe_denom += pLbit[i] * hmms[f]->getB(&dt,i,o); //BOOST
+                for(i=0; i<param.nS; i++)
+//                    pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //UNBOOST
+                  pLe[i] = pLbit[i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //BOOST
+                // 2. L = (pLe'*A)';
+                for(i=0; i<param.nS; i++)
+//                    group_skill_map[g][k][i]= 0.0; //UNBOOST
+                  pLbit[i]= 0.0; //BOOST
+                for(j=0; j<param.nS; j++)
+                    for(j=0; j<param.nS; j++)
+                        for(i=0; i<param.nS; i++)
+//                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getB(&dt,i,j);//A[i][j]; //UNBOOST
+                          pLbit[j] += pLe[i] * hmms[f]->getB(&dt,i,j);//A[i][j]; //BOOST
+            } else { // unknown observation
+                // 2. L = (pL'*A)';
+                for(i=0; i<param.nS; i++)
+//                    pLe[i] = group_skill_map[g][k][i]; // copy first; //UNBOOST
+                  pLe[i] = pLbit[i]; // copy first; //BOOST
+                for(i=0; i<param.nS; i++)
+//                    group_skill_map[g][k][i] = 0.0; // erase old value //UNBOOST
+                  pLbit[i] = 0.0; // erase old value //BOOST
+                for(j=0; j<param.nS; j++)
+                    for(i=0; i<param.nS; i++)
+//                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getB(&dt,i,j);//UNBOOST
+               pLbit[j] += pLe[i] * hmms[f]->getB(&dt,i,j);//BOOST
+            }// observations
         }
-        //        for(m=0; m<param.nO; m++)
-        //            local_pred[m] /= n;
-        if(param.predictions>0) // write predictions file if it was opened
+        // write prediction out (after update)
+        if(param.predictions>0) { // write predictions file if it was opened
             for(m=0; m<param.nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
+                fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t": ((param.predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+            if(param.predictions==2) { // if we print out states of KC's as welll
+                for(int l=0; l<n; l++) { // all KC here
+//                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+                }
+            }
+        }
+        
+        
         rmse += pow(isTarget-local_pred[param.cv_target_obs],2);
         rmse_no_null += pow(isTarget-local_pred[param.cv_target_obs],2);
         accuracy += isTarget == (local_pred[param.cv_target_obs]>=0.5);
@@ -1697,9 +1802,16 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
     free(folds);
     //    free(fold_shortcounts);
     free(local_pred);
-    free3D<NUMBER>(group_skill_map, param.nG, param.nK);
+//    free3D<NUMBER>(group_skill_map, param.nG, param.nK);//UNBOOST
     if(param.predictions>0) // close predictions file if it was opened
         fclose(fid);
+    gsm.clear();//BOOST
+    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator1 it1_t;//BOOST
+    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator2 it2_t;//BOOST
+    for (it1_t itgsm1 = gsm.begin1(); itgsm1 != gsm.end1(); itgsm1++)//BOOST
+       for (it2_t itgsm2 = itgsm1.begin(); itgsm2 != itgsm1.end(); itgsm2++)//BOOST
+           free( gsm( itgsm2.index1(), itgsm2.index2() ) );//BOOST
+    
     metrics[0] = ll;
     metrics[1] = 2*(n_par) + 2*ll;
     metrics[2] = n_par*safelog(param.N) + 2*ll;

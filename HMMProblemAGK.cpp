@@ -360,9 +360,13 @@ NUMBER HMMProblemAGK::GradientDescent() {
                         fb->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
                         FitResult fr = GradientDescentBit(fb);
                         // decide on convergence
-                        if(i>=first_iteration_qualify) {
-                            if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG) { // converged quick, or don't care (others all converged
+                        if(i>=first_iteration_qualify || fb->xndat==0) {
+                            if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG || fb->xndat==0) { // converged quick, or don't care (others all converged
                                 iter_qual_skill[k]++;
+                                if(fb->xndat==0) {
+                                    iter_qual_skill[k]=iterations_to_qualify;
+                                    fr.conv = 1;
+                                }
                                 if(iter_qual_skill[k]==iterations_to_qualify || skip_g==nG) {// criterion met, or don't care (others all converged)
                                     if(skip_g==nG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
                                     #pragma omp critical(update_skip_k)//PAR
