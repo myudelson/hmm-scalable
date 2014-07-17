@@ -122,8 +122,6 @@ int main (int argc, char ** argv) {
 	char predict_file[1024];
     
 	set_param_defaults(&param);
-	parse_arguments(argc, argv, input_file, output_file, predict_file);
-    
     
     if(!param.quiet)
         printf("trainhmm starting...\n");
@@ -136,6 +134,12 @@ int main (int argc, char ** argv) {
     
 	if( ! red_ok )
         return 0;
+    
+    // now we know the real data
+	parse_arguments(argc, argv, input_file, output_file, predict_file);
+    // to reflect upon number of states and observations if those are not 2 and 2 respectively
+	reset_param_defaults(&param);
+    
     
 //    write_pLo_irt();
     
@@ -300,7 +304,7 @@ int main (int argc, char ** argv) {
 	// free data
 	destroy_input_data(&param);
 	
-	if(param.quiet == 0)
+//	if(param.quiet == 0)
 //        printf("timing: overall %f seconds, read %f, fit %f, predict %f\n",(NUMBER)((clock()-tm_all)/CLOCKS_PER_SEC), (NUMBER)tm_read/CLOCKS_PER_SEC,  (NUMBER)tm_fit/CLOCKS_PER_SEC,  (NUMBER)tm_predict/CLOCKS_PER_SEC);//SEQ
         printf("timing: overall %lf sec, read %lf sec, fit %lf sec, predict %lf sec\n",omp_get_wtime()-_tm_all, _tm_read, _tm_fit, _tm_predict);//PAR
     return 0;
@@ -359,9 +363,14 @@ void exit_with_help() {
 void parse_arguments(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name) {
 	// parse command line options, starting from 1 (0 is path to executable)
 	// go in pairs, looking at whether first in pair starts with '-', if not, stop parsing arguments
+    
+    // at this time we should know nO -- the number of observations
 	int i;
     int n;
     char *ch, *ch2;
+    bool init_specd = false; // init parameters specified
+    bool lims_specd = false; // parameter limits specified
+    bool stat_specd_gt2 = false; // number of states specified to be >2
 	for(i=1;i<argc;i++)
 	{
 		if(argv[i][0] != '-') break; // end of options stop parsing
@@ -407,6 +416,9 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 					fprintf(stderr,"ERROR! Number of hidden states should be at least 2\n");
 					exit_with_help();
 				}
+                if(param.nS != 2) {
+                    stat_specd_gt2 = true;
+                }
 				break;
 			case 'S':
 				param.scaled = (NPAR)atoi(argv[i]);
@@ -416,20 +428,6 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 				}
 				break;
 			case 's':
-                //				param.solver = (NPAR)atoi( strtok(argv[i],".\t\n\r") );
-                //                ch = strtok(NULL,"\t\n\r");
-                //                if(ch != NULL)
-                //                    param.solver_setting = (NPAR)atoi(ch);
-                //                if( param.solver != BKT_CGD      && param.solver != BKT_GD      &&
-                //                    param.solver != BKT_BW       && param.solver != BKT_GD_BW   &&
-                //                    param.solver != BKT_BW_GD    && param.solver != BKT_GD_G    &&
-                //                    param.solver != BKT_GD_PIg   && param.solver != BKT_GD_PIgk &&
-                //                    param.solver != BKT_GD_APIgk && param.solver != BKT_GD_Agk  &&
-                //                    param.solver != BKT_GD_T ) {
-                //                    fprintf(stderr, "Method specified (%d) is out of range of allowed values\n",param.solver);
-                //					exit_with_help();
-                //                }
-                //                // new
 				param.structure = (NPAR)atoi( strtok(argv[i],".\t\n\r") );
                 ch = strtok(NULL,".\t\n\r"); // could be NULL (default GD solver)
                 if(ch != NULL)
@@ -479,13 +477,14 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
                 }
                 if(param.initfile[0]==0) { // init parameters parameters
                     // init params
-                    free(param.init_params);
+                    if(param.init_params!=NULL) free(param.init_params);
                     param.init_params = Calloc(NUMBER, (size_t)n);
                     // read params and write to params
                     param.init_params[0] = atof( strtok(argv[i],",\t\n\r") );
                     for(int j=1; j<n; j++)
                         param.init_params[j] = atof( strtok(NULL,",\t\n\r") );
                 }
+                init_specd = true;
 				break;
 			case 'l': // lower poundaries
 				len = (int)strlen( argv[i] );
@@ -494,12 +493,13 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 				for(int j=0;j<len;j++)
 					n += (NPAR)((argv[i][j]==',')?1:0);
 				// init params
-				free(param.param_lo);
+				if(param.param_lo!=NULL) free(param.param_lo);
 				param.param_lo = Calloc(NUMBER, (size_t)n);
 				// read params and write to params
 				param.param_lo[0] = atof( strtok(argv[i],",\t\n\r") );
 				for(int j=1; j<n; j++)
 					param.param_lo[j] = atof( strtok(NULL,",\t\n\r") );
+                lims_specd = true;
 				break;
 			case 'u': // upper poundaries
 				len = (int)strlen( argv[i] );
@@ -508,12 +508,13 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 				for(int j=0;j<len;j++)
 					n += (argv[i][j]==',')?1:0;
 				// init params
-				free(param.param_hi);
+				if(param.param_hi!=NULL) free(param.param_hi);
 				param.param_hi = Calloc(NUMBER, (size_t)n);
 				// read params and write to params
 				param.param_hi[0] = atof( strtok(argv[i],",\t\n\r") );
 				for(int j=1; j<n; j++)
 					param.param_hi[j] = atof( strtok(NULL,",\t\n\r") );
+                lims_specd = true;
 				break;
 			case 'B': // block fitting
                 // first
@@ -1739,7 +1740,7 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
                 pLe_denom = 0.0;
                 // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
                 for(i=0; i<param.nS; i++)
-//                    pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);  ///// TODO: this is local_pred[o]!!!//UNBOOST
+//                    pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);  // TODO: this is local_pred[o]!!!//UNBOOST
                   pLe_denom += pLbit[i] * hmms[f]->getB(&dt,i,o); //BOOST
                 for(i=0; i<param.nS; i++)
 //                    pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //UNBOOST

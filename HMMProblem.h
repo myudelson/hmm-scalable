@@ -98,9 +98,9 @@ protected:
     // predicting
 	virtual NDAT computeGradients(FitBit *fb);
     virtual NUMBER doLinearStep(FitBit *fb);
-    virtual void doLagrangeStep(FitBit *fb);
+    virtual NUMBER doLagrangeStep(FitBit *fb);
     NUMBER doConjugateLinearStep(FitBit *fb);
-    void doBaumWelchStep(FitBit *fb);
+    NUMBER doBaumWelchStep(FitBit *fb);
     FitResult GradientDescentBit(FitBit *fb); // for 1 skill or 1 group, all 1 skill for all data
     FitResult BaumWelchBit(FitBit *fb);
 	// predicting big

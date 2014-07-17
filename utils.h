@@ -94,6 +94,7 @@ enum STRUCTURE {
 struct FitResult {
     int iter;   // interations
     NUMBER pO0; // starting log-likelihood
+    NUMBER pOmid; // working - especially for stopping criteria on LL improvement
     NUMBER pO;  // final log-likelihood
     int conv;   // converged? (maybe just went to max-iter)
     NDAT ndat;
@@ -365,6 +366,7 @@ NUMBER elnprod(NUMBER eln_x, NUMBER eln_y);
 // The heavy end - common functionality
 //
 void set_param_defaults(struct param *param);
+void reset_param_defaults(struct param *param); // to reflect upon number of states and observations if those are not 2 and 2 respectively
 void RecycleFitData(NCAT xndat, struct data** x_data, struct param *param);
 
 //

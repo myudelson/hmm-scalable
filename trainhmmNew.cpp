@@ -896,7 +896,7 @@ void cross_validate(NUMBER* metrics, const char *filename) {
 //                hmms[f] = new HMMProblemPiABGK(&param);
 //                break;
 ////            case BKT_GD_T: // Gradient Descent with Transfer
-////                hmm = new HMMProblemKT(&param);
+//                hmm = new HMMProblemKT(&param);
 ////                break;
         }
         // block respective data - do not fit the data belonging to the fold

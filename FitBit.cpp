@@ -281,7 +281,8 @@ void FitBit::add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
     add(soursePI, sourseA, sourseB, targetPI, targetA, targetB);
 }
 
-bool FitBit::checkConvergence() {
+bool FitBit::checkConvergence(FitResult *fr) {
+
 	NUMBER critetion = 0;
 	for(NPAR i=0; i<this->nS; i++)
 	{
@@ -294,6 +295,8 @@ bool FitBit::checkConvergence() {
 		}
 	}
 	return sqrt(critetion) < this->tol; // double the truth or false
+        
+//    return (fr->pOmid - fr->pO) < this->tol;
 }
 
 void FitBit::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {

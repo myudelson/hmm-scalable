@@ -80,14 +80,14 @@ void HMMProblemPiGK::init(struct param *param) {
 		this->B   = init3D<NUMBER>(nK, nS, nO);
 		this->PIg = init2D<NUMBER>(nG, nS);
         NCAT x;
-		for(x=0; x<this->p->nK; x++) {
+		for(x=0; x<nK; x++) {
 			cpy1D<NUMBER>(a_PI, this->pi[x], nS);
 			cpy2D<NUMBER>(a_A,  this->A[x],  nS, nS);
 			cpy2D<NUMBER>(a_B,  this->B[x],  nS, nO);
         }
         // PIg start with same params
-		for(x=0; x<this->p->nG; x++)
-			cpy1D<NUMBER>(a_PI, this->PIg[x], this->p->nS);
+		for(x=0; x<nG; x++)
+			cpy1D<NUMBER>(a_PI, this->PIg[x], nS);
 	} else {
 		fprintf(stderr,"params do not meet constraints.\n");
 		exit(1);
@@ -106,7 +106,7 @@ void HMMProblemPiGK::init(struct param *param) {
 	// *PI
     init3Params(this->lbPI, this->lbA, this->lbB, nS, nO);
     init3Params(this->ubPI, this->ubA, this->ubB, nS, nO);
-	for(i=0; i<this->p->nS; i++) {
+	for(i=0; i<nS; i++) {
 		lbPI[i] = this->p->param_lo[i];
 		ubPI[i] = this->p->param_hi[i];
 	}
@@ -228,7 +228,7 @@ void HMMProblemPiGK::setGradPI(FitBit *fb){
         for(i=0; i<fb->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );
-			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
+            fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
         // penalty
         for(i=0; i<fb->nS && this->p->C!=0; i++)
@@ -284,6 +284,7 @@ void HMMProblemPiGK::fit() {
         loglik_rmse[0] += GradientDescent();
     } else {
         fprintf(stderr,"Solver specified is not supported.\n");
+        exit(1);
     }
     this->neg_log_lik = loglik_rmse[0];
     free(loglik_rmse);

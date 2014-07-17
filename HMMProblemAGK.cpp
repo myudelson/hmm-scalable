@@ -301,7 +301,7 @@ void HMMProblemAGK::fit() {
 }
 
 NUMBER HMMProblemAGK::GradientDescent() {
-	NCAT k, g, /*ki, gi, nX, */x;
+	NCAT k=0, g=0, /*ki, gi, nX, */x;
     NCAT nK = this->p->nK, nG = this->p->nG;
     
 	//
@@ -344,11 +344,14 @@ NUMBER HMMProblemAGK::GradientDescent() {
                 //
                 // Skills first
                 //
+                printf("... while in,  run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedG=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                 if(skip_k<nK) {
+                    printf("... still k,   run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedG=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                     #pragma omp for schedule(dynamic) //PAR
                     for(k=0; k<nK; k++) { // for all A,B-by-skill
                         if(iter_qual_skill[k]==iterations_to_qualify)
                             continue;
+                        printf("... doing k,   run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedG=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                         FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
                         fb->init(FBS_PARm1);
                         fb->init(FBS_GRAD);
@@ -388,10 +391,12 @@ NUMBER HMMProblemAGK::GradientDescent() {
                 // PIg second
                 //
                 if(skip_g<nG){
+                    printf("... still g,   run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedG=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                     #pragma omp for schedule(dynamic)//PAR
                     for(g=0; g<nG; g++) { // for all PI-by-user
                         if(iter_qual_group[g]==iterations_to_qualify)
                             continue;
+                        printf("... doing g,   run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedG=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                         FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
                         fb->init(FBS_PARm1);
                         fb->init(FBS_GRAD);
@@ -437,7 +442,9 @@ NUMBER HMMProblemAGK::GradientDescent() {
                 #pragma omp single//PAR
                 {//PAR
                     i++;
+                    printf("... done run,  run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedG=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                 }//PAR
+                printf("... while out, run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedG=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
             }
         }//PAR
         // recycle qualifications

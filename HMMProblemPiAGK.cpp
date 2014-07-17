@@ -27,12 +27,12 @@ HMMProblemPiAGK::HMMProblemPiAGK(struct param *param) {
 
 void HMMProblemPiAGK::init(struct param *param) {
 	this->p = param;
+    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
 	this->non01constraints = true;
     this->null_obs_ratio = Calloc(NUMBER, (size_t)this->p->nO);
     this->neg_log_lik = 0;
     this->null_skill_obs = 0;
     this->null_skill_obs_prob = 0;
-    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
     
     NUMBER *a_PI, ** a_A, ** a_B;
     init3Params(a_PI, a_A, a_B, nS, nO);
@@ -210,6 +210,16 @@ NUMBER* HMMProblemPiAGK::getPIg(NCAT x) {
 	return this->PIg[x];
 }
 
+NUMBER HMMProblemPiAGK::getPI(struct data* dt, NPAR i) {
+    NUMBER p = this->pi[dt->k][i], q = this->PIg[dt->g][i];
+    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+
+//    NUMBER p = this->PI[dt->k][i], q = this->PIg[dt->g][i];
+//    NUMBER item = this->p->item_complexity[ this->p->dat_item->get( dt->ix[0] ) ];
+//    NUMBER v = 1/( 1 + (1-p)*(1-q)*(1-item)/(p*q*item) );
+//    return v;
+}
+
 NUMBER** HMMProblemPiAGK::getAk(NCAT x) {
 	if( x > (this->p->nK-1) ) {
 		fprintf(stderr,"While accessing A, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
@@ -226,23 +236,10 @@ NUMBER** HMMProblemPiAGK::getAg(NCAT x) {
 	return this->Ag[x];
 }
 
-NUMBER HMMProblemPiAGK::getPI(struct data* dt, NPAR i) {
-    NUMBER p = this->pi[dt->k][i], q = this->PIg[dt->g][i];
-//    NUMBER item = this->p->item_complexity[ this->p->dat_item->get( dt->ix[0] ) ];
-    return 1/( 1 + (1-p)*(1-q)/(p*q) );
-//    NUMBER v = 1/( 1 + (1-p)*(1-q)*(1-item)/(p*q*item) );
-//    if( v < 0 | v > 1) {
-//        int z = 0;
-//    }
-//    return v;
-//    return sigmoid( logit( this->pi[dt->k][i] ) + logit( this->PIg[dt->g][i] ) );
-}
-
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemPiAGK::getA(struct data* dt, NPAR i, NPAR j) {
     NUMBER p = this->A[dt->k][i][j], q = this->Ag[dt->g][i][j];
     return 1/( 1 + (1-p)*(1-q)/(p*q) );
-//    return sigmoid( logit( this->A[dt->k][i][j] ) + logit( this->Ag[dt->k][i][j] ) );
 }
 
 // getters for computing alpha, beta, gamma
@@ -259,16 +256,16 @@ void HMMProblemPiAGK::setGradPI(FitBit *fb){
     NDAT t = 0;
     NPAR i, o;
     NUMBER combined, deriv_logit;
-//    o = dt->obs[t];
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
+//    o = dt->obs[t];
         o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
         for(i=0; i<fb->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->pi[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );
-			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
+            fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
         // penalty
         for(i=0; i<fb->nS && this->p->C!=0; i++)
@@ -288,12 +285,13 @@ void HMMProblemPiAGK::setGradA (FitBit *fb){
         for(t=1; t<dt->n; t++) {
 //            o = dt->obs[t];
             o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
-            for(i=0; i<fb->nS /*&& fitparam[1]>0*/; i++)
+            for(i=0; i<fb->nS /*&& fitparam[1]>0*/; i++) {
                 for(j=0; j<fb->nS; j++) {
                     combined = getA(dt,i,j);
                     deriv_logit = 1 / safe0num( fb->A[i][j] * (1-fb->A[i][j]) );
                     fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
                 }
+            }
         }
         // penalty
         for(i=0; i<fb->nS && this->p->C!=0; i++)
@@ -350,9 +348,9 @@ void HMMProblemPiAGK::toFile(const char *filename) {
 void HMMProblemPiAGK::fit() {
     NUMBER* loglik_rmse = init1D<NUMBER>(2);
     FitNullSkill(loglik_rmse, false /*do not need RMSE/SE*/);
-    if(this->p->structure==STRUCTURE_PIAgk)
+    if(this->p->structure==STRUCTURE_PIAgk) {
         loglik_rmse[0] += GradientDescent();
-    else {
+    } else {
         fprintf(stderr,"Solver specified is not supported.\n");
         exit(1);
     }
@@ -398,17 +396,20 @@ NUMBER HMMProblemPiAGK::GradientDescent() {
         
         int i = 0; // count runs
         int parallel_now = this->p->parallel==1; //PAR
-        #pragma omp parallel if(parallel_now) shared(iter_qual_group,iter_qual_skill)//PAR
+        #pragma omp parallel if(parallel_now) //shared(iter_qual_group,iter_qual_skill)//PAR
         {//PAR
             while(skip_k<nK || skip_g<nG) {
                 //
                 // Skills first
                 //
+                printf("... while in,  run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedK=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                 if(skip_k<nK) {
+                    printf("... still k,   run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedK=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                     #pragma omp for schedule(dynamic) //PAR
                     for(k=0; k<nK; k++) { // for all A,B-by-skill
                         if(iter_qual_skill[k]==iterations_to_qualify)
                             continue;
+                        printf("... doing k,   run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedK=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                         FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
                         fb->init(FBS_PARm1);
                         fb->init(FBS_GRAD);
@@ -448,10 +449,12 @@ NUMBER HMMProblemPiAGK::GradientDescent() {
                 // PIg second
                 //
                 if(skip_g<nG){
+                    printf("... still g,   run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedK=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                     #pragma omp for schedule(dynamic)//PAR
                     for(g=0; g<nG; g++) { // for all PI-by-user
                         if(iter_qual_group[g]==iterations_to_qualify)
                             continue;
+                        printf("... doing g,   run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedK=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                         FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
                         fb->init(FBS_PARm1);
                         fb->init(FBS_GRAD);
@@ -492,7 +495,9 @@ NUMBER HMMProblemPiAGK::GradientDescent() {
                 #pragma omp single//PAR
                 {//PAR
                     i++;
+                    printf("... done run,  run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedK=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                 }//PAR
+                printf("... while out, run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedK=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
             }
         }//PAR
         // recycle qualifications

@@ -80,7 +80,7 @@ void HMMProblem::init(struct param *param) {
 		}
 		a_A[i][((nS)-1)]  = 1 - sumA[i];
 	}
-	// polupale B
+	// populate B
 	offset = (NPAR)((nS-1) + nS*(nS-1));
 	for(i=0; i<nS; i++) {
 		for(j=0; j<((nO)-1); j++) {
@@ -1068,44 +1068,54 @@ void HMMProblem::free3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS) {
 }
 
 FitResult HMMProblem::GradientDescentBit(FitBit *fb) {
-    FitResult fr;
-    fr.iter = 1;
-    fr.pO0  = 0.0;
-    fr.pO   = 0.0;
-    fr.conv = 0; // converged
-    fr.ndat = 0;
+    FitResult res;
+    FitResult *fr = new FitResult;
+    fr->iter = 1;
+    fr->pO0  = 0.0;
+    fr->pO   = 0.0;
+    fr->conv = 0; // converged
+    fr->ndat = 0;
     NCAT xndat = fb->xndat;
     struct data **x_data = fb->x_data;
-    while( !fr.conv && fr.iter<=this->p->maxiter ) {
-        fr.ndat = computeGradients(fb);//a_gradPI, a_gradA, a_gradB);
+    while( !fr->conv && fr->iter<=this->p->maxiter ) {
+        fr->ndat = computeGradients(fb);//a_gradPI, a_gradA, a_gradB);
         
-        if(fr.iter==1) {
-            fr.pO0 = HMMProblem::getSumLogPOPara(xndat, x_data);
+        if(fr->iter==1) {
+            fr->pO0 = HMMProblem::getSumLogPOPara(xndat, x_data);
+            fr->pOmid = fr->pO0;
         }
         // copy parameter values
         fb->copy(FBS_PAR, FBS_PARm1);
         // make ste-
-        if( this->p->solver==METHOD_GD || (fr.iter==1 && this->p->solver==METHOD_CGD) )
-            doLinearStep(fb); // step for linked skill 0
+        if( this->p->solver==METHOD_GD || (fr->iter==1 && this->p->solver==METHOD_CGD) )
+            fr->pO = doLinearStep(fb); // step for linked skill 0
         else if( this->p->solver==METHOD_CGD )
-            doConjugateLinearStep(fb);
+            fr->pO = doConjugateLinearStep(fb);
         else if( this->p->solver==METHOD_GDL )
-            doLagrangeStep(fb);
+            fr->pO = doLagrangeStep(fb);
         // converge?
-        fr.conv = fb->checkConvergence();
+        fr->conv = fb->checkConvergence(fr);
         // report if converged
-        if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
-            fr.pO = HMMProblem::getSumLogPOPara(xndat, x_data);
+        if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr->conv || fr->iter==this->p->maxiter) )) {
+            ;//fr->pO = HMMProblem::getSumLogPOPara(xndat, x_data);
         } else if (this->p->solver==METHOD_CGD) {
             fb->copy(FBS_GRAD, FBS_GRADm1);
-            if( fr.iter==1 ) fb->copy(FBS_GRAD, FBS_DIRm1);
+            if( fr->iter==1 ) fb->copy(FBS_GRAD, FBS_DIRm1);
         }
-        fr.iter ++;
+        fr->iter ++;
+        fr->pOmid = fr->pO;
     }// single skill loop
     // cleanup
     RecycleFitData(xndat, x_data, this->p); // recycle memory (Alpha, Beta, p_O_param, Xi, Gamma)
-    fr.iter--;
-    return fr;
+    fr->iter--;
+    
+    res.iter = fr->iter;
+    res.pO0  = fr->pO0;
+    res.pO   = fr->pO;
+    res.conv = fr->conv;
+    res.ndat = fr->ndat;
+    delete fr;
+    return res;
 }
 
 FitResult HMMProblem::GradientDescentBitBig(FitBit **fbs, NCAT nfbs) {
@@ -1122,22 +1132,24 @@ FitResult HMMProblem::GradientDescentBitBig(FitBit **fbs, NCAT nfbs) {
     while( fr->conv==0 && fr->iter<=this->p->maxiter ) {
         fr->ndat = computeGradientsBig(fbs, nfbs);//a_gradPI, a_gradA, a_gradB);
         
-        if(fr->iter==1) fr->pO0 = HMMProblem::getSumLogPOPara(this->p->nSeq, this->p->k_data);
+        if(fr->iter==1) {
+            fr->pO0 = HMMProblem::getSumLogPOPara(this->p->nSeq, this->p->k_data);
+            fr->pOmid = fr->pO0;
+        }
         
         for(q=0; q<nfbs; q++) {
             fbs[q]->copy(FBS_PAR, FBS_PARm1);
         }
         // make step
         if( fr->iter==1 || this->p->solver!=METHOD_CGD)
-            doLinearStepBig(fbs, nfbs); // step for linked skill 0
+            fr->pO = doLinearStepBig(fbs, nfbs); // step for linked skill 0
         else
-            doConjugateLinearStepBig(fbs, nfbs); /* NOT FINISHED*/
+            fr->pO= doConjugateLinearStepBig(fbs, nfbs); /* NOT FINISHED*/
         
         fr->conv = checkConvergenceBig(fbs, nfbs, this->p->tol, &crit);
         
         if(fr->conv || fr->iter==this->p->maxiter) {
             if(!this->p->quiet) {
-                fr->pO = HMMProblem::getSumLogPOPara(this->p->nSeq, this->p->k_data);
                 if( !this->p->quiet )
                     printf("skill %5d, seq %5d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", q, this->p->nSeq, fr->ndat, fr->iter, fr->pO0, fr->pO, fr->conv);
             }
@@ -1150,6 +1162,7 @@ FitResult HMMProblem::GradientDescentBitBig(FitBit **fbs, NCAT nfbs) {
             }
         }
         fr->iter ++;
+        fr->pOmid = fr->pO;
     }// single skill loop
 
     RecycleFitData(this->p->nSeq, this->p->k_data, this->p); // recycle memory (Alpha, Beta, p_O_param, Xi, Gamma)
@@ -1189,12 +1202,12 @@ NUMBER HMMProblem::GradientDescent() {
         }
         fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
-        for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save progonal k's
+        for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save original k's
         fr = GradientDescentBit(fb);
         for(x=0; x<this->p->nSeq; x++) { this->p->all_data[x].k = original_ks[x]; } // restore original k's
         free(original_ks);
-        if( !this->p->quiet )
-            printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
+        if(!this->p->quiet)
+            printf("skill one, seq %5d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", this->p->nSeq, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
         if(this->p->single_skill==2) {
             for(NCAT y=0; y<this->sizes[0]; y++) { // copy the rest
                 NUMBER *aPI = this->getPI(y);
@@ -1292,49 +1305,35 @@ NUMBER HMMProblem::BaumWelch() {
 	//
 	// fit all as 1 skill first
 	//
-    //	if(this->p->fit_single_skill) {
-    //		for(k=0; k<this->p->nK; k++) this->p->mask_skill[k] = true; // mask with k'th==true to be computed
-    //		iter = 1;
-    //		pO0 = 0.0;
-    //		conv = 0; // converged
-    //		while( !conv && iter<=this->p->maxiter ) {
-    //			if(iter>1) {
-    //				toZero1DNumber(gradPI, this->p->nS);
-    //				toZero2DNumber(gradA,  this->p->nS, this->p->nS);
-    //				toZero2DNumber(gradB,  this->p->nS, this->p->nO);
-    //			}
-    //			hmm->computeGradients();
-    //			if(iter==1)
-    //				pO0 = hmm->getSumLogPOParaK(flog);
-    //			// add gradients
-    //			for(k=0; k<this->p->nK; k++) {
-    //				add1DNumbersWeighted(hmm->getGradPI(k), gradPI, this->p->nS, 1.0);
-    //				add2DNumbersWeighted(hmm->getGradA(k),  gradA,  this->p->nS, this->p->nS, 1.0);
-    //				add2DNumbersWeighted(hmm->getGradB(k),  gradB,  this->p->nS, this->p->nO, 1.0);
-    //			}
-    //			// copy old SAVED! values for params, just for skill #0 is enough
-    //			cpy1DNumber(hmm->getPI(0), PI_m1, this->p->nS);
-    //			cpy2DNumber(hmm->getA(0),  A_m1,  this->p->nS, this->p->nS);
-    //			cpy2DNumber(hmm->getB(0),  B_m1,  this->p->nS, this->p->nO);
-    //
-    //			// make step
-    //			for(k=0; k<this->p->nK; k++)
-    //				doLevinsonRabinerSondhi1982Step(hmm->getPI(k), hmm->getA(k), hmm->getB(k), gradPI, gradA, gradB, param);
-    //			// check convergence, on any skill, e.g. #0
-    //			conv = checkConvergence(hmm->getPI(k), hmm->getA(k), hmm->getB(k), PI_m1, A_m1, B_m1, param);
-    //
-    //			if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||/**/ (conv || iter==this->p->maxiter) )) {
-    //				hmm->computeAlphaAndPOParam();
-    //				NUMBER pO = hmm->getSumLogPOParaK(flog);
-    //				printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",iter,pO0,pO,conv);
-    //			}
-    //			iter ++;
-    //		}// single skill loop
-    //
-    //		free(gradPI);				   // from now on, just a pointer
-    //		free2DNumber(gradA, this->p->nS); // from now on, just a pointer
-    //		free2DNumber(gradB, this->p->nS); // from now on, just a pointer
-    //	}
+    if(this->p->single_skill>0) {
+        FitResult fr;
+        fr.pO = 0;
+        NCAT x;
+        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+        fb->init(FBS_PARm1);
+        fb->init(FBS_GRAD);
+        if(this->p->solver==METHOD_CGD) {
+            fb->init(FBS_GRADm1);
+            fb->init(FBS_DIRm1);
+        }
+        fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
+        NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
+        for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save original k's
+        fr = BaumWelchBit(fb);
+        for(x=0; x<this->p->nSeq; x++) { this->p->all_data[x].k = original_ks[x]; } // restore original k's
+        free(original_ks);
+        if(!this->p->quiet)
+            printf("skill one, seq %4d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",  this->p->nSeq, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
+        if(this->p->single_skill==2) {
+            for(NCAT y=0; y<this->sizes[0]; y++) { // copy the rest
+                NUMBER *aPI = this->getPI(y);
+                NUMBER **aA = this->getA(y);
+                NUMBER **aB = this->getB(y);
+                cpy3Params(fb->pi, fb->A, fb->B, aPI, aA, aB, this->p->nS, this->p->nO);
+            }
+        }// force single skill
+        delete fb;//PAR
+    }
 	
 	//
 	// Main fit
@@ -1343,9 +1342,8 @@ NUMBER HMMProblem::BaumWelch() {
     int parallel_now = this->p->parallel==1; //PAR
     #pragma omp parallel if(parallel_now) //num_threads(2) //PAR
     {//PAR
-//        printf("threads %i\n",omp_get_thread_num()); //undoPAR
         #pragma omp for schedule(dynamic) reduction(+:loglik) //PAR
-        for(k=0; k<this->p->nK; k++) {  // for(k=218; k<219; k++) { //
+        for(k=0; k<this->p->nK; k++) {
             FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
             fb->init(FBS_PARm1);
             fb->link(this->getPI(k), this->getA(k), this->getB(k), this->p->k_numg[k], this->p->k_g_data[k]);
@@ -1378,18 +1376,20 @@ FitResult HMMProblem::BaumWelchBit(FitBit *fb) {
         if(fr.iter==1) {
             computeAlphaAndPOParam(xndat, x_data);
             fr.pO0 = HMMProblem::getSumLogPOPara(xndat, x_data);
+            fr.pOmid = fr.pO0;
         }
         fb->copy(FBS_PAR, FBS_PARm1);
-        doBaumWelchStep(fb);// PI, A, B);
+        fr.pO = doBaumWelchStep(fb);// PI, A, B);
         
         // check convergence
-        fr.conv = fb->checkConvergence();
+        fr.conv = fb->checkConvergence(&fr);
         
         if( fr.conv || fr.iter==this->p->maxiter ) {
             //computeAlphaAndPOParam(fb->xndat, fb->x_data);
             fr.pO = HMMProblem::getSumLogPOPara(xndat, x_data);
         }
         fr.iter ++;
+        fr.pOmid = fr.pO;
     } // main solver loop
     // recycle memory (Alpha, Beta, p_O_param, Xi, Gamma)
     RecycleFitData(fb->xndat, fb->x_data, this->p);
@@ -1410,7 +1410,7 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
 	NUMBER e = this->p->ArmijoSeed; // step seed
 	bool compliesArmijo = false;
 	NUMBER f_xk = HMMProblem::getSumLogPOPara(xndat, x_data);
-	NUMBER f_xkplus1;
+	NUMBER f_xkplus1 = 0;
 	
     fb->copy(FBS_PAR, FBS_PARcopy);
 	// compute p_k * -p_k
@@ -1465,13 +1465,14 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
         fb->copy(FBS_PARcopy, FBS_PAR);
     }
     fb->destroy(FBS_PARcopy);
-    return e;
+    return f_xkplus1;
 } // doLinearStep
 
-void HMMProblem::doLagrangeStep(FitBit *fb) {
+NUMBER HMMProblem::doLagrangeStep(FitBit *fb) {
 	NPAR nS = this->p->nS, nO = this->p->nO;
 	NPAR i,j,m;
     
+    NUMBER  ll = 0;
 	NUMBER * b_PI = init1D<NUMBER>((NDAT)this->p->nS);
     NUMBER   b_PI_den = 0;
 	NUMBER ** b_A     = init2D<NUMBER>((NDAT)this->p->nS, (NDAT)this->p->nS);
@@ -1519,11 +1520,17 @@ void HMMProblem::doLagrangeStep(FitBit *fb) {
             projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
         }
     }
+    // compute LL
+    computeAlphaAndPOParam(fb->xndat, fb->x_data);
+    ll = HMMProblem::getSumLogPOPara(fb->xndat, fb->x_data);
+
 	free(b_PI);
 	free2D<NUMBER>(b_A, nS);
 	free(b_A_den);
 	free2D<NUMBER>(b_B, nS);
 	free(b_B_den);
+    
+    return ll;
 } // doLagrangeStep
 
 NUMBER HMMProblem::doLinearStepBig(FitBit **fbs, NCAT nfbs) {
@@ -1696,7 +1703,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
 	NUMBER e = this->p->ArmijoSeed; // step seed
 	bool compliesArmijo = false;
 	NUMBER f_xk = HMMProblem::getSumLogPOPara(fb->xndat, fb->x_data);
-	NUMBER f_xkplus1;
+	NUMBER f_xkplus1 = 0;
 	
     fb->copy(FBS_PAR, FBS_PARcopy);
 	// compute p_k * -p_k >>>> now current gradient by current direction
@@ -1748,7 +1755,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
     }
     //    RecycleFitData(xndat, x_data, this->p);
     fb->destroy(FBS_PARcopy);
-    return e;
+    return f_xkplus1;
 } // doLinearStep
 
 NUMBER HMMProblem::doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs) {
@@ -1845,7 +1852,7 @@ NUMBER HMMProblem::doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs) {
 	NUMBER e = this->p->ArmijoSeed; // step seed
 	bool compliesArmijo = false;
 	NUMBER f_xk = HMMProblem::getSumLogPOPara(this->p->nSeq, this->p->k_data);
-	NUMBER f_xkplus1;
+	NUMBER f_xkplus1 = 0;
 	
 	NUMBER p_k_by_neg_p_k = 0;
     for(q=0;q<nfbs;q++) {
@@ -1901,7 +1908,7 @@ NUMBER HMMProblem::doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs) {
         for(q=0;q<nfbs;q++) fbs[q]->copy(FBS_PARcopy, FBS_PAR);
     }
     //    RecycleFitData(xndat, x_data, this->p);
-    return e;
+    return f_xkplus1;
 } // doLinearStep
 
 NUMBER HMMProblem::doBarzalaiBorweinStep(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1) {
@@ -1968,11 +1975,12 @@ NUMBER HMMProblem::doBarzalaiBorweinStep(NCAT xndat, struct data** x_data, NUMBE
     return alpha_step;
 }
 
-void HMMProblem::doBaumWelchStep(FitBit *fb) {
+NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
 	NCAT x;
     NPAR nS = this->p->nS, nO = this->p->nO;
 	NPAR i,j,m, o;
 	NDAT t;
+    NUMBER ll;
     
     NCAT xndat = fb->xndat;
     struct data **x_data = fb->x_data;
@@ -2028,6 +2036,9 @@ void HMMProblem::doBaumWelchStep(FitBit *fb) {
             projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
         }
     }
+    // compute LL
+    computeAlphaAndPOParam(fb->xndat, fb->x_data);
+    ll = HMMProblem::getSumLogPOPara(fb->xndat, fb->x_data);
     // free mem
     //    RecycleFitData(xndat, x_data, this->p);
 	free(b_PI);
@@ -2035,6 +2046,7 @@ void HMMProblem::doBaumWelchStep(FitBit *fb) {
 	free2D<NUMBER>(b_A_den, nS);
 	free2D<NUMBER>(b_B_num, nS);
 	free2D<NUMBER>(b_B_den, nS);
+    return ll;
 }
 
 void HMMProblem::readNullObsRatio(FILE *fid, struct param* param, NDAT *line_no) {
