@@ -452,15 +452,15 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
         // utilize fitting larger data first
         
         int i = 0; // count runs
-        int parallel_now = this->p->parallel==1; //PAR
-        #pragma omp parallel if(parallel_now) shared(iter_qual_group,iter_qual_skill)//PAR
-        {//PAR
+//        int parallel_now = this->p->parallel==1; //PAR
+//        #pragma omp parallel if(parallel_now) shared(iter_qual_group,iter_qual_skill)//PAR
+//        {//PAR
             while(skip_k<nK || skip_g<nG) {
                 //
                 // Skills first
                 //
                 if(skip_k<nK) {
-                    #pragma omp for schedule(dynamic) //PAR
+//                    #pragma omp for schedule(dynamic) //PAR
                     for(k=0; k<nK; k++) { // for all A,B-by-skill
                         if(iter_qual_skill[k]==iterations_to_qualify)
                             continue;
@@ -484,10 +484,10 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                                 }
                                 if(iter_qual_skill[k]==iterations_to_qualify || skip_g==nG) {// criterion met, or don't care (others all converged)
                                     if(skip_g==nG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
-                                    #pragma omp critical(update_skip_k)//PAR
-                                    {//PAR
+//                                    #pragma omp critical(update_skip_k)//PAR
+//                                    {//PAR
                                         skip_k++;
-                                    }//PAR
+//                                    }//PAR
                                     if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
                                         printf("run %2d skipK %4d skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_k,k,fr.iter,fr.pO0,fr.pO,fr.conv);
                                     }
@@ -503,7 +503,7 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                 // PIg second
                 //
                 if(skip_g<nG){
-                    #pragma omp for schedule(dynamic)//PAR
+//                    #pragma omp for schedule(dynamic)//PAR
                     for(g=0; g<nG; g++) { // for all PI-by-user
                         if(iter_qual_group[g]==iterations_to_qualify)
                             continue;
@@ -529,10 +529,10 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                                 }
                                 if(iter_qual_group[g]==iterations_to_qualify || skip_k==nK) {// criterion met, or don't care (others all converged)
                                     if(skip_k==nK) iter_qual_group[g]=iterations_to_qualify; // K not changing anymore
-                                    #pragma omp critical(update_skip_g)//PAR
-                                    {//PAR
+//                                    #pragma omp critical(update_skip_g)//PAR
+//                                    {//PAR
                                         skip_g++;
-                                    }//PAR
+//                                    }//PAR
                                     if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
                                         printf("run %2d skipG %4d group %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_g,g,fr.iter,fr.pO0,fr.pO,fr.conv);
                                     }
@@ -544,12 +544,12 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                         delete fb;
                     } // for all groups
                 }
-                #pragma omp single//PAR
-                {//PAR
+//                #pragma omp single//PAR
+//                {//PAR
                     i++;
-                }//PAR
+//                }//PAR
             }
-        }//PAR
+//        }//PAR
         // recycle qualifications
         if( iter_qual_skill != NULL ) free(iter_qual_skill);
         if( iter_qual_group != NULL) free(iter_qual_group);

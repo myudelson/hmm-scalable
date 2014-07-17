@@ -20,20 +20,20 @@
 ////#include "HMMProblemKT.h"
 #include "StripedArray.h"
 //#include "SparseArray2D.h"
-#include <boost/numeric/ublas/matrix_sparse.hpp>//BOOST
-#include <boost/numeric/ublas/io.hpp>//BOOST
+//#include <boost/numeric/ublas/matrix_sparse.hpp>//BOOST
+//#include <boost/numeric/ublas/io.hpp>//BOOST
 using namespace std;
 
 struct param param;
 void exit_with_help();
 void parse_arguments(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name);
 bool read_and_structure_data(const char *filename);
-//void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict);//SEQ
-//void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict);//SEQ
-//void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict);//SEQ
-void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
-void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
-void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
+void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict);//SEQ
+void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict);//SEQ
+void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict);//SEQ
+//void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
+//void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
+//void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
 
 static int max_line_length;
 static char * line;
@@ -114,8 +114,8 @@ int main (int argc, char ** argv) {
 //    
 ////    int c = (unsigned long)ceil((double)34600/20000);
     
-//	clock_t tm_all = clock();//overall time //SEQ
-    double _tm_all = omp_get_wtime(); //PAR
+	clock_t tm_all = clock();//overall time //SEQ
+//    double _tm_all = omp_get_wtime(); //PAR
     
 	char input_file[1024];
 	char output_file[1024];
@@ -126,11 +126,11 @@ int main (int argc, char ** argv) {
     if(!param.quiet)
         printf("trainhmm starting...\n");
     
-//    clock_t tm_read = clock();//overall time //SEQ
-    double _tm_read = omp_get_wtime(); //PAR
+    clock_t tm_read = clock();//overall time //SEQ
+//    double _tm_read = omp_get_wtime(); //PAR
     int red_ok = read_and_structure_data(input_file);
-//    tm_read = (NUMBER)(clock()-tm_read);//SEQ
-    _tm_read = omp_get_wtime()-_tm_read;//PAR
+    tm_read = (NUMBER)(clock()-tm_read);//SEQ
+//    _tm_read = omp_get_wtime()-_tm_read;//PAR
     
 	if( ! red_ok )
         return 0;
@@ -187,10 +187,10 @@ int main (int argc, char ** argv) {
     // erase blocking labels
     zeroLabels(&param);
 
-//    clock_t tm_fit; //SEQ
-//    clock_t tm_predict; //SEQ
-    double _tm_fit;//PAR
-    double _tm_predict;//PAR
+    clock_t tm_fit; //SEQ
+    clock_t tm_predict; //SEQ
+//    double _tm_fit;//PAR
+//    double _tm_predict;//PAR
     
     if(param.cv_folds==0) { // not cross-validation
         // create problem
@@ -226,11 +226,11 @@ int main (int argc, char ** argv) {
                 //                hmm = new HMMProblemKT(&param);
                 //                break;
         }
-//        tm_fit = clock(); //SEQ
-        _tm_fit = omp_get_wtime(); //PAR
+        tm_fit = clock(); //SEQ
+//        _tm_fit = omp_get_wtime(); //PAR
         hmm->fit();
-//        tm_fit = clock()-tm_fit;//SEQ
-        _tm_fit = omp_get_wtime()-_tm_fit;//PAR
+        tm_fit = clock()-tm_fit;//SEQ
+//        _tm_fit = omp_get_wtime()-_tm_fit;//PAR
         
         // write model
         hmm->toFile(output_file);
@@ -249,11 +249,11 @@ int main (int argc, char ** argv) {
             // NUMBER l1 = hmm->getSumLogPOPara(param.nSeq, param.k_data);
 //            printf("hmm-style ll_no_null %15.7f\n",l1);
             
-//            tm_predict = clock(); //SEQ
-            _tm_predict = omp_get_wtime(); //PAR
+            tm_predict = clock(); //SEQ
+//            _tm_predict = omp_get_wtime(); //PAR
             hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
-//            tm_predict = clock()-tm_predict;//SEQ
-            _tm_predict = omp_get_wtime()-_tm_predict;//PAR
+            tm_predict = clock()-tm_predict;//SEQ
+//            _tm_predict = omp_get_wtime()-_tm_predict;//PAR
             
             if( param.metrics>0 /*&& !param.quiet*/) {
                 printf("trained model LL=%15.7f (%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",
@@ -280,24 +280,24 @@ int main (int argc, char ** argv) {
         NUMBER* metrics = Calloc(NUMBER, (size_t)7); // AIC, BIC, RMSE, RMSE no null
         switch (param.cv_strat) {
             case CV_GROUP:
-//                cross_validate(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
-                cross_validate(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
+                cross_validate(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
+//                cross_validate(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
                 break;
             case CV_ITEM:
-//                cross_validate_item(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
-                cross_validate_item(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
+                cross_validate_item(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
+//                cross_validate_item(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
                 break;
             case CV_NSTR:
-//                cross_validate_nstrat(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
-                cross_validate_nstrat(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
+                cross_validate_nstrat(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
+//                cross_validate_nstrat(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
                 break;
             default:
                 
                 break;
         }
         if(!param.quiet) {
-//            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
-            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
+            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
+//            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
         }
         free(metrics);
     }
@@ -305,8 +305,8 @@ int main (int argc, char ** argv) {
 	destroy_input_data(&param);
 	
 //	if(param.quiet == 0)
-//        printf("timing: overall %f seconds, read %f, fit %f, predict %f\n",(NUMBER)((clock()-tm_all)/CLOCKS_PER_SEC), (NUMBER)tm_read/CLOCKS_PER_SEC,  (NUMBER)tm_fit/CLOCKS_PER_SEC,  (NUMBER)tm_predict/CLOCKS_PER_SEC);//SEQ
-        printf("timing: overall %lf sec, read %lf sec, fit %lf sec, predict %lf sec\n",omp_get_wtime()-_tm_all, _tm_read, _tm_fit, _tm_predict);//PAR
+        printf("timing: overall %f seconds, read %f, fit %f, predict %f\n",(NUMBER)((clock()-tm_all)/CLOCKS_PER_SEC), (NUMBER)tm_read/CLOCKS_PER_SEC,  (NUMBER)tm_fit/CLOCKS_PER_SEC,  (NUMBER)tm_predict/CLOCKS_PER_SEC);//SEQ
+//        printf("timing: overall %lf sec, read %lf sec, fit %lf sec, predict %lf sec\n",omp_get_wtime()-_tm_all, _tm_read, _tm_fit, _tm_predict);//PAR
     return 0;
 }
 
@@ -965,12 +965,12 @@ bool read_and_structure_data(const char *filename) {
     return true;
 }
 
-//void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict) {//SEQ
-void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
+void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict) {//SEQ
+//void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
-//    clock_t tm0;//SEQ
-    double _tm0;//PAR
+    clock_t tm0;//SEQ
+//    double _tm0;//PAR
     char *ch;
     NPAR f;
     NCAT g,k;
@@ -1076,11 +1076,11 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
         }
 
         // now compute
-//        tm0 = clock(); //SEQ
-        _tm0 = omp_get_wtime(); //PAR
+        tm0 = clock(); //SEQ
+//        _tm0 = omp_get_wtime(); //PAR
         hmms[f]->fit();
-//        *(tm_fit) += (NUMBER)(clock()- tm0);//SEQ
-        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
+        *(tm_fit) += (NUMBER)(clock()- tm0);//SEQ
+//        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
         
         // UN-block respective data
         for(g=0; g<param.nG; g++) // for all groups
@@ -1098,16 +1098,16 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
     }
     param.quiet = (NPAR)q;
     
-//    tm0 = clock();//SEQ
-    _tm0 = omp_get_wtime();//PAR
+    tm0 = clock();//SEQ
+//    _tm0 = omp_get_wtime();//PAR
     // go trhough original data and predict
 	NDAT t;
 	NPAR i, j, m, o, isTarget;
 	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
 	NUMBER pLe[param.nS];// p(L|evidence);
 	NUMBER pLe_denom; // p(L|evidence) denominator
-//	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states //UNBOOST
-   ::boost::numeric::ublas::mapped_matrix<NUMBER*> gsm (param.nG, param.nK);//BOOST
+	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states //UNBOOST
+//   ::boost::numeric::ublas::mapped_matrix<NUMBER*> gsm (param.nG, param.nK);//BOOST
     NUMBER prob = 0, ll = 0;
     struct data dt;
 
@@ -1144,60 +1144,60 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
         // check if {g,k}'s were initialized
         for(int l=0; l<n; l++) {
             k = ar[l];
-          NUMBER *z = gsm(g,k); //BOOST
-          if( z==NULL )//BOOST
-//            if( group_skill_map[g][k][0]==0)//UNBOOST
+//          NUMBER *z = gsm(g,k); //BOOST
+//          if( z==NULL )//BOOST
+            if( group_skill_map[g][k][0]==0)//UNBOOST
             {
                 dt.k = k;
-                NUMBER * pLbit = Calloc(NUMBER, param.nS);//BOOST
+//                NUMBER * pLbit = Calloc(NUMBER, param.nS);//BOOST
                 
                 for(i=0; i<param.nS; i++) {
-//                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
-                    pLbit[i] = hmms[f]->getPI(&dt,i);//BOOST
+                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
+//                    pLbit[i] = hmms[f]->getPI(&dt,i);//BOOST
                     count++;
                 }
-              gsm(g,k) = pLbit; //BOOST
+//              gsm(g,k) = pLbit; //BOOST
             }// pLo/pL not set
         }// for all skills at this transaction
         
-//        hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt); //UNBOOST
-        hmms[f]->producePCorrectBoost(&gsm, local_pred, ar, n, &dt); //BOOST
+        hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt); //UNBOOST
+//        hmms[f]->producePCorrectBoost(&gsm, local_pred, ar, n, &dt); //BOOST
 
         for(int l=0; l<n; l++) {
             k = ar[l];
             dt.k = k;
-            NUMBER* pLbit = gsm(g,k); //BOOST
+//            NUMBER* pLbit = gsm(g,k); //BOOST
             if(o>-1) { // known observations
                 // update p(L)
                 pLe_denom = 0.0;
                 // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
                 for(i=0; i<param.nS; i++)
-//                    pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);  ///// TODO: this is local_pred[o]!!!//UNBOOST
-                  pLe_denom += pLbit[i] * hmms[f]->getB(&dt,i,o); //BOOST
+                    pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);  ///// TODO: this is local_pred[o]!!!//UNBOOST
+//                  pLe_denom += pLbit[i] * hmms[f]->getB(&dt,i,o); //BOOST
                 for(i=0; i<param.nS; i++)
-//                    pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //UNBOOST
-                  pLe[i] = pLbit[i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //BOOST
+                    pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //UNBOOST
+//                  pLe[i] = pLbit[i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //BOOST
                 // 2. L = (pLe'*A)';
                 for(i=0; i<param.nS; i++)
-//                    group_skill_map[g][k][i]= 0.0; //UNBOOST
-                  pLbit[i]= 0.0; //BOOST
+                    group_skill_map[g][k][i]= 0.0; //UNBOOST
+//                  pLbit[i]= 0.0; //BOOST
                 for(j=0; j<param.nS; j++)
                     for(j=0; j<param.nS; j++)
                         for(i=0; i<param.nS; i++)
-//                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //UNBOOST
-                          pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //BOOST
+                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //UNBOOST
+//                          pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //BOOST
             } else { // unknown observation
                 // 2. L = (pL'*A)';
                 for(i=0; i<param.nS; i++)
-//                    pLe[i] = group_skill_map[g][k][i]; // copy first; //UNBOOST
-                  pLe[i] = pLbit[i]; // copy first; //BOOST
+                    pLe[i] = group_skill_map[g][k][i]; // copy first; //UNBOOST
+//                  pLe[i] = pLbit[i]; // copy first; //BOOST
                 for(i=0; i<param.nS; i++)
-//                    group_skill_map[g][k][i] = 0.0; // erase old value //UNBOOST
-                  pLbit[i] = 0.0; // erase old value //BOOST
+                    group_skill_map[g][k][i] = 0.0; // erase old value //UNBOOST
+//                  pLbit[i] = 0.0; // erase old value //BOOST
                 for(j=0; j<param.nS; j++)
                     for(i=0; i<param.nS; i++)
-//                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//UNBOOST
-               pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//BOOST
+                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//UNBOOST
+//               pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//BOOST
             }// observations
         }
         // write prediction out (after update)
@@ -1206,8 +1206,8 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
                 fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t": ((param.predictions==1)?"\n":"\t") );// if we print states of KCs, continut
             if(param.predictions==2) { // if we print out states of KC's as welll
                 for(int l=0; l<n; l++) { // all KC here
-//                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
-           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+//           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
                 }
             }
         }
@@ -1221,8 +1221,8 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
-//        *(tm_predict) += (NUMBER)(clock()- tm0);//SEQ
-    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
+        *(tm_predict) += (NUMBER)(clock()- tm0);//SEQ
+//    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
     
     // delete problems
     NCAT n_par = 0;
@@ -1233,13 +1233,13 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
     n_par /= f;
     free(folds);
     free(local_pred);
-//    free3D<NUMBER>(group_skill_map, param.nG, param.nK);//UNBOOST
-    gsm.clear();//BOOST
-    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator1 it1_t;//BOOST
-    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator2 it2_t;//BOOST
-    for (it1_t itgsm1 = gsm.begin1(); itgsm1 != gsm.end1(); itgsm1++)//BOOST
-       for (it2_t itgsm2 = itgsm1.begin(); itgsm2 != itgsm1.end(); itgsm2++)//BOOST
-           free( gsm( itgsm2.index1(), itgsm2.index2() ) );//BOOST
+    free3D<NUMBER>(group_skill_map, param.nG, param.nK);//UNBOOST
+//    gsm.clear();//BOOST
+//    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator1 it1_t;//BOOST
+//    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator2 it2_t;//BOOST
+//    for (it1_t itgsm1 = gsm.begin1(); itgsm1 != gsm.end1(); itgsm1++)//BOOST
+//       for (it2_t itgsm2 = itgsm1.begin(); itgsm2 != itgsm1.end(); itgsm2++)//BOOST
+//           free( gsm( itgsm2.index1(), itgsm2.index2() ) );//BOOST
     
     
     if(param.predictions>0) // close predictions file if it was opened
@@ -1253,15 +1253,15 @@ void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, doubl
     metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }
 
-//void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict) {//SEQ
-void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
+void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict) {//SEQ
+//void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
     NUMBER rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
     NCAT I; // item
     NDAT t;
-//    clock_t tm0;//SEQ
-    double _tm0;//PAR
+    clock_t tm0;//SEQ
+//    double _tm0;//PAR
     char *ch;
     FILE *fid = NULL; // file for storing prediction should that be necessary
     FILE *fid_folds = NULL; // file for reading/writing folds
@@ -1363,11 +1363,11 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
             }
         }
         // now compute
-//        tm0 = clock(); //SEQ
-        _tm0 = omp_get_wtime(); //PAR
+        tm0 = clock(); //SEQ
+//        _tm0 = omp_get_wtime(); //PAR
         hmms[f]->fit();
-//        *(tm_fit) += (NUMBER)(clock()- tm0);//SEQ
-        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
+        *(tm_fit) += (NUMBER)(clock()- tm0);//SEQ
+//        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
         
         // UN-block respective data
         count_saved = 0;
@@ -1381,16 +1381,16 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
     free(fold_counts);
     param.quiet = (NPAR)q;
 
-//    tm0 = clock();//SEQ
-    _tm0 = omp_get_wtime();//PAR
+    tm0 = clock();//SEQ
+//    _tm0 = omp_get_wtime();//PAR
     // go trhough original data and predict
 	NPAR i, j, m, o, isTarget;
     NDAT count=0;
 	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
 	NUMBER pLe[param.nS];// p(L|evidence);
 	NUMBER pLe_denom; // p(L|evidence) denominator
-//	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states //UNBOOST
-   ::boost::numeric::ublas::mapped_matrix<NUMBER*> gsm (param.nG, param.nK);//BOOST
+	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states //UNBOOST
+//   ::boost::numeric::ublas::mapped_matrix<NUMBER*> gsm (param.nG, param.nK);//BOOST
     NUMBER prob = 0, ll = 0;
     struct data dt;
 
@@ -1427,60 +1427,60 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
         // check if {g,k}'s were initialized
         for(int l=0; l<n; l++) {
             k = ar[l];
-            NUMBER *z = gsm(g,k); //BOOST
-            if( z==NULL )//BOOST
-//            if( group_skill_map[g][k][0]==0)//UNBOOST
+//            NUMBER *z = gsm(g,k); //BOOST
+//            if( z==NULL )//BOOST
+            if( group_skill_map[g][k][0]==0)//UNBOOST
             {
                 dt.k = k;
-                NUMBER * pLbit = Calloc(NUMBER, param.nS);//BOOST
+//                NUMBER * pLbit = Calloc(NUMBER, param.nS);//BOOST
 
                 for(i=0; i<param.nS; i++) {
-//                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
-                    pLbit[i] = hmms[f]->getPI(&dt,i);//BOOST
+                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
+//                    pLbit[i] = hmms[f]->getPI(&dt,i);//BOOST
                     count++;
                 }
-                gsm(g,k) = pLbit; //BOOST
+//                gsm(g,k) = pLbit; //BOOST
             }// pLo/pL not set
         }// for all skills at this transaction
         
-//        hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt); //UNBOOST
-      hmms[f]->producePCorrectBoost(&gsm, local_pred, ar, n, &dt); //BOOST
+        hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt); //UNBOOST
+//      hmms[f]->producePCorrectBoost(&gsm, local_pred, ar, n, &dt); //BOOST
 
         for(int l=0; l<n; l++) {
             k = ar[l];
             dt.k = k;
-          NUMBER* pLbit = gsm(g,k); //BOOST
+//          NUMBER* pLbit = gsm(g,k); //BOOST
             if(o>-1) { // known observations
                 // update p(L)
                 pLe_denom = 0.0;
                 // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
                 for(i=0; i<param.nS; i++)
-//                    pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);  ///// TODO: this is local_pred[o]!!!//UNBOOST
-                  pLe_denom += pLbit[i] * hmms[f]->getB(&dt,i,o); //BOOST
+                    pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);  ///// TODO: this is local_pred[o]!!!//UNBOOST
+//                  pLe_denom += pLbit[i] * hmms[f]->getB(&dt,i,o); //BOOST
                 for(i=0; i<param.nS; i++)
-//                    pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //UNBOOST
-                  pLe[i] = pLbit[i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //BOOST
+                    pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //UNBOOST
+//                  pLe[i] = pLbit[i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //BOOST
                 // 2. L = (pLe'*A)';
                 for(i=0; i<param.nS; i++)
-//                    group_skill_map[g][k][i]= 0.0; //UNBOOST
-                  pLbit[i]= 0.0; //BOOST
+                    group_skill_map[g][k][i]= 0.0; //UNBOOST
+//                  pLbit[i]= 0.0; //BOOST
                 for(j=0; j<param.nS; j++)
                     for(j=0; j<param.nS; j++)
                         for(i=0; i<param.nS; i++)
-//                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //UNBOOST
-                          pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //BOOST
+                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //UNBOOST
+//                          pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //BOOST
             } else { // unknown observation
                 // 2. L = (pL'*A)';
                 for(i=0; i<param.nS; i++)
-//                    pLe[i] = group_skill_map[g][k][i]; // copy first; //UNBOOST
-                  pLe[i] = pLbit[i]; // copy first; //BOOST
+                    pLe[i] = group_skill_map[g][k][i]; // copy first; //UNBOOST
+//                  pLe[i] = pLbit[i]; // copy first; //BOOST
                 for(i=0; i<param.nS; i++)
-//                    group_skill_map[g][k][i] = 0.0; // erase old value //UNBOOST
-                  pLbit[i] = 0.0; // erase old value //BOOST
+                    group_skill_map[g][k][i] = 0.0; // erase old value //UNBOOST
+//                  pLbit[i] = 0.0; // erase old value //BOOST
                 for(j=0; j<param.nS; j++)
                     for(i=0; i<param.nS; i++)
-//                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//UNBOOST
-               pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//BOOST
+                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//UNBOOST
+//               pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//BOOST
             }// observations
         }
         // write prediction out (after update)
@@ -1489,8 +1489,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
                 fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t": ((param.predictions==1)?"\n":"\t") );// if we print states of KCs, continut
             if(param.predictions==2) { // if we print out states of KC's as welll
                 for(int l=0; l<n; l++) { // all KC here
-//                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
-           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+//           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
                 }
             }
         }
@@ -1504,8 +1504,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
-//        *(tm_predict) += (NUMBER)(clock()- tm0);//SEQ
-    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
+        *(tm_predict) += (NUMBER)(clock()- tm0);//SEQ
+//    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
     
     // delete problems
     NCAT n_par = 0;
@@ -1517,15 +1517,15 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
     free(folds);
     //    free(fold_shortcounts);
     free(local_pred);
-//    free3D<NUMBER>(group_skill_map, param.nG, param.nK);//UNBOOST
+    free3D<NUMBER>(group_skill_map, param.nG, param.nK);//UNBOOST
     if(param.predictions>0) // close predictions file if it was opened
         fclose(fid);
-    gsm.clear();//BOOST
-    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator1 it1_t;//BOOST
-    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator2 it2_t;//BOOST
-    for (it1_t itgsm1 = gsm.begin1(); itgsm1 != gsm.end1(); itgsm1++)//BOOST
-       for (it2_t itgsm2 = itgsm1.begin(); itgsm2 != itgsm1.end(); itgsm2++)//BOOST
-           free( gsm( itgsm2.index1(), itgsm2.index2() ) );//BOOST
+//    gsm.clear();//BOOST
+//    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator1 it1_t;//BOOST
+//    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator2 it2_t;//BOOST
+//    for (it1_t itgsm1 = gsm.begin1(); itgsm1 != gsm.end1(); itgsm1++)//BOOST
+//       for (it2_t itgsm2 = itgsm1.begin(); itgsm2 != itgsm1.end(); itgsm2++)//BOOST
+//           free( gsm( itgsm2.index1(), itgsm2.index2() ) );//BOOST
     metrics[0] = ll;
     metrics[1] = 2*(n_par) + 2*ll;
     metrics[2] = n_par*safelog(param.N) + 2*ll;
@@ -1535,8 +1535,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, 
     metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }
 
-//void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict) {//SEQ
-void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
+void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict) {//SEQ
+//void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
@@ -1544,8 +1544,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
     NCAT U; // unstratified
     NDAT t;
     NDAT count = 0;
-//    clock_t tm0;//SEQ
-    double _tm0;//PAR
+    clock_t tm0;//SEQ
+//    double _tm0;//PAR
     char *ch;
     FILE *fid = NULL; // file for storing prediction should that be necessary
     FILE *fid_folds = NULL; // file for reading/writing folds
@@ -1650,11 +1650,11 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
             }
         }
         // now compute
-//        tm0 = clock(); //SEQ
-        _tm0 = omp_get_wtime(); //PAR
+        tm0 = clock(); //SEQ
+//        _tm0 = omp_get_wtime(); //PAR
         hmms[f]->fit();
-//        *(tm_fit) += (NUMBER)(clock()- tm0);//SEQ
-        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
+        *(tm_fit) += (NUMBER)(clock()- tm0);//SEQ
+//        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
         
         // UN-block respective data
         count_saved = 0;
@@ -1668,15 +1668,15 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
     free(fold_counts);
     param.quiet = (NPAR)q;
     
-//    tm0 = clock();//SEQ
-    _tm0 = omp_get_wtime();//PAR
+    tm0 = clock();//SEQ
+//    _tm0 = omp_get_wtime();//PAR
     // go trhough original data and predict
 	NPAR i, j, m, o, isTarget;
 	NUMBER *local_pred = init1D<NUMBER>(param.nO); // local prediction
 	NUMBER pLe[param.nS];// p(L|evidence);
 	NUMBER pLe_denom; // p(L|evidence) denominator
-//	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states //UNBOOST
-    ::boost::numeric::ublas::mapped_matrix<NUMBER*> gsm (param.nG, param.nK);//BOOST
+	NUMBER ***group_skill_map = init3D<NUMBER>(param.nG, param.nK, param.nS); // knowledge states //UNBOOST
+//    ::boost::numeric::ublas::mapped_matrix<NUMBER*> gsm (param.nG, param.nK);//BOOST
     NUMBER prob = 0, ll = 0;
     struct data dt;
 
@@ -1713,59 +1713,59 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
         // check if {g,k}'s were initialized
         for(int l=0; l<n; l++) {
             k = ar[l];
-          NUMBER *z = gsm(g,k); //BOOST
-          if( z==NULL )//BOOST
-//            if( group_skill_map[g][k][0]==0)//UNBOOST
+//          NUMBER *z = gsm(g,k); //BOOST
+//          if( z==NULL )//BOOST
+            if( group_skill_map[g][k][0]==0)//UNBOOST
             {
                 dt.k = k;
-                NUMBER * pLbit = Calloc(NUMBER, param.nS);//BOOST
+//                NUMBER * pLbit = Calloc(NUMBER, param.nS);//BOOST
                 for(i=0; i<param.nS; i++) {
-//                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
-                    pLbit[i] = hmms[f]->getPI(&dt,i);//BOOST
+                    group_skill_map[g][k][i] = hmms[f]->getPI(&dt,i);//UNBOOST
+//                    pLbit[i] = hmms[f]->getPI(&dt,i);//BOOST
                     count++;
                 }
-              gsm(g,k) = pLbit; //BOOST
+//              gsm(g,k) = pLbit; //BOOST
             }// pLo/pL not set
         }// for all skills at this transaction
         
-//        hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt); //UNBOOST
-        hmms[f]->producePCorrectBoost(&gsm, local_pred, ar, n, &dt); //BOOST
+        hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt); //UNBOOST
+//        hmms[f]->producePCorrectBoost(&gsm, local_pred, ar, n, &dt); //BOOST
         
         for(int l=0; l<n; l++) {
             k = ar[l];
             dt.k = k;
-          NUMBER* pLbit = gsm(g,k); //BOOST
+//          NUMBER* pLbit = gsm(g,k); //BOOST
             if(o>-1) { // known observations
                 // update p(L)
                 pLe_denom = 0.0;
                 // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
                 for(i=0; i<param.nS; i++)
-//                    pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);  // TODO: this is local_pred[o]!!!//UNBOOST
-                  pLe_denom += pLbit[i] * hmms[f]->getB(&dt,i,o); //BOOST
+                    pLe_denom += group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o);  // TODO: this is local_pred[o]!!!//UNBOOST
+//                  pLe_denom += pLbit[i] * hmms[f]->getB(&dt,i,o); //BOOST
                 for(i=0; i<param.nS; i++)
-//                    pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //UNBOOST
-                  pLe[i] = pLbit[i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //BOOST
+                    pLe[i] = group_skill_map[g][k][i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //UNBOOST
+//                  pLe[i] = pLbit[i] * hmms[f]->getB(&dt,i,o) / safe0num(pLe_denom); //BOOST
                 // 2. L = (pLe'*A)';
                 for(i=0; i<param.nS; i++)
-//                    group_skill_map[g][k][i]= 0.0; //UNBOOST
-                  pLbit[i]= 0.0; //BOOST
+                    group_skill_map[g][k][i]= 0.0; //UNBOOST
+//                  pLbit[i]= 0.0; //BOOST
                 for(j=0; j<param.nS; j++)
                     for(j=0; j<param.nS; j++)
                         for(i=0; i<param.nS; i++)
-//                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //UNBOOST
-                          pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //BOOST
+                            group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //UNBOOST
+//                          pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//A[i][j]; //BOOST
             } else { // unknown observation
                 // 2. L = (pL'*A)';
                 for(i=0; i<param.nS; i++)
-//                    pLe[i] = group_skill_map[g][k][i]; // copy first; //UNBOOST
-                  pLe[i] = pLbit[i]; // copy first; //BOOST
+                    pLe[i] = group_skill_map[g][k][i]; // copy first; //UNBOOST
+//                  pLe[i] = pLbit[i]; // copy first; //BOOST
                 for(i=0; i<param.nS; i++)
-//                    group_skill_map[g][k][i] = 0.0; // erase old value //UNBOOST
-                  pLbit[i] = 0.0; // erase old value //BOOST
+                    group_skill_map[g][k][i] = 0.0; // erase old value //UNBOOST
+//                  pLbit[i] = 0.0; // erase old value //BOOST
                 for(j=0; j<param.nS; j++)
                     for(i=0; i<param.nS; i++)
-//                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//UNBOOST
-               pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//BOOST
+                        group_skill_map[g][k][j] += pLe[i] * hmms[f]->getA(&dt,i,j);//UNBOOST
+//               pLbit[j] += pLe[i] * hmms[f]->getA(&dt,i,j);//BOOST
             }// observations
         }
         // write prediction out (after update)
@@ -1774,8 +1774,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
                 fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t": ((param.predictions==1)?"\n":"\t") );// if we print states of KCs, continut
             if(param.predictions==2) { // if we print out states of KC's as welll
                 for(int l=0; l<n; l++) { // all KC here
-//                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
-           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+//           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
                 }
             }
         }
@@ -1790,8 +1790,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
-//        *(tm_predict) += (NUMBER)(clock()- tm0);//SEQ
-    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
+        *(tm_predict) += (NUMBER)(clock()- tm0);//SEQ
+//    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
     
     // delete problems
     NCAT n_par = 0;
@@ -1803,15 +1803,15 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit
     free(folds);
     //    free(fold_shortcounts);
     free(local_pred);
-//    free3D<NUMBER>(group_skill_map, param.nG, param.nK);//UNBOOST
+    free3D<NUMBER>(group_skill_map, param.nG, param.nK);//UNBOOST
     if(param.predictions>0) // close predictions file if it was opened
         fclose(fid);
-    gsm.clear();//BOOST
-    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator1 it1_t;//BOOST
-    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator2 it2_t;//BOOST
-    for (it1_t itgsm1 = gsm.begin1(); itgsm1 != gsm.end1(); itgsm1++)//BOOST
-       for (it2_t itgsm2 = itgsm1.begin(); itgsm2 != itgsm1.end(); itgsm2++)//BOOST
-           free( gsm( itgsm2.index1(), itgsm2.index2() ) );//BOOST
+//    gsm.clear();//BOOST
+//    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator1 it1_t;//BOOST
+//    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator2 it2_t;//BOOST
+//    for (it1_t itgsm1 = gsm.begin1(); itgsm1 != gsm.end1(); itgsm1++)//BOOST
+//       for (it2_t itgsm2 = itgsm1.begin(); itgsm2 != itgsm1.end(); itgsm2++)//BOOST
+//           free( gsm( itgsm2.index1(), itgsm2.index2() ) );//BOOST
     
     metrics[0] = ll;
     metrics[1] = 2*(n_par) + 2*ll;
