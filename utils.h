@@ -200,6 +200,11 @@ struct param {
 	struct data **g_data; // all group-skill data sequence pointers in one array (by group)
 	struct data ***g_k_data; // group_skill data pointer, it is a pointer itself
 	char multiskill; // multiskill per observation flag, 0 - single skill, [separator character] otherwise
+    // parse running settings
+    bool init_reset; // init parameters specified
+    bool lo_lims_specd; // parameter limits s`pecified
+    bool hi_lims_specd; // parameter limits s`pecified
+    bool stat_specd_gt2; // number of states specified to be >2
     // vocabilaries
     map<string,NCAT> *map_group_fwd; // string to id
     map<NCAT,string> *map_group_bwd; // id to string
@@ -391,7 +396,7 @@ NUMBER elnprod(NUMBER eln_x, NUMBER eln_y);
 // The heavy end - common functionality
 //
 void set_param_defaults(struct param *param);
-void reset_param_defaults(struct param *param, bool reset_init, bool reset_lo, bool reset_hi); // to reflect upon number of states and observations if those are not 2 and 2 respectively
+void reset_param_defaults(struct param *param); // to reflect upon number of states and observations if those are not 2 and 2 respectively
 void RecycleFitData(NCAT xndat, struct data** x_data, struct param *param);
 
 //

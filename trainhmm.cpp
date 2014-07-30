@@ -155,6 +155,9 @@ int main (int argc, char ** argv) {
     if(!param.quiet)
         printf("trainhmm starting...\n");
     
+    // parse parameters first
+	parse_arguments(argc, argv, input_file, output_file, predict_file);
+    
     clock_t tm_read = clock();//overall time //SEQ
 //    double _tm_read = omp_get_wtime(); //PAR
     int read_ok = read_and_structure_data(input_file);
@@ -164,8 +167,9 @@ int main (int argc, char ** argv) {
 	if( ! read_ok )
         return 0;
     
-    // now we know the real data
-	parse_arguments(argc, argv, input_file, output_file, predict_file);
+    // reset params and limits if necessary
+    reset_param_defaults(&param);
+    
     // to reflect upon number of states and observations if those are not 2 and 2 respectively
 	// reset_param_defaults(&param); // called from parse_arguments
     
@@ -396,10 +400,10 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 	int i;
     int n;
     char *ch, *ch2;
-    bool init_specd = false; // init parameters specified
-    bool lo_lims_specd = false; // parameter limits s`pecified
-    bool hi_lims_specd = false; // parameter limits s`pecified
-    bool stat_specd_gt2 = false; // number of states specified to be >2
+//    bool init_specd = false; // init parameters specified
+//    bool lo_lims_specd = false; // parameter limits s`pecified
+//    bool hi_lims_specd = false; // parameter limits s`pecified
+//    bool stat_specd_gt2 = false; // number of states specified to be >2
 	for(i=1;i<argc;i++)
 	{
 		if(argv[i][0] != '-') break; // end of options stop parsing
@@ -446,7 +450,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 					exit_with_help();
 				}
                 if(param.nS != 2) {
-                    stat_specd_gt2 = true;
+                    param.stat_specd_gt2 = true;
                 }
 				break;
 			case 'S':
@@ -513,7 +517,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
                     for(int j=1; j<n; j++)
                         param.init_params[j] = atof( strtok(NULL,",\t\n\r") );
                 }
-                init_specd = true;
+                param.init_reset = true;
 				break;
 			case 'l': // lower poundaries
 				len = (int)strlen( argv[i] );
@@ -528,7 +532,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 				param.param_lo[0] = atof( strtok(argv[i],",\t\n\r") );
 				for(int j=1; j<n; j++)
 					param.param_lo[j] = atof( strtok(NULL,",\t\n\r") );
-                lo_lims_specd = true;
+                param.lo_lims_specd = true;
 				break;
 			case 'u': // upper poundaries
 				len = (int)strlen( argv[i] );
@@ -543,7 +547,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 				param.param_hi[0] = atof( strtok(argv[i],",\t\n\r") );
 				for(int j=1; j<n; j++)
 					param.param_hi[j] = atof( strtok(NULL,",\t\n\r") );
-                hi_lims_specd = true;
+                param.hi_lims_specd = true;
 				break;
 			case 'B': // block fitting
                 // first
@@ -690,8 +694,6 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
     //        exit_with_help();
     //    }
     
-    // reset params and limits if necessary
-    reset_param_defaults(&param, !init_specd, lo_lims_specd, hi_lims_specd);
     
     
     if(param.cv_folds>0 && param.metrics>0) { // correct for 0-start coding

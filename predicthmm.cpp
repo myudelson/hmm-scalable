@@ -97,6 +97,8 @@ int main (int argc, char ** argv) {
 //    else
 //        readSolverInfo(fid, &initparam, &line_no);
     
+    // copy partial info from param_model to param
+    if(param.nO==0) param.nO = param_model.nO;
 	
     //
     // create hmm Object

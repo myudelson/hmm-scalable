@@ -482,6 +482,11 @@ void set_param_defaults(struct param *param) {
     param->cv_inout_flag = 'o'; // default rule, we're writing folds out
     param->multiskill = 0; // single skill per ovservation by default
     param->parallel = 0; // parallelization flag, no parallelization (0) by default
+    // parse running settings
+    param->init_reset = false; // init parameters specified
+    param->lo_lims_specd = false; // parameter limits s`pecified
+    param->hi_lims_specd = false; // parameter limits s`pecified
+    param->stat_specd_gt2 = false; // number of states specified to be >2
     // vocabilaries
     param->map_group_fwd = NULL;
     param->map_group_bwd = NULL;
@@ -527,7 +532,7 @@ void set_param_defaults(struct param *param) {
 
 // to reflect upon number of states and observations if those are not 2 and 2 respectively
 // sets parameters to random values
-void reset_param_defaults(struct param *param, bool reset_init, bool reset_lo, bool reset_hi) {
+void reset_param_defaults(struct param *param) {
     if(param->nS == 2 && param->nO==2)
         return;
     
@@ -535,9 +540,9 @@ void reset_param_defaults(struct param *param, bool reset_init, bool reset_lo, b
     // set parameters to random values
     // set limits: min=0, max=1
     
-    if(reset_init && param->init_params != NULL) free(param->init_params);
-    if(reset_lo   && param->param_lo    != NULL) free(param->param_lo);
-    if(reset_hi   && param->param_hi    != NULL) free(param->param_hi);
+    if(param->init_reset && param->init_params != NULL) free(param->init_params);
+    if(param->lo_lims_specd   && param->param_lo    != NULL) free(param->param_lo);
+    if(param->hi_lims_specd   && param->param_hi    != NULL) free(param->param_hi);
 
     // compact representation of parameters, without representing the last
     // element of PI, and last row elements of A and B (since they sum to 1)
@@ -545,11 +550,11 @@ void reset_param_defaults(struct param *param, bool reset_init, bool reset_lo, b
     // total number of parameters
     int n_full    = (param->nS + 1) * (param->nS) + param->nS * (param->nO);
 
-	if(reset_init) param->init_params  = Calloc(NUMBER, (size_t)n_reduced);
-	if(reset_lo  ) param->param_lo     = Calloc(NUMBER, (size_t)n_full);
-	if(reset_hi  ) param->param_hi     = Calloc(NUMBER, (size_t)n_full);
+	if(param->init_reset) param->init_params  = Calloc(NUMBER, (size_t)n_reduced);
+	if(param->lo_lims_specd  ) param->param_lo     = Calloc(NUMBER, (size_t)n_full);
+	if(param->hi_lims_specd  ) param->param_hi     = Calloc(NUMBER, (size_t)n_full);
     
-    if(reset_init) {
+    if(param->init_reset) {
         int position = 0; // position in init_params
         NUMBER limit = (NUMBER)1/param->nS;
         // PI
@@ -573,7 +578,7 @@ void reset_param_defaults(struct param *param, bool reset_init, bool reset_lo, b
     
     // lower limits already at 0
     // set upper limit to 1
-    for(NPAR i=0; (i<n_full && reset_hi); i++) param->param_hi[i] = 1;
+    for(NPAR i=0; (i<n_full && param->hi_lims_specd); i++) param->param_hi[i] = 1;
 }
 
 void destroy_input_data(struct param *param) {
