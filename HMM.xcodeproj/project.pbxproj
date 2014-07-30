@@ -58,7 +58,6 @@
 		719E18D418CF8CA3004ED5C4 /* HMMProblemPiGKww.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = HMMProblemPiGKww.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		71A39C9F179DAAC6000F9610 /* inputconvert.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = inputconvert.cpp; sourceTree = "<group>"; };
 		71A39CA9179DB04F000F9610 /* inputconvert */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = inputconvert; sourceTree = BUILT_PRODUCTS_DIR; };
-		71A6DFBB190DBE4F00E699E4 /* omp_test.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = omp_test.c; sourceTree = "<group>"; };
 		71D234A417540A7C006985EB /* HMMProblem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = HMMProblem.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		71D234A617540A80006985EB /* HMMProblem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMMProblem.h; sourceTree = "<group>"; };
 		71D234A717540AB6006985EB /* trainhmm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = trainhmm.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
@@ -180,7 +179,6 @@
 				EB5D902A158B7C8C007ECB58 /* StripedArray.cpp */,
 				EB994B9316288D0D0098D5ED /* FitBit.h */,
 				EB994B9216288D0C0098D5ED /* FitBit.cpp */,
-				71A6DFBB190DBE4F00E699E4 /* omp_test.c */,
 			);
 			name = Source;
 			sourceTree = "<group>";

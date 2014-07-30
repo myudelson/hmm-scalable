@@ -1,11 +1,32 @@
 /*
- *  utils.c
- *  HMM
- *
- *  Created by Mikhail Yudelson on 5/3/12.
- *  Copyright 2012 __MyCompanyName__. All rights reserved.
- *
+ 
+ Copyright (c) 2012-2014, Michael (Mikhail) Yudelson
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+ * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+ * Neither the name of the Michael (Mikhail) Yudelson nor the
+ names of other contributors may be used to endorse or promote products
+ derived from this software without specific prior written permission.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE FOR
+ ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
  */
+
 #include "utils.h"
 using namespace std;
 
@@ -505,7 +526,8 @@ void set_param_defaults(struct param *param) {
 }
 
 // to reflect upon number of states and observations if those are not 2 and 2 respectively
-void reset_param_defaults(struct param *param) {
+// sets parameters to random values
+void reset_param_defaults(struct param *param, bool reset_init, bool reset_lo, bool reset_hi) {
     if(param->nS == 2 && param->nO==2)
         return;
     
@@ -513,56 +535,45 @@ void reset_param_defaults(struct param *param) {
     // set parameters to random values
     // set limits: min=0, max=1
     
+    if(reset_init && param->init_params != NULL) free(param->init_params);
+    if(reset_lo   && param->param_lo    != NULL) free(param->param_lo);
+    if(reset_hi   && param->param_hi    != NULL) free(param->param_hi);
+
+    // compact representation of parameters, without representing the last
+    // element of PI, and last row elements of A and B (since they sum to 1)
     int n_reduced = (param->nS + 1) * (param->nS - 1) + param->nS * (param->nO - 1);
+    // total number of parameters
+    int n_full    = (param->nS + 1) * (param->nS) + param->nS * (param->nO);
+
+	if(reset_init) param->init_params  = Calloc(NUMBER, (size_t)n_reduced);
+	if(reset_lo  ) param->param_lo     = Calloc(NUMBER, (size_t)n_full);
+	if(reset_hi  ) param->param_hi     = Calloc(NUMBER, (size_t)n_full);
     
-    
-    
-    
-	param->init_params = Calloc(NUMBER, (size_t)n_reduced);
-    int pos = 0;
-    // PI
-    param->init_params[pos] = 0.5;
-    for(int i=1; i<(param->nS-1); i++) {
-        pos++;
-        param->init_params[pos] = 0.5 / (param->nS - 1);
-    }
-    // A first row
-    param->init_params[++pos] = 1;
-    for(int i=1; i<(param->nS-1); i++) {
-        pos++;
-        param->init_params[pos] = 0;
-    }
-    // A other rows
-    for(int j=1; j<(param->nS); j++) {
-        for(int i=1; i<(param->nS); i++) {
-            pos++;
-            param->init_params[pos] = 0.4 / ((param->nS - 1) * (param->nS - 1));
+    if(reset_init) {
+        int position = 0; // position in init_params
+        NUMBER limit = (NUMBER)1/param->nS;
+        // PI
+        for(NPAR i=0; i<(param->nS-1); i++)
+            param->init_params[position++] = NRand(0, limit);
+        
+        // A
+        for(NPAR i=0; i<(param->nS); i++) {
+            for(NPAR j=0; j<(param->nS-1); j++) {
+                param->init_params[position++] = NRand(0, limit);
+            }
         }
-    }
-    
-    // B first row
-    param-> init_params[++pos] = 0.8;
-    for(int m=1; m<(param->nO-1); m++) {
-        pos++;
-        param->init_params[pos] = 0.2 / (param->nO - 1);
-    }
-    // B other rows
-    for(int j=1; j<(param->nS); j++) {
-        for(int m=1; m<(param->nO); m++) {
-            pos++;
-            param->init_params[pos] = 0.2 / ((param->nS - 1) * (param->nO - 1));
+        // B
+        limit = (NUMBER)1/param->nO;
+        for(NPAR i=0; i<(param->nS); i++) {
+            for(NPAR m=0; m<(param->nO-1); m++) {
+                param->init_params[position++] = NRand(0, limit);
+            }
         }
-    }
+    } // if reset_init
     
-    int n = (param->nS + 1) * param->nS + param->nS * param->nO;
-	param->param_lo = Calloc(NUMBER, (size_t)n);
-	param->param_hi = Calloc(NUMBER, (size_t)n);
-    for(int i=0; i<n; i++) param->param_hi[i] = 1;
-    // lower not forgetting = 1
-    param->param_lo[param->nS] = 1;
-    // upper forgetting's = 0
-    for(int i=(param->nS+1); i<2*param->nS; i++)
-        param->param_hi[i] = 0;
+    // lower limits already at 0
+    // set upper limit to 1
+    for(NPAR i=0; (i<n_full && reset_hi); i++) param->param_hi[i] = 1;
 }
 
 void destroy_input_data(struct param *param) {
@@ -801,4 +812,11 @@ NUMBER L2penalty(param* param, NUMBER w, NUMBER penalty_offset) {
 // for fitting larger portions first
 int compareSortBitInv (const void * a, const void * b) {
     return -( ((sortbit*)a)->ndat - ((sortbit*)b)->ndat );
+}
+
+
+// random NUMBER in range
+NUMBER NRand(NUMBER NMin, NUMBER NMax) {
+    NUMBER N = (NUMBER)rand() / RAND_MAX;
+    return NMin + N * (NMax - NMin);
 }

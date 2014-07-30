@@ -4,7 +4,10 @@ HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literatur
 == HMM todo ==
 - finish work on number of states/observations >2
 - finish work on parallel iBKT, AGK version has all printouts for it (still deadlocks in all iBKT versions)
+- change the way multiple skills per row are represented (stacked column with separate count column and index column)
 - tolerance: on parameter change (now), on LL change (absolute, per datapoint), until LL improves
+- there is some savings possible when computing forward and backward variables 
+    rf. http://en.wikipedia.org/wiki/Forward%E2%80%93backward_algorithm#Example
 - random runs within each "fit bit"
 - revive Barzaline-Borwein stepping
 - implement weighting for student / skill pairing (work out gradients and additional fit for \beta's)

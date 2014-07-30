@@ -1,3 +1,32 @@
+/*
+ 
+ Copyright (c) 2012-2014, Michael (Mikhail) Yudelson
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+ * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+ * Neither the name of the Michael (Mikhail) Yudelson nor the
+ names of other contributors may be used to endorse or promote products
+ derived from this software without specific prior written permission.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE FOR
+ ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+ */
+
 #include <string.h>
 #include <iostream>
 #include <fstream>
@@ -128,18 +157,17 @@ int main (int argc, char ** argv) {
     
     clock_t tm_read = clock();//overall time //SEQ
 //    double _tm_read = omp_get_wtime(); //PAR
-    int red_ok = read_and_structure_data(input_file);
+    int read_ok = read_and_structure_data(input_file);
     tm_read = (NUMBER)(clock()-tm_read);//SEQ
 //    _tm_read = omp_get_wtime()-_tm_read;//PAR
     
-	if( ! red_ok )
+	if( ! read_ok )
         return 0;
     
     // now we know the real data
 	parse_arguments(argc, argv, input_file, output_file, predict_file);
     // to reflect upon number of states and observations if those are not 2 and 2 respectively
-	reset_param_defaults(&param);
-    
+	// reset_param_defaults(&param); // called from parse_arguments
     
 //    write_pLo_irt();
     
@@ -369,7 +397,8 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
     int n;
     char *ch, *ch2;
     bool init_specd = false; // init parameters specified
-    bool lims_specd = false; // parameter limits specified
+    bool lo_lims_specd = false; // parameter limits s`pecified
+    bool hi_lims_specd = false; // parameter limits s`pecified
     bool stat_specd_gt2 = false; // number of states specified to be >2
 	for(i=1;i<argc;i++)
 	{
@@ -499,7 +528,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 				param.param_lo[0] = atof( strtok(argv[i],",\t\n\r") );
 				for(int j=1; j<n; j++)
 					param.param_lo[j] = atof( strtok(NULL,",\t\n\r") );
-                lims_specd = true;
+                lo_lims_specd = true;
 				break;
 			case 'u': // upper poundaries
 				len = (int)strlen( argv[i] );
@@ -514,7 +543,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 				param.param_hi[0] = atof( strtok(argv[i],",\t\n\r") );
 				for(int j=1; j<n; j++)
 					param.param_hi[j] = atof( strtok(NULL,",\t\n\r") );
-                lims_specd = true;
+                hi_lims_specd = true;
 				break;
 			case 'B': // block fitting
                 // first
@@ -660,6 +689,11 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
     //        fprintf(stderr,"target observation to compute metrics against cannot be '%d'\n",param.metrics_target_obs+1);
     //        exit_with_help();
     //    }
+    
+    // reset params and limits if necessary
+    reset_param_defaults(&param, !init_specd, lo_lims_specd, hi_lims_specd);
+    
+    
     if(param.cv_folds>0 && param.metrics>0) { // correct for 0-start coding
         fprintf(stderr,"values for -v and -m cannot be both non-zeros\n");
         exit_with_help();
