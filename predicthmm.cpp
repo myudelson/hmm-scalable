@@ -195,8 +195,8 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
                 break;
             case  'p':
 				param.predictions = atoi(argv[i]);
-				if(param.predictions<0 || param.predictions>1) {
-					fprintf(stderr,"a flag of whether to report predictions for training data (-p) should be 0 or 1\n");
+				if(param.predictions<0 || param.predictions>2) {
+					fprintf(stderr,"a flag of whether to report predictions for training data (-p) should be 0, 1 or 2\n");
 					exit_with_help();
 				}
                 break;
@@ -228,7 +228,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
             param.predictions = 0;
         }
 		else {
-            param.predictions = 1;
+            // param.predictions = 1;
 			strcpy(predict_file_name,argv[i]);
         }
 	}
