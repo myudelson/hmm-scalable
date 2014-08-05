@@ -522,63 +522,12 @@ void set_param_defaults(struct param *param) {
     // coord descend
     param->first_iteration_qualify = 0;
     param->iterations_to_qualify   = 2;
-    // temporary experimental;
+    // block fitting of some parameters
+    param->block_fitting_type = 0; // no bocking of fitting - TODO, enable diff block types
     param->block_fitting[0] = 0; // no bocking fitting for PI
     param->block_fitting[1] = 0; // no bocking fitting for A
     param->block_fitting[2] = 0; // no bocking fitting for B
     param->per_kc_rmse_acc = false;
-    
-}
-
-// to reflect upon number of states and observations if those are not 2 and 2 respectively
-// sets parameters to random values
-void reset_param_defaults(struct param *param) {
-    if(param->nS == 2 && param->nO==2)
-        return;
-    
-    // if there are more than 2 states or 2 observations
-    // set parameters to random values
-    // set limits: min=0, max=1
-    
-    if(param->init_reset && param->init_params != NULL) free(param->init_params);
-    if(param->lo_lims_specd   && param->param_lo    != NULL) free(param->param_lo);
-    if(param->hi_lims_specd   && param->param_hi    != NULL) free(param->param_hi);
-
-    // compact representation of parameters, without representing the last
-    // element of PI, and last row elements of A and B (since they sum to 1)
-    int n_reduced = (param->nS + 1) * (param->nS - 1) + param->nS * (param->nO - 1);
-    // total number of parameters
-    int n_full    = (param->nS + 1) * (param->nS) + param->nS * (param->nO);
-
-	if(param->init_reset) param->init_params  = Calloc(NUMBER, (size_t)n_reduced);
-	if(param->lo_lims_specd  ) param->param_lo     = Calloc(NUMBER, (size_t)n_full);
-	if(param->hi_lims_specd  ) param->param_hi     = Calloc(NUMBER, (size_t)n_full);
-    
-    if(param->init_reset) {
-        int position = 0; // position in init_params
-        NUMBER limit = (NUMBER)1/param->nS;
-        // PI
-        for(NPAR i=0; i<(param->nS-1); i++)
-            param->init_params[position++] = NRand(0, limit);
-        
-        // A
-        for(NPAR i=0; i<(param->nS); i++) {
-            for(NPAR j=0; j<(param->nS-1); j++) {
-                param->init_params[position++] = NRand(0, limit);
-            }
-        }
-        // B
-        limit = (NUMBER)1/param->nO;
-        for(NPAR i=0; i<(param->nS); i++) {
-            for(NPAR m=0; m<(param->nO-1); m++) {
-                param->init_params[position++] = NRand(0, limit);
-            }
-        }
-    } // if reset_init
-    
-    // lower limits already at 0
-    // set upper limit to 1
-    for(NPAR i=0; (i<n_full && param->hi_lims_specd); i++) param->param_hi[i] = 1;
 }
 
 void destroy_input_data(struct param *param) {

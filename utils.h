@@ -222,7 +222,8 @@ struct param {
     NPAR first_iteration_qualify; // at what iteration to start considering parameter for "graduating" (converging) >=0
     NPAR iterations_to_qualify;   // how many interations of stable parameter values qualify it for "graduating" (converging)
     // experimental and temporary
-    NPAR block_fitting[3]; // array of flags to block PI, A, B in this order
+    NPAR block_fitting_type; // 0 - none, 1 - by PI, A, B - three flags, 2 - individual parameter, nS*(nS+1+nO)
+    NPAR block_fitting[3]; // array of flags to block PI, A, B in this order - TODO, enable diff block types
     bool per_kc_rmse_acc; // experimental
     NUMBER *kc_rmse;  // per-kc RMSE
     NUMBER *kc_acc;  // per-kc Accuracy
@@ -396,7 +397,6 @@ NUMBER elnprod(NUMBER eln_x, NUMBER eln_y);
 // The heavy end - common functionality
 //
 void set_param_defaults(struct param *param);
-void reset_param_defaults(struct param *param); // to reflect upon number of states and observations if those are not 2 and 2 respectively
 void RecycleFitData(NCAT xndat, struct data** x_data, struct param *param);
 
 //

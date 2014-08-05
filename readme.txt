@@ -106,9 +106,9 @@ nS	2
 nO	2
 Null skill ratios	  1.0000000	  0.0000000
 0	multiplication-skill
-PI	0.50000000	0.50000000
+PI	0.45000000	0.55000000
 A	1.00000000  0.00000000	0.40000000	0.60000000
-B	0.80000000	0.20000000	0.20000000	0.80000000
+B	0.79000000	0.21000000	0.22000000	0.78000000
 -- model file --
 
 In the model file example above, we see a specification of the solver algorithm
@@ -116,8 +116,8 @@ In the model file example above, we see a specification of the solver algorithm
 hidden states and 2 observations (nS and nO respectively). Skill numbering is
 zero started. Skill name is "multiplication-skill". Rows prefixed with PI, A,
 and B correspond to priors, transition, and observation matrices written row by
-row. Thus, first element of PI is pLo, 3rd element of A is pT, 2nd and 3rd
-elements of B are pS and pG respectively.
+row. Thus, first element of PI is pLo=0.55, 3rd element of A is pT=0.4, 2nd and
+3rd elements of B are pS=0.12 and pG=0.22 respectively.
 
 -- prediction file --
 0.73    0.27
@@ -161,7 +161,7 @@ options:
      specify observation for which metrics to be reported, list it after ','.
      For example '-m 0', '-m 1' (by default, observation 1 is assumed), '-m 1,2'
      (compute metrics for observation 2). Incompatible with '-v' option.
--v : cross-validation folds, stratification, target state to validate
+-v : cross-validation folds, stratification, and target state to validate
      against, folds input/output file, default 0 (no cross-validation),
      examples '-v 5,i,2' - 5 fold, item-stratified c.-v., predict state 2,
      '-v 10' - 10-fold subject-stratified c.-v. predict state 1 by default,
@@ -207,12 +207,15 @@ To fit a BKT model of this data using an EM algorithm run the following command:
 
 sh> ./trainhmm -s 1.1 -m 1 -p 1 toy_data.txt model.txt predict.txt
 
-The model will have 90% accuracy and root mean squared error (RMSE) = 0.3227 and
-the recovered BKT parameters would be: pLo=0.50, pT=0.17, pS=0.00, pG=0.00 .
+The model will have 90% accuracy and root mean squared error (RMSE) = 0.302691
+and the recovered BKT parameters would be: pLo=0.00000000, pT=0.16676161,
+pS=0.00044059, pG=0.00038573. Overall loglikelihood, actually, goes up from
+9.3763477 to 10.4379501 in 3 iterations.
 
-If we fit BKT model using Conjugate Gradient method using '-s 1.2' argument, the
-recovered parameters would be: pLo=0.00, pT=0.18, pS=0.08, pG=0.03, the accuracy
-would remain at 90% while RMSE = 0.2982.
+If we fit BKT model using Gradient Descent method using '-s 1.2' argument, the
+recovered parameters would be: pLo=0.00041944, pT=0.17478539, pS=0.07938036,
+0.03804388, the accuracy would remain at 90% while RMSE = 0.299250.
+Loglikelihood changes from  9.3763477 to 6.4099682 after 11 iterations.
 
 To generate predictions using a previously fit model run the following command 
 (do not forget that prediction will only be generated for rows where observation
