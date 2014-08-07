@@ -580,6 +580,14 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
             case '0':
                 param.init_reset = true;
                 break;
+            case 'l': // just to keep it a valid option
+                break;
+            case 'u': // just to keep it a valid option
+                break;
+            case 'B': // just to keep it a valid option
+                break;
+            case 'c': // just to keep it a valid option
+                break;
 			default:
 				fprintf(stderr,"unknown option: -%c\n", argv[i-1][1]);
 				exit_with_help();
