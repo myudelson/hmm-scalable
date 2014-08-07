@@ -21,9 +21,8 @@ HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literatur
 - check whether AIC and BIC computed correctly (n.parameters in particular)
 - add capability to run multiple model fits on one input file read (e.g., via a
     -F <filename> parameters where file contains multiple modeling specs
-
 - Baum Welch - does not have selective fitting of PI,A,B
-- All other steppers/fitters (Barzalai Borwein, LevinsonRabiner, Exponentiated etc.) are not updated properly.
+- Other steppers/fitters (LevinsonRabiner, Exponentiated etc.) are not updated properly.
 
 == Assumptions ==
 - columns: observation, user, step, skill[, time in ms]

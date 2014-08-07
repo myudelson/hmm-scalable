@@ -1002,6 +1002,7 @@ void HMMProblem::fit() {
         case METHOD_GD: // Gradient Descent
         case METHOD_CGD: // Conjugate Gradient Descent
         case METHOD_GDL: // Gradient Descent, Lagrange
+        case METHOD_GBB: // Brzilai Borwein Gradient Method
             loglik_rmse[0] += GradientDescent();
             break;
         default:
@@ -1108,20 +1109,29 @@ FitResult HMMProblem::GradientDescentBit(FitBit *fb) {
         // copy parameter values
         fb->copy(FBS_PAR, FBS_PARm1);
         // make ste-
-        if( this->p->solver==METHOD_GD || (fr->iter==1 && this->p->solver==METHOD_CGD) )
+        if( this->p->solver==METHOD_GD || (fr->iter==1 && this->p->solver==METHOD_CGD)  || (fr->iter==1 && this->p->solver==METHOD_GBB) )
             fr->pO = doLinearStep(fb); // step for linked skill 0
         else if( this->p->solver==METHOD_CGD )
             fr->pO = doConjugateLinearStep(fb);
         else if( this->p->solver==METHOD_GDL )
             fr->pO = doLagrangeStep(fb);
+        else if( this->p->solver==METHOD_GBB )
+            fr->pO = doBarzilaiBorweinStep(fb);
         // converge?
         fr->conv = fb->checkConvergence(fr);
         // report if converged
         if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr->conv || fr->iter==this->p->maxiter) )) {
             ;//fr->pO = HMMProblem::getSumLogPOPara(xndat, x_data);
-        } else if (this->p->solver==METHOD_CGD) {
-            fb->copy(FBS_GRAD, FBS_GRADm1);
-            if( fr->iter==1 ) fb->copy(FBS_GRAD, FBS_DIRm1);
+        } else {
+            // if Conjugate Gradient
+            if (this->p->solver==METHOD_CGD) {
+                fb->copy(FBS_GRAD, FBS_GRADm1);
+                if( fr->iter==1 ) fb->copy(FBS_GRAD, FBS_DIRm1);
+            }
+            // if Barzilai Borwein Gradient Method
+            if (this->p->solver==METHOD_GBB) {
+                fb->copy(FBS_GRAD, FBS_GRADm1);
+            }
         }
         fr->iter ++;
         fr->pOmid = fr->pO;
@@ -1221,6 +1231,9 @@ NUMBER HMMProblem::GradientDescent() {
             fb->init(FBS_GRADm1);
             fb->init(FBS_DIRm1);
         }
+        if(this->p->solver==METHOD_GBB) {
+            fb->init(FBS_GRADm1);
+        }
         fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save original k's
@@ -1268,6 +1281,9 @@ NUMBER HMMProblem::GradientDescent() {
             if(this->p->solver==METHOD_CGD) {
                 fb->init(FBS_GRADm1);
                 fb->init(FBS_DIRm1);
+            }
+            if(this->p->solver==METHOD_GBB) {
+                fb->init(FBS_GRADm1);
             }
             fb->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);// link skill 0 (we'll copy fit parameters to others
             fr = GradientDescentBit(fb);
@@ -1932,13 +1948,13 @@ NUMBER HMMProblem::doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs) {
     return f_xkplus1;
 } // doLinearStep
 
-NUMBER HMMProblem::doBarzalaiBorweinStep(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1) {
+
+NUMBER HMMProblem::doBarzilaiBorweinStep(FitBit *fb) {
+//NUMBER HMMProblem::doBarzilaiBorweinStep(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1) {
 	NPAR i,j,m;
     NPAR nS = this->p->nS, nO = this->p->nO;
 	// first scale down gradients
-	doLog10Scale1DGentle(a_gradPI, a_PI, nS);
-	doLog10Scale2DGentle(a_gradA,  a_A,  nS, nS);
-	doLog10Scale2DGentle(a_gradB,  a_B,  nS, nO);
+    fb->doLog10ScaleGentle(FBS_GRAD);
     
     // compute s_k_m1
   	NUMBER *s_k_m1_PI = init1D<NUMBER>((NDAT)nS);
@@ -1946,54 +1962,57 @@ NUMBER HMMProblem::doBarzalaiBorweinStep(NCAT xndat, struct data** x_data, NUMBE
 	NUMBER **s_k_m1_B = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
 	for(i=0; i<nS; i++)
 	{
-		s_k_m1_PI[i] = a_PI[i] - a_PI_m1[i];
-		for(j=0; j<nS; j++) s_k_m1_A[i][j] = a_A[i][j] - a_A_m1[i][j];
-		for(m=0; m<this->   p->nO; m++) s_k_m1_B[i][m] = a_B[i][m] - a_B_m1[i][m];
+		s_k_m1_PI[i] = fb->pi[i] - fb->PIm1[i];
+		for(j=0; j<nS; j++) s_k_m1_A[i][j] = fb->A[i][j] - fb->Am1[i][j];
+		for(m=0; m<this->p->nO; m++) s_k_m1_B[i][m] = fb->B[i][m] - fb->Bm1[i][m];
 	}
     // compute alpha_step
     NUMBER alpha_step = 0, alpha_step_num = 0, alpha_step_den = 0;
-    // Barzalai Borweig: s' * s / ( s' * (g-g_m1) )
+    // Barzilai Borwein: s' * s / ( s' * (g-g_m1) )
 	for(i=0; i<nS; i++)
 	{
 		alpha_step_num = s_k_m1_PI[i]*s_k_m1_PI[i];
-		alpha_step_den = s_k_m1_PI[i]*(a_gradPI[i] - a_gradPI_m1[i]);
+		alpha_step_den = s_k_m1_PI[i]*(fb->gradPI[i] - fb->gradPIm1[i]);
 		for(j=0; j<nS; j++) {
             alpha_step_num = s_k_m1_A[i][j]*s_k_m1_A[i][j];
-            alpha_step_den = s_k_m1_A[i][j]*(a_gradA[i][j] - a_gradA_m1[i][j]);
+            alpha_step_den = s_k_m1_A[i][j]*(fb->gradA[i][j] - fb->gradAm1[i][j]);
         }
 		for(m=0; m<nO; m++) {
             alpha_step_num = s_k_m1_B[i][m]*s_k_m1_B[i][m];
-            alpha_step_den = s_k_m1_B[i][m]*(a_gradB[i][m] - a_gradB_m1[i][m]);
+            alpha_step_den = s_k_m1_B[i][m]*(fb->gradB[i][m] - fb->gradBm1[i][m]);
         }
 	}
     alpha_step = alpha_step_num / safe0num(alpha_step_den);
     
     // step
     for(i=0; i<nS; i++) {
-        a_PI[i] = a_PI[i] - alpha_step * a_gradPI[i];
+        fb->pi[i] = fb->pi[i] - alpha_step * fb->gradPI[i];
         for(j=0; j<nS; j++)
-            a_A[i][j] = a_A[i][j] - alpha_step * a_gradA[i][j];
+            fb->A[i][j] = fb->A[i][j] - alpha_step * fb->gradA[i][j];
         for(m=0; m<nO; m++)
-            a_B[i][m] = a_B[i][m] - alpha_step * a_gradB[i][m];
+            fb->B[i][m] = fb->B[i][m] - alpha_step * fb->gradB[i][m];
     }
     // scale
     if( !this->hasNon01Constraints() ) {
-        projectsimplex(a_PI, nS);
+        projectsimplex(fb->pi, nS);
         for(i=0; i<nS; i++) {
-            projectsimplex(a_A[i], nS);
-            projectsimplex(a_B[i], nS);
+            projectsimplex(fb->A[i], nS);
+            projectsimplex(fb->B[i], nS);
         }
     } else {
-        projectsimplexbounded(a_PI, this->getLbPI(), this->getUbPI(), nS);
+        projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
         for(i=0; i<nS; i++) {
-            projectsimplexbounded(a_A[i], this->getLbA()[i], this->getUbA()[i], nS);
-            projectsimplexbounded(a_B[i], this->getLbB()[i], this->getUbB()[i], nS);
+            projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
+            projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
         }
     }
 	free(s_k_m1_PI);
 	free2D<NUMBER>(s_k_m1_B, nS);
 	free2D<NUMBER>(s_k_m1_A, nS);
-    return alpha_step;
+
+    // recompute alpha and p(O|param)
+    computeAlphaAndPOParam(fb->xndat, fb->x_data);
+    return HMMProblem::getSumLogPOPara(fb->xndat, fb->x_data);
 }
 
 NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {

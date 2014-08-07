@@ -151,7 +151,7 @@ protected:
     virtual NUMBER doLinearStep(NCAT k, FitBit *fb);
     NUMBER doConjugateLinearStep(NCAT ix1, NCAT n, struct data* data, NCAT k_target, FitBit *fb, NCAT copy);//NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1);
     NUMBER doConjugateLinearStep(NCAT k, FitBit *fb);
-    NUMBER doBarzalaiBorweinStep(NCAT ndat, struct data* data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1);
+    NUMBER doBarzilaiBorweinStep(NCAT ndat, struct data* data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1);
 //    bool checkConvergence(NUMBER* PI, NUMBER** A, NUMBER** B, NUMBER* PI_m1, NUMBER** A_m1, NUMBER** B_m1, bool flags[3]);
     // bridge to Liblinear - all objects are liblinear objects
 //    void createLiblinearProblem(struct problem &prob, struct parameter &param, struct feature_node *x_space);

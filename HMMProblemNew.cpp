@@ -2680,9 +2680,9 @@ NUMBER HMMProblem::doConjugateLinearStep(NCAT k, FitBit *fb) {
     return e;
 } // doLinearStep
 
-NUMBER HMMProblem::doBarzalaiBorweinStep(NCAT ndat, struct data* data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1) {
+NUMBER HMMProblem::doBarzilaiBorweinStep(NCAT ndat, struct data* data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1) {
     
-    fprintf(stderr,"Barzalai-Borwein step is not implemented\n");
+    fprintf(stderr,"Barzilai-Borwein step is not implemented\n");
     /*
 	NPAR i,j,m;
     NPAR nS = this->p->nS, nO = this->p->nO;
@@ -2703,7 +2703,7 @@ NUMBER HMMProblem::doBarzalaiBorweinStep(NCAT ndat, struct data* data, NUMBER *a
 	}
     // compute alpha_step
     NUMBER alpha_step = 0, alpha_step_num = 0, alpha_step_den = 0;
-    // Barzalai Borweig: s' * s / ( s' * (g-g_m1) )
+    // Barzilai Borweig: s' * s / ( s' * (g-g_m1) )
 	for(i=0; i<nS; i++)
 	{
 		alpha_step_num = s_k_m1_PI[i]*s_k_m1_PI[i];
