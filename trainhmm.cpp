@@ -164,7 +164,7 @@ int main (int argc, char ** argv) {
     clock_t tm_read = clock();//overall time //SEQ
 //    double _tm_read = omp_get_wtime(); //PAR
     int read_ok = read_and_structure_data(input_file);
-    tm_read = (NUMBER)(clock()-tm_read);//SEQ
+    tm_read = (clock_t)(clock()-tm_read);//SEQ
 //    _tm_read = omp_get_wtime()-_tm_read;//PAR
     
 	if( ! read_ok )
@@ -577,13 +577,17 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                     param.iterations_to_qualify   = (NPAR)atoi(ch);
                 }
 				break;
+            case '0':
+                param.init_reset = true;
+                break;
 			default:
 				fprintf(stderr,"unknown option: -%c\n", argv[i-1][1]);
 				exit_with_help();
 				break;
 		}
 	}
-    
+    // post-process checks
+    // -v and -m collision
     if(param.cv_folds>0 && param.metrics>0) { // correct for 0-start coding
         fprintf(stderr,"values for -v and -m cannot be both non-zeros\n");
         exit_with_help();
@@ -593,6 +597,12 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
         param.scaled = 0;
         printf("Scaling can only be enabled for Baum-Welch method. Setting it to off\n");
     }
+    // specifying >2 states via -n and mandatory specification of -0 (initial parameters)
+    if(param.nS > 2 && !param.init_reset) {
+        fprintf(stderr,"when >2 latent states specified via '-n', initial values of parameters have to be explicitly set via '-0'!\n");
+        exit_with_help();
+    }
+    
 	// next argument should be input file name
 	if(i>=argc) // if not
 		exit_with_help(); // leave
@@ -648,7 +658,6 @@ void parse_arguments_step2(int argc, char **argv) {
                     for(int j=1; j<n; j++)
                         param.init_params[j] = atof( strtok(NULL,",\t\n\r") );
                 }
-                param.init_reset = true;
 				break;
 			case 'l': // lower boundaries
 				len = (int)strlen( argv[i] );
@@ -726,15 +735,29 @@ void parse_arguments_step2(int argc, char **argv) {
 				break;
         } // end switch
     }// end for
+    // post parse actions
+    if(!param.lo_lims_specd) { // if not specified, set to 0
+        if(param.param_lo!=NULL) free(param.param_lo);
+        param.param_lo = Calloc(NUMBER, (size_t)( param.nS*(1+param.nS+param.nO) ) );
+    }
+        
+
+    if(!param.hi_lims_specd) {
+        if(param.param_hi!=NULL) free(param.param_hi);  // if not specified, set to 1
+        param.param_hi = Calloc(NUMBER, (size_t)( param.nS*(1+param.nS+param.nO) ) );
+        for(int j=0; j<( param.nS*(1+param.nS+param.nO) ); j++)
+            param.param_hi[j] = (NUMBER)1.0;
+    }
+        
     // post-argument checks - TODO - enable
-    //    if( param.cv_target_obs>(param.nO-1)) {
-    //        fprintf(stderr,"target observation to be cross-validated against cannot be '%d'\n",param.cv_target_obs+1);
-    //        exit_with_help();
-    //    }
-    //    if(param.metrics_target_obs>(param.nO-1)) {
-    //        fprintf(stderr,"target observation to compute metrics against cannot be '%d'\n",param.metrics_target_obs+1);
-    //        exit_with_help();
-    //    }
+    if( param.cv_target_obs>(param.nO-1)) {
+        fprintf(stderr,"target observation to be cross-validated against cannot be '%d'\n",param.cv_target_obs+1);
+        exit_with_help();
+    }
+    if(param.metrics_target_obs>(param.nO-1)) {
+        fprintf(stderr,"target observation to compute metrics against cannot be '%d'\n",param.metrics_target_obs+1);
+        exit_with_help();
+    }
     
 }
 
@@ -1129,7 +1152,7 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
         tm0 = clock(); //SEQ
 //        _tm0 = omp_get_wtime(); //PAR
         hmms[f]->fit();
-        *(tm_fit) += (NUMBER)(clock()- tm0);//SEQ
+        *(tm_fit) += (clock_t)(clock()- tm0);//SEQ
 //        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
         
         // UN-block respective data
@@ -1271,7 +1294,7 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
-        *(tm_predict) += (NUMBER)(clock()- tm0);//SEQ
+        *(tm_predict) += (clock_t)(clock()- tm0);//SEQ
 //    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
     
     // delete problems
@@ -1416,7 +1439,7 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
         tm0 = clock(); //SEQ
 //        _tm0 = omp_get_wtime(); //PAR
         hmms[f]->fit();
-        *(tm_fit) += (NUMBER)(clock()- tm0);//SEQ
+        *(tm_fit) += (clock_t)(clock()- tm0);//SEQ
 //        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
         
         // UN-block respective data
@@ -1554,7 +1577,7 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
-        *(tm_predict) += (NUMBER)(clock()- tm0);//SEQ
+        *(tm_predict) += (clock_t)(clock()- tm0);//SEQ
 //    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
     
     // delete problems
@@ -1703,7 +1726,7 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fi
         tm0 = clock(); //SEQ
 //        _tm0 = omp_get_wtime(); //PAR
         hmms[f]->fit();
-        *(tm_fit) += (NUMBER)(clock()- tm0);//SEQ
+        *(tm_fit) += (clock_t)(clock()- tm0);//SEQ
 //        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
         
         // UN-block respective data
@@ -1840,7 +1863,7 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fi
 	} // for all data
     rmse = sqrt( rmse / param.N );
     rmse_no_null = sqrt( rmse_no_null / (param.N - param.N_null) );
-        *(tm_predict) += (NUMBER)(clock()- tm0);//SEQ
+        *(tm_predict) += (clock_t)(clock()- tm0);//SEQ
 //    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
     
     // delete problems

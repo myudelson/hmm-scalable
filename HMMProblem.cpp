@@ -158,7 +158,7 @@ void HMMProblem::init(struct param *param) {
 	offset = (NPAR)(nS + nS*nS);
 	for(i=0; i<nS; i++)
 		for(j=0; j<nO; j++) {
-			idx = (NPAR)(offset + i*nS + j);
+			idx = (NPAR)(offset + i*nO + j);
 			lbB[i][j] = this->p->param_lo[idx];
 			ubB[i][j] = this->p->param_hi[idx];
 		}
