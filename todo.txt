@@ -8,7 +8,6 @@ HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literatur
 - there is some savings possible when computing forward and backward variables 
     rf. http://en.wikipedia.org/wiki/Forward%E2%80%93backward_algorithm#Example
 - random runs within each "fit bit"
-- revive Barzaline-Borwein stepping
 - implement weighting for student / skill pairing (work out gradients and additional fit for \beta's)
 - not just per-student & per-skill effects, but the interaction (work out gradient)
 - change per-student effects to resemble Logistic Regression: student pLo and pT
@@ -17,7 +16,6 @@ HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literatur
 - add per-item (problem) effects
 - Collapse all gradient descent to one class with "switchers" for per-student and
     per-skill attributes
-- step tolerance == convergence tolerance, BEWARE! when conv tolerance grows
 - check whether AIC and BIC computed correctly (n.parameters in particular)
 - add capability to run multiple model fits on one input file read (e.g., via a
     -F <filename> parameters where file contains multiple modeling specs
@@ -36,8 +34,3 @@ HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literatur
 - potential clients: Ken, John, Phil, Emma, 
 - git hub, sourceforge - repositories, search there
 - Uncertainty in AI mail list
-
-
-- all methods gave fit 1 skill
-- all Atomic steppers output LL
-- 

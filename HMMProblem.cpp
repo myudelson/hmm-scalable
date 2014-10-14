@@ -1446,6 +1446,7 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
     
 	NUMBER e = this->p->ArmijoSeed; // step seed
 	bool compliesArmijo = false;
+	bool compliesWolfe2 = true; // false; second wolfe condition is turned off
 	NUMBER f_xk = HMMProblem::getSumLogPOPara(xndat, x_data);
 	NUMBER f_xkplus1 = 0;
 	
@@ -1459,7 +1460,7 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
 		if(fb->B  != NULL) for(m=0; m<nO; m++) p_k_by_neg_p_k -= fb->gradB[i][m]*fb->gradB[i][m];
 	}
 	int iter = 0; // limit iter steps to 20, via ArmijoMinStep (now 10)
-	while( !compliesArmijo && e > this->p->ArmijoMinStep) {
+	while( !compliesArmijo && !compliesWolfe2 && e > this->p->ArmijoMinStep) {
 		// update
 		for(i=0; i<nS; i++) {
 			if(fb->pi != NULL) fb->pi[i] = fb->PIcopy[i] - e * fb->gradPI[i];
@@ -1494,7 +1495,20 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
 		f_xkplus1 = HMMProblem::getSumLogPOPara(xndat, x_data);
 		// compute Armijo compliance
 		compliesArmijo = (f_xkplus1 <= (f_xk + (this->p->ArmijoC1 * e * p_k_by_neg_p_k)));
-		e /= (compliesArmijo)?1:this->p->ArmijoReduceFactor;
+        
+//        // compute Wolfe 2
+//        NUMBER p_k_by_neg_p_kp1 = 0;
+//        computeGradients(fb);
+//        fb->doLog10ScaleGentle(FBS_GRAD);
+//        for(i=0; i<nS; i++)
+//        {
+//            if(fb->pi != NULL) p_k_by_neg_p_kp1 -= fb->gradPI[i]*fb->gradPI[i];
+//            if(fb->A  != NULL) for(j=0; j<nS; j++) p_k_by_neg_p_kp1 -= fb->gradA[i][j]*fb->gradA[i][j];
+//            if(fb->B  != NULL) for(m=0; m<nO; m++) p_k_by_neg_p_kp1 -= fb->gradB[i][m]*fb->gradB[i][m];
+//        }
+//        compliesWolfe2 = (p_k_by_neg_p_kp1 >= this->p->ArmijoC2 * p_k_by_neg_p_k);
+        
+		e /= (compliesArmijo && compliesWolfe2)?1:this->p->ArmijoReduceFactor;
 		iter++;
 	} // armijo loop
     if(!compliesArmijo) { // we couldn't step away from current, copy the inital point back
