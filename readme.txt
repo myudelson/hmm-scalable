@@ -197,6 +197,8 @@ options:
      observation (default), otherwise -- delimiter character, e.g. '-d ~'.
 -b : treat input file as binary input file  created from text file by
      inputconvert utility.
+-p : report model predictions on the train set 0-no (default), 1-yes; 2-yes,
+plus output state probability; works with -v and -m parameters.
 
 = Examples =
 
@@ -221,7 +223,7 @@ To generate predictions using a previously fit model run the following command
 (do not forget that prediction will only be generated for rows where observation
 is now known -- marked with '.'):
 
-sh> ./predicthmm toy_data_test.txt model.txt predict.txt
+sh> ./predicthmm -p 1 toy_data_test.txt model.txt predict.txt
 
 To give this tool a proper test you might want to try it on a KDD Cup 2010
 dataset donated to the Pittsburgh Science of Learning Center by Carnegie
