@@ -170,9 +170,9 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
     else
         param->dat_multiskill = new StripedArray< NCAT* >(true);
 	StripedArray<NCAT> * striped_dat_item = new StripedArray<NCAT>();
-    StripedArray<int> *striped_dat_time = new StripedArray<int>();
-    if(param->time)
-        striped_dat_time = new StripedArray<int>();
+    StripedArray<NPAR> *striped_dat_slice = new StripedArray<NPAR>();
+    if(param->sliced)
+        striped_dat_slice = new StripedArray<NPAR>();
     param->map_group_fwd = new map<string,NCAT>();
     param->map_group_bwd = new map<NCAT,string>();
     param->map_skill_fwd = new map<string,NCAT>();
@@ -180,7 +180,7 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
     param->map_step_fwd = new map<string,NCAT>();
     param->map_step_bwd = new map<NCAT,string>();
 	string s_group, s_step, s_skill;
-    int time = 0;
+    NPAR slice = 0;
 	map<string,NCAT>::iterator it;
 	map<string,NCAT>::iterator it2;
 	bool wrong_no_columns = false;
@@ -259,20 +259,22 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
 		number_columns++;
 		s_skill = string( col );
         // process skills later
-        // Time
-        if(param->time) {
+        // Slice
+        if(param->sliced) {
             col = strtok(NULL,"\t\n\r");
             if(col == NULL) {
                 wrong_no_columns = true;
                 break;
             }
             number_columns++;
-            time = atoi( col );
-            if( time<=0 ) {
-                fprintf(stderr,"Time cannot be negative or zero (line %d).\n",param->N+1);
+            slice = (NPAR) atoi( col );
+            if( slice<0 ) {
+                fprintf(stderr,"Slice cannot be negative (line %d).\n",param->N+1);
 				return false;
             }
-            striped_dat_time->add(time);
+            if( (slice >= 0) && ((param->nZ-1) < slice) ) // update slice count
+                param->nZ = (NPAR)(slice + 1);
+            striped_dat_slice->add(slice);
         } // time
         
         // back to skill processing
@@ -342,7 +344,7 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
 		param->N++;	// increase line count
 	}// reading loop
 	if(wrong_no_columns) {
-		fprintf(stderr,"Wrong number of columns in line %u. Expected %d, found %d\n",param->N+1,COLUMNS+param->time, number_columns);
+		fprintf(stderr,"Wrong number of columns in line %u. Expected %d, found %d\n",param->N+1,COLUMNS+param->sliced, number_columns);
 		free(line);
 		fclose(fid);
         return false;
@@ -362,9 +364,9 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
     }
     param->dat_item = striped_dat_item->toArray();
     delete striped_dat_item;
-    if(param->time) {
-        param->dat_time = striped_dat_time->toArray();
-        delete striped_dat_time;
+    if(param->sliced) {
+        param->dat_slice = striped_dat_slice->toArray();
+        delete striped_dat_slice;
     }
 
 	fclose(fid);

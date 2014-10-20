@@ -419,8 +419,8 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
 				}
 				break;
 			case 't':
-				param.time = (NPAR)atoi(argv[i]);
-				if(param.time!=0 && param.time!=1) {
+				param.sliced = (NPAR)atoi(argv[i]);
+				if(param.sliced!=0 && param.sliced!=1) {
 					fprintf(stderr,"ERROR! Time parameter should be either 0 (off) or 1(om)\n");
 					exit_with_help();
 				}
@@ -785,7 +785,6 @@ bool read_and_structure_data(const char *filename) {
 	//			k_numg[nK]        - number of groups per skill                 RETAIN
 	
 	NDAT t = 0;
-    int tm = 0; // time
 	NCAT g, k;
 //	NPAR o;
 	NPAR **skill_group_map = init2D<NPAR>(param.nK, param.nG); // binary map of skills to groups
@@ -893,7 +892,7 @@ bool read_and_structure_data(const char *filename) {
                 param.null_skills[gidx].gamma = NULL;
                 param.null_skills[gidx].xi = NULL;
                 param.null_skills[gidx].c = NULL;
-                param.null_skills[gidx].time = NULL;
+//                param.null_skills[gidx].time = NULL; // no longer used
                 param.null_skills[gidx].p_O_param = 0.0;
                 continue;
             }
@@ -962,8 +961,8 @@ bool read_and_structure_data(const char *filename) {
 	for(t=0; t<param.N; t++) {
 		g = param.dat_group[t];
 //		o = param.dat_obs->get(t);
-        if(param.time)
-            tm = param.dat_time[t];
+//        if(param.sliced)
+//            tm = param.dat_slice[t];
         NCAT *ar;
         int n;
         if(param.multiskill==0) {
@@ -988,11 +987,7 @@ bool read_and_structure_data(const char *filename) {
                 //                param.k_g_data[k][ k_countg[k] ]->obs = Calloc(NPAR, (size_t)param.k_g_data[k][ k_countg[k] ]->n); // grab
                 //                param.k_g_data[k][ k_countg[k] ]->obs[0] = o; // insert
                 param.k_g_data[k][ k_countg[k] ]->ix = Calloc(NDAT, (size_t)param.k_g_data[k][ k_countg[k] ]->n); // grab
-                if(param.time)
-                    param.k_g_data[k][ k_countg[k] ]->time = Calloc(int, (size_t)param.k_g_data[k][ k_countg[k] ]->n); // grab
                 param.k_g_data[k][ k_countg[k] ]->ix[0] = t; // insert
-                if(param.time)
-                    param.k_g_data[k][ k_countg[k] ]->time[0] = tm; // insert
                 param.k_g_data[k][ k_countg[k] ]->cnt++; // increase data counter
                 k_countg[k]++; // count unique groups forward
                 g_countk[g]++; // count unique skills forward
@@ -1006,8 +1001,6 @@ bool read_and_structure_data(const char *filename) {
                     NDAT pos = param.k_g_data[k][ gidx ]->cnt; // copy position
                     //                    param.k_g_data[k][ gidx ]->obs[pos] = o; // insert
                     param.k_g_data[k][ gidx ]->ix[pos] = t; // insert
-                    if(param.time)
-                        param.k_g_data[k][ gidx ]->time[pos] = tm; // insert
                     param.k_g_data[k][ gidx ]->cnt++; // increase data counter
                 }
                 else

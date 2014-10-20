@@ -262,9 +262,16 @@ void add1DNumbersWeighted(NUMBER* sourse, NUMBER* target, NPAR size, NUMBER weig
 }
 
 void add2DNumbersWeighted(NUMBER** sourse, NUMBER** target, NPAR size1, NPAR size2, NUMBER weight) {
-	for(NPAR i=0; i<size1; i++)
-		for(NPAR j=0; j<size2; j++)
-			target[i][j] = target[i][j] + sourse[i][j]*weight;
+    for(NPAR i=0; i<size1; i++)
+        for(NPAR j=0; j<size2; j++)
+            target[i][j] = target[i][j] + sourse[i][j]*weight;
+}
+
+void add3DNumbersWeighted(NUMBER*** sourse, NUMBER*** target, NPAR size1, NPAR size2, NPAR size3, NUMBER weight) {
+    for(NPAR i=0; i<size1; i++)
+        for(NPAR j=0; j<size2; j++)
+            for(NPAR l=0; l<size3; l++)
+                target[i][j][l] = target[i][j][l] + sourse[i][j][l]*weight;
 }
 
 bool isPasses(NUMBER* ar, NPAR size) {
@@ -396,7 +403,6 @@ NUMBER doLog10Scale2DGentle(NUMBER **grad, NUMBER **par, NPAR size1, NPAR size2)
 }
 
 
-
 // for skill of group
 void zeroLabels(NCAT xdat, struct data** x_data) { // set counts in data sequences to zero
 	NCAT x;
@@ -450,7 +456,7 @@ void set_param_defaults(struct param *param) {
 	// configurable - set
 	param->tol                   = 0.01;
 	param->scaled                = 0;
-	param->time                  = 0;
+	param->sliced                  = 0;
 	param->maxiter               = 200;
 	param->quiet                 = 0;
 	param->single_skill          = 0;
@@ -501,6 +507,7 @@ void set_param_defaults(struct param *param) {
 	param->nG = 0;
 	param->nK = 0;
 	param->nI = 0;
+    param->nZ = 1;
 	// data
     param->all_data = NULL;
     param->nSeq = 0;
@@ -542,13 +549,13 @@ void destroy_input_data(struct param *param) {
 	if(param->dat_item != NULL) free( param->dat_item );
 	if(param->dat_skill != NULL) free( param->dat_skill );
 	if(param->dat_multiskill != NULL) delete param->dat_multiskill;
-	if(param->dat_time != NULL) free( param->dat_time );
+	if(param->dat_slice != NULL) free( param->dat_slice );
     
     // not null skills
     for(NDAT kg=0;kg<param->nSeq; kg++) {
         free(param->all_data[kg].ix); // was obs;
-        if(param->time)
-            free(param->all_data[kg].time);
+//        if(param->sliced) // handled via one global array and ix indexing
+//            free(param->all_data[kg].time);
     }
     if(param->all_data != NULL) free(param->all_data); // ndat of them
     if(param->k_data != NULL)   free(param->k_data); // ndat of them (reordered by k)
@@ -718,37 +725,38 @@ NPAR sec_to_9cat(int time1, int time2, int *limits, NPAR nlimits) {
 }
 
 
-// write time intervals to file
-void write_time_interval_data(param* param, const char *file_name) {
-    if(param->time != 1) {
-        fprintf(stderr,"ERROR! Time data has not been read.\n");
-        return;
-    }
-    std::map<NCAT,std::string>::iterator it_g;
-    std::map<NCAT,std::string>::iterator it_k;
-    string group, skill;
-    data *dt;
-    // open file
-    FILE *fid = fopen(file_name,"w");
-    fprintf(fid,"Group\tKC\ttime1\ttime2\ttimediff\ttime_lim_20HDWM\tOutcome\n");
-    // for all groups
-    for(NCAT g=0; g<param->nG; g++) {
-        // for all KCs
-        it_g = param->map_group_bwd->find(g);
-        for(NCAT k=0; k<param->g_numk[g]; k++) {
-            it_k = param->map_skill_bwd->find(k);
-            dt = param->g_k_data[g][k];
-            // for times from 2 to N
-            for(NDAT t=1; t<dt->n; t++) {
-                //                NPAR code = sec_to_linear_interval(dt->time[t]-dt->time[t-1], time_lim_20HDWM, sizeof(time_lim_20HDWM)/sizeof(int));
-                NPAR code = sec_to_9cat(dt->time[t-1], dt->time[t], time_lim_20HDWM, sizeof(time_lim_20HDWM)/sizeof(int));
-                fprintf(fid,"%s\t%s\t%d\t%d\t%d\t%d\t%d\n", it_g->second.c_str(), it_k->second.c_str(), dt->time[t-1], dt->time[t], (dt->time[t]-dt->time[t-1]), code, 1-param->dat_obs[ dt->ix[t] ]/*->get( dt->ix[t] )*/ );
-            }// for times from 2 to N
-        }// for all KCs
-    }// for all groups
-    // close file
-    fclose(fid);
-}
+//// write time intervals to file
+//void write_time_interval_data(param* param, const char *file_name) {
+//    if(param->time != 1) {
+//        fprintf(stderr,"ERROR! Time data has not been read.\n");
+//        return;
+//    }
+//    std::map<NCAT,std::string>::iterator it_g;
+//    std::map<NCAT,std::string>::iterator it_k;
+//    string group, skill;
+//    data *dt;
+//    // open file
+//    FILE *fid = fopen(file_name,"w");
+//    fprintf(fid,"Group\tKC\ttime1\ttime2\ttimediff\ttime_lim_20HDWM\tOutcome\n");
+//    // for all groups
+//    for(NCAT g=0; g<param->nG; g++) {
+//        // for all KCs
+//        it_g = param->map_group_bwd->find(g);
+//        for(NCAT k=0; k<param->g_numk[g]; k++) {
+//            it_k = param->map_skill_bwd->find(k);
+//            dt = param->g_k_data[g][k];
+//            // for times from 2 to N
+//            for(NDAT t=1; t<dt->n; t++) {
+//                //                NPAR code = sec_to_linear_interval(dt->time[t]-dt->time[t-1], time_lim_20HDWM, sizeof(time_lim_20HDWM)/sizeof(int));
+//                NPAR code = sec_to_9cat(dt->time[t-1], dt->time[t], time_lim_20HDWM, sizeof(time_lim_20HDWM)/sizeof(int));
+//                fprintf(fid,"%s\t%s\t%d\t%d\t%d\t%d\t%d\n", it_g->second.c_str(), it_k->second.c_str(), dt->time[t-1], dt->time[t], (dt->time[t]-dt->time[t-1]), code, 1-param->dat_obs[ dt->ix[t] ]/*->get( dt->ix[t] )*/ );
+//            }// for times from 2 to N
+//        }// for all KCs
+//    }// for all groups
+//    // close file
+//    fclose(fid);
+//}
+//
 
 // penalties
 

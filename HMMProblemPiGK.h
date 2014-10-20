@@ -70,7 +70,7 @@ protected:
 	void init(struct param *param); // non-fit specific initialization
 	void destroy(); // non-fit specific descruction
     virtual NUMBER GradientDescent(); // fit alternating
-    virtual struct data*** getExdendedData(NCAT xndat, struct data** x_data, NPAR kg_flag, NCAT* xxndat);
+//    virtual struct data*** getExdendedData(NCAT xndat, struct data** x_data, NPAR kg_flag, NCAT* xxndat);
 //    virtual NUMBER GradientDescentX(); // fit alternating
 
 private:

@@ -496,48 +496,48 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 }
 
 
-struct data***  HMMProblemPiGK::getExdendedData(NCAT xndat, struct data** x_data, NPAR kg_flag, NCAT* xxndat) {
-    NCAT q, r, g, k;
-    struct data*** xx_data;
-    *xxndat = 0;
-    NCAT yndat;
-    struct data** z_data;
-    struct data** y_data;
-    if(kg_flag==0) {
-        for(q=0; q<xndat; q++)
-            *xxndat += this->p->g_numk[ x_data[q]->g ];
-        
-    } else if (kg_flag==1) {
-        for(q=0; q<xndat; q++)
-            *xxndat += this->p->k_numg[ x_data[q]->k ];
-        
-    } else {
-        fprintf(stderr,"Unexpected value of kg_flag\n");
-        return NULL;
-    }
-    z_data = (Malloc(struct data *, (size_t)*xxndat));
-    xx_data = &z_data;
-    NDAT i = 0;
-    if(kg_flag==0) {
-        for(q=0; q<xndat; q++) {
-            g = x_data[q]->g;
-            yndat = this->p->g_numk[g];
-            y_data = this->p->g_k_data[g];
-            for(r=0; r<yndat; r++)
-                z_data[i++] = y_data[r];
-        }
-        
-    } else if (kg_flag==1) {
-        for(q=0; q<xndat; q++) {
-            k = x_data[q]->k;
-            yndat = this->p->k_numg[k];
-            y_data = this->p->k_g_data[k];
-            for(r=0; r<yndat; r++)
-                z_data[i++] = y_data[r];
-        }
-    }
-    return xx_data;
-}
+//struct data***  HMMProblemPiGK::getExdendedData(NCAT xndat, struct data** x_data, NPAR kg_flag, NCAT* xxndat) {
+//    NCAT q, r, g, k;
+//    struct data*** xx_data;
+//    *xxndat = 0;
+//    NCAT yndat;
+//    struct data** z_data;
+//    struct data** y_data;
+//    if(kg_flag==0) {
+//        for(q=0; q<xndat; q++)
+//            *xxndat += this->p->g_numk[ x_data[q]->g ];
+//        
+//    } else if (kg_flag==1) {
+//        for(q=0; q<xndat; q++)
+//            *xxndat += this->p->k_numg[ x_data[q]->k ];
+//        
+//    } else {
+//        fprintf(stderr,"Unexpected value of kg_flag\n");
+//        return NULL;
+//    }
+//    z_data = (Malloc(struct data *, (size_t)*xxndat));
+//    xx_data = &z_data;
+//    NDAT i = 0;
+//    if(kg_flag==0) {
+//        for(q=0; q<xndat; q++) {
+//            g = x_data[q]->g;
+//            yndat = this->p->g_numk[g];
+//            y_data = this->p->g_k_data[g];
+//            for(r=0; r<yndat; r++)
+//                z_data[i++] = y_data[r];
+//        }
+//        
+//    } else if (kg_flag==1) {
+//        for(q=0; q<xndat; q++) {
+//            k = x_data[q]->k;
+//            yndat = this->p->k_numg[k];
+//            y_data = this->p->k_g_data[k];
+//            for(r=0; r<yndat; r++)
+//                z_data[i++] = y_data[r];
+//        }
+//    }
+//    return xx_data;
+//}
 
 //NUMBER HMMProblemPiGK::GradientDescentX() {
 //	NCAT k, ki, g, gi;
