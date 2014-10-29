@@ -107,6 +107,7 @@ enum STRUCTURE {
     STRUCTURE_SKILL   = 1,  // 1 - all by skill
     STRUCTURE_GROUP   = 2,  // 2 - all by group (user)
     STRUCTURE_PIg     = 3,  // 3 - PI by group, A,B by skill
+    STRUCTURE_SKABslc = 11, // all by skill - sliced A and B
     STRUCTURE_PIgk    = 4,  // 4 - PI by skll&group, A,B by skill
     STRUCTURE_PIgkww  = 10, // 4 - PI by skll&group with weights, A,B by skill
     STRUCTURE_PIAgk   = 5,  // 5 - PI, A by skll&group, B by skill
@@ -138,7 +139,7 @@ struct data {
 	NUMBER **beta;  // ndat x nS
 	NUMBER **gamma; // ndat x nS
 	NUMBER ***xi; // ndat x nS x nS
-	NUMBER p_O_param; // 
+	NUMBER p_O_param; // likelihood of the observations under parameters
     NUMBER loglik; // loglikelihood
 	NCAT k,g; // pointers to skill (k) and group (g)
 };
@@ -161,7 +162,7 @@ struct param {
 	NPAR solver; // whether to first fit all skills as skingle skill, to set a starting point
 	NPAR solver_setting; // to be used by individual solver
 	NPAR parallel;   // parallelization flag
-	NUMBER C;// weight of the L1 norm penalty
+	NUMBER C;// weight of the L2 norm penalty
 	int metrics;   // compute AIC, BIC, RMSE of training
 	int metrics_target_obs;   // target observation for RMSE of training
     int predictions; // report predictions on training data
@@ -176,17 +177,21 @@ struct param {
     NPAR* dat_obs;
     NCAT* dat_group;
     NCAT *dat_skill;
+    NCAT *dat_skill_stacked; // if multiskill==1, stacked array of all multiskills
+    NCAT *dat_skill_rcount;  // if multiskill==1, for each multi-skill row count of skills in it
+    NCAT *dat_skill_rix;     // if multiskill==1, for each data skill row, index into first element in stacked array
     NCAT *dat_item;
     StripedArray< NCAT* > *dat_multiskill;
-    NPAR *dat_slice;
+    NPAR *dat_slice;         // slices - alternative slots of A, B matrices
 	// derived from data
     NDAT   N;       // number of ALL data rows
+    NDAT   Nstacked;// number of ALL data rows, if multiple skills per row are expanded
 	NPAR  nS;		// number of states
 	NPAR  nO;		// number of unique observations
 	NCAT  nG;       // number of subjects (sequences, groups)
     NCAT  nK;		// number of skills (subproblems)
-    NCAT  nZ;		// number of slices
-	NCAT nI;		// number of items (problems)
+    NPAR  nZ;		// number of slices
+	NCAT  nI;		// number of items (problems)
     // null-skill data by student
     NDAT N_null; // total number of null skill instances
     struct data *null_skills;

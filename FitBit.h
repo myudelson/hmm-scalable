@@ -36,6 +36,8 @@
 
 #include "utils.h"
 
+#ifndef __HMM__FitBitEnums__
+#define __HMM__FitBitEnums__
 enum FIT_BIT_SLOT {
     FBS_PAR       = 1, // e.g. PI
     FBS_PARm1     = 2, // e.g. PIm1
@@ -50,6 +52,7 @@ enum FIT_BIT_VAR {
     FBV_A  = 2, // A
     FBV_B  = 3  // B
 };
+#endif /* fit bit enums*/
 
 class FitBit {
 public:

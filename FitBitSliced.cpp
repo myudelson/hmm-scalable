@@ -111,24 +111,24 @@ FitBitSliced::~FitBitSliced() {
 }
 
 void FitBitSliced::init(NUMBER* &a_PI, NUMBER*** &a_A, NUMBER*** &a_B) {
-//    if(this->pi != NULL) {
+    if(this->pi != NULL) {
         if(a_PI == NULL)
             a_PI = init1D<NUMBER>((NDAT)this->nS); // init1DNumber(this->nS);
         else
             toZero1D<NUMBER>(a_PI, (NDAT)this->nS);
-//    }
-//    if(this->A  != NULL) {
+    }
+    if(this->A  != NULL) {
         if(a_A == NULL)
-            a_A  = init3D<NUMBER>((NDAT)this->nS, (NDAT)this->nZ, (NDAT)this->nS);
+            a_A  = init3D<NUMBER>((NDAT)this->nZ, (NDAT)this->nS, (NDAT)this->nS);
         else
             toZero3D<NUMBER>(a_A, (NDAT)this->nZ, (NDAT)this->nS, (NDAT)this->nS);
-//    }
-//    if(this->B  != NULL) {
+    }
+    if(this->B  != NULL) {
         if(a_B == NULL)
-            a_B  = init3D<NUMBER>((NDAT)this->nS, (NDAT)this->nZ, (NDAT)this->nO);
+            a_B  = init3D<NUMBER>((NDAT)this->nZ, (NDAT)this->nS, (NDAT)this->nO);
         else
-            toZero3D<NUMBER>(a_B, (NDAT)this->nS, (NDAT)this->nZ, (NDAT)this->nO);
-//    }
+            toZero3D<NUMBER>(a_B, (NDAT)this->nZ, (NDAT)this->nS, (NDAT)this->nO);
+    }
 }
 
 void FitBitSliced::link(NUMBER *a_PI, NUMBER ***a_A, NUMBER ***a_B, NCAT a_xndat, struct data** a_x_data) {
@@ -307,16 +307,19 @@ void FitBitSliced::add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fb
 bool FitBitSliced::checkConvergence(FitResult *fr) {
 
 	NUMBER critetion = 0;
-	for(NPAR i=0; i<this->nS; i++)
-	{
-		if(this->pi != NULL) critetion += pow( this->pi[i]-this->PIm1[i], 2 )/*:0*/;
-		for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
-			critetion += pow(this->A[i][j] - this->Am1[i][j],2);
-		}
-		for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
-			critetion += pow(this->B[i][k] - this->Bm1[i][k],2);
-		}
-	}
+    for(NPAR i=0; i<this->nS; i++)
+        if(this->pi != NULL) critetion += pow( this->pi[i]-this->PIm1[i], 2 )/*:0*/;
+
+    for(NPAR z=0; z<this->nZ; z++)
+        for(NPAR i=0; i<this->nS; i++)
+        {
+            for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
+                critetion += pow(this->A[z][i][j] - this->Am1[z][i][j],2);
+            }
+            for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
+                critetion += pow(this->B[z][i][k] - this->Bm1[z][i][k],2);
+            }
+        }
 	return sqrt(critetion) < this->tol; // double the truth or false
         
 //    return (fr->pOmid - fr->pO) < this->tol;

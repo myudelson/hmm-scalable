@@ -28,6 +28,7 @@
  */
 
 #include "utils.h"
+#include "HMMProblem.h"
 #include "FitBitSliced.h"
 #include "StripedArray.h"
 
@@ -37,7 +38,7 @@
 #ifndef _HMMPROBLEM_SLICED_H
 #define _HMMPROBLEM_SLICED_H
 
-class HMMProblemSliced {
+class HMMProblemSliced : public HMMProblem {
 public:
 	HMMProblemSliced();
 	HMMProblemSliced(struct param *param); // sizes=={nK, nK, nK} by default
@@ -46,8 +47,8 @@ public:
 	NUMBER**** getA();
 	NUMBER**** getB();
 	NUMBER* getPI(NCAT k);
-	NUMBER** getA(NCAT k, NPAR z);
-	NUMBER** getB(NCAT k, NPAR z);
+	NUMBER*** getA(NCAT k);
+	NUMBER*** getB(NCAT k);
 	NUMBER* getLbPI();
 	NUMBER** getLbA();
 	NUMBER** getLbB();
@@ -58,6 +59,8 @@ public:
     virtual NUMBER getPI(struct data* dt, NPAR i);
     virtual NUMBER getA (struct data* dt, NDAT t, NPAR i, NPAR j);
     virtual NUMBER getB (struct data* dt, NDAT t, NPAR i, NPAR m);
+    virtual NUMBER getAz (struct data* dt, NPAR z, NPAR i, NPAR j);
+    virtual NUMBER getBz (struct data* dt, NPAR z, NPAR i, NPAR m);
     // getters for computing gradients of alpha, beta, gamma
     virtual void setGradPI(FitBitSliced *fb);
     virtual void setGradA (FitBitSliced *fb);
@@ -71,9 +74,9 @@ public:
     // fitting (the only public method)
     virtual void fit(); // return -LL for the model
     // predicting
-    virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt, NDAT t);
+    virtual void producePCorrectZ(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt, NPAR z);
 //    virtual void producePCorrectBoost(boost::numeric::ublas::mapped_matrix<NUMBER*> *group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt, NDAT t);//BOOST
-    void predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill, NPAR *dat_slice, bool only_unlabeled);
+    void predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled);
     void readModel(const char *filename, bool overwrite);
     virtual void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);
 //    virtual void reorderSequences(NDAT *newnK, NDAT *newnG, bool sort); /*place larger skill and group sequences closer to the beginning*/
@@ -111,10 +114,13 @@ protected:
 	void computeXiGamma(NCAT xndat, struct data** x_data);
     void FitNullSkill(NUMBER* loglik_rmse, bool keep_SE); // get loglik and RMSE
     // helpers
-    void init3Params(NUMBER* &pi, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO);
-    void toZero3Params(NUMBER* &pi, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO);
-    void free3Params(NUMBER* &pi, NUMBER** &A, NUMBER** &B, NPAR nS);
-    void cpy3Params(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB, NPAR nS, NPAR nO);
+    void init3Params(NUMBER* &pi, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO); // regular
+    void init3Params(NUMBER* &pi, NUMBER*** &A, NUMBER*** &B, NPAR nZ, NPAR nS, NPAR nO); // sliced
+    void toZero3Params(NUMBER* &pi, NUMBER*** &A, NUMBER*** &B, NPAR nZ, NPAR nS, NPAR nO);
+    void free3Params(NUMBER* &pi, NUMBER** &A, NUMBER** &B, NPAR nS); // regular
+    void free3Params(NUMBER* &pi, NUMBER*** &A, NUMBER*** &B, NPAR nZ, NPAR nS); // sliced
+    void cpy3Params(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB, NPAR nS, NPAR nO); // regular
+    void cpy3Params(NUMBER* &soursePI, NUMBER*** &sourseA, NUMBER*** &sourseB, NUMBER* &targetPI, NUMBER*** &targetA, NUMBER*** &targetB, NPAR nZ, NPAR nS, NPAR nO);// sliced
 
     // predicting
 	virtual NDAT computeGradients(FitBitSliced *fb);
@@ -124,13 +130,6 @@ protected:
     NUMBER doBaumWelchStep(FitBitSliced *fb);
     FitResult GradientDescentBit(FitBitSliced *fb); // for 1 skill or 1 group, all 1 skill for all data
     FitResult BaumWelchBit(FitBitSliced *fb);
-	// predicting big
-    virtual NDAT computeGradientsBig(FitBitSliced **fbs, NCAT nfbs);// global, for all
-    NUMBER doLinearStepBig(FitBitSliced **fbs, NCAT nfbs); //
-    NUMBER doConjugateLinearStepBig(FitBitSliced **fbs, NCAT nfbs); //
-    FitResult GradientDescentBitBig(FitBitSliced **fbs, NCAT nfbs); //
-    bool checkConvergenceBig0(FitBitSliced** fbs, NCAT nfbs, NUMBER tol, NUMBER *criterion);
-    bool checkConvergenceBig(FitBitSliced** fbs, NCAT nfbs, NUMBER tol, NUMBER *criterion);
     
     NUMBER doBarzilaiBorweinStep(FitBitSliced *fb);
 //    NUMBER doBarzilaiBorweinStep(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1);

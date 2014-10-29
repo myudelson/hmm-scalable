@@ -501,7 +501,8 @@ void set_param_defaults(struct param *param) {
     param->map_skill_fwd = NULL;
     param->map_skill_bwd = NULL;
 	// derived from data - set to 0
-	param->N  = 0; //will be dynamically set in read_data_...()
+    param->N  = 0; //will be dynamically set in read_data_...()
+    param->Nstacked  = 0; //will be dynamically set in read_data_...()
 	param->nS = 2;
 	param->nO = 0;
 	param->nG = 0;
@@ -535,6 +536,16 @@ void set_param_defaults(struct param *param) {
     param->block_fitting[1] = 0; // no bocking fitting for A
     param->block_fitting[2] = 0; // no bocking fitting for B
     param->per_kc_rmse_acc = false;
+    // data
+    param->dat_obs = NULL;
+    param->dat_group = NULL;
+    param->dat_skill = NULL;
+    param->dat_skill_stacked = NULL;
+    param->dat_skill_rcount = NULL;
+    param->dat_skill_rix = NULL;
+    param->dat_item = NULL;
+    param->dat_multiskill = NULL;
+    param->dat_slice = NULL;
 }
 
 void destroy_input_data(struct param *param) {
@@ -549,6 +560,9 @@ void destroy_input_data(struct param *param) {
 	if(param->dat_item != NULL) free( param->dat_item );
 	if(param->dat_skill != NULL) free( param->dat_skill );
 	if(param->dat_multiskill != NULL) delete param->dat_multiskill;
+    if(param->dat_skill_stacked != NULL) free( param->dat_skill_stacked );
+    if(param->dat_skill_rcount != NULL) free( param->dat_skill_rcount );
+    if(param->dat_skill_rix != NULL) free( param->dat_skill_rix );
 	if(param->dat_slice != NULL) free( param->dat_slice );
     
     // not null skills
@@ -597,6 +611,8 @@ void writeSolverInfo(FILE *fid, struct param *param) {
     fprintf(fid,"nS\t%d\n",param->nS);
     // nO
     fprintf(fid,"nO\t%d\n",param->nO);
+    // nZ
+    fprintf(fid,"nZ\t%d\n",param->nZ);
 }
 
 void readSolverInfo(FILE *fid, struct param *param, NDAT *line_no) {
@@ -624,6 +640,9 @@ void readSolverInfo(FILE *fid, struct param *param, NDAT *line_no) {
     (*line_no)++;
     // nO
     fscanf(fid,"nO\t%hhu\n",&param->nO);
+    (*line_no)++;
+    // nZ
+    fscanf(fid,"nZ\t%hhu\n",&param->nZ);
     (*line_no)++;
 }
 

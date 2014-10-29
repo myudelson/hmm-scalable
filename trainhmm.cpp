@@ -47,6 +47,7 @@
 #include "HMMProblemPiAGK.h"
 #include "HMMProblemPiABGK.h"
 ////#include "HMMProblemKT.h"
+#include "HMMProblemSliced.h"
 #include "StripedArray.h"
 //#include "SparseArray2D.h"
 //#include <boost/numeric/ublas/matrix_sparse.hpp>//BOOST
@@ -236,6 +237,9 @@ int main (int argc, char ** argv) {
                 //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
                 //                hmm = new HMMProblemPiG(&param);
                 //                break;
+            case STRUCTURE_SKABslc: // Conjugate Gradient Descent
+                hmm = new HMMProblemSliced(&param);
+                break;
             case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
                 hmm = new HMMProblemPiGK(&param);
                 break;
@@ -284,6 +288,7 @@ int main (int argc, char ** argv) {
             tm_predict = clock(); //SEQ
 //            _tm_predict = omp_get_wtime(); //PAR
             hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
+            
             tm_predict = clock()-tm_predict;//SEQ
 //            _tm_predict = omp_get_wtime()-_tm_predict;//PAR
             
@@ -468,7 +473,7 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                    param.structure != STRUCTURE_PIg   && param.structure != STRUCTURE_PIgk  &&
                    param.structure != STRUCTURE_PIAgk && param.structure != STRUCTURE_Agk &&
                    param.structure != STRUCTURE_PIABgk && param.structure != STRUCTURE_Agki &&
-                   param.structure != STRUCTURE_PIgkww) {
+                   param.structure != STRUCTURE_PIgkww && param.structure != STRUCTURE_SKABslc) {
                     fprintf(stderr, "Model Structure specified (%d) is out of range of allowed values\n",param.structure);
 					exit_with_help();
                 }
@@ -477,6 +482,10 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                    param.solver != METHOD_GBB) {
                     fprintf(stderr, "Method specified (%d) is out of range of allowed values\n",param.solver);
 					exit_with_help();
+                }
+                if( param.structure == STRUCTURE_SKABslc && param.solver == METHOD_BW) {
+                    fprintf(stderr, "Method specified (%d) is not defined for this structure (%d) \n",param.solver,param.structure);
+                    exit_with_help();
                 }
                 if( param.solver == METHOD_BW && ( param.solver != STRUCTURE_SKILL && param.solver != STRUCTURE_GROUP ) ) {
                     fprintf(stderr, "Baum-Welch solver does not support model structure specified (%d)\n",param.solver);

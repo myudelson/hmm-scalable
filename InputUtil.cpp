@@ -165,12 +165,20 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
 	StripedArray<NPAR> *striped_dat_obs = new StripedArray<NPAR>();
 	StripedArray<NCAT> *striped_dat_group = new StripedArray<NCAT>();
     StripedArray<NCAT> *striped_dat_skill = NULL;
+    StripedArray<NCAT> *striped_dat_skill_stacked = NULL;
+    StripedArray<NCAT> *striped_dat_skill_rcount  = NULL;
+    StripedArray<NCAT> *striped_dat_skill_rix     = NULL;
+    NDAT current_stacked = 0;
     if(param->multiskill==0)
         striped_dat_skill = new StripedArray<NCAT>();
-    else
+    else {
         param->dat_multiskill = new StripedArray< NCAT* >(true);
+        striped_dat_skill_stacked = new StripedArray<NCAT>();
+        striped_dat_skill_rcount  = new StripedArray<NCAT>();
+        striped_dat_skill_rix     = new StripedArray<NCAT>();
+    }
 	StripedArray<NCAT> * striped_dat_item = new StripedArray<NCAT>();
-    StripedArray<NPAR> *striped_dat_slice = new StripedArray<NPAR>();
+    StripedArray<NPAR> *striped_dat_slice = NULL;
     if(param->sliced)
         striped_dat_slice = new StripedArray<NPAR>();
     param->map_group_fwd = new map<string,NCAT>();
@@ -185,6 +193,8 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
 	map<string,NCAT>::iterator it2;
 	bool wrong_no_columns = false;
     param->N = 0;
+    param->Nstacked = 0;
+    NDAT Nstacked_alt = 0;
     param->N_null = 0;
 	while( readline(fid)!=NULL && !wrong_no_columns) {
         //    while( NULL!=fgets(line,max_line_length,fid) && !wrong_no_columns) {
@@ -259,6 +269,7 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
 		number_columns++;
 		s_skill = string( col );
         // process skills later
+        
         // Slice
         if(param->sliced) {
             col = strtok(NULL,"\t\n\r");
@@ -288,6 +299,10 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
                 a_skills[0] = 1; // count
                 a_skills[1] = -1; // value
                 param->dat_multiskill->add(a_skills);
+                // add whole multi-skill row
+                striped_dat_skill_rcount->add(1);
+                striped_dat_skill_rix->add(current_stacked++); // first add pointer, then increase
+                striped_dat_skill_stacked->add(-1);
             }
 		} // empty skill
 		else { // non-empty skill
@@ -298,8 +313,14 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
                 col = &s_skill[0];//. c_str();
                 a_kc  = strtok(col, "~\n\r");
                 string s_kc;
+                // stacked
+                NDAT skill_count;
+                striped_dat_skill_rix->add(current_stacked++); // add stacked pointer once (but increase it with every next skill
                 while(a_kc != NULL) {
                     s_kc = string(a_kc);
+                    // stacked
+                    skill_count++;
+                    param->Nstacked++;	// increase line count
                     // adding vvvv
                     it = param->map_skill_fwd->find(s_kc);
                     if( it==param->map_skill_fwd->end() ) { // not found
@@ -310,9 +331,14 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
                         a_skills.insert(a_skills.end(), (NCAT)param->map_skill_fwd->size()); //dat_skill->add(param->map_skill_fwd->size());
                         param->map_skill_fwd->insert(pair<string,NCAT>(s_kc, (NCAT)param->map_skill_fwd->size()));
                         param->map_skill_bwd->insert(pair<NCAT,string>((NCAT)param->map_skill_bwd->size(),s_kc));
+                        // add stacked skill
+                        striped_dat_skill_stacked->add((NCAT)param->map_skill_fwd->size()-1); // -1 because after adding
                     }
-                    else
+                    else {
                         a_skills.insert(a_skills.end(), it->second); //dat_skill->add(it->second); //[t] = it->second;
+                        // add stacked skill
+                        striped_dat_skill_stacked->add(it->second);
+                    }
                     // adding ^^^^
                     a_kc  = strtok(NULL,"~\n\r");
                 }
@@ -322,6 +348,9 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
                 for(list<NCAT>::iterator it=a_skills.begin(); it!=a_skills.end(); it++)
                     b_skills[++count] = *it;
                 param->dat_multiskill->add(b_skills);
+                // add stacked count
+                striped_dat_skill_rcount->add(skill_count);
+                Nstacked_alt+=skill_count;
                 // multi skill
             } else {
                 // single skill
@@ -361,6 +390,13 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
     if(param->multiskill==0) {
         param->dat_skill = striped_dat_skill->toArray();
         delete striped_dat_skill;
+    } else {
+        param->dat_skill_stacked = striped_dat_skill_stacked->toArray();
+        param->dat_skill_rcount  = striped_dat_skill_rcount->toArray();
+        param->dat_skill_rix     = striped_dat_skill_rix->toArray();
+        delete striped_dat_skill_stacked;
+        delete striped_dat_skill_rcount;
+        delete striped_dat_skill_rix;
     }
     param->dat_item = striped_dat_item->toArray();
     delete striped_dat_item;
@@ -399,6 +435,14 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
         return false;
     }
     param->N = (NDAT)i;
+    
+    // Nstacked
+    nread = (NDAT)fread (&i, sizeof(NDAT), (size_t)1, fid);
+    if(nread != 1) {
+        fprintf(stderr,"Error reading Nstacked from %s\n",fn);
+        return false;
+    }
+    param->Nstacked = (NDAT)i;
     
     // N_null
     nread = (NDAT)fread (&i, sizeof(NDAT), (size_t)1, fid);
@@ -530,6 +574,7 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
  * File format:
  *  - version number: char 1:...
  *  - N : NDAT 1...
+ *  - N_stacked : NDAT 1...
  *  - N_null : NDAT 0...
  *  - nO : NDAT 1...
  *  - nG : NDAT 1...
@@ -559,7 +604,11 @@ bool InputUtil::toBin(struct param * param, const char *fn) {
     // N
     i = param->N;
     fwrite (&i , sizeof(NDAT), 1, fid);
-
+    
+    // Nstacked
+    i = param->Nstacked;
+    fwrite (&i , sizeof(NDAT), 1, fid);
+    
     // N_null
     i = param->N_null;
     fwrite (&i , sizeof(NDAT), 1, fid);

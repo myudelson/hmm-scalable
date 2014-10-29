@@ -792,7 +792,7 @@ void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, 
 //    free(local_pred_inner);//BOOST
 //}//BOOST
 
-void HMMProblem::predict(NUMBER* metrics, const char *filename, /*StripedArray<NPAR>*/ NPAR* dat_obs, /*StripedArray<NCAT>*/ NCAT *dat_group, /*StripedArray<NCAT>*/ NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled) {
+void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled) {
 	NDAT t;
 	NCAT g, k;
 	NPAR i, j, m, o, isTarget = 0;
@@ -1068,16 +1068,16 @@ void HMMProblem::init3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS, NPA
     B  = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
 }
 
-void HMMProblem::toZero3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO) {
-    toZero1D<NUMBER>(PI, (NDAT)nS);
-    toZero2D<NUMBER>(A,  (NDAT)nS, (NDAT)nS);
-    toZero2D<NUMBER>(B,  (NDAT)nS, (NDAT)nO);
-}
-
 void HMMProblem::cpy3Params(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB, NPAR nS, NPAR nO) {
     cpy1D<NUMBER>(soursePI, targetPI, (NDAT)nS);
     cpy2D<NUMBER>(sourseA,  targetA,  (NDAT)nS, (NDAT)nS);
     cpy2D<NUMBER>(sourseB,  targetB,  (NDAT)nS, (NDAT)nO);
+}
+
+void HMMProblem::toZero3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO) {
+    toZero1D<NUMBER>(PI, (NDAT)nS);
+    toZero2D<NUMBER>(A,  (NDAT)nS, (NDAT)nS);
+    toZero2D<NUMBER>(B,  (NDAT)nS, (NDAT)nO);
 }
 
 void HMMProblem::free3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS) {

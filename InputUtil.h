@@ -39,7 +39,8 @@
 #include "utils.h"
 
 //#define bin_input_file_verstion 1
-#define bin_input_file_verstion 2 // increase number of skills/students to a 4 byte integer
+//#define bin_input_file_verstion 2 // increase number of skills/students to a 4 byte integer
+#define bin_input_file_verstion 3 // added Nstacked, changed how multi-skills are stored and added slices (single and multi-coded)
 
 class InputUtil {
 public:
