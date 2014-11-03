@@ -1446,7 +1446,7 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
     
 	NUMBER e = this->p->ArmijoSeed; // step seed
 	bool compliesArmijo = false;
-	bool compliesWolfe2 = true; // false; second wolfe condition is turned off
+	bool compliesWolfe2 = false; // second wolfe condition is turned off
 	NUMBER f_xk = HMMProblem::getSumLogPOPara(xndat, x_data);
 	NUMBER f_xkplus1 = 0;
 	
@@ -1460,7 +1460,7 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
 		if(fb->B  != NULL) for(m=0; m<nO; m++) p_k_by_neg_p_k -= fb->gradB[i][m]*fb->gradB[i][m];
 	}
 	int iter = 0; // limit iter steps to 20, via ArmijoMinStep (now 10)
-	while( !compliesArmijo && !compliesWolfe2 && e > this->p->ArmijoMinStep) {
+    while( !compliesArmijo /*&& !compliesWolfe2*/ && e > this->p->ArmijoMinStep) {
 		// update
 		for(i=0; i<nS; i++) {
 			if(fb->pi != NULL) fb->pi[i] = fb->PIcopy[i] - e * fb->gradPI[i];
