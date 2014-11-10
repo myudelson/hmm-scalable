@@ -544,7 +544,7 @@ void set_param_defaults(struct param *param) {
     param->dat_skill_rcount = NULL;
     param->dat_skill_rix = NULL;
     param->dat_item = NULL;
-    param->dat_multiskill = NULL;
+//    param->dat_multiskill = NULL;
     param->dat_slice = NULL;
 }
 
@@ -559,7 +559,7 @@ void destroy_input_data(struct param *param) {
 	if(param->dat_group != NULL) free( param->dat_group );
 	if(param->dat_item != NULL) free( param->dat_item );
 	if(param->dat_skill != NULL) free( param->dat_skill );
-	if(param->dat_multiskill != NULL) delete param->dat_multiskill;
+//	if(param->dat_multiskill != NULL) delete param->dat_multiskill;
     if(param->dat_skill_stacked != NULL) free( param->dat_skill_stacked );
     if(param->dat_skill_rcount != NULL) free( param->dat_skill_rcount );
     if(param->dat_skill_rix != NULL) free( param->dat_skill_rix );

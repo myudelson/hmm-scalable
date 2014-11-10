@@ -133,6 +133,7 @@ struct data {
 	NDAT cnt;  // help counter, used for building the data and "banning" data from being fit when cross-valudating based on group
     //	NPAR *obs; // onservations array - will become the pointer array to the big data
     NDAT *ix; // these are 'ndat' indices to the through arrays (e.g. param.dat_obs and param.dat_item)
+    NDAT *ix_stacked; // these are 'ndat' indices to the stacked version through arrays (for example the case of multi-skills per row)
 	NUMBER *c; // nS  - scaling factor vector
 //    int *time;
 	NUMBER **alpha; // ndat x nS
@@ -179,9 +180,9 @@ struct param {
     NCAT *dat_skill;
     NCAT *dat_skill_stacked; // if multiskill==1, stacked array of all multiskills
     NCAT *dat_skill_rcount;  // if multiskill==1, for each multi-skill row count of skills in it
-    NCAT *dat_skill_rix;     // if multiskill==1, for each data skill row, index into first element in stacked array
+    NDAT *dat_skill_rix;     // if multiskill==1, for each data skill row, index into first element in stacked array
     NCAT *dat_item;
-    StripedArray< NCAT* > *dat_multiskill;
+//    StripedArray< NCAT* > *dat_multiskill;
     NPAR *dat_slice;         // slices - alternative slots of A, B matrices
 	// derived from data
     NDAT   N;       // number of ALL data rows

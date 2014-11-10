@@ -64,68 +64,68 @@ void InputUtil::writeString(FILE *f, string str) {
     fwrite(text, 1, (size_t)size, f);
 }
 
-NDAT InputUtil::writeMultiSkill(FILE *f, struct param * param) {
-    if(param->multiskill == 0) {
-        fprintf(stderr,"Error: multiskill flag should not be 0\n.");
-        return 0;
-    }
-    NCAT * ar;
-    NDAT all_nwrit = 0;
-    NDAT nwrit     = 0;
-    for(NDAT t=0; t<param->N; t++) {
-        ar = param->dat_multiskill->get(t);
-        nwrit = (NDAT)fwrite (ar, sizeof(NCAT), (size_t)ar[0]+1, f);
-        if(nwrit != ar[0]+1) {
-            fprintf(stderr,"Errr while writing element %d of the multi-skill data. Expected %d, written %u\n.",t,ar[0]+1,nwrit);
-            return 0;
-        }
-        all_nwrit += nwrit;
-    }
-    return all_nwrit;
-}
-
-NDAT InputUtil::readMultiSkill(FILE *f, struct param * param, char version) {
-    if(param->multiskill == 0) {
-        fprintf(stderr,"Error: multiskill flag should not be 0\n.");
-        return 0;
-    }
-    NCAT * ar;
-    short * arv1;
-    NCAT n;
-    NDAT all_nread = 0;
-    NDAT nread     = 0;
-    for(NDAT t=0; t<param->N; t++) {
-        // read count
-        if(version == 1)
-            nread = (NCAT)fread(&n, sizeof(short), 1, f);
-        else
-            nread = (NDAT)fread(&n, sizeof(NCAT), (size_t)1, f);
-        if( nread!= 1) {
-            fprintf(stderr,"Error: read a wrong number of datapoints\n.");
-            return 0;
-        }
-        ar = Calloc(NCAT, (size_t)n+1);
-        ar[0] = n;
-        if(version==1)
-            arv1 = Calloc(short, (size_t)n+1);;
-        // read data
-        if(version == 1) {
-            nread = (NCAT)fread(&arv1[1], sizeof(short), (size_t)n, f);
-            for(int i=1;i<(n+1);i++)
-                ar[i] = (NCAT)arv1[i];
-        }
-        else
-            nread = (NDAT)fread(&ar[1], sizeof(NCAT), (size_t)n, f);
-        if( nread!= n) {
-            fprintf(stderr,"Error: read a wrong number of datapoints\n.");
-            return 0;
-        }
-        all_nread += (nread+1);
-        // place
-        param->dat_multiskill->set(t, ar);
-    }
-    return all_nread;
-}
+//NDAT InputUtil::writeMultiSkill(FILE *f, struct param * param) {
+//    if(param->multiskill == 0) {
+//        fprintf(stderr,"Error: multiskill flag should not be 0\n.");
+//        return 0;
+//    }
+//    NCAT * ar;
+//    NDAT all_nwrit = 0;
+//    NDAT nwrit     = 0;
+//    for(NDAT t=0; t<param->N; t++) {
+//        ar = param->dat_multiskill->get(t);
+//        nwrit = (NDAT)fwrite (ar, sizeof(NCAT), (size_t)ar[0]+1, f);
+//        if(nwrit != ar[0]+1) {
+//            fprintf(stderr,"Errr while writing element %d of the multi-skill data. Expected %d, written %u\n.",t,ar[0]+1,nwrit);
+//            return 0;
+//        }
+//        all_nwrit += nwrit;
+//    }
+//    return all_nwrit;
+//}
+//
+//NDAT InputUtil::readMultiSkill(FILE *f, struct param * param, char version) {
+//    if(param->multiskill == 0) {
+//        fprintf(stderr,"Error: multiskill flag should not be 0\n.");
+//        return 0;
+//    }
+//    NCAT * ar;
+//    short * arv1;
+//    NCAT n;
+//    NDAT all_nread = 0;
+//    NDAT nread     = 0;
+//    for(NDAT t=0; t<param->N; t++) {
+//        // read count
+//        if(version == 1)
+//            nread = (NCAT)fread(&n, sizeof(short), 1, f);
+//        else
+//            nread = (NDAT)fread(&n, sizeof(NCAT), (size_t)1, f);
+//        if( nread!= 1) {
+//            fprintf(stderr,"Error: read a wrong number of datapoints\n.");
+//            return 0;
+//        }
+//        ar = Calloc(NCAT, (size_t)n+1);
+//        ar[0] = n;
+//        if(version==1)
+//            arv1 = Calloc(short, (size_t)n+1);;
+//        // read data
+//        if(version == 1) {
+//            nread = (NCAT)fread(&arv1[1], sizeof(short), (size_t)n, f);
+//            for(int i=1;i<(n+1);i++)
+//                ar[i] = (NCAT)arv1[i];
+//        }
+//        else
+//            nread = (NDAT)fread(&ar[1], sizeof(NCAT), (size_t)n, f);
+//        if( nread!= n) {
+//            fprintf(stderr,"Error: read a wrong number of datapoints\n.");
+//            return 0;
+//        }
+//        all_nread += (nread+1);
+//        // place
+//        param->dat_multiskill->set(t, ar);
+//    }
+//    return all_nread;
+//}
 
 string InputUtil::readString(FILE *f) {
     // Create new string object to store the retrieved text and to return to the calling function.
@@ -172,7 +172,7 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
     if(param->multiskill==0)
         striped_dat_skill = new StripedArray<NCAT>();
     else {
-        param->dat_multiskill = new StripedArray< NCAT* >(true);
+//        param->dat_multiskill = new StripedArray< NCAT* >(true);
         striped_dat_skill_stacked = new StripedArray<NCAT>();
         striped_dat_skill_rcount  = new StripedArray<NCAT>();
         striped_dat_skill_rix     = new StripedArray<NCAT>();
@@ -298,7 +298,7 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
                 NCAT* a_skills = Malloc(NCAT, 2);
                 a_skills[0] = 1; // count
                 a_skills[1] = -1; // value
-                param->dat_multiskill->add(a_skills);
+//                param->dat_multiskill->add(a_skills);
                 // add whole multi-skill row
                 striped_dat_skill_rcount->add(1);
                 striped_dat_skill_rix->add(current_stacked++); // first add pointer, then increase
@@ -314,12 +314,13 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
                 a_kc  = strtok(col, "~\n\r");
                 string s_kc;
                 // stacked
-                NDAT skill_count;
-                striped_dat_skill_rix->add(current_stacked++); // add stacked pointer once (but increase it with every next skill
+                NDAT skill_count = 0;
+                striped_dat_skill_rix->add(current_stacked); // add stacked pointer once (but increase it with every next skill
                 while(a_kc != NULL) {
                     s_kc = string(a_kc);
                     // stacked
                     skill_count++;
+                    current_stacked++;
                     param->Nstacked++;	// increase line count
                     // adding vvvv
                     it = param->map_skill_fwd->find(s_kc);
@@ -342,12 +343,12 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
                     // adding ^^^^
                     a_kc  = strtok(NULL,"~\n\r");
                 }
-                NCAT *b_skills = Malloc(NCAT, a_skills.size()+1);
-                b_skills[0] = (NCAT)a_skills.size();
-                int count = 0;
-                for(list<NCAT>::iterator it=a_skills.begin(); it!=a_skills.end(); it++)
-                    b_skills[++count] = *it;
-                param->dat_multiskill->add(b_skills);
+//                NCAT *b_skills = Malloc(NCAT, a_skills.size()+1);
+//                b_skills[0] = (NCAT)a_skills.size();
+//                int count = 0;
+//                for(list<NCAT>::iterator it=a_skills.begin(); it!=a_skills.end(); it++)
+//                    b_skills[++count] = *it;
+//                param->dat_multiskill->add(b_skills);
                 // add stacked count
                 striped_dat_skill_rcount->add(skill_count);
                 Nstacked_alt+=skill_count;
@@ -498,26 +499,25 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
     param->dat_obs = striped_dat_obs->toArray();
     delete striped_dat_obs;
 
-    if(v==1) { // older NCAT of unsigned short
-        StripedArray<short> *dat_group_legacy = NULL;
-        StripedArray<short> *dat_skill_legacy = NULL;
-        StripedArray<short*> *dat_multiskill_legacy = NULL;
-        dat_group_legacy = new StripedArray<short>(fid, param->N);
-        for(t=0; t<param->N; t++)
-            param->dat_group[t] = (NCAT)dat_group_legacy->get(t);
-        if(param->multiskill == 0) {
-            dat_skill_legacy = new StripedArray<short>(fid, param->N);
-            for(t=0; t<param->N; t++)
-                param->dat_skill[t] = (NCAT)dat_skill_legacy->get(t);
-            delete dat_skill_legacy;
-        }
-        else {
-            param->dat_multiskill = new StripedArray<NCAT*>(param->N,true);
-            nread = readMultiSkill(fid, param, v);
-            delete dat_multiskill_legacy;
-        }
-        delete dat_group_legacy;
-    } else {
+//    if(v==1) { // older NCAT of unsigned short
+//        StripedArray<short> *dat_group_legacy = NULL;
+//        StripedArray<short> *dat_skill_legacy = NULL;
+//        StripedArray<short*> *dat_multiskill_legacy = NULL;
+//        dat_group_legacy = new StripedArray<short>(fid, param->N);
+//        for(t=0; t<param->N; t++)
+//            param->dat_group[t] = (NCAT)dat_group_legacy->get(t);
+//        if(param->multiskill == 0) {
+//            dat_skill_legacy = new StripedArray<short>(fid, param->N);
+//            for(t=0; t<param->N; t++)
+//                param->dat_skill[t] = (NCAT)dat_skill_legacy->get(t);
+//            delete dat_skill_legacy;
+//        } else {
+//            param->dat_multiskill = new StripedArray<NCAT*>(param->N,true);
+//            nread = readMultiSkill(fid, param, v);
+//            delete dat_multiskill_legacy;
+//        }
+//        delete dat_group_legacy;
+//    } else {
         // dat_group
         StripedArray<NCAT> *striped_dat_group = new StripedArray<NCAT>(fid, param->N);
         param->dat_group = striped_dat_group->toArray();
@@ -528,10 +528,19 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
             param->dat_skill = striped_dat_skill->toArray();
             delete striped_dat_skill;
         } else {
-            param->dat_multiskill = new StripedArray< NCAT* >(param->N,true);
-            nread = readMultiSkill(fid, param, v);
+//            param->dat_multiskill = new StripedArray< NCAT* >(param->N,true);
+//            nread = readMultiSkill(fid, param, v);
+            StripedArray<NCAT> *striped_dat_skill_stacked = new StripedArray<NCAT>(fid, param->Nstacked);
+            param->dat_skill_stacked = striped_dat_skill_stacked->toArray();
+            StripedArray<NCAT> *striped_dat_skill_rcount = new StripedArray<NCAT>(fid, param->N);
+            param->dat_skill_rcount = striped_dat_skill_rcount->toArray();
+            StripedArray<NCAT> *striped_dat_skill_rix = new StripedArray<NCAT>(fid, param->N);
+            param->dat_skill_rix = striped_dat_skill_rix->toArray();
+            delete striped_dat_skill_stacked;
+            delete striped_dat_skill_rcount;
+            delete striped_dat_skill_rix;
         }
-    }
+//    }
     
     // dat_item
     StripedArray<NCAT> *striped_dat_item = new StripedArray<NCAT>(fid, param->N);
@@ -641,8 +650,12 @@ bool InputUtil::toBin(struct param * param, const char *fn) {
     // dat_skill
     if(param->multiskill == 0)
         /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_skill, param->N, fid);//->toBinFile(fid);
-    else
-        /*nwrit = */writeMultiSkill(fid, param);
+    else {
+//        /*nwrit = */writeMultiSkill(fid, param);
+        /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_skill_stacked, param->Nstacked, fid);//->toBinFile(fid);
+        /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_skill_rcount , param->N,        fid);//->toBinFile(fid);
+        /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_skill_rix    , param->N,        fid);//->toBinFile(fid);
+    }
     // dat_item
     /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_item, param->N, fid);//->toBinFile(fid);
 

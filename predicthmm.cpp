@@ -135,7 +135,8 @@ int main (int argc, char ** argv) {
 //    if(param.metrics>0 || param.predictions>0) {
         metrics = Calloc(NUMBER, (size_t)7);// LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
 //    }
-    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*only unlabelled*/);
+//    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*only unlabelled*/);
+    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, false/*all, not only unlabelled*/);
 //    predict(predict_file, hmm);
 	if(param.quiet == 0)
 		printf("predicting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
@@ -330,8 +331,8 @@ void predict(const char *predict_file, HMMProblem *hmm) {
             ar = &k;
             n = 1;
         } else {
-            ar = &param.dat_multiskill->get(t)[1];
-            n = param.dat_multiskill->get(t)[0];
+            ar = &param.dat_skill_stacked[ param.dat_skill_rix[t] ];
+            n = param.dat_skill_rcount[t];
         }
         g = param.dat_group[t];
         dt.g = g;

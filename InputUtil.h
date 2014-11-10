@@ -50,7 +50,7 @@ public:
 private:
     static void writeString(FILE *f, string str);
     static string readString(FILE *f);
-    static NDAT writeMultiSkill(FILE *f, struct param * param);
-    static NDAT  readMultiSkill(FILE *f, struct param * param, char version);
+//    static NDAT writeMultiSkill(FILE *f, struct param * param);
+//    static NDAT  readMultiSkill(FILE *f, struct param * param, char version);
 };
 #endif /* defined(__HMM__InputUtil__) */

@@ -818,7 +818,8 @@ void HMMProblemSliced::producePCorrectZ(NUMBER*** group_skill_map, NUMBER* local
 //    free(local_pred_inner);//BOOST
 //}//BOOST
 
-void HMMProblemSliced::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled) {
+//void HMMProblemSliced::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled) {
+void HMMProblemSliced::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, NCAT *dat_skill_stacked, NCAT *dat_skill_rcount, NDAT *dat_skill_rix, bool only_unlabeled) {
 	NDAT t;
 	NCAT g, k;
 	NPAR i, j, m, o, isTarget = 0;
@@ -862,8 +863,11 @@ void HMMProblemSliced::predict(NUMBER* metrics, const char *filename, NPAR* dat_
             ar = &k;
             n = 1;
         } else {
-            ar = &dat_multiskill->get(t)[1];
-            n = dat_multiskill->get(t)[0];
+//            ar = &dat_multiskill->get(t)[1];
+//            n = dat_multiskill->get(t)[0];
+            k = dat_skill_stacked[ dat_skill_rix[t] ];
+            ar = &dat_skill_stacked[ dat_skill_rix[t] ];
+            n = dat_skill_rcount[t];
         }
         // deal with null skill
         if(ar[0]<0) { // if no skill label
