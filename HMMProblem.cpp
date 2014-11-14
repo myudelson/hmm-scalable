@@ -1238,7 +1238,12 @@ NUMBER HMMProblem::GradientDescent() {
         if(this->p->solver==METHOD_GBB) {
             fb->init(FBS_GRADm1);
         }
+        // link accordingly
         fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
+        if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+        if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+        if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save original k's
         fr = GradientDescentBit(fb);
@@ -1289,7 +1294,12 @@ NUMBER HMMProblem::GradientDescent() {
             if(this->p->solver==METHOD_GBB) {
                 fb->init(FBS_GRADm1);
             }
-            fb->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);// link skill 0 (we'll copy fit parameters to others
+            
+            fb->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);
+            if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+            if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+            if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+
             fr = GradientDescentBit(fb);
             delete fb;
             
@@ -1357,7 +1367,12 @@ NUMBER HMMProblem::BaumWelch() {
             fb->init(FBS_GRADm1);
             fb->init(FBS_DIRm1);
         }
+        
         fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
+        if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+        if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+        if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save original k's
         fr = BaumWelchBit(fb);
@@ -1387,7 +1402,12 @@ NUMBER HMMProblem::BaumWelch() {
         for(k=0; k<this->p->nK; k++) {
             FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
             fb->init(FBS_PARm1);
+            
             fb->link(this->getPI(k), this->getA(k), this->getB(k), this->p->k_numg[k], this->p->k_g_data[k]);
+            if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+            if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+            if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+
             FitResult fr;
             fr = BaumWelchBit(fb);
             delete fb;
@@ -2046,52 +2066,77 @@ NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
 	computeBeta(xndat, x_data);
 	computeXiGamma(xndat, x_data);
 	
-	NUMBER * b_PI = init1D<NUMBER>((NDAT)nS);
-	NUMBER ** b_A_num = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
-	NUMBER ** b_A_den = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
-	NUMBER ** b_B_num = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
-	NUMBER ** b_B_den = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
-	// compute sums PI
+    NUMBER * b_PI = NULL;
+	NUMBER ** b_A_num = NULL;
+	NUMBER ** b_A_den = NULL;
+	NUMBER ** b_B_num = NULL;
+	NUMBER ** b_B_den = NULL;
+    if(fb->pi != NULL)
+        init1D<NUMBER>((NDAT)nS);
+    if(fb->A != NULL) {
+        b_A_num = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
+        b_A_den = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
+    }
+    if(fb->B != NULL) {
+        b_B_num = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
+        b_B_den = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
+    }
+
+    // compute sums PI
 
 	for(x=0; x<xndat; x++) {
         if( x_data[x]->cnt!=0 ) continue;
-		for(i=0; i<nS; i++) b_PI[i] += x_data[x]->gamma[0][i] / xndat;
+        
+        if(fb->pi != NULL)
+            for(i=0; i<nS; i++)
+                b_PI[i] += x_data[x]->gamma[0][i] / xndat;
 		
 		for(t=0;t<(x_data[x]->n-1);t++) {
             //			o = x_data[x]->obs[t];
             o = this->p->dat_obs[ x_data[x]->ix[t] ];//->get( x_data[x]->ix[t] );
 			for(i=0; i<nS; i++) {
-				for(j=0; j<nS; j++){
-					b_A_num[i][j] += x_data[x]->xi[t][i][j];
-					b_A_den[i][j] += x_data[x]->gamma[t][i];
-				}
-				for(m=0; m<nO; m++) {
-					b_B_num[i][m] += (m==o) * x_data[x]->gamma[t][i];
-					b_B_den[i][m] += x_data[x]->gamma[t][i];
-				}
+                if(fb->A != NULL)
+                    for(j=0; j<nS; j++){
+                        b_A_num[i][j] += x_data[x]->xi[t][i][j];
+                        b_A_den[i][j] += x_data[x]->gamma[t][i];
+                    }
+                if(fb->B != NULL)
+                    for(m=0; m<nO; m++) {
+                        b_B_num[i][m] += (m==o) * x_data[x]->gamma[t][i];
+                        b_B_den[i][m] += x_data[x]->gamma[t][i];
+                    }
 			}
 		}
 	} // for all groups within a skill
 	// set params
 	for(i=0; i<nS; i++) {
-		fb->pi[i] = b_PI[i];
-		for(j=0; j<nS; j++)
-			fb->A[i][j] = b_A_num[i][j] / safe0num(b_A_den[i][j]);
-		for(m=0; m<nO; m++)
-			fb->B[i][m] = b_B_num[i][m] / safe0num(b_B_den[i][m]);
+        if(fb->pi != NULL)
+            fb->pi[i] = b_PI[i];
+        if(fb->A != NULL)
+            for(j=0; j<nS; j++)
+                fb->A[i][j] = b_A_num[i][j] / safe0num(b_A_den[i][j]);
+        if(fb->B != NULL)
+            for(m=0; m<nO; m++)
+                fb->B[i][m] = b_B_num[i][m] / safe0num(b_B_den[i][m]);
 	}
     // scale
     if( !this->hasNon01Constraints() ) {
-        projectsimplex(fb->pi, nS);
+        if(fb->pi != NULL)
+            projectsimplex(fb->pi, nS);
         for(i=0; i<nS; i++) {
-            projectsimplex(fb->A[i], nS);
-            projectsimplex(fb->B[i], nS);
+            if(fb->A != NULL)
+                projectsimplex(fb->A[i], nS);
+            if(fb->B != NULL)
+                projectsimplex(fb->B[i], nS);
         }
     } else {
-        projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
+        if(fb->pi != NULL)
+            projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
         for(i=0; i<nS; i++) {
-            projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
-            projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
+            if(fb->A != NULL)
+                projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
+            if(fb->B != NULL)
+                projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
         }
     }
     // compute LL
@@ -2099,11 +2144,11 @@ NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
     ll = HMMProblem::getSumLogPOPara(fb->xndat, fb->x_data);
     // free mem
     //    RecycleFitData(xndat, x_data, this->p);
-	free(b_PI);
-	free2D<NUMBER>(b_A_num, nS);
-	free2D<NUMBER>(b_A_den, nS);
-	free2D<NUMBER>(b_B_num, nS);
-	free2D<NUMBER>(b_B_den, nS);
+	if(b_PI    != NULL) free(b_PI);
+	if(b_A_num != NULL) free2D<NUMBER>(b_A_num, nS);
+	if(b_A_den != NULL) free2D<NUMBER>(b_A_den, nS);
+	if(b_B_num != NULL) free2D<NUMBER>(b_B_num, nS);
+	if(b_B_den != NULL) free2D<NUMBER>(b_B_den, nS);
     return ll;
 }
 

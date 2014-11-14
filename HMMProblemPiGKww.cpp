@@ -357,6 +357,10 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
 	//
 	if(this->p->single_skill>0) {
         fb->link( HMMProblem::getPI(0), HMMProblem::getA(0), HMMProblem::getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
+        if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+        if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+        if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save progonal k's
         fr = GradientDescentBit(fb);
@@ -389,6 +393,9 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
 //                struct data** x_data = this->p->k_g_data[k];
                 // link and fit
                 fb->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
+                if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+                if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+                if(this->p->block_fitting[2]!=0) fb->B  = NULL;
 //                cpy1D<NUMBER>(this->pi[k],copyPI[k],nS); /*prep hide*/
                 fr = GradientDescentBit(fb);
                 // decide on convergence
@@ -420,6 +427,9 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
 //                cpy1D<NUMBER>(this->PIg[g],copyPIg[g],nS); /*prep hide*/
                 // vvvvvvvvvvvvvvvvvvvvv ONLY PART THAT IS DIFFERENT FROM others
                 fb->link(this->getPIg(g), NULL, NULL, this->p->g_numk[g], this->p->g_k_data[g]);
+                if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+                if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+                if(this->p->block_fitting[2]!=0) fb->B  = NULL;
                 // ^^^^^^^^^^^^^^^^^^^^^
                 // decide on convergence
                 fr = GradientDescentBit(fb);
