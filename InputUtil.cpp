@@ -416,7 +416,6 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
     NDAT i;
     NDAT nread;
     FILE *fid = fopen(fn,"rb");
-    NDAT t;
     
     // version
     nread = (NDAT)fread (&v, sizeof(char), (size_t)1, fid);
@@ -491,7 +490,7 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
         fprintf(stderr,"Error reading number of slices from %s\n",fn);
         return false;
     }
-    param->nZ = (NCAT)i;
+    param->nZ = (NPAR)i;
     if(param->nZ<1) {
         fprintf(stderr,"Number of slices should be at least 1\n");
         return true;

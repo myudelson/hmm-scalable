@@ -1266,7 +1266,7 @@ NUMBER HMMProblem::GradientDescent() {
                 cpy3Params(fb->pi, fb->A, fb->B, aPI, aA, aB, this->p->nS, this->p->nO);
             }
         }// force single skill
-//        delete fb;//PAR
+        delete fb;//PAR
 	}
 	//
 	// Main fit
@@ -1396,7 +1396,7 @@ NUMBER HMMProblem::BaumWelch() {
                 cpy3Params(fb->pi, fb->A, fb->B, aPI, aA, aB, this->p->nS, this->p->nO);
             }
         }// force single skill
-//        delete fb;//PAR
+        delete fb;//PAR
     }
 	
 	//
@@ -2080,7 +2080,7 @@ NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
 	NUMBER ** b_B_num = NULL;
 	NUMBER ** b_B_den = NULL;
     if(fb->pi != NULL)
-        init1D<NUMBER>((NDAT)nS);
+        b_PI = init1D<NUMBER>((NDAT)nS);
     if(fb->A != NULL) {
         b_A_num = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
         b_A_den = init2D<NUMBER>((NDAT)nS, (NDAT)nS);

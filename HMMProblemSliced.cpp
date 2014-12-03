@@ -1747,23 +1747,31 @@ NUMBER HMMProblemSliced::doBarzilaiBorweinStep(FitBitSliced *fb) {
 	for(i=0; i<nS; i++)
 	{
 		s_k_m1_PI[i] = fb->pi[i] - fb->PIm1[i];
-		for(j=0; j<nS; j++) s_k_m1_A[i][j] = fb->A[i][j] - fb->Am1[i][j];
-		for(m=0; m<this->p->nO; m++) s_k_m1_B[i][m] = fb->B[i][m] - fb->Bm1[i][m];
+        for(z=0; z<nZ; z++) {
+            for(j=0; j<nS; j++)
+                s_k_m1_A[i][j] = fb->A[z][i][j] - fb->Am1[z][i][j];
+            for(m=0; m<this->p->nO; m++)
+                s_k_m1_B[i][m] = fb->B[z][i][m] - fb->Bm1[z][i][m];
+        }
 	}
     // compute alpha_step
-    NUMBER alpha_step = 0, alpha_step_num = 0, alpha_step_den = 0;
+    NUMBER alpha_step = 0;
+    NUMBER alpha_step_num = 0;
+    NUMBER alpha_step_den = 0;
     // Barzilai Borwein: s' * s / ( s' * (g-g_m1) )
 	for(i=0; i<nS; i++)
 	{
 		alpha_step_num = s_k_m1_PI[i]*s_k_m1_PI[i];
 		alpha_step_den = s_k_m1_PI[i]*(fb->gradPI[i] - fb->gradPIm1[i]);
-		for(j=0; j<nS; j++) {
-            alpha_step_num = s_k_m1_A[i][j]*s_k_m1_A[i][j];
-            alpha_step_den = s_k_m1_A[i][j]*(fb->gradA[i][j] - fb->gradAm1[i][j]);
-        }
-		for(m=0; m<nO; m++) {
-            alpha_step_num = s_k_m1_B[i][m]*s_k_m1_B[i][m];
-            alpha_step_den = s_k_m1_B[i][m]*(fb->gradB[i][m] - fb->gradBm1[i][m]);
+        for(z=0; z<nZ; z++) {
+            for(j=0; j<nS; j++) {
+                alpha_step_num = s_k_m1_A[i][j]*s_k_m1_A[i][j];
+                alpha_step_den = s_k_m1_A[i][j]*(fb->gradA[z][i][j] - fb->gradAm1[z][i][j]);
+            }
+            for(m=0; m<nO; m++) {
+                alpha_step_num = s_k_m1_B[i][m]*s_k_m1_B[i][m];
+                alpha_step_den = s_k_m1_B[i][m]*(fb->gradB[z][i][m] - fb->gradBm1[z][i][m]);
+            }
         }
 	}
     alpha_step = alpha_step_num / safe0num(alpha_step_den);

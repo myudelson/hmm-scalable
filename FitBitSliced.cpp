@@ -357,7 +357,7 @@ void FitBitSliced::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER penal
             for(i=0; i<this->nS; i++)
                 for(m=0; m<this->nO; m++)
                     for(z=0; z<this->nZ; z++)
-                        this->gradB[z][i][j] += L2penalty(param,this->B[z][i][j], 0.5);
+                        this->gradB[z][i][m] += L2penalty(param,this->B[z][i][m], 0.5);
             break;
             
         default:
