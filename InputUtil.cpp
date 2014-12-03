@@ -432,7 +432,7 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
     // N
     nread = (NDAT)fread (&i, sizeof(NDAT), (size_t)1, fid);
     if(nread != 1) {
-        fprintf(stderr,"Error reading N from %s\n",fn);
+        fprintf(stderr,"Error reading number of rows from %s\n",fn);
         return false;
     }
     param->N = (NDAT)i;
@@ -440,7 +440,7 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
     // Nstacked
     nread = (NDAT)fread (&i, sizeof(NDAT), (size_t)1, fid);
     if(nread != 1) {
-        fprintf(stderr,"Error reading Nstacked from %s\n",fn);
+        fprintf(stderr,"Error reading number of rows (stacked) from %s\n",fn);
         return false;
     }
     param->Nstacked = (NDAT)i;
@@ -448,7 +448,7 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
     // N_null
     nread = (NDAT)fread (&i, sizeof(NDAT), (size_t)1, fid);
     if(nread != 1) {
-        fprintf(stderr,"Error reading N_null from %s\n",fn);
+        fprintf(stderr,"Error reading number of rows with null skills from %s\n",fn);
         return false;
     }
     param->N_null = (NDAT)i;
@@ -456,7 +456,7 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
     // nO
     nread = (NDAT)fread (&i, sizeof(NDAT), (size_t)1, fid);
     if(nread != 1) {
-        fprintf(stderr,"Error reading nO from %s\n",fn);
+        fprintf(stderr,"Error reading number of observations from %s\n",fn);
         return false;
     }
     param->nO = (NPAR)i;
@@ -464,7 +464,7 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
     // nG
     nread = (NDAT)fread (&i, sizeof(NDAT), (size_t)1, fid);
     if(nread != 1) {
-        fprintf(stderr,"Error reading nG from %s\n",fn);
+        fprintf(stderr,"Error reading number of groups (students) from %s\n",fn);
         return false;
     }
     param->nG = (NCAT)i;
@@ -472,7 +472,7 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
     // nI
     nread = (NDAT)fread (&i, sizeof(NDAT), (size_t)1, fid);
     if(nread != 1) {
-        fprintf(stderr,"Error reading nI from %s\n",fn);
+        fprintf(stderr,"Error reading number of items from %s\n",fn);
         return false;
     }
     param->nI = (NCAT)i;
@@ -480,10 +480,22 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
     // nK
     nread = (NDAT)fread (&i, sizeof(NDAT), (size_t)1, fid);
     if(nread != 1) {
-        fprintf(stderr,"Error reading nK from %s\n",fn);
+        fprintf(stderr,"Error reading number of skills from %s\n",fn);
         return false;
     }
     param->nK = (NCAT)i;
+    
+    // nZ
+    nread = (NDAT)fread (&i, sizeof(NDAT), (size_t)1, fid);
+    if(nread != 1) {
+        fprintf(stderr,"Error reading number of slices from %s\n",fn);
+        return false;
+    }
+    param->nZ = (NCAT)i;
+    if(param->nZ<1) {
+        fprintf(stderr,"Number of slices should be at least 1\n");
+        return true;
+    }
     
     // multiskill
     nread = (NDAT)fread (&c, sizeof(char), (size_t)1, fid);
@@ -522,24 +534,6 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
         StripedArray<NCAT> *striped_dat_group = new StripedArray<NCAT>(fid, param->N);
         param->dat_group = striped_dat_group->toArray();
         delete striped_dat_group;
-        // dat_skill
-        if(param->multiskill == 0) {
-            StripedArray<NCAT> *striped_dat_skill = new StripedArray<NCAT>(fid, param->N);
-            param->dat_skill = striped_dat_skill->toArray();
-            delete striped_dat_skill;
-        } else {
-//            param->dat_multiskill = new StripedArray< NCAT* >(param->N,true);
-//            nread = readMultiSkill(fid, param, v);
-            StripedArray<NCAT> *striped_dat_skill_stacked = new StripedArray<NCAT>(fid, param->Nstacked);
-            param->dat_skill_stacked = striped_dat_skill_stacked->toArray();
-            StripedArray<NCAT> *striped_dat_skill_rcount = new StripedArray<NCAT>(fid, param->N);
-            param->dat_skill_rcount = striped_dat_skill_rcount->toArray();
-            StripedArray<NCAT> *striped_dat_skill_rix = new StripedArray<NCAT>(fid, param->N);
-            param->dat_skill_rix = striped_dat_skill_rix->toArray();
-            delete striped_dat_skill_stacked;
-            delete striped_dat_skill_rcount;
-            delete striped_dat_skill_rix;
-        }
 //    }
     
     // dat_item
@@ -547,6 +541,32 @@ bool InputUtil::readBin(const char *fn, struct param * param) {
     param->dat_item = striped_dat_item->toArray();
     delete striped_dat_item;
     
+    // dat_skill
+    if(param->multiskill == 0) {
+        StripedArray<NCAT> *striped_dat_skill = new StripedArray<NCAT>(fid, param->N);
+        param->dat_skill = striped_dat_skill->toArray();
+        delete striped_dat_skill;
+    } else {
+//            param->dat_multiskill = new StripedArray< NCAT* >(param->N,true);
+//            nread = readMultiSkill(fid, param, v);
+        StripedArray<NCAT> *striped_dat_skill_stacked = new StripedArray<NCAT>(fid, param->Nstacked);
+        param->dat_skill_stacked = striped_dat_skill_stacked->toArray();
+        StripedArray<NCAT> *striped_dat_skill_rcount = new StripedArray<NCAT>(fid, param->N);
+        param->dat_skill_rcount = striped_dat_skill_rcount->toArray();
+        StripedArray<NCAT> *striped_dat_skill_rix = new StripedArray<NCAT>(fid, param->N);
+        param->dat_skill_rix = striped_dat_skill_rix->toArray();
+        delete striped_dat_skill_stacked;
+        delete striped_dat_skill_rcount;
+        delete striped_dat_skill_rix;
+    }
+    // dat_slices, only of nZ > 1
+    if(param->nZ > 1) {
+        NDAT szZ = (param->multiskill == 0)?param->N:param->Nstacked;
+        StripedArray<NPAR> *striped_dat_slice = new StripedArray<NPAR>(fid, szZ);
+        param->dat_slice = striped_dat_slice->toArray();
+        delete striped_dat_slice;
+    }
+        
     string str;
     param->map_group_fwd = new map<string,NCAT>();
     param->map_group_bwd = new map<NCAT,string>();
@@ -638,6 +658,10 @@ bool InputUtil::toBin(struct param * param, const char *fn) {
     i = param->nK;
     fwrite (&i , sizeof(NDAT), 1, fid);
     
+    // nZ
+    i = param->nZ;
+    fwrite (&i , sizeof(NDAT), 1, fid);
+    
     // multiskill
     c = param->multiskill;
     fwrite (&c , sizeof(char), 1, fid);
@@ -647,17 +671,22 @@ bool InputUtil::toBin(struct param * param, const char *fn) {
     /*nwrit = */StripedArray<NPAR>::arrayToBinFile(param->dat_obs, param->N, fid);//param->dat_obs->toBinFile(fid);
     // dat_group
     /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_group, param->N, fid);//->toBinFile(fid);
+    // dat_item
+    /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_item, param->N, fid);//->toBinFile(fid);
     // dat_skill
     if(param->multiskill == 0)
-        /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_skill, param->N, fid);//->toBinFile(fid);
+    /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_skill, param->N, fid);//->toBinFile(fid);
     else {
-//        /*nwrit = */writeMultiSkill(fid, param);
+        //        /*nwrit = */writeMultiSkill(fid, param);
         /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_skill_stacked, param->Nstacked, fid);//->toBinFile(fid);
         /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_skill_rcount , param->N,        fid);//->toBinFile(fid);
         /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_skill_rix    , param->N,        fid);//->toBinFile(fid);
     }
-    // dat_item
-    /*nwrit = */StripedArray<NCAT>::arrayToBinFile(param->dat_item, param->N, fid);//->toBinFile(fid);
+    // dat_slices, only of nZ > 1
+    if(param->nZ > 1) {
+        NDAT szZ = (param->multiskill == 0)?param->N:param->Nstacked;
+        StripedArray<NPAR>::arrayToBinFile(param->dat_slice, szZ, fid);
+    }
 
     map<NCAT,string>::iterator it;
     // voc_group

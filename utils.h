@@ -191,8 +191,8 @@ struct param {
 	NPAR  nO;		// number of unique observations
 	NCAT  nG;       // number of subjects (sequences, groups)
     NCAT  nK;		// number of skills (subproblems)
-    NPAR  nZ;		// number of slices
 	NCAT  nI;		// number of items (problems)
+    NPAR  nZ;		// number of slices
     // null-skill data by student
     NDAT N_null; // total number of null skill instances
     struct data *null_skills;

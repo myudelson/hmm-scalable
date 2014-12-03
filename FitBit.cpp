@@ -94,6 +94,9 @@ FitBit::~FitBit() {
     if(this->PIm1 != NULL) free(this->PIm1);
     if(this->Am1 != NULL) free2D<NUMBER>(this->Am1, (NDAT)this->nS);
     if(this->Bm1 != NULL) free2D<NUMBER>(this->Bm1, (NDAT)this->nS);
+    if(this->PIm2 != NULL) free(this->PIm2);
+    if(this->Am2 != NULL) free2D<NUMBER>(this->Am2, (NDAT)this->nS);
+    if(this->Bm2 != NULL) free2D<NUMBER>(this->Bm2, (NDAT)this->nS);
     if(this->gradPI != NULL) free(this->gradPI);
     if(this->gradA != NULL) free2D<NUMBER>(this->gradA, (NDAT)this->nS);
     if(this->gradB != NULL) free2D<NUMBER>(this->gradB, (NDAT)this->nS);
@@ -172,6 +175,9 @@ void FitBit::init(enum FIT_BIT_SLOT fbs){
         case FBS_PARm1:
             init(this->PIm1, this->Am1, this->Bm1);
             break;
+        case FBS_PARm2:
+            init(this->PIm2, this->Am2, this->Bm2);
+            break;
         case FBS_GRAD:
             init(this->gradPI, this->gradA, this->gradB);
             break;
@@ -197,6 +203,9 @@ void FitBit::toZero(enum FIT_BIT_SLOT fbs){
         case FBS_PARm1:
             toZero(this->PIm1, this->Am1, this->Bm1);
             break;
+        case FBS_PARm2:
+            toZero(this->PIm2, this->Am2, this->Bm2);
+            break;
         case FBS_GRAD:
             toZero(this->gradPI, this->gradA, this->gradB);
             break;
@@ -221,6 +230,9 @@ void FitBit::destroy(enum FIT_BIT_SLOT fbs){
             break;
         case FBS_PARm1:
             destroy(this->PIm1, this->Am1, this->Bm1);
+            break;
+        case FBS_PARm2:
+            destroy(this->PIm2, this->Am2, this->Bm2);
             break;
         case FBS_GRAD:
             destroy(this->gradPI, this->gradA, this->gradB);
@@ -250,6 +262,11 @@ void FitBit::get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &
             a_PI = this->PIm1;
             a_A  = this->Am1;
             a_B  = this->Bm1;
+            break;
+        case FBS_PARm2:
+            a_PI = this->PIm2;
+            a_A  = this->Am2;
+            a_B  = this->Bm2;
             break;
         case FBS_GRAD:
             a_PI = this->gradPI;

@@ -6,7 +6,7 @@ HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literatur
 - tolerance: on parameter change (now), on LL change (absolute, per datapoint), until LL improves
 - there is some savings possible when computing forward and backward variables 
     rf. http://en.wikipedia.org/wiki/Forward%E2%80%93backward_algorithm#Example
-- random runs within each "fit bit"
+- random runs within each "fit bit", e.g. '-r' parameter
 - implement weighting for student / skill pairing (work out gradients and additional fit for \beta's)
 - not just per-student & per-skill effects, but the interaction (work out gradient)
 - change per-student effects to resemble Logistic Regression: student pLo and pT

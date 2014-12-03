@@ -36,8 +36,8 @@ forgetting is captured by setting A[1,2] = 0 (from mastered to unmastered).
 pLearn corresponds to A[2,1] - from unmastered to mastered. pGuess and pSlip are
 specified in B -- observation matrix N*M, where M is the number of observations.
 First column corresponds to correct observation, second -- incorrect. For two
-onservations, typical for BKT, pGuess is B[2,1] -- mastered skill but a correct
-response, and pSlip is B[1,2] - mastered skill but incorrect response.
+onservations, typical for BKT, pGuess is B[2,1] -- unmastered skill but a
+correct response, and pSlip is B[1,2] - mastered skill but incorrect response.
 
 \pi .-------------------.
     |   pLo   | 1 - pLo |
@@ -56,7 +56,7 @@ B   .-------------------.
     .-------------------.
 
 For more details on BKT refer to [1]. [2], among other things, discusses how
-a gradient-based fitting of HMM can be implemented. [3, 4] covers additional
+a gradient-based fitting of HMM can be implemented. [3, 4] cover additional
 topics relevant for the implementation.
 
 = Compilation =
@@ -221,7 +221,7 @@ Loglikelihood changes from  9.3763477 to 6.4099682 after 11 iterations.
 
 To generate predictions using a previously fit model run the following command 
 (do not forget that prediction will only be generated for rows where observation
-is now known -- marked with '.'):
+is not known -- marked with '.'):
 
 sh> ./predicthmm -p 1 toy_data_test.txt model.txt predict.txt
 
