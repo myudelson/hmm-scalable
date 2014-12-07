@@ -47,6 +47,8 @@ public:
     static bool readTxt(const char *fn, struct param * param); // read txt into param
     static bool readBin(const char *fn, struct param * param); // read bin into param
     static bool toBin(struct param * param, const char *fn);// writes data in param to bin file
+    // experimental
+    static void writeInputMatrix(const char *filename, struct param* p, NCAT xndat, struct data** x_data);
 private:
     static void writeString(FILE *f, string str);
     static string readString(FILE *f);

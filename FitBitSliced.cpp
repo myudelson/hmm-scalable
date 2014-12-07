@@ -42,6 +42,9 @@ FitBitSliced::FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ
     this->PIm1 = NULL;
     this->Am1 = NULL;
     this->Bm1 = NULL;
+    this->PIm2 = NULL;
+    this->Am2 = NULL;
+    this->Bm2 = NULL;
     this->gradPI = NULL;
     this->gradA = NULL;
     this->gradB = NULL;
@@ -72,6 +75,9 @@ FitBitSliced::FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ
     this->PIm1 = NULL;
     this->Am1 = NULL;
     this->Bm1 = NULL;
+    this->PIm2 = NULL;
+    this->Am2 = NULL;
+    this->Bm2 = NULL;
     this->gradPI = NULL;
     this->gradA = NULL;
     this->gradB = NULL;
@@ -96,6 +102,9 @@ FitBitSliced::~FitBitSliced() {
     if(this->PIm1 != NULL) free(this->PIm1);
     if(this->Am1 != NULL) free3D<NUMBER>(this->Am1, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->Bm1 != NULL) free3D<NUMBER>(this->Bm1, (NDAT)this->nZ, (NDAT)this->nS);
+    if(this->PIm2 != NULL) free(this->PIm2);
+    if(this->Am2 != NULL) free3D<NUMBER>(this->Am2, (NDAT)this->nZ, (NDAT)this->nS);
+    if(this->Bm2 != NULL) free3D<NUMBER>(this->Bm2, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->gradPI != NULL) free(this->gradPI);
     if(this->gradA != NULL) free3D<NUMBER>(this->gradA, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->gradB != NULL) free3D<NUMBER>(this->gradB, (NDAT)this->nZ, (NDAT)this->nS);
@@ -174,6 +183,9 @@ void FitBitSliced::init(enum FIT_BIT_SLOT fbs){
         case FBS_PARm1:
             init(this->PIm1, this->Am1, this->Bm1);
             break;
+        case FBS_PARm2:
+            init(this->PIm2, this->Am2, this->Bm2);
+            break;
         case FBS_GRAD:
             init(this->gradPI, this->gradA, this->gradB);
             break;
@@ -199,6 +211,9 @@ void FitBitSliced::toZero(enum FIT_BIT_SLOT fbs){
         case FBS_PARm1:
             toZero(this->PIm1, this->Am1, this->Bm1);
             break;
+        case FBS_PARm2:
+            toZero(this->PIm2, this->Am2, this->Bm2);
+            break;
         case FBS_GRAD:
             toZero(this->gradPI, this->gradA, this->gradB);
             break;
@@ -223,6 +238,9 @@ void FitBitSliced::destroy(enum FIT_BIT_SLOT fbs){
             break;
         case FBS_PARm1:
             destroy(this->PIm1, this->Am1, this->Bm1);
+            break;
+        case FBS_PARm2:
+            destroy(this->PIm2, this->Am2, this->Bm2);
             break;
         case FBS_GRAD:
             destroy(this->gradPI, this->gradA, this->gradB);
@@ -252,6 +270,11 @@ void FitBitSliced::get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER*** &a_A, NUM
             a_PI = this->PIm1;
             a_A  = this->Am1;
             a_B  = this->Bm1;
+            break;
+        case FBS_PARm2:
+            a_PI = this->PIm2;
+            a_A  = this->Am2;
+            a_B  = this->Bm2;
             break;
         case FBS_GRAD:
             a_PI = this->gradPI;

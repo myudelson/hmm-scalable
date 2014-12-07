@@ -41,6 +41,9 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol) {
     this->PIm1 = NULL;
     this->Am1 = NULL;
     this->Bm1 = NULL;
+    this->PIm2 = NULL;
+    this->Am2 = NULL;
+    this->Bm2 = NULL;
     this->gradPI = NULL;
     this->gradA = NULL;
     this->gradB = NULL;
@@ -70,6 +73,9 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_
     this->PIm1 = NULL;
     this->Am1 = NULL;
     this->Bm1 = NULL;
+    this->PIm2 = NULL;
+    this->Am2 = NULL;
+    this->Bm2 = NULL;
     this->gradPI = NULL;
     this->gradA = NULL;
     this->gradB = NULL;

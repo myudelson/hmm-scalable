@@ -33,6 +33,12 @@
 #include <map>
 #include <list>
 
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <iostream>
+
+
 static int max_line_length;
 static char * line;
 
@@ -705,4 +711,41 @@ bool InputUtil::toBin(struct param * param, const char *fn) {
     
     fclose(fid);
     return true;
+}
+
+// experimental
+// for a skill, write all student sequences as a matrix
+// Nstudents * Max attempts, 1 - correct, 2 - incorrect, 0 - empty
+// space separated coumns
+void InputUtil::writeInputMatrix(const char *filename, struct param* p, NCAT xndat, struct data** x_data) {
+//    FILE *fid = fopen(filename,"w");
+//    if(fid == NULL) {
+//        fprintf(stderr,"Can't write output model file %s\n",filename);
+//        exit(1);
+//    }
+    
+    std::ofstream file;
+    file.open(filename);
+    
+    NDAT nmax = 0;
+    for(NCAT x=0; x<xndat; x++)
+        if(nmax < x_data[x]->n)
+            nmax = x_data[x]->n;
+    
+    for(NCAT x=0; x<xndat; x++) {
+        std::stringstream ss;
+        for(NDAT t=0; t<nmax; t++) {
+            
+            if(t<x_data[x]->n) {
+                ss << ((t>0)?" ":"") << (int)(1+p->dat_obs[ x_data[x]->ix[t] ]);
+            } else {
+                ss << " " << 0;
+            }
+        }
+        ss << "\n";
+        file << ss.str();
+    } // for all groups in skill
+    
+//    fclose(fid);
+    file.close();
 }

@@ -1492,7 +1492,7 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
 		if(fb->B  != NULL) for(m=0; m<nO; m++) p_k_by_neg_p_k -= fb->gradB[i][m]*fb->gradB[i][m];
 	}
 	int iter = 0; // limit iter steps to 20, via ArmijoMinStep (now 10)
-    while( !compliesArmijo /*&& !compliesWolfe2*/ && e > this->p->ArmijoMinStep) {
+    while( !compliesArmijo && !compliesWolfe2 && e > this->p->ArmijoMinStep) {
 		// update
 		for(i=0; i<nS; i++) {
 			if(fb->pi != NULL) fb->pi[i] = fb->PIcopy[i] - e * fb->gradPI[i];
@@ -1528,17 +1528,17 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
 		// compute Armijo compliance
 		compliesArmijo = (f_xkplus1 <= (f_xk + (this->p->ArmijoC1 * e * p_k_by_neg_p_k)));
         
-//        // compute Wolfe 2
-//        NUMBER p_k_by_neg_p_kp1 = 0;
-//        computeGradients(fb);
-//        fb->doLog10ScaleGentle(FBS_GRAD);
-//        for(i=0; i<nS; i++)
-//        {
-//            if(fb->pi != NULL) p_k_by_neg_p_kp1 -= fb->gradPI[i]*fb->gradPI[i];
-//            if(fb->A  != NULL) for(j=0; j<nS; j++) p_k_by_neg_p_kp1 -= fb->gradA[i][j]*fb->gradA[i][j];
-//            if(fb->B  != NULL) for(m=0; m<nO; m++) p_k_by_neg_p_kp1 -= fb->gradB[i][m]*fb->gradB[i][m];
-//        }
-//        compliesWolfe2 = (p_k_by_neg_p_kp1 >= this->p->ArmijoC2 * p_k_by_neg_p_k);
+        // compute Wolfe 2
+        NUMBER p_k_by_neg_p_kp1 = 0;
+        computeGradients(fb);
+        fb->doLog10ScaleGentle(FBS_GRAD);
+        for(i=0; i<nS; i++)
+        {
+            if(fb->pi != NULL) p_k_by_neg_p_kp1 -= fb->gradPI[i]*fb->gradPI[i];
+            if(fb->A  != NULL) for(j=0; j<nS; j++) p_k_by_neg_p_kp1 -= fb->gradA[i][j]*fb->gradA[i][j];
+            if(fb->B  != NULL) for(m=0; m<nO; m++) p_k_by_neg_p_kp1 -= fb->gradB[i][m]*fb->gradB[i][m];
+        }
+        compliesWolfe2 = (p_k_by_neg_p_kp1 >= this->p->ArmijoC2 * p_k_by_neg_p_k);
         
 		e /= (compliesArmijo && compliesWolfe2)?1:this->p->ArmijoReduceFactor;
 		iter++;
@@ -2079,21 +2079,30 @@ NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
 	NUMBER ** b_A_den = NULL;
 	NUMBER ** b_B_num = NULL;
 	NUMBER ** b_B_den = NULL;
+//    NUMBER ** c_A     = NULL;  // A,B average across sequences
+//    NUMBER ** c_B     = NULL;  // A,B average across sequences
     if(fb->pi != NULL)
         b_PI = init1D<NUMBER>((NDAT)nS);
     if(fb->A != NULL) {
         b_A_num = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
         b_A_den = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
+//        c_A     = init2D<NUMBER>((NDAT)nS, (NDAT)nS);  // A,B average across sequences
     }
     if(fb->B != NULL) {
         b_B_num = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
         b_B_den = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
+//        c_B     = init2D<NUMBER>((NDAT)nS, (NDAT)nO);  // A,B average across sequences
     }
 
     // compute sums PI
 
 	for(x=0; x<xndat; x++) {
         if( x_data[x]->cnt!=0 ) continue;
+        
+//        toZero2D(b_A_num, (NDAT)nS, (NDAT)nS); // A,B average across sequences
+//        toZero2D(b_A_den, (NDAT)nS, (NDAT)nS); // A,B average across sequences
+//        toZero2D(b_B_num, (NDAT)nS, (NDAT)nO); // A,B average across sequences
+//        toZero2D(b_B_den, (NDAT)nS, (NDAT)nO); // A,B average across sequences
         
         if(fb->pi != NULL)
             for(i=0; i<nS; i++)
@@ -2115,6 +2124,12 @@ NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
                     }
 			}
 		}
+//        if(fb->A != NULL)  // A,B average across sequences
+//            for(j=0; j<nS; j++)  // A,B average across sequences
+//                c_A[i][j] += b_A_num[i][j] / safe0num(b_A_den[i][j]);  // A,B average across sequences
+//        if(fb->B != NULL)  // A,B average across sequences
+//            for(m=0; m<nO; m++)  // A,B average across sequences
+//                c_B[i][m] = b_B_num[i][m] / safe0num(b_B_den[i][m]);  // A,B average across sequences
 	} // for all groups within a skill
 	// set params
 	for(i=0; i<nS; i++) {
@@ -2123,9 +2138,11 @@ NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
         if(fb->A != NULL)
             for(j=0; j<nS; j++)
                 fb->A[i][j] = b_A_num[i][j] / safe0num(b_A_den[i][j]);
+//                fb->A[i][j] = c_A[i][j] / xndat; // A,B average across sequences
         if(fb->B != NULL)
             for(m=0; m<nO; m++)
                 fb->B[i][m] = b_B_num[i][m] / safe0num(b_B_den[i][m]);
+//                fb->B[i][m] = c_B[i][m] / xndat; // A,B average across sequences
 	}
     // scale
     if( !this->hasNon01Constraints() ) {
@@ -2157,6 +2174,8 @@ NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
 	if(b_A_den != NULL) free2D<NUMBER>(b_A_den, nS);
 	if(b_B_num != NULL) free2D<NUMBER>(b_B_num, nS);
 	if(b_B_den != NULL) free2D<NUMBER>(b_B_den, nS);
+//    if(c_A     != NULL) free2D<NUMBER>(c_A, nS); // A,B average across sequences
+//    if(c_B     != NULL) free2D<NUMBER>(c_B, nS); // A,B average across sequences
     return ll;
 }
 

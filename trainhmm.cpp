@@ -171,7 +171,10 @@ int main (int argc, char ** argv) {
     tm_read = (clock_t)(clock()-tm_read);//SEQ
 //    _tm_read = omp_get_wtime()-_tm_read;//PAR
     
-	if( ! read_ok )
+    // experimental
+    //    InputUtil::writeInputMatrix("toy_matr1.txt", &param, param.k_numg[0], param.k_g_data[0]);
+
+    if( ! read_ok )
         return 0;
     
     // once we know nO (number of observations) parse parameters, step 2
