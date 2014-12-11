@@ -214,7 +214,7 @@ int main (int argc, char ** argv) {
 //    fclose(fid);
 
     if(!param.quiet)
-        printf("input read, nO=%d, nG=%d, nK=%d, nI=%d\n",param.nO, param.nG, param.nK, param.nI);
+        printf("input read, nO=%d, nG=%d, nK=%d, nI=%d, nZ=%d\n",param.nO, param.nG, param.nK, param.nI, param.nZ);
     
     //    // write time
     //    if(param.time==1) {
@@ -365,7 +365,7 @@ void exit_with_help() {
            "     For example '-s 1.3.1' would be by skill structure (classical) with\n"
            "     Conjugate Gradient Descent and Hestenes-Stiefel formula, '-s 2.1' would be\n"
            "     by student structure fit using Baum-Welch method.\n"
-           "-t : tolerance of termination criterion (0.01 default)\n"
+           "-e : tolerance of termination criterion (0.01 default)\n"
            "-i : maximum iterations (200 by default)\n"
            "-q : quiet mode, without output, 0-no (default), or 1-yes\n"
            "-n : number of hidden states, should be 2 or more (default 2)\n"

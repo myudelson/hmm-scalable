@@ -129,7 +129,7 @@ int main (int argc, char ** argv) {
 	free(line);
     
 	if(param.quiet == 0)
-        printf("input read, nO=%d, nG=%d, nK=%d, nI=%d\n",param.nO, param.nG, param.nK, param.nI);
+        printf("input read, nO=%d, nG=%d, nK=%d, nI=%d, nZ=%d\n",param.nO, param.nG, param.nK, param.nI, param.nZ);
 	
 	clock_t tm = clock();
 //    if(param.metrics>0 || param.predictions>0) {

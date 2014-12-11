@@ -118,24 +118,24 @@ FitBit::~FitBit() {
 }
 
 void FitBit::init(NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B) {
-//    if(this->pi != NULL) {
+    if(this->pi != NULL) {
         if(a_PI == NULL)
             a_PI = init1D<NUMBER>((NDAT)this->nS); // init1DNumber(this->nS);
         else
             toZero1D<NUMBER>(a_PI, (NDAT)this->nS);
-//    }
-//    if(this->A  != NULL) {
+    }
+    if(this->A  != NULL) {
         if(a_A == NULL)
             a_A  = init2D<NUMBER>((NDAT)this->nS, (NDAT)this->nS);
         else
             toZero2D<NUMBER>(a_A,  (NDAT)this->nS, (NDAT)this->nS);
-//    }
-//    if(this->B  != NULL) {
+    }
+    if(this->B  != NULL) {
         if(a_B == NULL)
             a_B  = init2D<NUMBER>((NDAT)this->nS, (NDAT)this->nO);
         else
             toZero2D<NUMBER>(a_B, (NDAT)this->nS, (NDAT)this->nO);
-//    }
+    }
 }
 
 void FitBit::link(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NCAT a_xndat, struct data** a_x_data) {

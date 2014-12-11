@@ -1235,6 +1235,9 @@ NUMBER HMMProblem::GradientDescent() {
         FitResult fr;
         fr.pO = 0;
         FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+        // link accordingly
+        fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
+
         fb->init(FBS_PARm1);
         fb->init(FBS_GRAD);
         if(this->p->solver==METHOD_CGD) {
@@ -1245,8 +1248,6 @@ NUMBER HMMProblem::GradientDescent() {
             fb->init(FBS_GRADm1);
             fb->init(FBS_PARm2);
         }
-        // link accordingly
-        fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         if(this->p->block_fitting[0]!=0) fb->pi = NULL;
         if(this->p->block_fitting[1]!=0) fb->A  = NULL;
         if(this->p->block_fitting[2]!=0) fb->B  = NULL;
@@ -1291,6 +1292,7 @@ NUMBER HMMProblem::GradientDescent() {
                 x_data = NULL;
             }
             FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+            fb->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);
             FitResult fr;
             fb->init(FBS_PARm1);
             fb->init(FBS_GRAD);
@@ -1303,7 +1305,6 @@ NUMBER HMMProblem::GradientDescent() {
                 fb->init(FBS_PARm2);
             }
             
-            fb->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);
             if(this->p->block_fitting[0]!=0) fb->pi = NULL;
             if(this->p->block_fitting[1]!=0) fb->A  = NULL;
             if(this->p->block_fitting[2]!=0) fb->B  = NULL;
