@@ -163,7 +163,9 @@ struct param {
 	NPAR solver; // whether to first fit all skills as skingle skill, to set a starting point
 	NPAR solver_setting; // to be used by individual solver
 	NPAR parallel;   // parallelization flag
-	NUMBER C;// weight of the L2 norm penalty
+    NPAR    Cslices; // 0 - do not use L2 norm penalty, >0 - number of "slices" (e.g. 1 - for by skill, 2 - for by skill and by group/user)
+    NUMBER* Cw;// weight of the L2 norm penalty, for skill or group parameters (or however many there might be)
+    NUMBER* Ccenters;// center values for L2 penalties
 	int metrics;   // compute AIC, BIC, RMSE of training
 	int metrics_target_obs;   // target observation for RMSE of training
     int predictions; // report predictions on training data
@@ -455,8 +457,9 @@ void write_time_interval_data(param* param, const char *file_name);
 
 // penalties
 //NUMBER penalty_offset = 0.5;
-NUMBER L2penalty(param* param, NUMBER w);
-NUMBER L2penalty(param* param, NUMBER w, NUMBER penalty_offset);
+//NUMBER L2penalty(param* param, NUMBER w);
+//NUMBER L2penalty(param* param, NUMBER w, NUMBER penalty_offset);
+NUMBER L2penalty(NUMBER C, NUMBER w, NUMBER Ccenter);
 
 // for fitting larger portions first
 struct sortbit {

@@ -83,6 +83,7 @@ public:
     NCAT xndat; // number of sequences of data
     struct data** x_data; // sequences of data
     NPAR projecttosimplex; // whether projection to simplex should be done
+    NPAR Cslice; // current slice during L2 norm penalty fitting
     
     FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol);
     FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol, NPAR a_projecttosimplex);

@@ -561,9 +561,12 @@ void HMMProblem::setGradPI(FitBit *fb){
         for(i=0; i<this->p->nS; i++) {
             fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
-        // penalty
-        for(i=0; i<this->p->nS && this->p->C!=0; i++)
-            fb->gradPI[i] += L2penalty(this->p,getPI(dt,i), 0.5);
+        if( this->p->Cslices ) { // penalty
+            NUMBER C = this->p->Cw[fb->Cslice];
+            NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
+            for(i=0; i<fb->nS > 0; i++)
+                fb->gradPI[i] += L2penalty(C, fb->pi[i], Ccenter); // PENALTY
+        } // penalty
     }
 }
 
@@ -581,10 +584,13 @@ void HMMProblem::setGradA (FitBit *fb){
                 for(j=0; j<this->p->nS; j++)
                     fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
         }
-        // penalty
-        for(i=0; i<this->p->nS && this->p->C!=0; i++)
-            for(j=0; j<this->p->nS; j++)
-                fb->gradA[i][j] += L2penalty(this->p,getA(dt,i,j), 0.5);
+        if( this->p->Cslices ) { // penalty
+            NUMBER C = this->p->Cw[fb->Cslice];
+            NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
+            for(i=0; i<fb->nS > 0; i++)
+                for(j=0; j<fb->nS; j++)
+                    fb->gradA[i][j] += L2penalty(C, fb->A[i][j], Ccenter); // PENALTY
+        } // penalty
     }
 }
 
@@ -612,10 +618,13 @@ void HMMProblem::setGradB (FitBit *fb){
                         fb->gradB[j][o] -= ( dt->alpha[t-1][i] * getA(dt,i,j) * dt->beta[t][j] /*+ (o0==o) * getPI(dt,j) * dt->beta[0][j]*/ ) / safe0num(dt->p_O_param); // Levinson MMFST
                 }
         }
-        // penalty
-        for(i=0; i<this->p->nS && this->p->C!=0; i++)
-            for(m=0; m<this->p->nO; m++)
-                fb->gradB[i][m] += L2penalty(this->p,getB(dt,i,m), 0);
+        if( this->p->Cslices ) { // penalty
+            NUMBER C = this->p->Cw[fb->Cslice];
+            NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 2];
+            for(i=0; i<fb->nS > 0; i++)
+                for(m=0; m<fb->nO; m++)
+                    fb->gradB[i][m] += L2penalty(C, fb->B[i][m], Ccenter); // PENALTY
+        } // penalty
     }
 }
 

@@ -59,6 +59,7 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol) {
     this->xndat = 0;
     this->x_data = 0;
     this->projecttosimplex = 1;
+    this->Cslice = 0;
 }
 
 FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_projecttosimplex){
@@ -91,6 +92,7 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_
     this->xndat = 0;
     this->x_data = 0;
     this->projecttosimplex = a_projecttosimplex;
+    this->Cslice = 0;
 }
 
 FitBit::~FitBit() {

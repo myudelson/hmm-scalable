@@ -467,7 +467,9 @@ void set_param_defaults(struct param *param) {
     param->metrics_target_obs    = 0;
     param->predictions           = 0;
     param->binaryinput           = 0;
-	param->C                     = 0;
+	param->Cw                     = Calloc(NUMBER, (size_t)1);
+    param->Cw[0]                  = 0;
+    param->Ccenters              = NULL;
     param->initfile[0]           = 0; // 1st bit is 0 - no file
 	param->init_params			 = Calloc(NUMBER, (size_t)5);
 	param->init_params[0] = 0.5; // PI[0]
@@ -564,6 +566,10 @@ void destroy_input_data(struct param *param) {
     if(param->dat_skill_rcount != NULL) free( param->dat_skill_rcount );
     if(param->dat_skill_rix != NULL) free( param->dat_skill_rix );
 	if(param->dat_slice != NULL) free( param->dat_slice );
+    if( param->Cslices>0 ) {
+        free( param->Cw );
+        free( param->Ccenters );
+    }
     
     // not null skills
     for(NDAT kg=0;kg<param->nSeq; kg++) {
@@ -779,15 +785,15 @@ NPAR sec_to_9cat(int time1, int time2, int *limits, NPAR nlimits) {
 
 // penalties
 
-// uniform
-NUMBER L2penalty(param* param, NUMBER w) {
-    NUMBER penalty_offset = 0.5;
-    return (param->C != 0)? 0.5*param->C*fabs((w-penalty_offset)) : 0;
-}
+// // uniform -- no longer up to date
+//NUMBER L2penalty(param* param, NUMBER w) {
+//    NUMBER penalty_offset = 0.5;
+//    return (param->C != 0)? 0.5*param->C*fabs((w-penalty_offset)) : 0;
+//}
 
 // pre-specified
-NUMBER L2penalty(param* param, NUMBER w, NUMBER penalty_offset) {
-    return (param->C != 0)? 0.5*param->C*fabs((w-penalty_offset)) : 0;
+NUMBER L2penalty(NUMBER C, NUMBER w, NUMBER Ccenter) {
+    return 0.5*C*fabs((w-Ccenter));
 }
 
 // for fitting larger portions first

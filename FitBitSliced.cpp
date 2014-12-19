@@ -60,6 +60,7 @@ FitBitSliced::FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ
     this->xndat = 0;
     this->x_data = 0;
     this->projecttosimplex = 1;
+    this->Cslice = 0;
 }
 
 FitBitSliced::FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol, NPAR a_projecttosimplex) {
@@ -93,6 +94,7 @@ FitBitSliced::FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ
     this->xndat = 0;
     this->x_data = 0;
     this->projecttosimplex = a_projecttosimplex;
+    this->Cslice = 0;
 }
 
 FitBitSliced::~FitBitSliced() {
@@ -366,21 +368,23 @@ void FitBitSliced::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
 
 void FitBitSliced::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER penalty_offset ) {
     NPAR i, j, m, z;
+    NUMBER C = param->Cw[this->Cslice];
     switch (fbv) {
         case FBV_PI:
-            for(i=0; i<this->nS; i++) this->gradPI[i] += L2penalty(param,this->pi[i], 0.5);
+            for(i=0; i<this->nS; i++)
+                this->gradPI[i] += L2penalty(C, this->pi[i], param->Ccenters[ this->Cslice * 3 + 0] );
             break;
         case FBV_A:
             for(i=0; i<this->nS; i++)
                 for(j=0; j<this->nS; j++)
                     for(z=0; z<this->nZ; z++)
-                        this->gradA[z][i][j] += L2penalty(param,this->A[z][i][j], 0.5);
+                        this->gradA[z][i][j] += L2penalty(C, this->A[z][i][j], param->Ccenters[ this->Cslice * 3 + 1] );
             break;
         case FBV_B:
             for(i=0; i<this->nS; i++)
                 for(m=0; m<this->nO; m++)
                     for(z=0; z<this->nZ; z++)
-                        this->gradB[z][i][m] += L2penalty(param,this->B[z][i][m], 0.5);
+                        this->gradB[z][i][m] += L2penalty(C, this->B[z][i][m], param->Ccenters[ this->Cslice * 3 + 2] );
             break;
             
         default:

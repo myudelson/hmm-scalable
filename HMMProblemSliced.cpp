@@ -616,9 +616,12 @@ void HMMProblemSliced::setGradPI(FitBitSliced *fb){
         for(i=0; i<this->p->nS; i++) {
             fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,t,i,o)) / safe0num(dt->p_O_param);
         }
-        // penalty
-        for(i=0; i<this->p->nS && this->p->C!=0; i++)
-            fb->gradPI[i] += L2penalty(this->p,getPI(dt,i), 0.5);
+        if( this->p->Cslices ) { // penalty
+            NUMBER C = this->p->Cw[fb->Cslice];
+            NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
+            for(i=0; i<fb->nS > 0; i++)
+                fb->gradPI[i] += L2penalty(C, fb->pi[i], Ccenter); // PENALTY
+        } // penalty
     }
 }
 

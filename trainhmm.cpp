@@ -171,8 +171,12 @@ int main (int argc, char ** argv) {
     tm_read = (clock_t)(clock()-tm_read);//SEQ
 //    _tm_read = omp_get_wtime()-_tm_read;//PAR
     
-    // experimental
-    //    InputUtil::writeInputMatrix("toy_matr1.txt", &param, param.k_numg[0], param.k_g_data[0]);
+//    // experimental
+//    for(NCAT k=0; k<param.nK; k++) {
+//        char fn [256];
+//        sprintf (fn, "b89_kts_skill%d_A.txt", k);
+//        InputUtil::writeInputMatrix(fn, &param, param.k_numg[k], param.k_g_data[k]);
+//    }
 
     if( ! read_ok )
         return 0;
@@ -594,6 +598,29 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                     param.iterations_to_qualify   = (NPAR)atoi(ch);
                 }
 				break;
+            case 'c': {
+                    StripedArray<NUMBER> * tmp_array = new StripedArray<NUMBER>();
+                    ch = strtok(argv[i],",\t\n\r");
+                    while( ch != NULL ) {
+                        tmp_array->add( atof(ch) );
+                        ch = strtok(NULL,",\t\n\r");
+                    }
+                    if( (tmp_array->getSize() % 4) != 0 ) {
+                        fprintf(stderr,"The number of recularization parameters should be a multiple of 4 and it is %d\n",tmp_array->getSize());
+                        exit_with_help();
+                    }
+                    param.Cslices = (NPAR) tmp_array->getSize() / 4;
+                    param.Cw = Calloc(NUMBER, (size_t)param.Cslices);
+                    param.Ccenters = Calloc(NUMBER, (size_t)(param.Cslices * 3) );
+                    int c1 = 0, c2 = 0;
+                    for(i=0; i<(int)tmp_array->getSize(); i++) {
+                        param.Cw[c1++] = tmp_array->get((NDAT)i);
+                        for(int j=0; j<3; j++)
+                            param.Ccenters[c2++] = tmp_array->get((NDAT)i);
+                    }
+                    delete tmp_array;
+                }
+                break;
             case '0':
                 param.init_reset = true;
                 break;
@@ -602,8 +629,6 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
             case 'u': // just to keep it a valid option
                 break;
             case 'B': // just to keep it a valid option
-                break;
-            case 'c': // just to keep it a valid option
                 break;
 			default:
 				fprintf(stderr,"unknown option: -%c\n", argv[i-1][1]);
@@ -747,16 +772,6 @@ void parse_arguments_step2(int argc, char **argv) {
                     fprintf(stderr,"There should be 3 blockig the fitting flags specified.\n");
                     exit_with_help();
                 }
-				break;
-			case 'c':
-				param.C = atof(argv[i]);
-				if(param.C < 0) {
-					fprintf(stderr,"Regularization parameter C should be above 0.\n");
-					exit_with_help();
-				}
-				if(param.C > 1000) {
-					fprintf(stderr,"Regularization parameter C is _very) high and might be impractical(%f).\n", param.C);
-				}
 				break;
         } // end switch
     }// end for

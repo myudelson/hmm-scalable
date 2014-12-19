@@ -259,10 +259,13 @@ void HMMProblemAGK::setGradA (FitBit *fb){
                     fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
                 }
         }
-        // penalty
-        for(i=0; i<fb->nS && this->p->C!=0; i++)
-            for(j=0; j<fb->nS; j++)
-                fb->gradA[i][j] += L2penalty(this->p,fb->A[i][j], 0.5); // PENALTY
+        if( this->p->Cslices ) { // penalty
+            NUMBER C = this->p->Cw[fb->Cslice];
+            NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
+            for(i=0; i<fb->nS > 0; i++)
+                for(j=0; j<fb->nS; j++)
+                    fb->gradA[i][j] += L2penalty(C, fb->A[i][j], Ccenter); // PENALTY
+        } // penalty
     }
 }
 
@@ -429,6 +432,7 @@ NUMBER HMMProblemAGK::GradientDescent() {
                             continue;
 //                        printf("... doing g,   run=%3d, k=%6d, skippedK=%6d, g=%6d, skippedG=%6d, thread id=%d\n",i,k,skip_k,g,skip_g, omp_get_thread_num());//PAR
                         FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                        fb->Cslice = 1;
                         fb->init(FBS_PARm1);
                         fb->init(FBS_GRAD);
                         if(this->p->solver==METHOD_CGD) {

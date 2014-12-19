@@ -190,7 +190,7 @@ void HMMProblemPiGKww::setGradPI(FitBit *fb){
             combined = getPI(dt,i);//sigmoid( logit(this->pi[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = (1+logit(this->ww[0])) / safe0num( fb->pi[i] * ( 1 - fb->pi[i] ) );
 			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) +
-                L2penalty(this->p,fb->pi[i], 0.5); // PENALTY;
+                L2penalty(fb->Cslice,fb->pi[i], 0.5); // PENALTY;
         }
     }
     
@@ -427,6 +427,7 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
 //                cpy1D<NUMBER>(this->PIg[g],copyPIg[g],nS); /*prep hide*/
                 // vvvvvvvvvvvvvvvvvvvvv ONLY PART THAT IS DIFFERENT FROM others
                 fb->link(this->getPIg(g), NULL, NULL, this->p->g_numk[g], this->p->g_k_data[g]);
+                fb->Cslice = 1;
                 if(this->p->block_fitting[0]!=0) fb->pi = NULL;
                 if(this->p->block_fitting[1]!=0) fb->A  = NULL;
                 if(this->p->block_fitting[2]!=0) fb->B  = NULL;
