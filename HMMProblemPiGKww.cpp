@@ -328,13 +328,6 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
     NPAR nS = this->p->nS; NPAR nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
     NUMBER loglik = 0;
     FitResult fr;
-    FitBit *fb = new FitBit(nS, nO, nK, nG, this->p->tol);
-    fb->init(FBS_PARm1);
-    fb->init(FBS_GRAD);
-    if(this->p->solver==METHOD_CGD) {
-        fb->init(FBS_GRADm1);
-        fb->init(FBS_DIRm1);
-    }
 
 //    // all together
 //    NUMBER ** copyPI = init2D<NUMBER>((NDAT)this->sizes[0], (NDAT)nS);
@@ -342,24 +335,22 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
 //    NUMBER *** copyA =  init3D<NUMBER>((NDAT)this->sizes[1], (NDAT)nS, (NDAT)nS);
 //    NUMBER *** copyB =  init3D<NUMBER>((NDAT)this->sizes[2], (NDAT)nS, (NDAT)nO);
 
-    // fit bit and for result for ww
-    FitResult frww;
-    FitBit *fbww = new FitBit(nS, nO, nK, nG, this->p->tol, 1/*do project to simplex*/);
-    fbww->init(FBS_PARm1);
-    fbww->init(FBS_GRAD);
-    if(this->p->solver==METHOD_CGD) {
-        fbww->init(FBS_GRADm1);
-        fbww->init(FBS_DIRm1);
-    }
-    
     //
 	// fit all as 1 skill first, set group gradients to 0, and do not fit them
 	//
 	if(this->p->single_skill>0) {
+        FitBit *fb = new FitBit(nS, nO, nK, nG, this->p->tol);
         fb->link( HMMProblem::getPI(0), HMMProblem::getA(0), HMMProblem::getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         if(this->p->block_fitting[0]!=0) fb->pi = NULL;
         if(this->p->block_fitting[1]!=0) fb->A  = NULL;
         if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+
+        fb->init(FBS_PARm1);
+        fb->init(FBS_GRAD);
+        if(this->p->solver==METHOD_CGD) {
+            fb->init(FBS_GRADm1);
+            fb->init(FBS_DIRm1);
+        }
 
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save progonal k's
@@ -368,6 +359,7 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
         free(original_ks);
         if( !this->p->quiet )
             printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
+        delete fb;
     }
     
 	//
@@ -382,20 +374,29 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
         
         
         int i = 0; // count runs
-        while(skip_k<nK || skip_g<nG || frww.conv==0) {
+        while(skip_k<nK || skip_g<nG /*|| frww.conv==0*/ ) {
             //
             // Skills first
             //
             for(k=0; k<nK && skip_k<nK; k++) { // for all A,B-by-skill
                 if(iter_qual_skill[k]==iterations_to_qualify)
                     continue;
-//                NCAT xndat = this->p->k_numg[k];
-//                struct data** x_data = this->p->k_g_data[k];
+                FitBit *fb = new FitBit(nS, nO, nK, nG, this->p->tol);
                 // link and fit
                 fb->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
                 if(this->p->block_fitting[0]!=0) fb->pi = NULL;
                 if(this->p->block_fitting[1]!=0) fb->A  = NULL;
                 if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+
+                fb->init(FBS_PARm1);
+                fb->init(FBS_GRAD);
+                if(this->p->solver==METHOD_CGD) {
+                    fb->init(FBS_GRADm1);
+                    fb->init(FBS_DIRm1);
+                }
+                
+//                NCAT xndat = this->p->k_numg[k];
+//                struct data** x_data = this->p->k_g_data[k];
 //                cpy1D<NUMBER>(this->pi[k],copyPI[k],nS); /*prep hide*/
                 fr = GradientDescentBit(fb);
                 // decide on convergence
@@ -415,6 +416,7 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
                         iter_qual_skill[k]=0;
                 } // decide on convergence
 //                swap1D<NUMBER>(this->pi[k],copyPI[k],nS); /*hide*/
+                delete fb;
             } // for all skills
             //
             // PIg second
@@ -422,6 +424,7 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
             for(g=0; g<nG && skip_g<nG; g++) { // for all PI-by-user
                 if(iter_qual_group[g]==iterations_to_qualify)
                     continue;
+                FitBit *fb = new FitBit(nS, nO, nK, nG, this->p->tol);
 //                NCAT xndat = this->p->g_numk[g];
 //                struct data** x_data = this->p->g_k_data[g];
 //                cpy1D<NUMBER>(this->PIg[g],copyPIg[g],nS); /*prep hide*/
@@ -432,6 +435,12 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
                 if(this->p->block_fitting[1]!=0) fb->A  = NULL;
                 if(this->p->block_fitting[2]!=0) fb->B  = NULL;
                 // ^^^^^^^^^^^^^^^^^^^^^
+                fb->init(FBS_PARm1);
+                fb->init(FBS_GRAD);
+                if(this->p->solver==METHOD_CGD) {
+                    fb->init(FBS_GRADm1);
+                    fb->init(FBS_DIRm1);
+                }
                 // decide on convergence
                 fr = GradientDescentBit(fb);
                 if(i>=first_iteration_qualify) {
@@ -474,10 +483,20 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
             //
             // ww third
             //
+            // fit bit and for result for ww
+            FitResult frww;
+            FitBit *fbww = new FitBit(nS, nO, nK, nG, this->p->tol, 1/*do project to simplex*/);
+            fbww->link(this->ww, NULL, NULL, this->p->nSeq, this->p->k_data);
+
+            fbww->init(FBS_PARm1);
+            fbww->init(FBS_GRAD);
+            if(this->p->solver==METHOD_CGD) {
+                fbww->init(FBS_GRADm1);
+                fbww->init(FBS_DIRm1);
+            }
 //            NCAT xndat = this->p->nSeq;
 //            struct data** x_data = this->p->k_data;
-            fbww->link(this->ww, NULL, NULL, this->p->nSeq, this->p->k_data);
-            computeAlphaAndPOParam(fb->xndat, fb->x_data);
+            computeAlphaAndPOParam(fbww->xndat, fbww->x_data);
 //            loglik = getSumLogPOPara(this->p->nSeq, this->p->k_data);
             bool non01constraints = this->non01constraints;
             this->non01constraints = false;
@@ -490,6 +509,7 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
 //            cpy2D<NUMBER>(copyPIg,this->PIg,nG,nS);
 //            cpy3D<NUMBER>(copyA,this->A,nK,nS,nS);
 //            cpy3D<NUMBER>(copyB,this->B,nK,nS,nS);
+            delete fbww;
             i++;
         }
         // recycle qualifications
@@ -497,8 +517,6 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
         if( iter_qual_group != NULL) free(iter_qual_group);
     } // if not "force single skill
     
-    delete fb;
-    delete fbww;
     // compute loglik
     loglik = getSumLogPOPara(this->p->nSeq, this->p->k_data);
     return loglik;

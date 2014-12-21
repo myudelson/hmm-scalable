@@ -612,11 +612,11 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                     param.Cslices = (NPAR) tmp_array->getSize() / 4;
                     param.Cw = Calloc(NUMBER, (size_t)param.Cslices);
                     param.Ccenters = Calloc(NUMBER, (size_t)(param.Cslices * 3) );
-                    int c1 = 0, c2 = 0;
-                    for(i=0; i<(int)tmp_array->getSize(); i++) {
-                        param.Cw[c1++] = tmp_array->get((NDAT)i);
+                    int c1 = 0, c2 = 0, i = 0;
+                    for(int l=0; l<(int)tmp_array->getSize() / 4; l++) {
+                        param.Cw[c1++] = tmp_array->get((NDAT)i++);
                         for(int j=0; j<3; j++)
-                            param.Ccenters[c2++] = tmp_array->get((NDAT)i);
+                            param.Ccenters[c2++] = tmp_array->get((NDAT)i++);
                     }
                     delete tmp_array;
                 }

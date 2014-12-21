@@ -1246,6 +1246,9 @@ NUMBER HMMProblem::GradientDescent() {
         FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
         // link accordingly
         fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
+        if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+        if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+        if(this->p->block_fitting[2]!=0) fb->B  = NULL;
 
         fb->init(FBS_PARm1);
         fb->init(FBS_GRAD);
@@ -1257,9 +1260,6 @@ NUMBER HMMProblem::GradientDescent() {
             fb->init(FBS_GRADm1);
             fb->init(FBS_PARm2);
         }
-        if(this->p->block_fitting[0]!=0) fb->pi = NULL;
-        if(this->p->block_fitting[1]!=0) fb->A  = NULL;
-        if(this->p->block_fitting[2]!=0) fb->B  = NULL;
 
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save original k's
@@ -1302,6 +1302,10 @@ NUMBER HMMProblem::GradientDescent() {
             }
             FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
             fb->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);
+            if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+            if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+            if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+            
             FitResult fr;
             fb->init(FBS_PARm1);
             fb->init(FBS_GRAD);
@@ -1314,10 +1318,6 @@ NUMBER HMMProblem::GradientDescent() {
                 fb->init(FBS_PARm2);
             }
             
-            if(this->p->block_fitting[0]!=0) fb->pi = NULL;
-            if(this->p->block_fitting[1]!=0) fb->A  = NULL;
-            if(this->p->block_fitting[2]!=0) fb->B  = NULL;
-
             fr = GradientDescentBit(fb);
             delete fb;
             
@@ -1349,6 +1349,7 @@ NUMBER HMMProblem::GradientDescent() {
         }
         fbs[x] = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
         fbs[x]->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);
+
         fbs[x]->init(FBS_PARm1);
         fbs[x]->init(FBS_GRAD);
         if(this->p->solver==METHOD_CGD) {
@@ -1379,17 +1380,17 @@ NUMBER HMMProblem::BaumWelch() {
         fr.pO = 0;
         NCAT x;
         FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+        fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
+        if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+        if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+        if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+
         fb->init(FBS_PARm1);
         fb->init(FBS_GRAD);
         if(this->p->solver==METHOD_CGD) {
             fb->init(FBS_GRADm1);
             fb->init(FBS_DIRm1);
         }
-        
-        fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
-        if(this->p->block_fitting[0]!=0) fb->pi = NULL;
-        if(this->p->block_fitting[1]!=0) fb->A  = NULL;
-        if(this->p->block_fitting[2]!=0) fb->B  = NULL;
 
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save original k's
@@ -1419,13 +1420,13 @@ NUMBER HMMProblem::BaumWelch() {
 //        #pragma omp for schedule(dynamic) reduction(+:loglik) //PAR
         for(k=0; k<this->p->nK; k++) {
             FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
-            fb->init(FBS_PARm1);
-            
             fb->link(this->getPI(k), this->getA(k), this->getB(k), this->p->k_numg[k], this->p->k_g_data[k]);
             if(this->p->block_fitting[0]!=0) fb->pi = NULL;
             if(this->p->block_fitting[1]!=0) fb->A  = NULL;
             if(this->p->block_fitting[2]!=0) fb->B  = NULL;
-
+            
+            fb->init(FBS_PARm1);
+            
             FitResult fr;
             fr = BaumWelchBit(fb);
             delete fb;

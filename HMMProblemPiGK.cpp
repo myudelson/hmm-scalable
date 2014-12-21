@@ -323,6 +323,11 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 	//
 	if(this->p->single_skill>0) {
         FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+        fb->link( HMMProblem::getPI(0), HMMProblem::getA(0), HMMProblem::getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
+        if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+        if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+        if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+        
         fb->init(FBS_PARm1);
         fb->init(FBS_GRAD);
         if(this->p->solver==METHOD_CGD) {
@@ -330,11 +335,6 @@ NUMBER HMMProblemPiGK::GradientDescent() {
             fb->init(FBS_DIRm1);
         }
         
-        fb->link( HMMProblem::getPI(0), HMMProblem::getA(0), HMMProblem::getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
-        if(this->p->block_fitting[0]!=0) fb->pi = NULL;
-        if(this->p->block_fitting[1]!=0) fb->A  = NULL;
-        if(this->p->block_fitting[2]!=0) fb->B  = NULL;
-
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save progonal k's
         FitResult fr = GradientDescentBit(fb);
@@ -369,17 +369,18 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                     if(iter_qual_skill[k]==iterations_to_qualify)
                         continue;
                     FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                    // link
+                    fb->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
+                    if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+                    if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+                    if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+
                     fb->init(FBS_PARm1);
                     fb->init(FBS_GRAD);
                     if(this->p->solver==METHOD_CGD) {
                         fb->init(FBS_GRADm1);
                         fb->init(FBS_DIRm1);
                     }
-                    // link and fit
-                    fb->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
-                    if(this->p->block_fitting[0]!=0) fb->pi = NULL;
-                    if(this->p->block_fitting[1]!=0) fb->A  = NULL;
-                    if(this->p->block_fitting[2]!=0) fb->B  = NULL;
                     FitResult fr = GradientDescentBit(fb);
                     // decide on convergence
                     if(i>=first_iteration_qualify || fb->xndat==0) {
@@ -415,6 +416,12 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                     if(iter_qual_group[g]==iterations_to_qualify)
                         continue;
                     FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                    // link
+                    fb->link(this->getPIg(g), NULL, NULL, this->p->g_numk[g], this->p->g_k_data[g]);
+                    if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+                    if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+                    if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+
                     fb->Cslice = 1;
                     fb->init(FBS_PARm1);
                     fb->init(FBS_GRAD);
@@ -422,11 +429,6 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                         fb->init(FBS_GRADm1);
                         fb->init(FBS_DIRm1);
                     }
-                    // link
-                    fb->link(this->getPIg(g), NULL, NULL, this->p->g_numk[g], this->p->g_k_data[g]);
-                    if(this->p->block_fitting[0]!=0) fb->pi = NULL;
-                    if(this->p->block_fitting[1]!=0) fb->A  = NULL;
-                    if(this->p->block_fitting[2]!=0) fb->B  = NULL;
                     FitResult fr = GradientDescentBit(fb);
                     // decide on convergence
                     if(i>=first_iteration_qualify || fb->xndat==0) { //can qualify or  student had no skill labelled rows
