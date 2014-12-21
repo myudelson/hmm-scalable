@@ -288,7 +288,7 @@ void HMMProblemPiAGK::setGradPI(FitBit *fb){
             deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );
             fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
-        if( this->p->Cslices ) { // penalty
+        if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
             for(i=0; i<fb->nS > 0; i++)
@@ -317,7 +317,7 @@ void HMMProblemPiAGK::setGradA (FitBit *fb){
                 }
             }
         }
-        if( this->p->Cslices ) { // penalty
+        if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
             for(i=0; i<fb->nS > 0; i++)

@@ -366,8 +366,9 @@ void FitBitSliced::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
             doLog10Scale2DGentle(a_B[z],  this->B[z],  this->nS, this->nO);
 }
 
-void FitBitSliced::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER penalty_offset ) {
+void FitBitSliced::addL2Penalty(enum FIT_BIT_VAR fbv, param* param) {
     NPAR i, j, m, z;
+    if(param->Cslices) return;
     NUMBER C = param->Cw[this->Cslice];
     switch (fbv) {
         case FBV_PI:

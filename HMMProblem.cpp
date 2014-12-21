@@ -561,7 +561,7 @@ void HMMProblem::setGradPI(FitBit *fb){
         for(i=0; i<this->p->nS; i++) {
             fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
-        if( this->p->Cslices ) { // penalty
+        if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
             for(i=0; i<fb->nS > 0; i++)
@@ -584,7 +584,7 @@ void HMMProblem::setGradA (FitBit *fb){
                 for(j=0; j<this->p->nS; j++)
                     fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
         }
-        if( this->p->Cslices ) { // penalty
+        if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
             for(i=0; i<fb->nS > 0; i++)
@@ -618,7 +618,7 @@ void HMMProblem::setGradB (FitBit *fb){
                         fb->gradB[j][o] -= ( dt->alpha[t-1][i] * getA(dt,i,j) * dt->beta[t][j] /*+ (o0==o) * getPI(dt,j) * dt->beta[0][j]*/ ) / safe0num(dt->p_O_param); // Levinson MMFST
                 }
         }
-        if( this->p->Cslices ) { // penalty
+        if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 2];
             for(i=0; i<fb->nS > 0; i++)

@@ -313,7 +313,7 @@ void HMMProblemPiABGK::setGradPI(FitBit *fb){
             combined = getPI(dt,i);//sigmoid( logit(this->pi[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );
             fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
-            if( this->p->Cslices ) { // penalty
+            if( this->p->Cslices>0 ) { // penalty
                 NUMBER C = this->p->Cw[fb->Cslice];
                 NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
                 for(i=0; i<fb->nS > 0; i++)
@@ -342,7 +342,7 @@ void HMMProblemPiABGK::setGradA (FitBit *fb){
                     fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) ;
                 }
         }
-        if( this->p->Cslices ) { // penalty
+        if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
             for(i=0; i<fb->nS > 0; i++)
@@ -372,7 +372,7 @@ void HMMProblemPiABGK::setGradB (FitBit *fb){
                 fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o));
             }
         }
-        if( this->p->Cslices ) { // penalty
+        if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 2];
             for(i=0; i<fb->nS > 0; i++)

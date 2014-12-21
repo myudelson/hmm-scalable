@@ -259,7 +259,7 @@ void HMMProblemAGK::setGradA (FitBit *fb){
                     fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
                 }
         }
-        if( this->p->Cslices ) { // penalty
+        if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
             for(i=0; i<fb->nS > 0; i++)

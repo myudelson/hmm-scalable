@@ -616,12 +616,8 @@ void HMMProblemSliced::setGradPI(FitBitSliced *fb){
         for(i=0; i<this->p->nS; i++) {
             fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,t,i,o)) / safe0num(dt->p_O_param);
         }
-        if( this->p->Cslices ) { // penalty
-            NUMBER C = this->p->Cw[fb->Cslice];
-            NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
-            for(i=0; i<fb->nS > 0; i++)
-                fb->gradPI[i] += L2penalty(C, fb->pi[i], Ccenter); // PENALTY
-        } // penalty
+        if( this->p->Cslices>0 ) // penalty
+           fb->addL2Penalty(FBV_PI, this->p);
     }
 }
 
@@ -641,7 +637,8 @@ void HMMProblemSliced::setGradA (FitBitSliced *fb){
                     fb->gradA[z][i][j] -= dt->beta[t][j] * ((o<0)?1:getB(dt,t,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
         }
         // penalty
-        fb->addL2Penalty(FBV_A, this->p, 0.5 );
+        if( this->p->Cslices>0 )
+            fb->addL2Penalty(FBV_A, this->p);
     }
 }
 
@@ -671,7 +668,9 @@ void HMMProblemSliced::setGradB (FitBitSliced *fb){
                 }
         }
         // penalty
-        fb->addL2Penalty(FBV_B, this->p, 0.5 );
+        if( this->p->Cslices>0 ) {
+            fb->addL2Penalty(FBV_B, this->p);
+        }
     }
 }
 

@@ -98,7 +98,7 @@ public:
     void doLog10ScaleGentle(enum FIT_BIT_SLOT fbs);
     
     // adding penalties
-    void addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER penalty_offset );
+    void addL2Penalty(enum FIT_BIT_VAR fbv, param* param);
 private:
     NUMBER tol;
 

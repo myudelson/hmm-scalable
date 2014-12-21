@@ -652,6 +652,11 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
         fprintf(stderr,"when >2 latent states specified via '-n', initial values of parameters have to be explicitly set via '-0'!\n");
         exit_with_help();
     }
+    // STRUCTURE_SKABslc solver and -t 1 should be set together
+    if( (param.sliced==1) != (param.structure == STRUCTURE_SKABslc) ) {
+        fprintf(stderr,"Error! sliced parameter ('-t 1') and STRUCTURE_SKABslc structure should be either both set on or off.\n");
+        exit_with_help();
+    }
     
 	// next argument should be input file name
 	if(i>=argc) // if not
