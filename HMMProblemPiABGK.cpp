@@ -277,14 +277,14 @@ NUMBER** HMMProblemPiABGK::getBg(NCAT x) {
 
 NUMBER HMMProblemPiABGK::getPI(struct data* dt, NPAR i) {
     NUMBER p = this->pi[dt->k][i], q = this->PIg[dt->g][i];
-    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+    return pairing(p,q);
     //    return sigmoid( logit( this->pi[dt->k][i] ) + logit( this->PIg[dt->g][i] ) );
 }
 
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemPiABGK::getA(struct data* dt, NPAR i, NPAR j) {
     NUMBER p = this->A[dt->k][i][j], q = this->Ag[dt->g][i][j];
-    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+    return pairing(p,q);
     //    return sigmoid( logit( this->A[dt->k][i][j] ) + logit( this->Ag[dt->k][i][j] ) );
 }
 
@@ -295,7 +295,7 @@ NUMBER HMMProblemPiABGK::getB(struct data* dt, NPAR i, NPAR m) {
     if(m<0)
         return 1;
     NUMBER p = this->B[dt->k][i][m], q = this->Bg[dt->g][i][m];
-    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+    return pairing(p,q);
 }
 
 void HMMProblemPiABGK::setGradPI(FitBit *fb){

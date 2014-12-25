@@ -156,6 +156,7 @@ struct param {
 	NUMBER tol;  // tolerance of termination criterion (0.0001 by default)
     NPAR scaled;
     NPAR sliced; // 1-read slice data from 5th column (0-default), slices - different versions of A and B matrices
+    NPAR duplicate_console; // output to file in addition to putputting to console
 	int maxiter; // maximum iterations (200 by default)
 	NPAR quiet;   // quiet mode (no outputs)
 	NPAR single_skill; // 0 - do nothing, 1 - fit all skills as skingle skill, to set a starting point, 2 - enforce fit single skill
@@ -413,6 +414,7 @@ NUMBER sigmoid(NUMBER val);
 NUMBER deprecated_fsafelog(NUMBER val); // fast and safe log for params
 NUMBER safelog(NUMBER val); // safe log for prediction
 NUMBER sgn(NUMBER val);
+NUMBER pairing(NUMBER p, NUMBER q); // computes sigmoid( logit(p) + logit(q) )
 
 void add1DNumbersWeighted(NUMBER* sourse, NUMBER* target, NPAR size, NUMBER weight);
 void add2DNumbersWeighted(NUMBER** sourse, NUMBER** target, NPAR size1, NPAR size2, NUMBER weight);
@@ -426,6 +428,7 @@ NUMBER doLog10Scale1D(NUMBER *ar, NPAR size);
 NUMBER doLog10Scale2D(NUMBER **ar, NPAR size1, NPAR size2);
 NUMBER doLog10Scale1DGentle(NUMBER *grad, NUMBER *par, NPAR size);
 NUMBER doLog10Scale2DGentle(NUMBER **grad, NUMBER **par, NPAR size1, NPAR size2);
+NUMBER doLog10Scale3DGentle(NUMBER ***grad, NUMBER ***par, NPAR size1, NPAR size2, NPAR size3);
 
 void zeroLabels(NCAT xdat, struct data** x_data); // for skill of group
 void zeroLabels(struct param* param); // set counts in all data sequences to zero

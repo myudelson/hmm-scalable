@@ -50,11 +50,11 @@ public:
 	NUMBER*** getA(NCAT k);
 	NUMBER*** getB(NCAT k);
 	NUMBER* getLbPI();
-	NUMBER** getLbA();
-	NUMBER** getLbB();
+	NUMBER*** getLbA();
+	NUMBER*** getLbB();
 	NUMBER* getUbPI();
-	NUMBER** getUbA();
-	NUMBER** getUbB();
+	NUMBER*** getUbA();
+	NUMBER*** getUbB();
     // getters for computing alpha, beta, gamma
     virtual NUMBER getPI(struct data* dt, NPAR i);
     virtual NUMBER getA (struct data* dt, NDAT t, NPAR i, NPAR j);
@@ -95,11 +95,11 @@ protected:
 	NUMBER**** A; // transition matrix
 	NUMBER**** B; // observation matrix
 	NUMBER* lbPI; // lower boundary initial state probabilities
-	NUMBER** lbA; // lower boundary transition matrix
-	NUMBER** lbB; // lower boundary observation matrix
+	NUMBER*** lbA; // lower boundary transition matrix
+	NUMBER*** lbB; // lower boundary observation matrix
 	NUMBER* ubPI; // upper boundary initial state probabilities
-	NUMBER** ubA; // upper boundary transition matrix
-	NUMBER** ubB; // upper boundary observation matrix
+	NUMBER*** ubA; // upper boundary transition matrix
+	NUMBER*** ubB; // upper boundary observation matrix
 	bool non01constraints; // whether there are lower or upper boundaries different from 0,1 respectively
 	struct param *p; // data and params
 	//
@@ -137,7 +137,7 @@ protected:
     virtual NUMBER GradientDescent(); // return -LL for the model
     NUMBER BaumWelch(); // return -LL for the model
     void readNullObsRatio(FILE *fid, struct param* param, NDAT *line_no);
-	bool checkPIABConstraints(NUMBER* a_PI, NUMBER** a_A, NUMBER** a_B); // all constraints, inc row sums
+	bool checkPIABConstraints(NUMBER* a_PI, NUMBER*** a_A, NUMBER*** a_B); // all constraints, inc row sums
 private:
     // write model
 	void toFileSkill(const char *filename);

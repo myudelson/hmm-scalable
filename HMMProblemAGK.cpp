@@ -228,7 +228,7 @@ NUMBER HMMProblemAGK::getPI(struct data* dt, NPAR i) {
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemAGK::getA(struct data* dt, NPAR i, NPAR j) {
     NUMBER p = this->A[dt->k][i][j], q = this->Ag[dt->g][i][j];
-    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+    return pairing(p,q);
     //    return sigmoid( logit( this->A[dt->k][i][j] ) + logit( this->Ag[dt->k][i][j] ) );
 }
 

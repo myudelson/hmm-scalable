@@ -212,7 +212,7 @@ NUMBER* HMMProblemPiGK::getPIg(NCAT x) {
 
 NUMBER HMMProblemPiGK::getPI(struct data* dt, NPAR i) {
     NUMBER p = this->pi[dt->k][i], q = this->PIg[dt->g][i];
-    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+    return pairing(p,q);
 
 //    NUMBER p = this->PI[dt->k][i], q = this->PIg[dt->g][i];
 //    NUMBER item = this->p->item_complexity[ this->p->dat_item->get( dt->ix[0] ) ];

@@ -154,7 +154,11 @@ options:
      and emission probabilities (without skips); default 0,0,1,0,0,0,0,0,0,0
 -u : upper boundaries for params, comma-separated for priors, transition,
      and emission probabilities (without skips); default 0,0,1,0,0,0,0,0,0,0
--c : weight of the L2 penalty, 0 (default)
+-c : specification of the C weight and cetroids for L2 penalty, empty (default).
+     For standard BKT - 4 comma-separated numbers: C weight of the penalty and
+     centroids, for PI, A, and B matrices respectively. If used for iBKT with
+     student effects, 8 values will be used with 4 additional values for student
+     effect matrices. For example, '-c 1.0,0.5,0.5,0.0'.
 -f : fit as one skill, 0-no (default), 1 - fit as one skill and use params as
      starting point for multi-skill, 2 - force one skill
 -m : report model fitting metrics (AIC, BIC, RMSE) 0-no (default), 1-yes. To 
@@ -180,6 +184,8 @@ options:
 -P : use parallel processing, defaul - 0 (no parallel processing), 1 - fit
      separate skills/students separately, 2 - fit separate sequences within
      skill/student separately.
+-o : in addition to printing to console, print output to the file specified
+     default is empty.
 
 
 = Using models for prediction =

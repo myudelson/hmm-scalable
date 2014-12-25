@@ -564,8 +564,9 @@ void HMMProblem::setGradPI(FitBit *fb){
         if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
-            for(i=0; i<fb->nS > 0; i++)
+            for(i=0; i<fb->nS > 0; i++) {
                 fb->gradPI[i] += L2penalty(C, fb->pi[i], Ccenter); // PENALTY
+            }
         } // penalty
     }
 }
@@ -1503,13 +1504,16 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
 		if(fb->B  != NULL) for(m=0; m<nO; m++) p_k_by_neg_p_k -= fb->gradB[i][m]*fb->gradB[i][m];
 	}
 	int iter = 0; // limit iter steps to 20, via ArmijoMinStep (now 10)
-    while( !compliesArmijo && !compliesWolfe2 && e > this->p->ArmijoMinStep) {
+    while( !(compliesArmijo && compliesWolfe2) && e > this->p->ArmijoMinStep) {
 		// update
 		for(i=0; i<nS; i++) {
-			if(fb->pi != NULL) fb->pi[i] = fb->PIcopy[i] - e * fb->gradPI[i];
+            if(fb->pi != NULL)
+                fb->pi[i] = fb->PIcopy[i] - e * fb->gradPI[i];
+            
             if(fb->A  != NULL)
                 for(j=0; j<nS; j++)
                     fb->A[i][j] = fb->Acopy[i][j] - e * fb->gradA[i][j];
+            
             if(fb->B  != NULL)
                 for(m=0; m<nO; m++)
                     fb->B[i][m] = fb->Bcopy[i][m] - e * fb->gradB[i][m];
@@ -1557,6 +1561,7 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
     if(!compliesArmijo) { // we couldn't step away from current, copy the inital point back
         e = 0;
         fb->copy(FBS_PARcopy, FBS_PAR);
+        f_xkplus1 = f_xk;
     }
     fb->destroy(FBS_PARcopy);
     return f_xkplus1;

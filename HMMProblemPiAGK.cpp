@@ -233,7 +233,7 @@ NUMBER* HMMProblemPiAGK::getPIg(NCAT x) {
 
 NUMBER HMMProblemPiAGK::getPI(struct data* dt, NPAR i) {
     NUMBER p = this->pi[dt->k][i], q = this->PIg[dt->g][i];
-    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+    return pairing(p,q);
 
 //    NUMBER p = this->PI[dt->k][i], q = this->PIg[dt->g][i];
 //    NUMBER item = this->p->item_complexity[ this->p->dat_item->get( dt->ix[0] ) ];
@@ -260,7 +260,7 @@ NUMBER** HMMProblemPiAGK::getAg(NCAT x) {
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemPiAGK::getA(struct data* dt, NPAR i, NPAR j) {
     NUMBER p = this->A[dt->k][i][j], q = this->Ag[dt->g][i][j];
-    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+    return pairing(p,q);
 }
 
 // getters for computing alpha, beta, gamma
@@ -291,8 +291,9 @@ void HMMProblemPiAGK::setGradPI(FitBit *fb){
         if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
-            for(i=0; i<fb->nS > 0; i++)
+            for(i=0; i<fb->nS > 0; i++) {
                 fb->gradPI[i] += L2penalty(C, fb->pi[i], Ccenter); // PENALTY
+            }
         } // penalty
     }
 }

@@ -245,6 +245,12 @@ NUMBER logit(NUMBER val) {
     //    return fsafelog(val/safe0num(1-val));
 }
 
+// computes sigmoid( logit(p) + logit(q) )
+NUMBER  pairing(NUMBER p, NUMBER q) {
+    if( (p*q)==0 ) return 1.0;
+    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+}
+
 //#define logit(y)
 //#define logit(y)
 //NUMBER logit(NUMBER val) {
@@ -368,9 +374,10 @@ NUMBER doLog10Scale1DGentle(NUMBER *grad, NUMBER *par, NPAR size) {
             min_delta = candidate;
 	}
     max_grad = max_grad / pow(10, max_10_scale);
-    if(max_10_scale > 0)
+    if(max_10_scale > 0) {
         for(i=0; i<size; i++)
             grad[i] = ( 0.95 * min_delta / max_grad) * grad[i] / pow(10, max_10_scale);
+    }
     return ( 0.95 * min_delta / max_grad ) / pow(10, max_10_scale);
 }
 
@@ -400,6 +407,36 @@ NUMBER doLog10Scale2DGentle(NUMBER **grad, NUMBER **par, NPAR size1, NPAR size2)
 			for(j=0; j<size2; j++)
 				grad[i][j] = ( 0.95 * min_delta / max_grad) * grad[i][j] / pow(10, max_10_scale);
 	return ( 0.95 * min_delta / max_grad ) / pow(10, max_10_scale);
+}
+
+// Gentle - as per max distance to go toward extreme value of 0 or 1
+NUMBER doLog10Scale3DGentle(NUMBER ***grad, NUMBER ***par, NPAR size1, NPAR size2, NPAR size3) {
+    NPAR i,j,k;
+    NUMBER max_10_scale = 0, candidate, min_delta = 1, max_grad = 0;
+    for(i=0; i<size1; i++)
+        for(j=0; j<size2; j++)
+            for(k=0; k<size3; k++) {
+                if( fabs(grad[i][j][k]) < SAFETY ) // 0 gradient
+                    continue;
+                // scale
+                if(max_grad < fabs(grad[i][j][k]))
+                    max_grad = fabs(grad[i][j][k]);
+                candidate = ceil( log10( fabs(grad[i][j][k]) ) );
+                if(candidate > max_10_scale)
+                    max_10_scale = candidate;
+                // delta: if grad<0 - distance to 1, if grad>0 - distance to 0
+                candidate = (grad[i][j][k]<0)*(1-par[i][j][k]) + (grad[i][j][k]>0)*(par[i][j][k]) +
+                ( (fabs(par[i][j][k])< SAFETY) || (fabs(1-par[i][j][k])< SAFETY) ); // these terms are there to avoid already extreme 0, 1 values
+                if( candidate < min_delta)
+                    min_delta = candidate;
+            }
+    max_grad = max_grad / pow(10, max_10_scale);
+    if(max_10_scale >0 )
+        for(i=0; i<size1; i++)
+            for(j=0; j<size2; j++)
+                for(k=0; k<size3; k++)
+                    grad[i][j][k] = ( 0.95 * min_delta / max_grad) * grad[i][j][k] / pow(10, max_10_scale);
+    return ( 0.95 * min_delta / max_grad ) / pow(10, max_10_scale);
 }
 
 
@@ -456,7 +493,8 @@ void set_param_defaults(struct param *param) {
 	// configurable - set
 	param->tol                   = 0.01;
 	param->scaled                = 0;
-	param->sliced                  = 0;
+	param->sliced                = 0;
+    param->duplicate_console     = 0;
 	param->maxiter               = 200;
 	param->quiet                 = 0;
 	param->single_skill          = 0;

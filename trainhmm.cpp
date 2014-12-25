@@ -57,13 +57,13 @@ using namespace std;
 struct param param;
 void exit_with_help();
 
-void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name); // things that do not need data file read
-void parse_arguments_step2(int argc, char **argv); // things that do need data file read, namely, number of observations
+void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name, char *console_file_name); // things that do not need data file read
+void parse_arguments_step2(int argc, char **argv, FILE *fid_console); // things that do need data file read, namely, number of observations
 
-bool read_and_structure_data(const char *filename);
-void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict);//SEQ
-void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict);//SEQ
-void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict);//SEQ
+bool read_and_structure_data(const char *filename, FILE *fid_console);
+void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
+void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
+void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
 //void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
 //void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
 //void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
@@ -153,21 +153,29 @@ int main (int argc, char ** argv) {
 	clock_t tm_all = clock();//overall time //SEQ
 //    double _tm_all = omp_get_wtime(); //PAR
     
-	char input_file[1024];
-	char output_file[1024];
-	char predict_file[1024];
+	char input_file[1024]; // data
+	char output_file[1024]; // model
+    char colsole_file[1024]; // console copy
+	char predict_file[1024]; // predictions
     
 	set_param_defaults(&param);
     
-    if(!param.quiet)
-        printf("trainhmm starting...\n");
     
     // parse parameters, step 1
-	parse_arguments_step1(argc, argv, input_file, output_file, predict_file);
+	parse_arguments_step1(argc, argv, input_file, output_file, predict_file, colsole_file);
+
+    FILE *fid_console = NULL;
+    if(param.duplicate_console==1)
+        fid_console = fopen(colsole_file,"w");
     
+    if(!param.quiet) {
+        printf("trainhmm starting...\n");
+        if(param.duplicate_console==1) fprintf(fid_console, "trainhmm starting...\n");
+    }
+
     clock_t tm_read = clock();//overall time //SEQ
 //    double _tm_read = omp_get_wtime(); //PAR
-    int read_ok = read_and_structure_data(input_file);
+    int read_ok = read_and_structure_data(input_file, fid_console);
     tm_read = (clock_t)(clock()-tm_read);//SEQ
 //    _tm_read = omp_get_wtime()-_tm_read;//PAR
     
@@ -182,7 +190,7 @@ int main (int argc, char ** argv) {
         return 0;
     
     // once we know nO (number of observations) parse parameters, step 2
-    parse_arguments_step2(argc, argv);
+    parse_arguments_step2(argc, argv, fid_console);
     
 //    write_pLo_irt();
     
@@ -217,8 +225,10 @@ int main (int argc, char ** argv) {
 //    free(line);
 //    fclose(fid);
 
-    if(!param.quiet)
+    if(!param.quiet) {
         printf("input read, nO=%d, nG=%d, nK=%d, nI=%d, nZ=%d\n",param.nO, param.nG, param.nK, param.nI, param.nZ);
+        if(param.duplicate_console==1) fprintf(fid_console, "input read, nO=%d, nG=%d, nK=%d, nI=%d, nZ=%d\n",param.nO, param.nG, param.nK, param.nI, param.nZ);
+    }
     
     //    // write time
     //    if(param.time==1) {
@@ -309,13 +319,21 @@ int main (int argc, char ** argv) {
                        2*hmm->getNparams() + 2*metrics[0], hmm->getNparams()*safelog(param.N) + 2*metrics[0],
                        metrics[2], metrics[3], // rmse's
                        metrics[4], metrics[5]); // acc's
+                if(param.duplicate_console==1) fprintf(fid_console, "trained model LL=%15.7f (%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",
+                       metrics[0], metrics[1], // ll's
+                       2*hmm->getNparams() + 2*metrics[0], hmm->getNparams()*safelog(param.N) + 2*metrics[0],
+                       metrics[2], metrics[3], // rmse's
+                       metrics[4], metrics[5]); // acc's
+
             }
             free(metrics);
 
             // temporary
             if(param.per_kc_rmse_acc) {
-                for(NCAT i=0; i<param.nK; i++)
+                for(NCAT i=0; i<param.nK; i++) {
                     printf("KC %4u RMSE=%8.6f Acc=%8.6f\n",i,param.kc_rmse[i],param.kc_acc[i]);
+                    if(param.duplicate_console==1) fprintf(fid_console, "KC %4u RMSE=%8.6f Acc=%8.6f\n",i,param.kc_rmse[i],param.kc_acc[i]);
+                }
                 free(param.kc_counts);
                 free(param.kc_rmse);
                 free(param.kc_acc);
@@ -328,33 +346,42 @@ int main (int argc, char ** argv) {
         NUMBER* metrics = Calloc(NUMBER, (size_t)7); // AIC, BIC, RMSE, RMSE no null
         switch (param.cv_strat) {
             case CV_GROUP:
-                cross_validate(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
+                cross_validate(metrics, predict_file, &tm_fit, &tm_predict, fid_console);//SEQ
 //                cross_validate(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
                 break;
             case CV_ITEM:
-                cross_validate_item(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
+                cross_validate_item(metrics, predict_file, &tm_fit, &tm_predict, fid_console);//SEQ
 //                cross_validate_item(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
                 break;
             case CV_NSTR:
-                cross_validate_nstrat(metrics, predict_file, &tm_fit, &tm_predict);//SEQ
+                cross_validate_nstrat(metrics, predict_file, &tm_fit, &tm_predict, fid_console);//SEQ
 //                cross_validate_nstrat(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
                 break;
             default:
                 
                 break;
         }
-        if(!param.quiet) {
+//        if(!param.quiet) { // allow to report c-v result anyway
             printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
+            if(param.duplicate_console==1) fprintf(fid_console, "%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
+
 //            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
-        }
+//            if(param.duplicate_console==1) fprintf(fid_console,"%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
+//        }
         free(metrics);
     }
 	// free data
 	destroy_input_data(&param);
 	
-//	if(param.quiet == 0)
+//	if(param.quiet == 0) {
         printf("timing: overall %f seconds, read %f, fit %f, predict %f\n",(NUMBER)((clock()-tm_all)/CLOCKS_PER_SEC), (NUMBER)tm_read/CLOCKS_PER_SEC,  (NUMBER)tm_fit/CLOCKS_PER_SEC,  (NUMBER)tm_predict/CLOCKS_PER_SEC);//SEQ
+        if(param.duplicate_console==1) fprintf(fid_console, "timing: overall %f seconds, read %f, fit %f, predict %f\n",(NUMBER)((clock()-tm_all)/CLOCKS_PER_SEC), (NUMBER)tm_read/CLOCKS_PER_SEC,  (NUMBER)tm_fit/CLOCKS_PER_SEC,  (NUMBER)tm_predict/CLOCKS_PER_SEC);//SEQ
+//        if(param.duplicate_console==1) fprintf(fid_console, "timing: overall %lf sec, read %lf sec, fit %lf sec, predict %lf sec\n",omp_get_wtime()-_tm_all, _tm_read, _tm_fit, _tm_predict);//PAR
 //        printf("timing: overall %lf sec, read %lf sec, fit %lf sec, predict %lf sec\n",omp_get_wtime()-_tm_all, _tm_read, _tm_fit, _tm_predict);//PAR
+//    }
+    
+    if(param.duplicate_console==1)
+        fclose(fid_console);
     return 0;
 }
 
@@ -380,7 +407,11 @@ void exit_with_help() {
            "     and emission probabilities (without skips); default 0,0,1,0,0,0,0,0,0,0\n"
            "-u : upper boundaries for params, comma-separated for priors, transition,\n"
            "     and emission probabilities (without skips); default 0,0,1,0,0,0,0,0,0,0\n"
-           "-c : weight of the L2 penalty, 0 (default)\n"
+           "-c : specification of the C weight and cetroids for L2 penalty, empty (default).\n"
+           "     For standard BKT - 4 comma-separated numbers: C weight of the penalty and "
+           "     centroids, for PI, A, and B matrices respectively. If used for iBKT with\n"
+           "     student effects, 8 values will be used with 4 additional values for student\n"
+           "     effect matrices. For example, '-c 1.0,0.5,0.5,0.0'."
            "-f : fit as one skill, 0-no (default), 1 - fit as one skill and use params as\n"
            "     starting point for multi-skill, 2 - force one skill\n"
            "-m : report model fitting metrics (AIC, BIC, RMSE) 0-no (default), 1-yes. To \n"
@@ -404,11 +435,13 @@ void exit_with_help() {
            "-P : use parallel processing, defaul - 0 (no parallel processing), 1 - fit\n"
            "     separate skills/students separately, 2 - fit separate sequences within\n"
            "     skill/student separately.\n"
+           "-o : in addition to printing to console, print output to the file specified\n"
+           "     default is empty.\n"
 		   );
 	exit(1);
 }
 
-void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name) {
+void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *output_file_name, char *predict_file_name, char *console_file_name) {
 	// parse command line options, starting from 1 (0 is path to executable)
 	// go in pairs, looking at whether first in pair starts with '-', if not, stop parsing arguments
     
@@ -547,6 +580,7 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                 
 				if(param.cv_folds<2) {
 					fprintf(stderr,"number of cross-validation folds should be at least 2\n");
+
 					exit_with_help();
 				}
 				if(param.cv_folds>10) {
@@ -621,6 +655,10 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                     delete tmp_array;
                 }
                 break;
+            case 'o':
+                param.duplicate_console = 1;
+                strcpy(console_file_name,argv[i]);
+                break;
             case '0':
                 param.init_reset = true;
                 break;
@@ -677,7 +715,7 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
 	}
 }
 
-void parse_arguments_step2(int argc, char **argv) {
+void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
 	// parse command line options, starting from 1 (0 is path to executable)
 	// go in pairs, looking at whether first in pair starts with '-', if not, stop parsing arguments
     
@@ -749,6 +787,7 @@ void parse_arguments_step2(int argc, char **argv) {
 				param.block_fitting[0] = (NPAR)atoi( strtok(argv[i],",\t\n\r") );
                 if(param.block_fitting[0]!=0 && param.block_fitting[0]!=1) {
                     fprintf(stderr,"Values of blocking the fitting flags shuld only be 0 or 1.\n");
+                    if(param.duplicate_console==1) fprintf(fid_console,"Values of blocking the fitting flags shuld only be 0 or 1.\n");
                     exit_with_help();
                 }
                 // second
@@ -757,11 +796,13 @@ void parse_arguments_step2(int argc, char **argv) {
                     param.block_fitting[1] = (NPAR)atoi(ch);
                     if(param.block_fitting[1]!=0 && param.block_fitting[1]!=1) {
                         fprintf(stderr,"Values of blocking the fitting flags shuld only be 0 or 1.\n");
+                        if(param.duplicate_console==1) fprintf(fid_console,"Values of blocking the fitting flags shuld only be 0 or 1.\n");
                         exit_with_help();
                     }
                 }
                 else {
                     fprintf(stderr,"There should be 3 blockig the fitting flags specified.\n");
+                    if(param.duplicate_console==1) fprintf(fid_console,"There should be 3 blockig the fitting flags specified.\n");
                     exit_with_help();
                 }
                 // third
@@ -770,11 +811,13 @@ void parse_arguments_step2(int argc, char **argv) {
                     param.block_fitting[2] = (NPAR)atoi(ch);
                     if(param.block_fitting[2]!=0 && param.block_fitting[2]!=1) {
                         fprintf(stderr,"Values of blocking the fitting flags shuld only be 0 or 1.\n");
+                        if(param.duplicate_console==1) fprintf(fid_console,"Values of blocking the fitting flags shuld only be 0 or 1.\n");
                         exit_with_help();
                     }
                 }
                 else {
                     fprintf(stderr,"There should be 3 blockig the fitting flags specified.\n");
+                    if(param.duplicate_console==1) fprintf(fid_console,"There should be 3 blockig the fitting flags specified.\n");
                     exit_with_help();
                 }
 				break;
@@ -797,16 +840,18 @@ void parse_arguments_step2(int argc, char **argv) {
     // post-argument checks - TODO - enable
     if( param.cv_target_obs>(param.nO-1)) {
         fprintf(stderr,"target observation to be cross-validated against cannot be '%d'\n",param.cv_target_obs+1);
+        if(param.duplicate_console==1) fprintf(fid_console,"target observation to be cross-validated against cannot be '%d'\n",param.cv_target_obs+1);
         exit_with_help();
     }
     if(param.metrics_target_obs>(param.nO-1)) {
         fprintf(stderr,"target observation to compute metrics against cannot be '%d'\n",param.metrics_target_obs+1);
+        if(param.duplicate_console==1) fprintf(fid_console,"target observation to compute metrics against cannot be '%d'\n",param.metrics_target_obs+1);
         exit_with_help();
     }
     
 }
 
-bool read_and_structure_data(const char *filename) {
+bool read_and_structure_data(const char *filename, FILE *fid_console) {
     bool readok = true;
     if(param.binaryinput==0)
         readok = InputUtil::readTxt(filename, &param);
@@ -941,9 +986,10 @@ bool read_and_structure_data(const char *filename) {
                 param.null_skills[gidx].p_O_param = 0.0;
                 continue;
             }
-            if( skill_group_map[k][g]==0)
-                printf("ERROR! position [%d,%d] in skill_group_map should have been 1\n",k,g);
-            else if( skill_group_map[k][g]==1 ) { // insert new sequence and grab new data
+            if( skill_group_map[k][g]==0) {
+                fprintf(stderr, "ERROR! position [%d,%d] in skill_group_map should have been 1\n",k,g);
+                if(param.duplicate_console==1) fprintf(fid_console,"ERROR! position [%d,%d] in skill_group_map should have been 1\n",k,g);
+            } else if( skill_group_map[k][g]==1 ) { // insert new sequence and grab new data
                 // link
                 param.k_data[ k_countg[k] ] = &param.all_data[n_all_data]; // in linear array
                 param.g_data[ g_countk[g] ] = &param.all_data[n_all_data]; // in linear array
@@ -988,8 +1034,10 @@ bool read_and_structure_data(const char *filename) {
                     ;
                 if( param.k_data[gidx]->g==g)
                     param.k_data[gidx]->n++;
-                else
-                    printf("ERROR! position of group %d in skill %d not found\n",g,k);
+                else {
+                    fprintf(stderr, "ERROR! position of group %d in skill %d not found\n",g,k);
+                    if(param.duplicate_console==1) fprintf(fid_console,"ERROR! position of group %d in skill %d not found\n",g,k);
+                }
             }
         }
 	}
@@ -1030,9 +1078,10 @@ bool read_and_structure_data(const char *filename) {
                 param.null_skills[gidx].ix[ param.null_skills[gidx].cnt++ ] = t; // use .cnt as counter
                 continue;
             }
-            if( skill_group_map[k][g]<2)
-                printf("ERROR! position [%d,%d] in skill_group_map should have been 2\n",k,g);
-            else if( skill_group_map[k][g]==2 ) { // grab data and insert first dat point
+            if( skill_group_map[k][g]<2) {
+                fprintf(stderr, "ERROR! position [%d,%d] in skill_group_map should have been 2\n",k,g);
+                if(param.duplicate_console==1) fprintf(fid_console, "ERROR! position [%d,%d] in skill_group_map should have been 2\n",k,g);
+            } else if( skill_group_map[k][g]==2 ) { // grab data and insert first dat point
                 //                param.k_g_data[k][ k_countg[k] ]->obs = Calloc(NPAR, (size_t)param.k_g_data[k][ k_countg[k] ]->n); // grab
                 //                param.k_g_data[k][ k_countg[k] ]->obs[0] = o; // insert
                 param.k_g_data[k][ k_countg[k] ]->ix = Calloc(NDAT, (size_t)param.k_g_data[k][ k_countg[k] ]->n); // grab
@@ -1058,8 +1107,10 @@ bool read_and_structure_data(const char *filename) {
                         param.k_g_data[k][ gidx ]->ix_stacked[pos] = t_stacked; // insert
                     param.k_g_data[k][ gidx ]->cnt++; // increase data counter
                 }
-                else
-                    printf("ERROR! position of group %d in skill %d not found\n",g,k);
+                else {
+                    fprintf(stderr, "ERROR! position of group %d in skill %d not found\n",g,k);
+                    if(param.duplicate_console==1) fprintf(fid_console, "ERROR! position of group %d in skill %d not found\n",g,k);
+                }
             }
             t_stacked++;
         }// all skills on the row
@@ -1096,7 +1147,7 @@ bool read_and_structure_data(const char *filename) {
     return true;
 }
 
-void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict) {//SEQ
+void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
 //void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
@@ -1112,7 +1163,8 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
         fid = fopen(filename,"w");
         if(fid == NULL)
         {
-            fprintf(stderr,"Can't write output model file %s\n",filename);
+            fprintf(stderr, "Can't write output model file %s\n",filename);
+            if(param.duplicate_console==1) fprintf(fid_console, "Can't write output model file %s\n",filename);
             exit(1);
         }
     }
@@ -1125,7 +1177,8 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
             fid_folds = fopen(param.cv_folds_file,"r");
             if(fid_folds == NULL)
             {
-                fprintf(stderr,"Can't open folds file %s\n",filename);
+                fprintf(stderr, "Can't open folds file for reading %s\n",filename);
+                if(param.duplicate_console==1) fprintf(fid_console, "Can't open folds file for reading %s\n",filename);
                 exit(1);
             }
             max_line_length = 1024;
@@ -1134,7 +1187,8 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
             fid_folds = fopen(param.cv_folds_file,"w");
             if(fid_folds == NULL)
             {
-                fprintf(stderr,"Can't open folds file %s\n",filename);
+                fprintf(stderr, "Can't open folds file for writing %s\n",filename);
+                if(param.duplicate_console==1) fprintf(fid_console, "Can't open folds file for writing %s\n",filename);
                 exit(1);
             }
         }
@@ -1148,7 +1202,8 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
             readline(fid_folds);//
             ch = strtok(line,"\t\n\r");
             if(ch == NULL) {
-                fprintf(stderr,"Error reading input folds file (potentialy wrong number of rows)\n");
+                fprintf(stderr, "Error reading input folds file (potentialy wrong number of rows)\n");
+                if(param.duplicate_console==1) fprintf(fid_console, "Error reading input folds file (potentialy wrong number of rows)\n");
                 exit(1);
             }
             folds[g] = (NPAR)(atoi(ch));
@@ -1224,8 +1279,10 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
             if( param.null_skills[x].g == f)
                 param.null_skills[x].cnt = 0;
         }
-        if(q == 0)
+        if(q == 0) {
             printf("fold %d is done\n",f+1);
+            if(param.duplicate_console==1) fprintf(fid_console,"fold %d is done\n",f+1);
+        }
     }
     param.quiet = (NPAR)q;
     
@@ -1387,7 +1444,7 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
     metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }
 
-void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict) {//SEQ
+void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
 //void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
     NUMBER rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
@@ -1403,7 +1460,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
         fid = fopen(filename,"w");
         if(fid == NULL)
         {
-            fprintf(stderr,"Can't write output model file %s\n",filename);
+            fprintf(stderr, "Can't write output model file %s\n",filename);
+            if(param.duplicate_console==1) fprintf(fid_console, "Can't write output model file %s\n",filename);
             exit(1);
         }
     }
@@ -1418,7 +1476,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
             fid_folds = fopen(param.cv_folds_file,"r");
             if(fid_folds == NULL)
             {
-                fprintf(stderr,"Can't open folds file %s\n",filename);
+                fprintf(stderr, "Can't open folds file for reading %s\n",filename);
+                if(param.duplicate_console==1) fprintf(fid_console, "Can't open folds file for reading %s\n",filename);
                 exit(1);
             }
             max_line_length = 1024;
@@ -1427,7 +1486,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
             fid_folds = fopen(param.cv_folds_file,"w");
             if(fid_folds == NULL)
             {
-                fprintf(stderr,"Can't open folds file %s\n",filename);
+                fprintf(stderr, "Can't open folds file for writing %s\n",filename);
+                if(param.duplicate_console==1) fprintf(fid_console, "Can't open folds file for writing %s\n",filename);
                 exit(1);
             }
         }
@@ -1441,7 +1501,8 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
             readline(fid_folds);//
             ch = strtok(line,"\t\n\r");
             if(ch == NULL) {
-                fprintf(stderr,"Error reading input folds file (potentialy wrong number of rows)\n");
+                fprintf(stderr, "Error reading input folds file (potentialy wrong number of rows)\n");
+                if(param.duplicate_console==1) fprintf(fid_console, "Error reading input folds file (potentialy wrong number of rows)\n");
                 exit(1);
             }
             folds[I] = (NPAR)(atoi(ch));
@@ -1509,8 +1570,10 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
             if( folds[ param.dat_item[t]/*->get(t)*/ ] == f )
                 param.dat_obs[t]=saved_obs[count_saved++];//->set(t, saved_obs[count_saved++]);
         free(saved_obs);
-        if(q == 0)
+        if(q == 0) {
             printf("fold %d is done\n",f+1);
+            if(param.duplicate_console==1) fprintf(fid_console, "fold %d is done\n",f+1);
+        }
     }
     free(fold_counts);
     param.quiet = (NPAR)q;
@@ -1672,7 +1735,7 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
     metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }
 
-void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict) {//SEQ
+void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
 //void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
@@ -1690,7 +1753,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fi
         fid = fopen(filename,"w");
         if(fid == NULL)
         {
-            fprintf(stderr,"Can't write output model file %s\n",filename);
+            fprintf(stderr, "Can't write output model file %s\n",filename);
+            if(param.duplicate_console==1) fprintf(fid_console, "Can't write output model file %s\n",filename);
             exit(1);
         }
     }
@@ -1708,7 +1772,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fi
             fid_folds = fopen(param.cv_folds_file,"r");
             if(fid_folds == NULL)
             {
-                fprintf(stderr,"Can't open folds file %s\n",filename);
+                fprintf(stderr, "Can't open folds file for reading %s\n",filename);
+                if(param.duplicate_console==1) fprintf(fid_console, "Can't open folds file for reading %s\n",filename);
                 exit(1);
             }
             max_line_length = 1024;
@@ -1717,7 +1782,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fi
             fid_folds = fopen(param.cv_folds_file,"w");
             if(fid_folds == NULL)
             {
-                fprintf(stderr,"Can't open folds file %s\n",filename);
+                fprintf(stderr, "Can't open folds file for writing %s\n",filename);
+                if(param.duplicate_console==1) fprintf(fid_console, "Can't open folds file for writing %s\n",filename);
                 exit(1);
             }
         }
@@ -1731,7 +1797,8 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fi
             readline(fid_folds);//
             ch = strtok(line,"\t\n\r");
             if(ch == NULL) {
-                fprintf(stderr,"Error reading input folds file (potentialy wrong number of rows)\n");
+                fprintf(stderr, "Error reading input folds file (potentialy wrong number of rows)\n");
+                if(param.duplicate_console==1) fprintf(fid_console, "Error reading input folds file (potentialy wrong number of rows)\n");
                 exit(1);
             }
             folds[U] = (NPAR)(atoi(ch));
@@ -1799,8 +1866,10 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fi
             if( folds[ param.dat_item[t]/*->get(t)*/ ] == f )
                 param.dat_obs[t]=saved_obs[count_saved++];//->set(t, saved_obs[count_saved++]);
         free(saved_obs);
-        if(q == 0)
+        if(q == 0) {
             printf("fold %d is done\n",f+1);
+            if(param.duplicate_console==1) fprintf(fid_console, "fold %d is done\n",f+1);
+        }
     }
     free(fold_counts);
     param.quiet = (NPAR)q;
