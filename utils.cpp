@@ -563,7 +563,7 @@ void set_param_defaults(struct param *param) {
     param->null_skills = NULL;
 	// fitting specific - Armijo rule
 	param->ArmijoC1            = 1e-4;
-	param->ArmijoC2            = 0.9;
+	param->ArmijoC2            = 0.9; // since we're not newton method
 	param->ArmijoReduceFactor  = 2;//1/0.9;//
 	param->ArmijoSeed          = 1; //1; - since we use smooth stepping 1 is the only thing we need
     param->ArmijoMinStep       = 0.001; //  0.000001~20steps, 0.001~10steps

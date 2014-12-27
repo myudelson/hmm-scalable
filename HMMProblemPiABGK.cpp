@@ -316,7 +316,7 @@ void HMMProblemPiABGK::setGradPI(FitBit *fb){
             if( this->p->Cslices>0 ) { // penalty
                 NUMBER C = this->p->Cw[fb->Cslice];
                 NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
-                for(i=0; i<fb->nS > 0; i++)
+                for(i=0; i<fb->nS; i++)
                     fb->gradPI[i] += L2penalty(C, fb->pi[i], Ccenter); // PENALTY
             } // penalty
         }
@@ -345,7 +345,7 @@ void HMMProblemPiABGK::setGradA (FitBit *fb){
         if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
-            for(i=0; i<fb->nS > 0; i++)
+            for(i=0; i<fb->nS; i++)
                 for(j=0; j<fb->nS; j++)
                     fb->gradA[i][j] += L2penalty(C, fb->A[i][j], Ccenter); // PENALTY
         } // penalty
@@ -375,7 +375,7 @@ void HMMProblemPiABGK::setGradB (FitBit *fb){
         if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 2];
-            for(i=0; i<fb->nS > 0; i++)
+            for(i=0; i<fb->nS; i++)
                 for(m=0; m<fb->nO; m++)
                     fb->gradB[i][m] += L2penalty(C, fb->B[i][m], Ccenter); // PENALTY
         } // penalty

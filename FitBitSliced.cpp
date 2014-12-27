@@ -358,9 +358,13 @@ void FitBitSliced::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
     get(fbs, a_PI, a_A, a_B);
 	if(this->pi != NULL) doLog10Scale1DGentle(a_PI, this->pi, this->nS);
     if(this->A  != NULL)
-        doLog10Scale3DGentle(a_A,  this->A,  this->nZ, this->nS, this->nS);
+        for(NPAR z=0; z<this->nZ; z++)
+            doLog10Scale2DGentle(a_A[z],  this->A[z], this->nS, this->nS);
+//        doLog10Scale3DGentle(a_A,  this->A,  this->nZ, this->nS, this->nS);
 	if(this->B  != NULL)
-        doLog10Scale3DGentle(a_B,  this->B,  this->nZ, this->nS, this->nO);
+        for(NPAR z=0; z<this->nZ; z++)
+            doLog10Scale2DGentle(a_B[z],  this->B[z], this->nS, this->nO);
+//        doLog10Scale3DGentle(a_B,  this->B,  this->nZ, this->nS, this->nO);
 }
 
 void FitBitSliced::addL2Penalty(enum FIT_BIT_VAR fbv, param* param) {

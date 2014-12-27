@@ -382,11 +382,12 @@ bool HMMProblemSliced::checkPIABConstraints(NUMBER* a_PI, NUMBER*** a_A, NUMBER*
 	NUMBER sum_pi = 0.0;
 	NUMBER sum_a_row[nZ][nS];
 	NUMBER sum_b_row[nZ][nS];
-	for(i=0; i<nS; i++) {
-		sum_a_row[z][i] = 0.0;
-		sum_b_row[z][i] = 0.0;
-	}
-	
+    for(z=0; z<nZ; z++) {
+        for(i=0; i<nS; i++) {
+            sum_a_row[z][i] = 0.0;
+            sum_b_row[z][i] = 0.0;
+        }
+    }
 	for(i=0; i<nS; i++) {
 		if( a_PI[i]>1.0 || a_PI[i]<0.0)
 			return false;
@@ -1456,7 +1457,7 @@ NUMBER HMMProblemSliced::doLinearStep(FitBitSliced *fb) {
     
 	NUMBER e = this->p->ArmijoSeed; // step seed
 	bool compliesArmijo = false;
-	bool compliesWolfe2 = false; // second wolfe condition is turned off
+//	bool compliesWolfe2 = false; // second wolfe condition is turned off
 	NUMBER f_xk = HMMProblemSliced::getSumLogPOPara(xndat, x_data);
 	NUMBER f_xkplus1 = 0;
 	
@@ -1477,7 +1478,7 @@ NUMBER HMMProblemSliced::doLinearStep(FitBitSliced *fb) {
                     p_k_by_neg_p_k -= fb->gradB[z][i][m]*fb->gradB[z][i][m];
     }
 	int iter = 0; // limit iter steps to 20, via ArmijoMinStep (now 10)
-	while( !(compliesArmijo && compliesWolfe2) && e > this->p->ArmijoMinStep) {
+	while( !(compliesArmijo /*&& compliesWolfe2*/) && e > this->p->ArmijoMinStep) {
 		// update
         for(i=0; i<nS; i++) {
             if(fb->pi != NULL) fb->pi[i] = fb->PIcopy[i] - e * fb->gradPI[i];
@@ -1517,28 +1518,30 @@ NUMBER HMMProblemSliced::doLinearStep(FitBitSliced *fb) {
 		// compute Armijo compliance
 		compliesArmijo = (f_xkplus1 <= (f_xk + (this->p->ArmijoC1 * e * p_k_by_neg_p_k)));
         
-        // compute Wolfe 2
-        NUMBER p_k_by_neg_p_kp1 = 0;
-        computeGradients(fb);
-        fb->doLog10ScaleGentle(FBS_GRAD);
-        for(i=0; i<nS; i++)
-        {
-            if(fb->pi != NULL) p_k_by_neg_p_kp1 -= fb->gradPI[i]*fb->gradPI[i];
-            if(fb->A  != NULL)
-                for(z=0; z<nZ; z++)
-                    for(j=0; j<nS; j++)
-                        p_k_by_neg_p_kp1 -= fb->gradA[z][i][j]*fb->gradA[z][i][j];
-            if(fb->B  != NULL)
-                for(z=0; z<nZ; z++)
-                    for(m=0; m<nO; m++)
-                        p_k_by_neg_p_kp1 -= fb->gradB[z][i][m]*fb->gradB[z][i][m];
-        }
-        compliesWolfe2 = (p_k_by_neg_p_kp1 >= this->p->ArmijoC2 * p_k_by_neg_p_k);
+//        // compute Wolfe 2
+//        NUMBER p_k_by_neg_p_kp1 = 0;
+//        computeGradients(fb);
+//        fb->doLog10ScaleGentle(FBS_GRAD);
+//        for(i=0; i<nS; i++)
+//        {
+//            if(fb->pi != NULL) p_k_by_neg_p_kp1 -= fb->gradPI[i]*fb->gradPI[i];
+//            if(fb->A  != NULL)
+//                for(z=0; z<nZ; z++)
+//                    for(j=0; j<nS; j++)
+//                        p_k_by_neg_p_kp1 -= fb->gradA[z][i][j]*fb->gradA[z][i][j];
+//            if(fb->B  != NULL)
+//                for(z=0; z<nZ; z++)
+//                    for(m=0; m<nO; m++)
+//                        p_k_by_neg_p_kp1 -= fb->gradB[z][i][m]*fb->gradB[z][i][m];
+//        }
+//        compliesWolfe2 = (p_k_by_neg_p_kp1 >= this->p->ArmijoC2 * p_k_by_neg_p_k); // Wolfe condition
+//        // OR
+//        compliesWolfe2 = fabs(p_k_by_neg_p_kp1) <= fabs(this->p->ArmijoC2 * p_k_by_neg_p_k); // strong Wolfe condition
         
-		e /= (compliesArmijo && compliesWolfe2)?1:this->p->ArmijoReduceFactor;
+		e /= (compliesArmijo /*&& compliesWolfe2*/)?1:this->p->ArmijoReduceFactor;
 		iter++;
 	} // armijo loop
-    if(!compliesArmijo) { // we couldn't step away from current, copy the inital point back
+    if(!(compliesArmijo /*&& compliesWolfe2*/)) { // we couldn't step away from current, copy the inital point back
         e = 0;
         fb->copy(FBS_PARcopy, FBS_PAR);
         f_xkplus1 = f_xk;

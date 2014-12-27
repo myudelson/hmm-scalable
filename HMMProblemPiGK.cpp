@@ -254,7 +254,7 @@ void HMMProblemPiGK::setGradPI(FitBit *fb){
         if( this->p->Cslices>0 ) { // penalty
             NUMBER C = this->p->Cw[fb->Cslice];
             NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
-            for(i=0; i<fb->nS > 0; i++)
+            for(i=0; i<fb->nS; i++)
                 fb->gradPI[i] += L2penalty(C, fb->pi[i], Ccenter); // PENALTY
         } // penalty
     }
