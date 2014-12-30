@@ -481,7 +481,11 @@ NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
         else {
             x_data[x]->p_O_param = 0; // 0 for non-scaled
             for(i=0; i<nS; i++) x_data[x]->p_O_param += x_data[x]->alpha[x_data[x]->n-1][i];
+            if( x_data[x]->p_O_param < 0)
+                fprintf(stderr, "ERROR! p(O|param) is negative!");
             x_data[x]->loglik = -safelog(x_data[x]->p_O_param);
+            if( x_data[x]->loglik < 0)
+                fprintf(stderr, "ERROR! -log( p(O|param) ) is negative!");
         }
 	} // for all groups in skill
     return ndat; //TODO, figure out a diff way to sum it, and not multiple times
@@ -561,14 +565,14 @@ void HMMProblem::setGradPI(FitBit *fb){
         for(i=0; i<this->p->nS; i++) {
             fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
-        if( this->p->Cslices>0 ) { // penalty
-            NUMBER C = this->p->Cw[fb->Cslice];
-            NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
-            for(i=0; i<fb->nS; i++) {
-                fb->gradPI[i] += L2penalty(C, fb->pi[i], Ccenter); // PENALTY
-            }
-        } // penalty
     }
+    if( this->p->Cslices>0 ) { // penalty
+        NUMBER C = this->p->Cw[fb->Cslice];
+        NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
+        for(i=0; i<fb->nS; i++) {
+            fb->gradPI[i] += L2penalty(C, fb->pi[i], Ccenter); // PENALTY
+        }
+    } // penalty
 }
 
 void HMMProblem::setGradA (FitBit *fb){
@@ -585,14 +589,14 @@ void HMMProblem::setGradA (FitBit *fb){
                 for(j=0; j<this->p->nS; j++)
                     fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
         }
-        if( this->p->Cslices>0 ) { // penalty
-            NUMBER C = this->p->Cw[fb->Cslice];
-            NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
-            for(i=0; i<fb->nS; i++)
-                for(j=0; j<fb->nS; j++)
-                    fb->gradA[i][j] += L2penalty(C, fb->A[i][j], Ccenter); // PENALTY
-        } // penalty
     }
+    if( this->p->Cslices>0 ) { // penalty
+        NUMBER C = this->p->Cw[fb->Cslice];
+        NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
+        for(i=0; i<fb->nS; i++)
+            for(j=0; j<fb->nS; j++)
+                fb->gradA[i][j] += L2penalty(C, fb->A[i][j], Ccenter); // PENALTY
+    } // penalty
 }
 
 void HMMProblem::setGradB (FitBit *fb){
@@ -619,14 +623,14 @@ void HMMProblem::setGradB (FitBit *fb){
                         fb->gradB[j][o] -= ( dt->alpha[t-1][i] * getA(dt,i,j) * dt->beta[t][j] /*+ (o0==o) * getPI(dt,j) * dt->beta[0][j]*/ ) / safe0num(dt->p_O_param); // Levinson MMFST
                 }
         }
-        if( this->p->Cslices>0 ) { // penalty
-            NUMBER C = this->p->Cw[fb->Cslice];
-            NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 2];
-            for(i=0; i<fb->nS; i++)
-                for(m=0; m<fb->nO; m++)
-                    fb->gradB[i][m] += L2penalty(C, fb->B[i][m], Ccenter); // PENALTY
-        } // penalty
     }
+    if( this->p->Cslices>0 ) { // penalty
+        NUMBER C = this->p->Cw[fb->Cslice];
+        NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 2];
+        for(i=0; i<fb->nS; i++)
+            for(m=0; m<fb->nO; m++)
+                fb->gradB[i][m] += L2penalty(C, fb->B[i][m], Ccenter); // PENALTY
+    } // penalty
 }
 
 NDAT HMMProblem::computeGradients(FitBit *fb){

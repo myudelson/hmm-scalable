@@ -84,6 +84,7 @@ public:
     struct data** x_data; // sequences of data
     NPAR projecttosimplex; // whether projection to simplex should be done
     NPAR Cslice; // current slice during L2 norm penalty fitting
+    NPAR tag; // multippurpose
     
     FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol);
     FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_projecttosimplex);
@@ -96,6 +97,9 @@ public:
     void add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs);
     bool checkConvergence(FitResult *fr);
     void doLog10ScaleGentle(enum FIT_BIT_SLOT fbs);
+
+    // adding penalties
+    void addL2Penalty(enum FIT_BIT_VAR fbv, param* param);
 private:
     NUMBER tol;
 

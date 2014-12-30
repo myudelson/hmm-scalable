@@ -259,14 +259,14 @@ void HMMProblemAGK::setGradA (FitBit *fb){
                     fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
                 }
         }
-        if( this->p->Cslices>0 ) { // penalty
-            NUMBER C = this->p->Cw[fb->Cslice];
-            NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
-            for(i=0; i<fb->nS; i++)
-                for(j=0; j<fb->nS; j++)
-                    fb->gradA[i][j] += L2penalty(C, fb->A[i][j], Ccenter); // PENALTY
-        } // penalty
     }
+    if( this->p->Cslices>0 ) { // penalty
+        NUMBER C = this->p->Cw[fb->Cslice];
+        NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
+        for(i=0; i<fb->nS; i++)
+            for(j=0; j<fb->nS; j++)
+                fb->gradA[i][j] += L2penalty(C, fb->A[i][j], Ccenter); // PENALTY
+    } // penalty
 }
 
 void HMMProblemAGK::toFile(const char *filename) {

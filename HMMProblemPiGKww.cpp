@@ -191,6 +191,7 @@ void HMMProblemPiGKww::setGradPI(FitBit *fb){
             deriv_logit = (1+logit(this->ww[0])) / safe0num( fb->pi[i] * ( 1 - fb->pi[i] ) );
 			fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param) +
                 L2penalty(fb->Cslice,fb->pi[i], 0.5); // PENALTY;
+            fprintf(stderr,"Fix L2penalty here");
         }
     }
     
@@ -236,6 +237,7 @@ void HMMProblemPiGKww::setGradWW(FitBit *fb){
 //            deriv_logit2 = 1/ safe0num( -0.25 + this->ww[2] * this->ww[2] );
             fb->gradPI[0] -= combined * (1-combined) * deriv_logit0 * logit( this->pi [ dt->k ][i] ) * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
             fb->gradPI[1] -= combined * (1-combined) * deriv_logit1 * logit( this->PIg[ dt->g ][i] ) * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
+            fprintf(stderr,"Fix L2penalty here too");
 //            fb->gradPI[2] -= combined * (1-combined) * deriv_logit2 * 1                              * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
             
 //            // x / sqrt( 1 + x^2 )

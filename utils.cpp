@@ -247,8 +247,9 @@ NUMBER logit(NUMBER val) {
 
 // computes sigmoid( logit(p) + logit(q) )
 NUMBER  pairing(NUMBER p, NUMBER q) {
-    if( (p*q)==0 ) return 1.0;
-    return 1/( 1 + (1-p)*(1-q)/(p*q) );
+    NUMBER P = safe01num(p);
+    NUMBER Q = safe01num(q);
+    return 1/( 1 + (1-P)*(1-Q)/(P*Q) );
 }
 
 //#define logit(y)
