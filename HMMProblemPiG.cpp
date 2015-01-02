@@ -260,7 +260,7 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
     //			if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (conv || iter==this->p->maxiter) )) {
     //				hmm->computeAlphaAndPOParam();
     //				NUMBER pO = HMMProblem::getSumLogPOPara(param);
-    //				printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",iter,pO0,pO,conv);
+    //				printf("single skill iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",iter,pO0,pO,conv);
     //			}
     //			iter ++;
     //		}// single skill loop
@@ -324,7 +324,7 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
                         if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (conv || iter==this->p->maxiter) )) {
                             computeAlphaAndPOParam(xndat, x_data);
                             pO = HMMProblem::getSumLogPOPara(xndat, x_data);
-                            printf("run %2d skipG %4d group %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_g,g,iter,pO0,pO,conv);
+                            printf("run %2d skipG %4d group %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",i,skip_g,g,iter,pO0,pO,conv);
                         }
                     }
                 }
@@ -388,7 +388,7 @@ NUMBER HMMProblemPiG::GradientDescentPLoGroupOtherSkill(){
                         if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (conv || iter==this->p->maxiter) )) {
                             computeAlphaAndPOParam(xndat, x_data);
                             pO = HMMProblem::getSumLogPOPara(xndat, x_data);
-                            printf("run %2d skipK %4d skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",i,skip_k,k,iter,pO0,pO,conv);
+                            printf("run %2d skipK %4d skill %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",i,skip_k,k,iter,pO0,pO,conv);
                         }
                     }
                 }

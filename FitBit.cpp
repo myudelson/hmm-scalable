@@ -342,7 +342,23 @@ bool FitBit::checkConvergence(FitResult *fr) {
 			critetion += pow(this->B[i][k] - this->Bm1[i][k],2);
 		}
 	}
-	return sqrt(critetion) < this->tol; // double the truth or false
+    
+    NUMBER critetion_oscil = 0; // oscillation between PAR and PARm1, i.e. PAR is close to PARm2
+    if( (!(sqrt(critetion) < this->tol)) && ( this->PIm2 != NULL || this->Am2 != NULL || this->Bm2 != NULL ) ) {
+        for(NPAR i=0; i<this->nS; i++)
+        {
+            if(this->pi != NULL) critetion_oscil += pow( this->pi[i]-this->PIm2[i], 2 )/*:0*/;
+            for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
+                critetion_oscil += pow(this->A[i][j] - this->Am2[i][j],2);
+            }
+            for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
+                critetion_oscil += pow(this->B[i][k] - this->Bm2[i][k],2);
+            }
+        }
+        return sqrt(critetion_oscil) < this->tol; // double the truth or false
+    }
+    else
+        return sqrt(critetion) < this->tol; // double the truth or false
         
 //    return (fr->pOmid - fr->pO) < this->tol;
 }

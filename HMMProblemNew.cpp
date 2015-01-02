@@ -1969,7 +1969,7 @@ NUMBER HMMProblem::GradientDescent0() {
         fb->linkPar( this->getPI(0), this->getA(0), this->getB(0));// link skill 0 (we'll copy fit parameters to others
         fr = GradientDescentBit(0/*start at squence 0*/, this->p->nSeq/*for all sequences*/, this->p->all_seq, 0/*use skill 0*/, 0/* by skill*/, fb, true /*is1SkillForAll*/);
         if( !this->p->quiet )
-            printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
+            printf("single skill iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
 	}
 	//
 	// Main fit
@@ -1986,7 +1986,7 @@ NUMBER HMMProblem::GradientDescent0() {
         fb->linkPar( this->getPI(x), this->getA(x), this->getB(x));// link skill 0 (we'll copy fit parameters to others
         fr = GradientDescentBit(ix1, ndat, this->p->all_seq, x, (this->p->structure!=STRUCTURE_SKILL), fb, false /*is1SkillForAll*/);
         if( !this->p->quiet )
-            printf("skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", x, fr.iter,fr.pO0,fr.pO,fr.conv);
+            printf("skill %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n", x, fr.iter,fr.pO0,fr.pO,fr.conv);
 	} // for all skills
     delete fb; // that takes care of *m1, and *GRAD
     return loglik;
@@ -2025,7 +2025,7 @@ NUMBER HMMProblem::GradientDescent() {
 //    for(x=0; x<this->p->nSeq; x++) { this->p->all_data[x].k = original_ks[x]; } // restore original k's
 //    free(original_ks);
 //        if( !this->p->quiet )
-//            printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
+//            printf("single skill iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
 //	}
 
 	//
@@ -2063,7 +2063,7 @@ NUMBER HMMProblem::GradientDescent() {
                 frs[k].conv -= (frs[k].conv>0)?1:-1; // if negative increase, if positive decrease to -1/1
                 frs[k].iter = iter;
                 if( !this->p->quiet )
-                    printf("skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", k, frs[k].iter, frs[k].pO0, frs[k].pO, frs[k].conv);
+                    printf("skill %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n", k, frs[k].iter, frs[k].pO0, frs[k].pO, frs[k].conv);
                 done--;  // done with freshly converged
                 dones++; // now count it
             } // freshly done
@@ -2134,7 +2134,7 @@ NUMBER HMMProblem::BaumWelchSkill() {
 //    //			if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||/**/ (conv || iter==this->p->maxiter) )) {
 //    //				hmm->computeAlphaAndPOParam();
 //    //				NUMBER pO = hmm->getSumLogPOParaK(flog);
-//    //				printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",iter,pO0,pO,conv);
+//    //				printf("single skill iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",iter,pO0,pO,conv);
 //    //			}
 //    //			iter ++;
 //    //		}// single skill loop
@@ -2179,7 +2179,7 @@ NUMBER HMMProblem::BaumWelchSkill() {
 //                pO = HMMProblem::getSumLogPOPara(xndat, x_data);
 //                loglik += pO*(pO>0);
 //                if(!this->p->quiet)
-//                    printf("skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",k,iter,pO0,pO,conv);
+//                    printf("skill %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",k,iter,pO0,pO,conv);
 //			}
 //			
 //			iter ++;

@@ -39,14 +39,14 @@
 #include "utils.h"
 #include "InputUtil.h"
 #include "HMMProblem.h"
-////#include "HMMProblemPiG.h"
+//#include "HMMProblemPiG.h"
 #include "HMMProblemPiGK.h"
 #include "HMMProblemPiGKww.h"
 #include "HMMProblemAGK.h"
 //#include "HMMProblemAGKi.h"
 #include "HMMProblemPiAGK.h"
 #include "HMMProblemPiABGK.h"
-////#include "HMMProblemKT.h"
+//#include "HMMProblemKT.h"
 #include "HMMProblemSliced.h"
 #include "StripedArray.h"
 //#include "SparseArray2D.h"
@@ -64,9 +64,9 @@ bool read_and_structure_data(const char *filename, FILE *fid_console);
 void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
 void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
 void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
-//void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
-//void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
-//void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict);//PAR
+//void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console);//PAR
+//void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console);//PAR
+//void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console);//PAR
 
 static int max_line_length;
 static char * line;
@@ -115,7 +115,7 @@ void write_pLo_irt() {
                 qsortNcat(ar, (NPAR)n);
             }
             obs = param.dat_obs[ dat->ix[0] ]; //->get( dat->ix[0] );
-            NPAR count = 0; // 557687 -> 499117
+            NPAR count = 0; // 557687 >> 499117
             for(int l=0; l<n; l++)
                 count = (NPAR)(count + (group_skill_mask[g][ ar[l] ] == 1));
                 if(count<n) {
@@ -148,7 +148,7 @@ int main (int argc, char ** argv) {
 //    ix = SparseArray2D<int>::binsearch(&v, array, 7, &lim);
 //    fprintf(stderr,"%d found=%d, lim=%d\n",v, ix, lim);
 //    
-////    int c = (unsigned long)ceil((double)34600/20000);
+//    int c = (unsigned long)ceil((double)34600/20000);
     
 	clock_t tm_all = clock();//overall time //SEQ
 //    double _tm_all = omp_get_wtime(); //PAR
@@ -347,15 +347,15 @@ int main (int argc, char ** argv) {
         switch (param.cv_strat) {
             case CV_GROUP:
                 cross_validate(metrics, predict_file, &tm_fit, &tm_predict, fid_console);//SEQ
-//                cross_validate(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
+//                cross_validate(metrics, predict_file, &_tm_fit, &_tm_predict, fid_console);//PAR
                 break;
             case CV_ITEM:
                 cross_validate_item(metrics, predict_file, &tm_fit, &tm_predict, fid_console);//SEQ
-//                cross_validate_item(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
+//                cross_validate_item(metrics, predict_file, &_tm_fit, &_tm_predict, fid_console);//PAR
                 break;
             case CV_NSTR:
                 cross_validate_nstrat(metrics, predict_file, &tm_fit, &tm_predict, fid_console);//SEQ
-//                cross_validate_nstrat(metrics, predict_file, &_tm_fit, &_tm_predict);//PAR
+//                cross_validate_nstrat(metrics, predict_file, &_tm_fit, &_tm_predict, fid_console);//PAR
                 break;
             default:
                 
@@ -1148,7 +1148,7 @@ bool read_and_structure_data(const char *filename, FILE *fid_console) {
 }
 
 void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
-//void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
+//void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     clock_t tm0;//SEQ
@@ -1445,7 +1445,7 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
 }
 
 void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
-//void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
+//void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
     NUMBER rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
@@ -1736,7 +1736,7 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
 }
 
 void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
-//void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict) {//PAR
+//void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;

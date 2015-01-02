@@ -1140,8 +1140,8 @@ FitResult HMMProblem::GradientDescentBit(FitBit *fb) {
         // converge?
         fr->conv = fb->checkConvergence(fr);
         // copy parameter values after we already compared step t-1 with currently computed step t
-        if( this->p->solver==METHOD_GBB )
-            fb->copy(FBS_PARm1, FBS_PARm2);
+//        if( this->p->solver==METHOD_GBB )
+        fb->copy(FBS_PARm1, FBS_PARm2); // do this for all in order to capture oscillation, e.g. if new param at t is close to param at t-2 (tolerance)
         fb->copy(FBS_PAR, FBS_PARm1);
         // report if converged
         if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr->conv || fr->iter==this->p->maxiter) )) {
@@ -1206,7 +1206,7 @@ FitResult HMMProblem::GradientDescentBitBig(FitBit **fbs, NCAT nfbs) {
         if(fr->conv || fr->iter==this->p->maxiter) {
             if(!this->p->quiet) {
                 if( !this->p->quiet )
-                    printf("skill %5d, seq %5d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", q, this->p->nSeq, fr->ndat, fr->iter, fr->pO0, fr->pO, fr->conv);
+                    printf("skill %5d, seq %5d, dat %8d, iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n", q, this->p->nSeq, fr->ndat, fr->iter, fr->pO0, fr->pO, fr->conv);
             }
         } else {
             for(q=0; q<nfbs; q++) {
@@ -1263,8 +1263,8 @@ NUMBER HMMProblem::GradientDescent() {
         }
         if(this->p->solver==METHOD_GBB) {
             fb->init(FBS_GRADm1);
-            fb->init(FBS_PARm2);
         }
+        fb->init(FBS_PARm2); // do this for all in order to capture oscillation, e.g. if new param at t is close to param at t-2 (tolerance)
 
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
         for(x=0; x<this->p->nSeq; x++) { original_ks[x] = this->p->all_data[x].k; this->p->all_data[x].k = 0; } // save original k's
@@ -1272,7 +1272,7 @@ NUMBER HMMProblem::GradientDescent() {
         for(x=0; x<this->p->nSeq; x++) { this->p->all_data[x].k = original_ks[x]; } // restore original k's
         free(original_ks);
         if(!this->p->quiet)
-            printf("skill one, seq %5d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", this->p->nSeq, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
+            printf("skill one, seq %5d, dat %8d, iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n", this->p->nSeq, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
         if(this->p->single_skill==2) {
             for(NCAT y=0; y<this->sizes[0]; y++) { // copy the rest
                 NUMBER *aPI = this->getPI(y);
@@ -1281,7 +1281,7 @@ NUMBER HMMProblem::GradientDescent() {
                 cpy3Params(fb->pi, fb->A, fb->B, aPI, aA, aB, this->p->nS, this->p->nO);
             }
         }// force single skill
-        delete fb;//PAR
+        delete fb;
 	}
 	//
 	// Main fit
@@ -1320,8 +1320,8 @@ NUMBER HMMProblem::GradientDescent() {
             }
             if(this->p->solver==METHOD_GBB) {
                 fb->init(FBS_GRADm1);
-                fb->init(FBS_PARm2);
             }
+            fb->init(FBS_PARm2); // do this for all in order to capture oscillation, e.g. if new param at t is close to param at t-2 (tolerance)
             
             fr = GradientDescentBit(fb);
             delete fb;
@@ -1329,7 +1329,7 @@ NUMBER HMMProblem::GradientDescent() {
             if( ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
                 loglik += fr.pO*(fr.pO>0); // reduction'ed
                 if(!this->p->quiet)
-                    printf("skill %5d, seq %5d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", x, xndat, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
+                    printf("skill %5d, seq %5d, dat %8d, iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n", x, xndat, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
             }
         } // for all skills
     }// if not force single skill
@@ -1403,7 +1403,7 @@ NUMBER HMMProblem::BaumWelch() {
         for(x=0; x<this->p->nSeq; x++) { this->p->all_data[x].k = original_ks[x]; } // restore original k's
         free(original_ks);
         if(!this->p->quiet)
-            printf("skill one, seq %4d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",  this->p->nSeq, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
+            printf("skill one, seq %4d, dat %8d, iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",  this->p->nSeq, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
         if(this->p->single_skill==2) {
             for(NCAT y=0; y<this->sizes[0]; y++) { // copy the rest
                 NUMBER *aPI = this->getPI(y);
@@ -1412,7 +1412,7 @@ NUMBER HMMProblem::BaumWelch() {
                 cpy3Params(fb->pi, fb->A, fb->B, aPI, aA, aB, this->p->nS, this->p->nO);
             }
         }// force single skill
-        delete fb;//PAR
+        delete fb;
     }
 	
 	//
@@ -1439,7 +1439,7 @@ NUMBER HMMProblem::BaumWelch() {
             if( ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
                 loglik += fr.pO*(fr.pO>0); // reduction'ed
                 if(!this->p->quiet)
-                    printf("skill %4d, seq %4d, dat %8d, iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n", k,  this->p->k_numg[k], fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
+                    printf("skill %4d, seq %4d, dat %8d, iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n", k,  this->p->k_numg[k], fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
             }
         } // for all skills
 //    }//PAR

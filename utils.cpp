@@ -566,7 +566,7 @@ void set_param_defaults(struct param *param) {
 	param->ArmijoC1            = 1e-4;
 	param->ArmijoC2            = 0.9; // since we're not newton method
 	param->ArmijoReduceFactor  = 2;//1/0.9;//
-	param->ArmijoSeed          = 1; //1; - since we use smooth stepping 1 is the only thing we need
+	param->ArmijoSeed          = 0.5; //1; - since we use smooth stepping 1 is the only thing we need
     param->ArmijoMinStep       = 0.001; //  0.000001~20steps, 0.001~10steps
     // coord descend
     param->first_iteration_qualify = 0;

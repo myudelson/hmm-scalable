@@ -229,7 +229,7 @@ NUMBER HMMProblemKT::GradientDescentKT1() {
                     HMMProblem::computeAlphaAndPOParam(this->p->k_numg[k], this->p->k_g_data[k]);
                     pO += HMMProblem::getSumLogPOPara(this->p->k_numg[k], this->p->k_g_data[k]);
                 }
-				printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",iter,pO0,pO,conv);
+				printf("single skill iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",iter,pO0,pO,conv);
 			}
 			iter ++;
 		}// single skill loop
@@ -282,7 +282,7 @@ NUMBER HMMProblemKT::GradientDescentKT1() {
                 //                pO = HMMProblem::getSumLogPOPara(xndat, x_data);
                 loglik += pO*(pO>0);
                 if(!this->p->quiet)
-                    printf("skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",k,iter,pO0,pO,conv);
+                    printf("skill %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",k,iter,pO0,pO,conv);
 			}
 			iter ++;
 		} // main solver loop
@@ -420,7 +420,7 @@ NUMBER HMMProblemKT::GradientDescentKT2() {
                     HMMProblem::computeAlphaAndPOParam(this->p->k_numg[k], this->p->k_g_data[k]);
                     pO += HMMProblem::getSumLogPOPara(this->p->k_numg[k], this->p->k_g_data[k]);
                 }
-				printf("single skill iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",iter,pO0,pO,conv);
+				printf("single skill iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",iter,pO0,pO,conv);
 			}
 			iter ++;
 		}// single skill loop
@@ -467,7 +467,7 @@ NUMBER HMMProblemKT::GradientDescentKT2() {
                 //                pO = HMMProblem::getSumLogPOPara(xndat, x_data);
                 loglik += pO*(pO>0);
                 if(!this->p->quiet)
-                    printf("skill %4d iter#%3d p(O|param)= %15.7f -> %15.7f, conv=%d\n",k,iter,pO0,pO,conv);
+                    printf("skill %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",k,iter,pO0,pO,conv);
 			}
 			iter ++;
 		} // main solver loop
