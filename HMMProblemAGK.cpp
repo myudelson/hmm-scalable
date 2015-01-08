@@ -335,6 +335,7 @@ NUMBER HMMProblemAGK::GradientDescent() {
         if(this->p->block_fitting[2]!=0) fb->B  = NULL;
         
         fb->init(FBS_PARm1);
+        fb->init(FBS_PARm2);
         fb->init(FBS_GRAD);
         if(this->p->solver==METHOD_CGD) {
             fb->init(FBS_GRADm1);
@@ -385,6 +386,7 @@ NUMBER HMMProblemAGK::GradientDescent() {
                         if(this->p->block_fitting[2]!=0) fb->B  = NULL;
                         
                         fb->init(FBS_PARm1);
+                        fb->init(FBS_PARm2);
                         fb->init(FBS_GRAD);
                         if(this->p->solver==METHOD_CGD) {
                             fb->init(FBS_GRADm1);
@@ -437,6 +439,7 @@ NUMBER HMMProblemAGK::GradientDescent() {
                         // ^^^^^^^^^^^^^^^^^^^^^
                         fb->Cslice = 1;
                         fb->init(FBS_PARm1);
+                        fb->init(FBS_PARm2);
                         fb->init(FBS_GRAD);
                         if(this->p->solver==METHOD_CGD) {
                             fb->init(FBS_GRADm1);

@@ -173,7 +173,7 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 	NPAR *at_hi = Calloc(NPAR, (size_t)size);
 	NPAR *at_lo = Calloc(NPAR, (size_t)size);
 	NUMBER err, lambda;
-	while( !issimplexbounded(ar, lb, ub, size)) {
+	while( !issimplexbounded(ar, lb, ub, size) ) {
         lambda = 0;
 		num_at_hi = 0;
 		num_at_lo = 0;
@@ -192,18 +192,51 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 		}
 		if (size > (num_at_hi + num_at_lo) )
 			lambda = err / (size - (num_at_hi + num_at_lo));
+
+        int will_suffer_from_lambda = 0; // those values that, if lessened by lambda, will be below 0 or over 1
+        NUMBER err2 = 0.0, lambda2 = 0.0;
+        for(i=0; i<size; i++) {
+            if( (at_lo[i]==0 && at_hi[i]==0) ) {
+                if( ar[i] < lambda ) {
+                    will_suffer_from_lambda++;
+                    err2 += ar[i];
+                }
+            }
+        }
         
-		for(i=0; i<size; i++)
-			ar[i] -= (at_lo[i]==0 && at_hi[i]==0)?lambda:0;
+        if( will_suffer_from_lambda == 0 ) {
+            for(i=0; i<size; i++) {
+                ar[i] -= (at_lo[i]==0 && at_hi[i]==0)?lambda:0;
+            }
+        } else {
+            lambda2 = (err-err2) / ( size - (num_at_hi + num_at_lo) - will_suffer_from_lambda );
+            for(i=0; i<size; i++) {
+                if( at_lo[i]==0 && at_hi[i]==0 ) {
+                    ar[i] = (ar[i]<lambda)?0:(ar[i]-lambda2);
+                }
+            }
+        }
 		
 	} // until satisfied
-    // force last to be 1 - sum of all but last
-    err = 1;
-    for(i=0; i<(size-1); i++) err -= ar[i];
-    ar[size-1] = err;
-    err = 1;
-    for(i=1; i<(size-0); i++) err -= ar[i];
-    ar[0] = err;
+    // force last to be 1 - sum of all but last -- this code, actually breaks things
+//    err = 0;
+//    for(i=0; i<(size); i++) {
+//        err += ar[i];
+//    }
+//    err = 1;
+//    for(i=0; i<(size-1); i++) {
+//        err -= ar[i];
+//    }
+//    ar[size-1] = err;
+//    err = 1;
+//    for(i=1; i<(size-0); i++) {
+//        err -= ar[i];
+//    }
+//    ar[0] = err;
+    
+    for(i=0; i<size; i++)
+        if(ar[i]<0 || ar[i] >1)
+            fprintf(stderr, "ERROR! projected value is not within [0, 1] range!\n");
     
 	free(at_hi);
 	free(at_lo);

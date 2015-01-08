@@ -453,6 +453,9 @@ NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
 		for(t=0; t<x_data[x]->n; t++) {
 //			o = x_data[x]->obs[t];
 			o = this->p->dat_obs[ x_data[x]->ix[t] ];//->get( x_data[x]->ix[t] );
+            if(o>(this->p->nO-1)) {
+                int a = 0;
+            }
 			if(t==0) { // it's alpha(1,i)
                 // compute \alpha_1(i) = \pi_i b_i(o_1)
 				for(i=0; i<nS; i++) {
@@ -466,6 +469,8 @@ NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
 						x_data[x]->alpha[t][i] += x_data[x]->alpha[t-1][j] * getA(x_data[x],j,i);
 					}
 					x_data[x]->alpha[t][i] *= ((o<0)?1:getB(x_data[x],i,o)); // if observatiob unknown use 1
+                    if( x_data[x]->alpha[t][i] < 0 || x_data[x]->alpha[t][i] > 1)
+                        fprintf(stderr, "ERROR! alpha value is not within [0, 1] range!\n");
                     if(this->p->scaled==1) x_data[x]->c[t] += x_data[x]->alpha[t][i];
 				}
 			}
@@ -481,11 +486,11 @@ NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
         else {
             x_data[x]->p_O_param = 0; // 0 for non-scaled
             for(i=0; i<nS; i++) x_data[x]->p_O_param += x_data[x]->alpha[x_data[x]->n-1][i];
-            if( x_data[x]->p_O_param < 0)
-                fprintf(stderr, "ERROR! p(O|param) is negative!");
+            if( x_data[x]->p_O_param < 0 || x_data[x]->p_O_param >1 )
+                fprintf(stderr, "ERROR! p(O|param) not within [0, 1] range!\n");
             x_data[x]->loglik = -safelog(x_data[x]->p_O_param);
             if( x_data[x]->loglik < 0)
-                fprintf(stderr, "ERROR! -log( p(O|param) ) is negative!");
+                fprintf(stderr, "ERROR! -log( p(O|param) ) is negative!\n");
         }
 	} // for all groups in skill
     return ndat; //TODO, figure out a diff way to sum it, and not multiple times
@@ -1391,6 +1396,7 @@ NUMBER HMMProblem::BaumWelch() {
         if(this->p->block_fitting[2]!=0) fb->B  = NULL;
 
         fb->init(FBS_PARm1);
+        fb->init(FBS_PARm2);
         fb->init(FBS_GRAD);
         if(this->p->solver==METHOD_CGD) {
             fb->init(FBS_GRADm1);
@@ -1431,6 +1437,7 @@ NUMBER HMMProblem::BaumWelch() {
             if(this->p->block_fitting[2]!=0) fb->B  = NULL;
             
             fb->init(FBS_PARm1);
+            fb->init(FBS_PARm2);
             
             FitResult fr;
             fr = BaumWelchBit(fb);
@@ -1511,16 +1518,31 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
     while( !(compliesArmijo && compliesWolfe2) && e > this->p->ArmijoMinStep) {
 		// update
 		for(i=0; i<nS; i++) {
-            if(fb->pi != NULL)
+            if(fb->pi != NULL) {
                 fb->pi[i] = fb->PIcopy[i] - e * fb->gradPI[i];
+                if( (fb->pi[i]<0 || fb->pi[i] >1) && (fb->pi[i] > 0) && (fb->pi[i] < 1) ) {
+                    int a = 0;
+                    fprintf(stderr, "ERROR! pi value is not within [0, 1] range!\n");
+                }
+            }
             
             if(fb->A  != NULL)
-                for(j=0; j<nS; j++)
+                for(j=0; j<nS; j++) {
                     fb->A[i][j] = fb->Acopy[i][j] - e * fb->gradA[i][j];
+                    if( (fb->A[i][j]<0 || fb->A[i][j] >1) && (fb->A[i][j] > 0) && (fb->A[i][j] < 1) ) {
+                        int a = 0;
+                        fprintf(stderr, "ERROR! A value is not within [0, 1] range!\n");
+                    }
+                }
             
             if(fb->B  != NULL)
-                for(m=0; m<nO; m++)
+                for(m=0; m<nO; m++) {
                     fb->B[i][m] = fb->Bcopy[i][m] - e * fb->gradB[i][m];
+                    if( (fb->B[i][m]<0 || fb->B[i][m] >1) && (fb->B[i][m] > 0) && (fb->B[i][m] < 1) ) {
+                        int a = 0;
+                        fprintf(stderr, "ERROR! B value is not within [0, 1] range!\n");
+                    }
+                }
 		}
         // project parameters to simplex if needs be
         if(fb->projecttosimplex==1) {
