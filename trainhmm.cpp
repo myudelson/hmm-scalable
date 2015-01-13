@@ -748,8 +748,10 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
                     param.init_params = Calloc(NUMBER, (size_t)n);
                     // read params and write to params
                     param.init_params[0] = atof( strtok(argv[i],",\t\n\r") );
-                    for(int j=1; j<n; j++)
+                    for(int j=1; j<n; j++) {
                         param.init_params[j] = atof( strtok(NULL,",\t\n\r") );
+                        int a = 0;
+                    }
                 }
 				break;
 			case 'l': // lower boundaries
@@ -763,8 +765,12 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
 				param.param_lo = Calloc(NUMBER, (size_t)n);
 				// read params and write to params
 				param.param_lo[0] = atof( strtok(argv[i],",\t\n\r") );
-				for(int j=1; j<n; j++)
+                for(int j=1; j<n; j++) {
 					param.param_lo[j] = atof( strtok(NULL,",\t\n\r") );
+//                    if(param.param_lo[j] >0) {
+//                        int a = 0;
+//                    }
+                }
                 param.lo_lims_specd = true;
 				break;
 			case 'u': // upper boundaries
@@ -778,8 +784,12 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
 				param.param_hi = Calloc(NUMBER, (size_t)n);
 				// read params and write to params
 				param.param_hi[0] = atof( strtok(argv[i],",\t\n\r") );
-				for(int j=1; j<n; j++)
+                for(int j=1; j<n; j++) {
 					param.param_hi[j] = atof( strtok(NULL,",\t\n\r") );
+//                    if(param.param_hi[j] < 1) {
+//                        int a = 0;
+//                    }
+                }
                 param.hi_lims_specd = true;
 				break;
 			case 'B': // block fitting

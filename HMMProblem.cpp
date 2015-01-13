@@ -76,7 +76,8 @@ void HMMProblem::init(struct param *param) {
     //
     // setup params
     //
-	NPAR i, j, idx, offset;
+	NPAR i, j;
+    int offset, idx;
 	NUMBER sumPI = 0;
 	NUMBER sumA[this->p->nS];
 	NUMBER sumB[this->p->nS];
@@ -91,20 +92,20 @@ void HMMProblem::init(struct param *param) {
 	}
 	a_PI[nS-1] = 1 - sumPI;
 	// populate A
-	offset = (NPAR)(nS-1);
+	offset = (int)(nS-1);
 	for(i=0; i<nS; i++) {
 		for(j=0; j<((nS)-1); j++) {
-			idx = (NPAR)(offset + i*((nS)-1) + j);
+			idx = (int)(offset + i*((nS)-1) + j);
 			a_A[i][j] = this->p->init_params[idx];
 			sumA[i]  += this->p->init_params[idx];
 		}
 		a_A[i][((nS)-1)]  = 1 - sumA[i];
 	}
 	// populate B
-	offset = (NPAR)((nS-1) + nS*(nS-1));
+	offset = (int)((nS-1) + nS*(nS-1));
 	for(i=0; i<nS; i++) {
 		for(j=0; j<((nO)-1); j++) {
-			idx = (NPAR)(offset + i*((nO)-1) + j);
+			idx = (int)(offset + i*((nO)-1) + j);
 			a_B[i][j] = this->p->init_params[idx];
 			sumB[i] += this->p->init_params[idx];
 		}
@@ -150,15 +151,15 @@ void HMMProblem::init(struct param *param) {
 	offset = nS;
 	for(i=0; i<nS; i++)
 		for(j=0; j<nS; j++) {
-			idx = (NPAR)(offset + i*nS + j);
+			idx = (int)(offset + i*nS + j);
 			lbA[i][j] = this->p->param_lo[idx];
 			ubA[i][j] = this->p->param_hi[idx];
 		}
 	// *B
-	offset = (NPAR)(nS + nS*nS);
+	offset = (int)(nS + nS*nS);
 	for(i=0; i<nS; i++)
 		for(j=0; j<nO; j++) {
-			idx = (NPAR)(offset + i*nO + j);
+			idx = (int)(offset + i*nO + j);
 			lbB[i][j] = this->p->param_lo[idx];
 			ubB[i][j] = this->p->param_hi[idx];
 		}
