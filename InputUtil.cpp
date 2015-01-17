@@ -220,6 +220,11 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
 		striped_dat_obs->add(obs); // dat_obs[t] = (NPAR)obs;
 		if( (obs >= 0) && ((param->nO-1) < obs) )
 			param->nO = (NPAR)(obs + 1); // obs[t] + 1;
+
+        if(obs<0) {
+            int a = 0;
+        }
+        
 		// Group
 		col = strtok(NULL,"\t\n\r");
 		if(col == NULL) {
@@ -391,6 +396,14 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
     
     // copy striped to lined
     param->dat_obs = striped_dat_obs->toArray();
+    
+    for(NDAT t=0; t<param->N; t++) {
+        if( param->dat_obs[t] <0 ) {
+            int a = 0;
+        }
+    }
+    
+    
     delete striped_dat_obs;
     param->dat_group = striped_dat_group->toArray();
     delete striped_dat_group;

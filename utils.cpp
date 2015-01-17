@@ -128,7 +128,7 @@ bool issimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 }
 
 
-void projectsimplex(NUMBER* ar, NPAR size) {
+void projectsimplexOld(NUMBER* ar, NPAR size) {
 	NPAR i, num_at_hi, num_at_lo; // number of elements at lower,upper boundary
 	NPAR *at_hi = Calloc(NPAR, (size_t)size);
 	NPAR *at_lo = Calloc(NPAR, (size_t)size);
@@ -168,11 +168,104 @@ void projectsimplex(NUMBER* ar, NPAR size) {
 	free(at_lo);
 }
 
+void projectsimplex(NUMBER* ar, NPAR size) {
+    NPAR i, num_at_hi, num_at_lo; // number of elements at lower,upper boundary
+    NPAR *at_hi = Calloc(NPAR, (size_t)size);
+    NPAR *at_lo = Calloc(NPAR, (size_t)size);
+    NUMBER err, lambda;
+    NUMBER* ar_copy = Calloc(NUMBER, (size_t)size);
+    memcpy(ar_copy, ar, (size_t)size);
+    int iter = 0;
+    while( !issimplex(ar, size) ) {
+        lambda = 0;
+        num_at_hi = 0;
+        num_at_lo = 0;
+        err = -1;
+        // threshold
+        for(i=0; i<size; i++) {
+            at_lo[i] = (ar[i]<=/*lb[i]*/0)?1:0;
+            ar[i] = (at_lo[i]==1)?/*lb[i]*/0:ar[i];
+            num_at_lo = (NPAR)( num_at_lo + at_lo[i] );
+            
+            at_hi[i] = (ar[i]>=/*ub[i]*/1)?1:0;
+            ar[i] = (at_hi[i]==1)?/*ub[i]*/1:ar[i];
+            num_at_hi = (NPAR)( num_at_hi + at_hi[i] );
+            
+            err += ar[i];
+        }
+        //		if (size > (num_at_hi + num_at_lo) )
+        //			lambda = err / (size - (num_at_hi + num_at_lo));
+        if ( err > 0 && size > num_at_lo )
+            lambda = err / (size - num_at_lo);
+        else if ( err < 0 && size > num_at_hi )
+            lambda = err / (size - num_at_hi);
+        
+        int will_suffer_from_lambda = 0; // those values that, if lessened by lambda, will be below 0 or over 1
+        NUMBER err2 = 0.0, lambda2 = 0.0;
+        for(i=0; i<size; i++) {
+            if( (at_lo[i]==0 && at_hi[i]==0) ) {
+                if( ar[i] < lambda ) {
+                    will_suffer_from_lambda++;
+                    err2 += ar[i];
+                }
+            }
+        }
+        
+        if( will_suffer_from_lambda == 0 ) {
+            for(i=0; i<size; i++) {
+                ar[i] -= (at_lo[i]==0 && err>0)?lambda:0;
+                ar[i] -= (at_hi[i]==0 && err<0)?lambda:0;
+            }
+        } else {
+            lambda2 = (err-err2) / ( size - (num_at_hi + num_at_lo) - will_suffer_from_lambda );
+            for(i=0; i<size; i++) {
+                if( at_lo[i]==0 && at_hi[i]==0 ) {
+                    ar[i] = (ar[i]<lambda)?0:(ar[i]-lambda2);
+                }
+            }
+        }
+        iter++;
+        if(iter==100) {
+            fprintf(stderr,"WARNING! Stuck in projectsimplexbounded().");
+        }
+    } // until satisfied
+    // force last to be 1 - sum of all but last -- this code, actually breaks things
+    //    err = 0;
+    //    for(i=0; i<(size); i++) {
+    //        err += ar[i];
+    //    }
+    //    err = 1;
+    //    for(i=0; i<(size-1); i++) {
+    //        err -= ar[i];
+    //    }
+    //    ar[size-1] = err;
+    //    err = 1;
+    //    for(i=1; i<(size-0); i++) {
+    //        err -= ar[i];
+    //    }
+    //    ar[0] = err;
+    
+    NUMBER sum = 0.0;
+    for(i=0; i<size; i++) {
+        sum += ar[i];
+        if(ar[i]<0 || ar[i] >1)
+            fprintf(stderr, "ERROR! projected value is not within [0, 1] range!\n");
+    }
+    if( fabs(sum-1)>SAFETY)
+        fprintf(stderr, "ERROR! projected simplex does not sum to 1!\n");
+    
+    free(at_hi);
+    free(at_lo);
+}
+
 void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 	NPAR i, num_at_hi, num_at_lo; // number of elements at lower,upper boundary
 	NPAR *at_hi = Calloc(NPAR, (size_t)size);
 	NPAR *at_lo = Calloc(NPAR, (size_t)size);
 	NUMBER err, lambda;
+    NUMBER* ar_copy = Calloc(NUMBER, (size_t)size);
+    memcpy(ar_copy, ar, (size_t)size);
+    int iter = 0;
 	while( !issimplexbounded(ar, lb, ub, size) ) {
         lambda = 0;
 		num_at_hi = 0;
@@ -180,18 +273,22 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 		err = -1;
 		// threshold
 		for(i=0; i<size; i++) {
-			at_lo[i] = (ar[i]<lb[i])?1:0;
+			at_lo[i] = (ar[i]<=lb[i])?1:0;
 			ar[i] = (at_lo[i]==1)?lb[i]:ar[i];
 			num_at_lo = (NPAR)( num_at_lo + at_lo[i] );
 			
-			at_hi[i] = (ar[i]>ub[i])?1:0;
+			at_hi[i] = (ar[i]>=ub[i])?1:0;
 			ar[i] = (at_hi[i]==1)?ub[i]:ar[i];
 			num_at_hi = (NPAR)( num_at_hi + at_hi[i] );
 			
 			err += ar[i];
 		}
-		if (size > (num_at_hi + num_at_lo) )
-			lambda = err / (size - (num_at_hi + num_at_lo));
+//		if (size > (num_at_hi + num_at_lo) )
+//			lambda = err / (size - (num_at_hi + num_at_lo));
+        if ( err > 0 && size > num_at_lo )
+            lambda = err / (size - num_at_lo);
+        else if ( err < 0 && size > num_at_hi )
+            lambda = err / (size - num_at_hi);
 
         int will_suffer_from_lambda = 0; // those values that, if lessened by lambda, will be below 0 or over 1
         NUMBER err2 = 0.0, lambda2 = 0.0;
@@ -206,7 +303,8 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
         
         if( will_suffer_from_lambda == 0 ) {
             for(i=0; i<size; i++) {
-                ar[i] -= (at_lo[i]==0 && at_hi[i]==0)?lambda:0;
+                ar[i] -= (at_lo[i]==0 && err>0)?lambda:0;
+                ar[i] -= (at_hi[i]==0 && err<0)?lambda:0;
             }
         } else {
             lambda2 = (err-err2) / ( size - (num_at_hi + num_at_lo) - will_suffer_from_lambda );
@@ -216,7 +314,10 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
                 }
             }
         }
-		
+        iter++;
+        if(iter==100) {
+            fprintf(stderr,"WARNING! Stuck in projectsimplexbounded().");
+        }
 	} // until satisfied
     // force last to be 1 - sum of all but last -- this code, actually breaks things
 //    err = 0;
@@ -234,9 +335,14 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 //    }
 //    ar[0] = err;
     
-    for(i=0; i<size; i++)
+    NUMBER sum = 0.0;
+    for(i=0; i<size; i++) {
+        sum += ar[i];
         if(ar[i]<0 || ar[i] >1)
             fprintf(stderr, "ERROR! projected value is not within [0, 1] range!\n");
+    }
+    if( fabs(sum-1)>SAFETY)
+        fprintf(stderr, "ERROR! projected simplex does not sum to 1!\n");
     
 	free(at_hi);
 	free(at_lo);
@@ -527,6 +633,7 @@ void set_param_defaults(struct param *param) {
 	// configurable - set
 	param->tol                   = 0.01;
 	param->scaled                = 0;
+    param->do_not_check_constraints = 0;
 	param->sliced                = 0;
     param->duplicate_console     = 0;
 	param->maxiter               = 200;

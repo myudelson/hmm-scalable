@@ -91,28 +91,27 @@ void HMMProblemAGK::init(struct param *param) {
 	}
     
     // mass produce PI's/PIg's, A's, B's
-	if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-		this->pi  = init2D<NUMBER>((NDAT)nK, (NDAT)nS);
-		this->A   = init3D<NUMBER>((NDAT)nK, (NDAT)nS, (NDAT)nS);
-		this->Ag  = init3D<NUMBER>((NDAT)nG, (NDAT)nS, (NDAT)nS);
-		this->B   = init3D<NUMBER>((NDAT)nK, (NDAT)nS, (NDAT)nO);
-        NCAT x;
-		for(x=0; x<nK; x++) {
-			cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
-			cpy2D<NUMBER>(a_A,  this->A[x],  (NDAT)nS, (NDAT)nS);
-			cpy2D<NUMBER>(a_B,  this->B[x],  (NDAT)nS, (NDAT)nO);
+    if( this->p->do_not_check_constraints==0 && !checkPIABConstraints(a_PI, a_A, a_B)) {
+        fprintf(stderr,"params do not meet constraints.\n");
+        exit(1);
+    }
+    this->pi  = init2D<NUMBER>((NDAT)nK, (NDAT)nS);
+    this->A   = init3D<NUMBER>((NDAT)nK, (NDAT)nS, (NDAT)nS);
+    this->Ag  = init3D<NUMBER>((NDAT)nG, (NDAT)nS, (NDAT)nS);
+    this->B   = init3D<NUMBER>((NDAT)nK, (NDAT)nS, (NDAT)nO);
+    NCAT x;
+    for(x=0; x<nK; x++) {
+        cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
+        cpy2D<NUMBER>(a_A,  this->A[x],  (NDAT)nS, (NDAT)nS);
+        cpy2D<NUMBER>(a_B,  this->B[x],  (NDAT)nS, (NDAT)nO);
+    }
+    // PIg start with "no-effect" params,PI[i] = 1/nS
+    for(x=0; x<nG; x++) {
+        for(i=0; i<nS; i++) {
+            for(j=0; j<nS; j++)
+                this->Ag[x][i][j] = (NUMBER)1/nS;
         }
-        // PIg start with "no-effect" params,PI[i] = 1/nS
-		for(x=0; x<nG; x++) {
-            for(i=0; i<nS; i++) {
-                for(j=0; j<nS; j++)
-                    this->Ag[x][i][j] = (NUMBER)1/nS;
-            }
-        }
-	} else {
-		fprintf(stderr,"params do not meet constraints.\n");
-		exit(1);
-	}
+    }
     // destroy setup params
 	free(a_PI);
 	free2D<NUMBER>(a_A, (NDAT)nS);
@@ -277,7 +276,7 @@ void HMMProblemAGK::toFile(const char *filename) {
     
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
-		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
+		fprintf(fid," %12.10f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
 	NCAT k, g;
     NPAR i,j,m;
 	std::map<NCAT,std::string>::iterator it;
@@ -287,22 +286,22 @@ void HMMProblemAGK::toFile(const char *filename) {
 		fprintf(fid,"Ag\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
-				fprintf(fid,"%10.8f%s",this->Ag[g][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->Ag[g][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
     }
 	for(k=0;k<this->p->nK;k++) {
 		it = this->p->map_skill_bwd->find(k);
 		fprintf(fid,"%d\t%s\n",k,it->second.c_str());
 		fprintf(fid,"PI\t");
 		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%10.8f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
+			fprintf(fid,"%12.10f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"Ak\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
-				fprintf(fid,"%10.8f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"B\t");
 		for(i=0; i<this->p->nS; i++)
 			for(m=0; m<this->p->nO; m++)
-				fprintf(fid,"%10.8f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
 	}
 	fclose(fid);
 }
@@ -475,7 +474,7 @@ NUMBER HMMProblemAGK::GradientDescent() {
                 //
                 //            computeAlphaAndPOParam(this->p->nSeq, this->p->k_data);
                 //            ll = HMMProblem::getSumLogPOPara(this->p->nSeq, this->p->k_data);
-                //            printf("*%i ll=%15.7f, crit=%10.7f\n",i,ll,crit);
+                //            printf("*%i ll=%15.7f, crit=%12.10f\n",i,ll,crit);
 //                #pragma omp single//PAR
 //                {//PAR
                     i++;
@@ -601,8 +600,8 @@ void HMMProblemAGK::readModelBody(FILE *fid, struct param *param, NDAT *line_no,
 		// read B
         fscanf(fid,"B\t");
 		for(i=0; i<this->p->nS; i++)
-			for(m=0; m<this->p->nS; m++) {
-                if(i==(this->p->nS-1) && m==(this->p->nS-1)) {
+			for(m=0; m<this->p->nO; m++) {
+                if(i==(this->p->nS-1) && m==(this->p->nO-1)) {
                     fscanf(fid,"%[^\n]\n", col); // last one;
                     this->B[idxk][i][m] = atof(col);
                 }

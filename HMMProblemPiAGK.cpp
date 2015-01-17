@@ -97,30 +97,29 @@ void HMMProblemPiAGK::init(struct param *param) {
 	}
     
     // mass produce PI's/PIg's, A's, B's
-	if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-		this->pi  = init2D<NUMBER>(nK, nS);
-		this->A   = init3D<NUMBER>(nK, nS, nS);
-		this->B   = init3D<NUMBER>(nK, nS, nO);
-		this->PIg = init2D<NUMBER>(nG, nS);
-		this->Ag  = init3D<NUMBER>(nG, nS, nS);
-        NCAT x;
-		for(x=0; x<nK; x++) {
-			cpy1D<NUMBER>(a_PI, this->pi[x], nS);
-			cpy2D<NUMBER>(a_A,  this->A[x],  nS, nS);
-			cpy2D<NUMBER>(a_B,  this->B[x],  nS, nO);
+    if( this->p->do_not_check_constraints==0 && !checkPIABConstraints(a_PI, a_A, a_B)) {
+        fprintf(stderr,"params do not meet constraints.\n");
+        exit(1);
+    }
+    this->pi  = init2D<NUMBER>(nK, nS);
+    this->A   = init3D<NUMBER>(nK, nS, nS);
+    this->B   = init3D<NUMBER>(nK, nS, nO);
+    this->PIg = init2D<NUMBER>(nG, nS);
+    this->Ag  = init3D<NUMBER>(nG, nS, nS);
+    NCAT x;
+    for(x=0; x<nK; x++) {
+        cpy1D<NUMBER>(a_PI, this->pi[x], nS);
+        cpy2D<NUMBER>(a_A,  this->A[x],  nS, nS);
+        cpy2D<NUMBER>(a_B,  this->B[x],  nS, nO);
+    }
+    // PIg start with "no-effect" params,PI[i] = 1/nS
+    for(x=0; x<nG; x++) {
+        for(i=0; i<nS; i++) {
+            this->PIg[x][i] = (NUMBER)1/nS;
+            for(j=0; j<nS; j++)
+                this->Ag[x][i][j] = (NUMBER)1/nS;
         }
-        // PIg start with "no-effect" params,PI[i] = 1/nS
-		for(x=0; x<nG; x++) {
-            for(i=0; i<nS; i++) {
-                this->PIg[x][i] = (NUMBER)1/nS;
-                for(j=0; j<nS; j++)
-                    this->Ag[x][i][j] = (NUMBER)1/nS;
-            }
-        }
-	} else {
-		fprintf(stderr,"params do not meet constraints.\n");
-		exit(1);
-	}
+    }
     // destroy setup params
 	free(a_PI);
 	free2D<NUMBER>(a_A, nS);
@@ -340,7 +339,7 @@ void HMMProblemPiAGK::toFile(const char *filename) {
     
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
-		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
+		fprintf(fid," %12.10f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
 	NCAT k, g;
     NPAR i,j,m;
 	std::map<NCAT,std::string>::iterator it;
@@ -349,26 +348,26 @@ void HMMProblemPiAGK::toFile(const char *filename) {
 		fprintf(fid,"%d\t%s\n",g,it->second.c_str());
 		fprintf(fid,"PIg\t");
 		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%10.8f%s",this->PIg[g][i],(i==(this->p->nS-1))?"\n":"\t");
+			fprintf(fid,"%12.10f%s",this->PIg[g][i],(i==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"Ag\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
-				fprintf(fid,"%10.8f%s",this->Ag[g][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->Ag[g][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
     }
 	for(k=0;k<this->p->nK;k++) {
 		it = this->p->map_skill_bwd->find(k);
 		fprintf(fid,"%d\t%s\n",k,it->second.c_str());
 		fprintf(fid,"PIk\t");
 		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%10.8f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
+			fprintf(fid,"%12.10f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"Ak\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
-				fprintf(fid,"%10.8f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"B\t");
 		for(i=0; i<this->p->nS; i++)
 			for(m=0; m<this->p->nO; m++)
-				fprintf(fid,"%10.8f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
 	}
 	fclose(fid);
 }
@@ -670,8 +669,8 @@ void HMMProblemPiAGK::readModelBody(FILE *fid, struct param* param, NDAT *line_n
 		// read B
         fscanf(fid,"B\t");
 		for(i=0; i<this->p->nS; i++)
-			for(m=0; m<this->p->nS; m++) {
-                if(i==(this->p->nS-1) && m==(this->p->nS-1)) {
+			for(m=0; m<this->p->nO; m++) {
+                if(i==(this->p->nS-1) && m==(this->p->nO-1)) {
                     fscanf(fid,"%[^\n]\n", col); // last one;
                     this->B[idxk][i][m] = atof(col);
                 }

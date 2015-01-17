@@ -84,7 +84,7 @@ void HMMProblemKT::toFile(const char *filename) {
     
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
-		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
+		fprintf(fid," %12.10f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
 	NCAT k;
 	std::map<NCAT,std::string>::iterator it;
 	for(k=0;k<this->p->nK;k++) {
@@ -93,19 +93,19 @@ void HMMProblemKT::toFile(const char *filename) {
 		NPAR i,j,m;
 		fprintf(fid,"PI\t");
 		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%10.8f%s",this->PI[k][i],(i==(this->p->nS-1))?"\n":"\t");
+			fprintf(fid,"%12.10f%s",this->PI[k][i],(i==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"A\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
-				fprintf(fid,"%10.8f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"B\t");
 		for(i=0; i<this->p->nS; i++)
 			for(m=0; m<this->p->nO; m++)
-				fprintf(fid,"%10.8f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
 	}
 	fprintf(fid,"Transfer matrix");
     for(NDAT r=0; r<( ((NDAT)this->p->nK)*((NDAT)this->p->nK) + (NDAT)this->p->nK); r++)
-        fprintf(fid,"%s%10.8f",(r%(this->p->nK + 1)==0)?"\n":"\t",this->liblinear_weights[r]);
+        fprintf(fid,"%s%12.10f",(r%(this->p->nK + 1)==0)?"\n":"\t",this->liblinear_weights[r]);
 	fprintf(fid,"\n");
     
 	fclose(fid);

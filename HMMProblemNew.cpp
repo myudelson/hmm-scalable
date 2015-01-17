@@ -1464,7 +1464,7 @@ void HMMProblem::toFileSkill(const char *filename) {
     
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
-		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
+		fprintf(fid," %12.10f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
     
 	NCAT k;
 	std::map<NCAT,std::string>::iterator it;
@@ -1474,15 +1474,15 @@ void HMMProblem::toFileSkill(const char *filename) {
 		NPAR i,j,m;
 		fprintf(fid,"PI\t");
 		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%10.8f%s",this->PI[k][i],(i==(this->p->nS-1))?"\n":"\t");
+			fprintf(fid,"%12.10f%s",this->PI[k][i],(i==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"A\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
-				fprintf(fid,"%10.8f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"B\t");
 		for(i=0; i<this->p->nS; i++)
 			for(m=0; m<this->p->nO; m++)
-				fprintf(fid,"%10.8f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
 	}
 	fclose(fid);
 }
@@ -1499,7 +1499,7 @@ void HMMProblem::toFileGroup(const char *filename) {
 
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
-		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
+		fprintf(fid," %12.10f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
 	NCAT g;
 	std::map<NCAT,std::string>::iterator it;
 	for(g=0;g<this->p->nG;g++) {
@@ -1508,15 +1508,15 @@ void HMMProblem::toFileGroup(const char *filename) {
 		NPAR i,j,m;
 		fprintf(fid,"PI\t");
 		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%10.8f%s",this->PI[g][i],(i==(this->p->nS-1))?"\n":"\t");
+			fprintf(fid,"%12.10f%s",this->PI[g][i],(i==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"A\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
-				fprintf(fid,"%10.8f%s",this->A[g][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->A[g][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"B\t");
 		for(i=0; i<this->p->nS; i++)
 			for(m=0; m<this->p->nO; m++)
-				fprintf(fid,"%10.8f%s",this->B[g][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->B[g][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
 	}
 	fclose(fid);
 }
@@ -1603,7 +1603,7 @@ void HMMProblem::toFileGroup(const char *filename) {
 //            ll -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1 - this->null_skill_obs_prob);
 //            if(this->p->predictions>0 && output_this) // write predictions file if it was opened
 //                for(m=0; m<nO; m++)
-//                    fprintf(fid,"%10.8f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
+//                    fprintf(fid,"%12.10f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
 //            continue;
 //        }
 //        // produce prediction and copy to result
@@ -1636,13 +1636,13 @@ void HMMProblem::toFileGroup(const char *filename) {
 //        }
 //        local_know[0] = 0;
 //        for(int l=0; l<n; l++)
-//            sprintf(local_know,"%s%s%10.8f",local_know,(strlen(local_know)>0)?",":"",group_skill_map[g][ ar[l] ][0]);
+//            sprintf(local_know,"%s%s%12.10f",local_know,(strlen(local_know)>0)?",":"",group_skill_map[g][ ar[l] ][0]);
 //        if(this->p->predictions>0 && output_this) { // write predictions file if it was opened
 //            for(m=0; m<nO; m++)
-//                fprintf(fid,"%10.8f%s",local_pred[m],(m<(nO-1))?"\t":"\n");
+//                fprintf(fid,"%12.10f%s",local_pred[m],(m<(nO-1))?"\t":"\n");
 ////            fprintf(fid,"%s\n",local_know);
 //            //            for(i=0; i<nS; i++)
-//            //                fprintf(fid,"%10.8f%s",local_know[i],(i<(nS-1))?"\t":"\n");
+//            //                fprintf(fid,"%12.10f%s",local_know[i],(i<(nS-1))?"\t":"\n");
 //        }
 //        rmse += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
 //        rmse_no_null += pow(isTarget-local_pred[this->p->metrics_target_obs],2);

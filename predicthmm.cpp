@@ -100,6 +100,13 @@ int main (int argc, char ** argv) {
     // copy partial info from param_model to param
     if(param.nO==0) param.nO = param_model.nO;
 	
+    // copy number of states from the model
+    param.nS = param_model.nS;
+    
+    // if number of states or observations >2, then no check
+    if( param.nO>2 || param.nS>2)
+        param.do_not_check_constraints = 1;
+    
     //
     // create hmm Object
     //
@@ -136,7 +143,7 @@ int main (int argc, char ** argv) {
         metrics = Calloc(NUMBER, (size_t)7);// LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
 //    }
 //    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*only unlabelled*/);
-    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, false/*all, not only unlabelled*/);
+    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, param.predictions==1/*1 -- only unlabelled, 2 -- all*/);
 //    predict(predict_file, hmm);
 	if(param.quiet == 0)
 		printf("predicting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
@@ -343,7 +350,7 @@ void predict(const char *predict_file, HMMProblem *hmm) {
 			//	result[t][m] = param.null_obs_ratio[m];
 			if(o==-1 || param.predictions) {// if output
 				for(m=0; m<param.nO; m++)
-					fprintf(fid,"%10.8f%s",hmm->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
+					fprintf(fid,"%12.10f%s",hmm->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
 				predict_idx++;
 			}
 			continue;
@@ -375,7 +382,7 @@ void predict(const char *predict_file, HMMProblem *hmm) {
             }// observations
             if(param.predictions>0 || o==-1) { // write predictions file if it was opened
                 for(m=0; m<param.nO; m++)
-                    fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
+                    fprintf(fid,"%12.10f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
             }
         }// for all subskills
 	} // for all data

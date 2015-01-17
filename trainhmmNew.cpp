@@ -1001,7 +1001,7 @@ void cross_validate(NUMBER* metrics, const char *filename) {
             ll -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
             if(param.predictions>0) // write predictions file if it was opened
                 for(m=0; m<param.nO; m++)
-                    fprintf(fid,"%10.8f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
+                    fprintf(fid,"%12.10f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
             continue;
         }
         hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt);
@@ -1027,7 +1027,7 @@ void cross_validate(NUMBER* metrics, const char *filename) {
 //            local_pred[m] /= n;
         if(param.predictions>0) // write predictions file if it was opened
             for(m=0; m<param.nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
+                fprintf(fid,"%12.10f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
         rmse += pow(isTarget-local_pred[param.cv_target_obs],2);
         rmse_no_null += pow(isTarget-local_pred[param.cv_target_obs],2);
         accuracy += isTarget == (local_pred[param.cv_target_obs]>=0.5);
@@ -1180,7 +1180,7 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
             ll -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
             if(param.predictions>0) // write predictions file if it was opened
                 for(m=0; m<param.nO; m++)
-                    fprintf(fid,"%10.8f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
+                    fprintf(fid,"%12.10f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
             continue;
         }
         hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt);
@@ -1206,7 +1206,7 @@ void cross_validate_item(NUMBER* metrics, const char *filename) {
         //            local_pred[m] /= n;
         if(param.predictions>0) // write predictions file if it was opened
             for(m=0; m<param.nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
+                fprintf(fid,"%12.10f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
         rmse += pow(isTarget-local_pred[param.cv_target_obs],2);
         rmse_no_null += pow(isTarget-local_pred[param.cv_target_obs],2);
         accuracy += isTarget == (local_pred[param.cv_target_obs]>=0.5);
@@ -1360,7 +1360,7 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
             ll -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
             if(param.predictions>0) // write predictions file if it was opened
                 for(m=0; m<param.nO; m++)
-                    fprintf(fid,"%10.8f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
+                    fprintf(fid,"%12.10f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
             continue;
         }
         hmms[f]->producePCorrect(group_skill_map, local_pred, ar, n, &dt);
@@ -1386,7 +1386,7 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename) {
         //            local_pred[m] /= n;
         if(param.predictions>0) // write predictions file if it was opened
             for(m=0; m<param.nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
+                fprintf(fid,"%12.10f%s",local_pred[m],(m<(param.nO-1))?"\t":"\n");
         rmse += pow(isTarget-local_pred[param.cv_target_obs],2);
         rmse_no_null += pow(isTarget-local_pred[param.cv_target_obs],2);
         accuracy += isTarget == (local_pred[param.cv_target_obs]>=0.5);

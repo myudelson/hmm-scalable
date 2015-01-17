@@ -263,11 +263,11 @@ void HMMProblemPiGKww::toFile(const char *filename) {
     
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
-		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
+		fprintf(fid," %12.10f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
     /*vvdiffvv*/
 	fprintf(fid,"Student and skill component ratios\t");
-	fprintf(fid,"%10.7f\t%10.7f\t%10.7f\n",this->ww[0],this->ww[1],this->ww[2]);
-//	fprintf(fid,"%10.7f\t%10.7f\n",this->ww[0],this->ww[1]);
+	fprintf(fid,"%12.10f\t%12.10f\t%12.10f\n",this->ww[0],this->ww[1],this->ww[2]);
+//	fprintf(fid,"%12.10f\t%12.10f\n",this->ww[0],this->ww[1]);
     /*^^diff^^*/
 	NCAT k, g;
     NPAR i,j,m;
@@ -277,22 +277,22 @@ void HMMProblemPiGKww::toFile(const char *filename) {
 		fprintf(fid,"%d\t%s\n",g,it->second.c_str());
 		fprintf(fid,"PIg\t");
 		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%10.8f%s",this->PIg[g][i],(i==(this->p->nS-1))?"\n":"\t");
+			fprintf(fid,"%12.10f%s",this->PIg[g][i],(i==(this->p->nS-1))?"\n":"\t");
     }
 	for(k=0;k<this->p->nK;k++) {
 		it = this->p->map_skill_bwd->find(k);
 		fprintf(fid,"%d\t%s\n",k,it->second.c_str());
 		fprintf(fid,"PIk\t");
 		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%10.8f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
+			fprintf(fid,"%12.10f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"A\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
-				fprintf(fid,"%10.8f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"B\t");
 		for(i=0; i<this->p->nS; i++)
 			for(m=0; m<this->p->nO; m++)
-				fprintf(fid,"%10.8f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
 	}
 	fclose(fid);
 }
@@ -643,8 +643,8 @@ void HMMProblemPiGKww::readModelBody(FILE *fid, struct param* param, NDAT *line_
 		// read B
         fscanf(fid,"B\t");
 		for(i=0; i<this->p->nS; i++)
-			for(m=0; m<this->p->nS; m++) {
-                if(i==(this->p->nS-1) && m==(this->p->nS-1)) {
+			for(m=0; m<this->p->nO; m++) {
+                if(i==(this->p->nS-1) && m==(this->p->nO-1)) {
                     fscanf(fid,"%[^\n]\n", col); // last one;
                     this->B[idxk][i][m] = atof(col);
                 }

@@ -113,21 +113,21 @@ void HMMProblem::init(struct param *param) {
 	}
     
     // mass produce PI's, A's, B's
-	if( checkPIABConstraints(a_PI, a_A, a_B) ) {
-		this->pi = init2D<NUMBER>((NDAT)this->sizes[0], (NDAT)nS);
-		this->A =  init3D<NUMBER>((NDAT)this->sizes[1], (NDAT)nS, (NDAT)nS);
-		this->B =  init3D<NUMBER>((NDAT)this->sizes[2], (NDAT)nS, (NDAT)nO);
-        NCAT x;
-		for(x=0; x<this->sizes[0]; x++)
-			cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
-		for(x=0; x<this->sizes[1]; x++)
-			cpy2D<NUMBER>(a_A, this->A[x], (NDAT)nS, (NDAT)nS);
-		for(x=0; x<this->sizes[2]; x++)
-			cpy2D<NUMBER>(a_B, this->B[x], (NDAT)nS, (NDAT)nO);
-	} else {
-		fprintf(stderr,"params do not meet constraints.\n");
-		exit(1);
-	}
+    if( this->p->do_not_check_constraints==0 && !checkPIABConstraints(a_PI, a_A, a_B)) {
+        fprintf(stderr,"params do not meet constraints.\n");
+        exit(1);
+    }
+    this->pi = init2D<NUMBER>((NDAT)this->sizes[0], (NDAT)nS);
+    this->A =  init3D<NUMBER>((NDAT)this->sizes[1], (NDAT)nS, (NDAT)nS);
+    this->B =  init3D<NUMBER>((NDAT)this->sizes[2], (NDAT)nS, (NDAT)nO);
+    NCAT x;
+    for(x=0; x<this->sizes[0]; x++)
+        cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
+    for(x=0; x<this->sizes[1]; x++)
+        cpy2D<NUMBER>(a_A, this->A[x], (NDAT)nS, (NDAT)nS);
+    for(x=0; x<this->sizes[2]; x++)
+        cpy2D<NUMBER>(a_B, this->B[x], (NDAT)nS, (NDAT)nO);
+
     // destroy setup params
 	free(a_PI);
 	free2D<NUMBER>(a_A, (NDAT)nS);
@@ -441,7 +441,17 @@ void HMMProblem::initBeta(NCAT xndat, struct data** x_data) {
 
 NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
     //    NUMBER mult_c, old_pOparam, neg_sum_log_c;
+    for(NDAT t=0; t<this->p->N; t++) {
+        if( this->p->dat_obs[t] <0 ) {
+            int a  = 0;
+        }
+    }
 	initAlpha(xndat, x_data);
+    for(NDAT t=0; t<this->p->N; t++) {
+        if( this->p->dat_obs[t] <0 ) {
+            int a  = 0;
+        }
+    }
     NPAR nS = this->p->nS;
     NDAT  ndat = 0;
 //    int parallel_now = this->p->parallel==2; //PAR
@@ -454,7 +464,7 @@ NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
 		for(t=0; t<x_data[x]->n; t++) {
 //			o = x_data[x]->obs[t];
 			o = this->p->dat_obs[ x_data[x]->ix[t] ];//->get( x_data[x]->ix[t] );
-            if(o>(this->p->nO-1)) {
+            if( o < 0) {
                 int a = 0;
             }
 			if(t==0) { // it's alpha(1,i)
@@ -470,8 +480,8 @@ NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
 						x_data[x]->alpha[t][i] += x_data[x]->alpha[t-1][j] * getA(x_data[x],j,i);
 					}
 					x_data[x]->alpha[t][i] *= ((o<0)?1:getB(x_data[x],i,o)); // if observatiob unknown use 1
-                    if( x_data[x]->alpha[t][i] < 0 || x_data[x]->alpha[t][i] > 1)
-                        fprintf(stderr, "ERROR! alpha value is not within [0, 1] range!\n");
+//                    if( x_data[x]->alpha[t][i] < 0 || x_data[x]->alpha[t][i] > 1)
+//                        fprintf(stderr, "ERROR! alpha value is not within [0, 1] range!\n");
                     if(this->p->scaled==1) x_data[x]->c[t] += x_data[x]->alpha[t][i];
 				}
 			}
@@ -487,11 +497,11 @@ NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
         else {
             x_data[x]->p_O_param = 0; // 0 for non-scaled
             for(i=0; i<nS; i++) x_data[x]->p_O_param += x_data[x]->alpha[x_data[x]->n-1][i];
-            if( x_data[x]->p_O_param < 0 || x_data[x]->p_O_param >1 )
-                fprintf(stderr, "ERROR! p(O|param) not within [0, 1] range!\n");
+//            if( x_data[x]->p_O_param < 0 || x_data[x]->p_O_param >1 )
+//                fprintf(stderr, "ERROR! p(O|param) not within [0, 1] range!\n");
             x_data[x]->loglik = -safelog(x_data[x]->p_O_param);
-            if( x_data[x]->loglik < 0)
-                fprintf(stderr, "ERROR! -log( p(O|param) ) is negative!\n");
+//            if( x_data[x]->loglik < 0)
+//                fprintf(stderr, "ERROR! -log( p(O|param) ) is negative!\n");
         }
 	} // for all groups in skill
     return ndat; //TODO, figure out a diff way to sum it, and not multiple times
@@ -720,15 +730,15 @@ void HMMProblem::toFileSkill(const char *filename) {
 		NPAR i,j,m;
 		fprintf(fid,"PI\t");
 		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%10.8f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
+			fprintf(fid,"%12.10f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"A\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
-				fprintf(fid,"%10.8f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"B\t");
 		for(i=0; i<this->p->nS; i++)
 			for(m=0; m<this->p->nO; m++)
-				fprintf(fid,"%10.8f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
 	}
 	fclose(fid);
 }
@@ -754,15 +764,15 @@ void HMMProblem::toFileGroup(const char *filename) {
 		NPAR i,j,m;
 		fprintf(fid,"PI\t");
 		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%10.8f%s",this->pi[g][i],(i==(this->p->nS-1))?"\n":"\t");
+			fprintf(fid,"%12.10f%s",this->pi[g][i],(i==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"A\t");
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
-				fprintf(fid,"%10.8f%s",this->A[g][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->A[g][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
 		fprintf(fid,"B\t");
 		for(i=0; i<this->p->nS; i++)
 			for(m=0; m<this->p->nO; m++)
-				fprintf(fid,"%10.8f%s",this->B[g][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
+				fprintf(fid,"%12.10f%s",this->B[g][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
 	}
 	fclose(fid);
 }
@@ -786,6 +796,14 @@ void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, 
         for(m=0; m<this->p->nO; m++)
             local_pred[m] /= nks;
     }
+    
+//    NUMBER sum=0;
+//    for(m=0; m<this->p->nO; m++)
+//        sum+=local_pred[m];
+//    if( fabs(sum-1)>SAFETY ) {
+//        int a = 0;
+//    }
+    
     free(local_pred_inner);
 }
 
@@ -874,7 +892,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
             }
             if(this->p->predictions>0 && output_this) // write predictions file if it was opened
                 for(m=0; m<nO; m++)
-                    fprintf(fid,"%10.8f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
+                    fprintf(fid,"%12.10f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
             continue;
         }
         // check if {g,k}'s were initialized
@@ -899,6 +917,15 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
         // produce prediction and copy to result
         producePCorrect(group_skill_map, local_pred, ar, n, dt); //UNBOOST
 //      producePCorrectBoost(&gsm, local_pred, ar, n, dt); //BOOST
+        projectsimplex(local_pred, nO); // addition to make sure there's not side effects
+
+//        NUMBER sum=0;
+//        for(m=0; m<this->p->nO; m++)
+//            sum+=local_pred[m];
+//        if( fabs(sum-1)>SAFETY ) {
+//            int a = 0;
+//        }
+
         // update pL
         for(int l=0; l<n; l++) {
             k = ar[l];
@@ -936,15 +963,23 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
                         group_skill_map[g][k][j] += pLe[i] * getA(dt,i,j);//UNBOOST
 //               pLbit[j] += pLe[i] * getA(dt,i,j);//BOOST
             }// observations
+            projectsimplex(group_skill_map[g][k], nS); // addition to make sure there's not side effects // UNBOOST
+//            projectsimplex(pLbit, nS); // addition to make sure there's not side effects // BOOST
+//            NUMBER sum=0;
+//            for(i=0; i<this->p->nS; i++)
+//                sum+=group_skill_map[g][k][i];
+//            if( fabs(sum-1)>SAFETY ) {
+//                int a = 0;
+//            }
         }
         // write prediction out (after update)  
         if(this->p->predictions>0 && output_this) { // write predictions file if it was opened
             for(m=0; m<nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+                fprintf(fid,"%12.10f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
             if(this->p->predictions==2) { // if we print out states of KC's as welll
                 for(int l=0; l<n; l++) { // all KC here
-         fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
-//           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+         fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+//           fprintf(fid,"%12.10f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
                 }
             }
         }
@@ -1431,6 +1466,11 @@ NUMBER HMMProblem::BaumWelch() {
 //    {//PAR
 //        #pragma omp for schedule(dynamic) reduction(+:loglik) //PAR
         for(k=0; k<this->p->nK; k++) {
+            for(NDAT t=0; t<this->p->N; t++) {
+                if( this->p->dat_obs[t] <0 ) {
+                    int a  = 0;
+                }
+            }
             FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
             fb->link(this->getPI(k), this->getA(k), this->getB(k), this->p->k_numg[k], this->p->k_g_data[k]);
             if(this->p->block_fitting[0]!=0) fb->pi = NULL;
@@ -1441,6 +1481,11 @@ NUMBER HMMProblem::BaumWelch() {
             fb->init(FBS_PARm2);
             
             FitResult fr;
+            for(NDAT t=0; t<this->p->N; t++) {
+                if( this->p->dat_obs[t] <0 ) {
+                    int a  = 0;
+                }
+            }
             fr = BaumWelchBit(fb);
             delete fb;
             
@@ -1463,6 +1508,12 @@ FitResult HMMProblem::BaumWelchBit(FitBit *fb) {
     fr.ndat = 0;
     NCAT xndat = fb->xndat;
     struct data **x_data = fb->x_data;
+    
+    for(NDAT t=0; t<this->p->N; t++) {
+        if( this->p->dat_obs[t] <0 ) {
+            int a  = 0;
+        }
+    }
     
     while( !fr.conv && fr.iter<=this->p->maxiter ) {
         fr.ndat = -1; // no accounting so far
@@ -1522,7 +1573,6 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
             if(fb->pi != NULL) {
                 fb->pi[i] = fb->PIcopy[i] - e * fb->gradPI[i];
                 if( (fb->pi[i]<0 || fb->pi[i] >1) && (fb->pi[i] > 0) && (fb->pi[i] < 1) ) {
-                    int a = 0;
                     fprintf(stderr, "ERROR! pi value is not within [0, 1] range!\n");
                 }
             }
@@ -1531,7 +1581,6 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
                 for(j=0; j<nS; j++) {
                     fb->A[i][j] = fb->Acopy[i][j] - e * fb->gradA[i][j];
                     if( (fb->A[i][j]<0 || fb->A[i][j] >1) && (fb->A[i][j] > 0) && (fb->A[i][j] < 1) ) {
-                        int a = 0;
                         fprintf(stderr, "ERROR! A value is not within [0, 1] range!\n");
                     }
                 }
@@ -1540,7 +1589,6 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
                 for(m=0; m<nO; m++) {
                     fb->B[i][m] = fb->Bcopy[i][m] - e * fb->gradB[i][m];
                     if( (fb->B[i][m]<0 || fb->B[i][m] >1) && (fb->B[i][m] > 0) && (fb->B[i][m] < 1) ) {
-                        int a = 0;
                         fprintf(stderr, "ERROR! B value is not within [0, 1] range!\n");
                     }
                 }
@@ -1552,7 +1600,7 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
                 if(fb->pi != NULL) projectsimplex(fb->pi, nS);
                 for(i=0; i<nS; i++) {
                     if(fb->A  != NULL) projectsimplex(fb->A[i], nS);
-                    if(fb->B  != NULL) projectsimplex(fb->B[i], nS);
+                    if(fb->B  != NULL) projectsimplex(fb->B[i], nO);
                 }
             } else {
                 if(fb->pi != NULL) projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
@@ -1637,7 +1685,7 @@ NUMBER HMMProblem::doLagrangeStep(FitBit *fb) {
         projectsimplex(fb->pi, nS);
         for(i=0; i<nS; i++) {
             projectsimplex(fb->A[i], nS);
-            projectsimplex(fb->B[i], nS);
+            projectsimplex(fb->B[i], nO);
         }
     } else {
         projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
@@ -1704,14 +1752,14 @@ NUMBER HMMProblem::doLinearStepBig(FitBit **fbs, NCAT nfbs) {
                     if(fbs[q]->pi != NULL) projectsimplex(fbs[q]->pi, fbs[q]->nS);
                     for(i=0; i<fbs[q]->nS; i++) {
                         if(fbs[q]->A  != NULL) projectsimplex(fbs[q]->A[i], fbs[q]->nS);
-                        if(fbs[q]->B  != NULL) projectsimplex(fbs[q]->B[i], fbs[q]->nS);
+                        if(fbs[q]->B  != NULL) projectsimplex(fbs[q]->B[i], fbs[q]->nO);
                     }
                 } else {
                     if(fbs[q]->pi != NULL) projectsimplexbounded(fbs[q]->pi, this->getLbPI(), this->getUbPI(), fbs[q]->nS);
                     
                     for(i=0; i<fbs[q]->nS; i++) {
                         if(fbs[q]->A  != NULL) projectsimplexbounded(fbs[q]->A[i], this->getLbA()[i], this->getUbA()[i], fbs[q]->nS);
-                        if(fbs[q]->B  != NULL) projectsimplexbounded(fbs[q]->B[i], this->getLbB()[i], this->getUbB()[i], fbs[q]->nS);
+                        if(fbs[q]->B  != NULL) projectsimplexbounded(fbs[q]->B[i], this->getLbB()[i], this->getUbB()[i], fbs[q]->nO);
                     }
                 }
             }
@@ -1857,13 +1905,13 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
 			if(fb->pi != NULL) projectsimplex(fb->pi, nS);
 			for(i=0; i<nS; i++) {
 				if(fb->A != NULL) projectsimplex(fb->A[i], nS);
-				if(fb->B != NULL) projectsimplex(fb->B[i], nS);
+				if(fb->B != NULL) projectsimplex(fb->B[i], nO);
 			}
 		} else {
 			if(fb->pi != NULL) projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
 			for(i=0; i<nS; i++) {
 				if(fb->A != NULL) projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
-				if(fb->B != NULL) projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
+				if(fb->B != NULL) projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nO);
 			}
 		}
 		// recompute alpha and p(O|param)
@@ -2010,13 +2058,13 @@ NUMBER HMMProblem::doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs) {
                 if(fbs[q]->pi != NULL) projectsimplex(fbs[q]->pi, nS);
                 for(i=0; i<nS; i++) {
                     if(fbs[q]->A != NULL) projectsimplex(fbs[q]->A[i], nS);
-                    if(fbs[q]->B != NULL) projectsimplex(fbs[q]->B[i], nS);
+                    if(fbs[q]->B != NULL) projectsimplex(fbs[q]->B[i], nO);
                 }
             } else {
                 if(fbs[q]->pi != NULL) projectsimplexbounded(fbs[q]->pi, this->getLbPI(), this->getUbPI(), nS);
                 for(i=0; i<nS; i++) {
                     if(fbs[q]->A != NULL) projectsimplexbounded(fbs[q]->A[i], this->getLbA()[i], this->getUbA()[i], nS);
-                    if(fbs[q]->B != NULL) projectsimplexbounded(fbs[q]->B[i], this->getLbB()[i], this->getUbB()[i], nS);
+                    if(fbs[q]->B != NULL) projectsimplexbounded(fbs[q]->B[i], this->getLbB()[i], this->getUbB()[i], nO);
                 }
             }
         }
@@ -2086,13 +2134,13 @@ NUMBER HMMProblem::doBarzilaiBorweinStep(FitBit *fb) {
         projectsimplex(fb->pi, nS);
         for(i=0; i<nS; i++) {
             projectsimplex(fb->A[i], nS);
-            projectsimplex(fb->B[i], nS);
+            projectsimplex(fb->B[i], nO);
         }
     } else {
         projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
         for(i=0; i<nS; i++) {
             projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
-            projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
+            projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nO);
         }
     }
 	free(s_k_m1_PI);
@@ -2195,7 +2243,7 @@ NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
             if(fb->A != NULL)
                 projectsimplex(fb->A[i], nS);
             if(fb->B != NULL)
-                projectsimplex(fb->B[i], nS);
+                projectsimplex(fb->B[i], nO);
         }
     } else {
         if(fb->pi != NULL)
@@ -2204,9 +2252,30 @@ NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
             if(fb->A != NULL)
                 projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
             if(fb->B != NULL)
-                projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
+                projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nO);
         }
     }
+    
+//    NUMBER sumP=0, sumA=0, sumB=0;
+//    for(i=0; i<nS; i++) {
+//        sumP += fb->pi[i];
+//        sumA=0;
+//        for(j=0; j<nS; j++)
+//            sumA += fb->A[i][j];
+//        if(fabs(sumA-1)>SAFETY) {
+//            int a = 0;
+//        }
+//        sumB=0;
+//        for(m=0; m<nO; m++)
+//            sumB += fb->B[i][m];
+//        if(fabs(sumB-1)>SAFETY) {
+//            int a = 0;
+//        }
+//    }
+//    if(fabs(sumP-1)>SAFETY) {
+//        int a = 0;
+//    }
+    
     // compute LL
     computeAlphaAndPOParam(fb->xndat, fb->x_data);
     ll = HMMProblem::getSumLogPOPara(fb->xndat, fb->x_data);
@@ -2341,13 +2410,13 @@ void HMMProblem::readModelBody(FILE *fid, struct param* param, NDAT *line_no,  b
 		// read B
         fscanf(fid,"B\t");
 		for(i=0; i<this->p->nS; i++)
-			for(m=0; m<this->p->nS; m++) {
-                if(i==(this->p->nS-1) && m==(this->p->nS-1)) {
+			for(m=0; m<this->p->nO; m++) {
+                if(i==(this->p->nS-1) && m==(this->p->nO-1)) {
                     fscanf(fid,"%[^\n]\n", col); // last one;
                     this->B[idxk][i][m] = atof(col);
                 }
                 else {
-                    fscanf(fid,"%[^\t]\t", col); // not las one
+                    fscanf(fid,"%[^\t]\t", col); // not last one
                     this->B[idxk][i][m] = atof(col);
                 }
 			}

@@ -177,6 +177,12 @@ int main (int argc, char ** argv) {
 //    double _tm_read = omp_get_wtime(); //PAR
     int read_ok = read_and_structure_data(input_file, fid_console);
     tm_read = (clock_t)(clock()-tm_read);//SEQ
+    for(NDAT t=0; t<param.N; t++) {
+        if( param.dat_obs[t] <0 ) {
+            int a  = 0;
+        }
+    }
+    
 //    _tm_read = omp_get_wtime()-_tm_read;//PAR
     
 //    // experimental
@@ -244,6 +250,12 @@ int main (int argc, char ** argv) {
     clock_t tm_predict; //SEQ
 //    double _tm_fit;//PAR
 //    double _tm_predict;//PAR
+    
+    for(NDAT t=0; t<param.N; t++) {
+        if( param.dat_obs[t] <0 ) {
+            int a  = 0;
+        }
+    }
     
     if(param.cv_folds==0) { // not cross-validation
         // create problem
@@ -750,7 +762,6 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
                     param.init_params[0] = atof( strtok(argv[i],",\t\n\r") );
                     for(int j=1; j<n; j++) {
                         param.init_params[j] = atof( strtok(NULL,",\t\n\r") );
-                        int a = 0;
                     }
                 }
 				break;
@@ -1064,6 +1075,11 @@ bool read_and_structure_data(const char *filename, FILE *fid_console) {
 	g_countk = Calloc(NDAT, (size_t)param.nG); // track current skill in group
 	for(t=0; t<param.N; t++) {
 		g = param.dat_group[t];
+        
+        if( param.dat_obs[t] < 0) {
+            int a = 0;
+        }
+        
 //		o = param.dat_obs->get(t);
 //        if(param.sliced)
 //            tm = param.dat_slice[t];
@@ -1338,7 +1354,7 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
             ll -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
             if(param.predictions>0) // write predictions file if it was opened
                 for(m=0; m<param.nO; m++)
-                    fprintf(fid,"%10.8f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
+                    fprintf(fid,"%12.10f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
             continue;
         }
 
@@ -1404,11 +1420,11 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
         // write prediction out (after update)
         if(param.predictions>0) { // write predictions file if it was opened
             for(m=0; m<param.nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t": ((param.predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+                fprintf(fid,"%12.10f%s",local_pred[m],(m<(param.nO-1))?"\t": ((param.predictions==1)?"\n":"\t") );// if we print states of KCs, continut
             if(param.predictions==2) { // if we print out states of KC's as welll
                 for(int l=0; l<n; l++) { // all KC here
-                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
-//           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+                    fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+//           fprintf(fid,"%12.10f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
                 }
             }
         }
@@ -1480,6 +1496,11 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
     NDAT *fold_counts = Calloc(NDAT, (size_t)param.cv_folds);
     srand ( (unsigned int)time(NULL) ); // randomize
 
+    for(NDAT t=0; t<param.N; t++) {
+        if( param.dat_obs[t] <0 ) {
+            int a  = 0;
+        }
+    }
     // folds file
     if(param.cv_folds_file[0] > 0) { // file is specified
         if(param.cv_inout_flag=='i') {
@@ -1523,6 +1544,11 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
         if(param.cv_inout_flag=='i')
             free(line);
     }
+    for(NDAT t=0; t<param.N; t++) {
+        if( param.dat_obs[t] <0 ) {
+            int a  = 0;
+        }
+    }
     
     
     // count number of items in each fold
@@ -1539,24 +1565,24 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
             case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblem(&param);
                 break;
-//                //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
-//                //                hmm = new HMMProblemPiG(&param);
-//                //                break;
-//            case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-//                hmms[f] = new HMMProblemPiGK(&param);
-//                break;
-//            case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-//                hmms[f] = new HMMProblemPiAGK(&param);
-//                break;
-//            case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
-//                hmms[f] = new HMMProblemAGK(&param);
-//                break;
-//            case STRUCTURE_PIABgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-//                hmms[f] = new HMMProblemPiABGK(&param);
-//                break;
-//                //            case BKT_GD_T: // Gradient Descent with Transfer
-//                //                hmm = new HMMProblemKT(&param);
-//                //                break;
+                //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
+                //                hmm = new HMMProblemPiG(&param);
+                //                break;
+            case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+                hmms[f] = new HMMProblemPiGK(&param);
+                break;
+            case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+                hmms[f] = new HMMProblemPiAGK(&param);
+                break;
+            case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
+                hmms[f] = new HMMProblemAGK(&param);
+                break;
+            case STRUCTURE_PIABgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+                hmms[f] = new HMMProblemPiABGK(&param);
+                break;
+                //            case BKT_GD_T: // Gradient Descent with Transfer
+                //                hmm = new HMMProblemKT(&param);
+                //                break;
         }
         // block respective data - do not fit the data belonging to the fold
         NPAR *saved_obs = Calloc(NPAR, (size_t)fold_counts[f]);
@@ -1570,6 +1596,12 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
         // now compute
         tm0 = clock(); //SEQ
 //        _tm0 = omp_get_wtime(); //PAR
+        for(NDAT t=0; t<param.N; t++) {
+            if( param.dat_obs[t] <0 ) {
+                int a  = 0;
+            }
+        }
+        
         hmms[f]->fit();
         *(tm_fit) += (clock_t)(clock()- tm0);//SEQ
 //        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
@@ -1631,7 +1663,7 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
             ll -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
             if(param.predictions>0) // write predictions file if it was opened
                 for(m=0; m<param.nO; m++)
-                    fprintf(fid,"%10.8f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
+                    fprintf(fid,"%12.10f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
             continue;
         }
         // check if {g,k}'s were initialized
@@ -1696,11 +1728,11 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
         // write prediction out (after update)
         if(param.predictions>0) { // write predictions file if it was opened
             for(m=0; m<param.nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t": ((param.predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+                fprintf(fid,"%12.10f%s",local_pred[m],(m<(param.nO-1))?"\t": ((param.predictions==1)?"\n":"\t") );// if we print states of KCs, continut
             if(param.predictions==2) { // if we print out states of KC's as welll
                 for(int l=0; l<n; l++) { // all KC here
-                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
-//           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+                    fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+//           fprintf(fid,"%12.10f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
                 }
             }
         }
@@ -1925,7 +1957,7 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fi
             ll -= safelog(  prob)*   isTarget  +  safelog(1-prob)*(1-isTarget);
             if(param.predictions>0) // write predictions file if it was opened
                 for(m=0; m<param.nO; m++)
-                    fprintf(fid,"%10.8f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
+                    fprintf(fid,"%12.10f%s",hmms[f]->getNullSkillObs(m),(m<(param.nO-1))?"\t":"\n");
             continue;
         }
         
@@ -1990,11 +2022,11 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fi
         // write prediction out (after update)
         if(param.predictions>0) { // write predictions file if it was opened
             for(m=0; m<param.nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(param.nO-1))?"\t": ((param.predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+                fprintf(fid,"%12.10f%s",local_pred[m],(m<(param.nO-1))?"\t": ((param.predictions==1)?"\n":"\t") );// if we print states of KCs, continut
             if(param.predictions==2) { // if we print out states of KC's as welll
                 for(int l=0; l<n; l++) { // all KC here
-                    fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
-//           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+                    fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+//           fprintf(fid,"%12.10f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
                 }
             }
         }

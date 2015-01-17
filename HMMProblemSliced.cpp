@@ -114,24 +114,22 @@ void HMMProblemSliced::init(struct param *param) {
     }
     
     // mass produce PI's, A's, B's
-	if( checkPIABConstraints(a_PI, a_A, a_B) ) {
-		this->pi = init2D<NUMBER>((NDAT)this->sizes[0], (NDAT)nS);
-		this->A =  init4D<NUMBER>((NDAT)this->sizes[1], (NDAT)nZ, (NDAT)nS, (NDAT)nS);
-		this->B =  init4D<NUMBER>((NDAT)this->sizes[2], (NDAT)nZ, (NDAT)nS, (NDAT)nO);
-        NCAT x;
-        NPAR z;
-		for(x=0; x<this->sizes[0]; x++)
-			cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
-		for(x=0; x<this->sizes[1]; x++)
-            for(z=0; z<nZ; z++)
-                cpy3D<NUMBER>(a_A, this->A[x], (NDAT)nZ, (NDAT)nS, (NDAT)nS);
-		for(x=0; x<this->sizes[2]; x++)
-            for(z=0; z<nZ; z++)
-                cpy3D<NUMBER>(a_B, this->B[x], (NDAT)nZ, (NDAT)nS, (NDAT)nO);
-	} else {
-		fprintf(stderr,"params do not meet constraints.\n");
-		exit(1);
-	}
+    if( this->p->do_not_check_constraints==0 && !checkPIABConstraints(a_PI, a_A, a_B)) {
+        fprintf(stderr,"params do not meet constraints.\n");
+        exit(1);
+    }
+    this->pi = init2D<NUMBER>((NDAT)this->sizes[0], (NDAT)nS);
+    this->A =  init4D<NUMBER>((NDAT)this->sizes[1], (NDAT)nZ, (NDAT)nS, (NDAT)nS);
+    this->B =  init4D<NUMBER>((NDAT)this->sizes[2], (NDAT)nZ, (NDAT)nS, (NDAT)nO);
+    NCAT x;
+    for(x=0; x<this->sizes[0]; x++)
+        cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
+    for(x=0; x<this->sizes[1]; x++)
+        for(z=0; z<nZ; z++)
+            cpy3D<NUMBER>(a_A, this->A[x], (NDAT)nZ, (NDAT)nS, (NDAT)nS);
+    for(x=0; x<this->sizes[2]; x++)
+        for(z=0; z<nZ; z++)
+            cpy3D<NUMBER>(a_B, this->B[x], (NDAT)nZ, (NDAT)nS, (NDAT)nO);
     // destroy setup params
 	free(a_PI);
 	free3D<NUMBER>(a_A, (NDAT)nZ, (NDAT)nS);
@@ -737,7 +735,7 @@ void HMMProblemSliced::toFileSkill(const char *filename) {
     
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
-		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
+		fprintf(fid," %12.10f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
     
 	NCAT k;
     NPAR z;
@@ -748,16 +746,16 @@ void HMMProblemSliced::toFileSkill(const char *filename) {
         NPAR i,j,m;
         fprintf(fid,"PI\t");
         for(i=0; i<this->p->nS; i++)
-            fprintf(fid,"%10.8f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
+            fprintf(fid,"%12.10f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
         for(z=0;z<this->p->nZ;z++) {
             fprintf(fid,"A - slice %d \t",z);
             for(i=0; i<this->p->nS; i++)
                 for(j=0; j<this->p->nS; j++)
-                    fprintf(fid,"%10.8f%s",this->A[k][z][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+                    fprintf(fid,"%12.10f%s",this->A[k][z][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
             fprintf(fid,"B - slice %d \t",z);
             for(i=0; i<this->p->nS; i++)
                 for(m=0; m<this->p->nO; m++)
-                    fprintf(fid,"%10.8f%s",this->B[k][z][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
+                    fprintf(fid,"%12.10f%s",this->B[k][z][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
         }
 	}
 	fclose(fid);
@@ -775,7 +773,7 @@ void HMMProblemSliced::toFileGroup(const char *filename) {
     
 	fprintf(fid,"Null skill ratios\t");
 	for(NPAR m=0; m<this->p->nO; m++)
-		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
+		fprintf(fid," %12.10f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
 	NCAT g;
     NPAR z;
 	std::map<NCAT,std::string>::iterator it;
@@ -785,16 +783,16 @@ void HMMProblemSliced::toFileGroup(const char *filename) {
 		NPAR i,j,m;
 		fprintf(fid,"PI\t");
 		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%10.8f%s",this->pi[g][i],(i==(this->p->nS-1))?"\n":"\t");
+			fprintf(fid,"%12.10f%s",this->pi[g][i],(i==(this->p->nS-1))?"\n":"\t");
         for(z=0; z<this->p->nZ; z++){
             fprintf(fid,"A - slice %d\t",z);
             for(i=0; i<this->p->nS; i++)
                 for(j=0; j<this->p->nS; j++)
-                    fprintf(fid,"%10.8f%s",this->A[g][z][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+                    fprintf(fid,"%12.10f%s",this->A[g][z][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
             fprintf(fid,"B - slice %d \t",z);
             for(i=0; i<this->p->nS; i++)
                 for(m=0; m<this->p->nO; m++)
-                    fprintf(fid,"%10.8f%s",this->B[g][z][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
+                    fprintf(fid,"%12.10f%s",this->B[g][z][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
         }
 	}
 	fclose(fid);
@@ -907,7 +905,7 @@ void HMMProblemSliced::predict(NUMBER* metrics, const char *filename, NPAR* dat_
             }
             if(this->p->predictions>0 && output_this) // write predictions file if it was opened
                 for(m=0; m<nO; m++)
-                    fprintf(fid,"%10.8f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
+                    fprintf(fid,"%12.10f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
             continue;
         }
         // check if {g,k}'s were initialized
@@ -973,11 +971,11 @@ void HMMProblemSliced::predict(NUMBER* metrics, const char *filename, NPAR* dat_
         // write prediction out (after update)  
         if(this->p->predictions>0 && output_this) { // write predictions file if it was opened
             for(m=0; m<nO; m++)
-                fprintf(fid,"%10.8f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+                fprintf(fid,"%12.10f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
             if(this->p->predictions==2) { // if we print out states of KC's as welll
                 for(int l=0; l<n; l++) { // all KC here
-         fprintf(fid,"%10.8f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
-//           fprintf(fid,"%10.8f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+         fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+//           fprintf(fid,"%12.10f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
                 }
             }
         }
@@ -2116,8 +2114,8 @@ void HMMProblemSliced::readModelBody(FILE *fid, struct param* param, NDAT *line_
         for(z=0; z<param->nZ; z++) {
             fscanf(fid,"B - slice %hhu\t",&slice);
             for(i=0; i<this->p->nS; i++)
-                for(m=0; m<this->p->nS; m++) {
-                    if(i==(this->p->nS-1) && m==(this->p->nS-1)) {
+                for(m=0; m<this->p->nO; m++) {
+                    if(i==(this->p->nS-1) && m==(this->p->nO-1)) {
                         fscanf(fid,"%[^\n]\n", col); // last one;
                         this->B[z][idxk][i][m] = atof(col);
                     }
