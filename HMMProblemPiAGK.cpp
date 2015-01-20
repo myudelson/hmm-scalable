@@ -273,13 +273,14 @@ NUMBER HMMProblemPiAGK::getB(struct data* dt, NPAR i, NPAR m) {
 
 void HMMProblemPiAGK::setGradPI(FitBit *fb){
     if(this->p->block_fitting[0]>0) return;
-    NDAT t = 0;
+    NDAT t = 0, ndat = 0;
     NPAR i, o;
     NUMBER combined, deriv_logit;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
+        ndat += dt->n;
 //    o = dt->obs[t];
         o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
         for(i=0; i<fb->nS; i++) {
@@ -288,24 +289,20 @@ void HMMProblemPiAGK::setGradPI(FitBit *fb){
             fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
     }
-    if( this->p->Cslices>0 ) { // penalty
-        NUMBER C = this->p->Cw[fb->Cslice];
-        NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
-        for(i=0; i<fb->nS; i++) {
-            fb->gradPI[i] += L2penalty(C, fb->pi[i], Ccenter); // PENALTY
-        }
-    } // penalty
+    if( this->p->Cslices>0 ) // penalty
+        fb->addL2Penalty(FBV_PI, this->p, (NUMBER)ndat);
 }
 
 void HMMProblemPiAGK::setGradA (FitBit *fb){
     if(this->p->block_fitting[1]>0) return;
-    NDAT t;
+    NDAT t, ndat = 0;
     NPAR o, i, j;
     NUMBER combined, deriv_logit;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
+        ndat += dt->n;
         for(t=1; t<dt->n; t++) {
 //            o = dt->obs[t];
             o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
@@ -318,13 +315,8 @@ void HMMProblemPiAGK::setGradA (FitBit *fb){
             }
         }
     }
-    if( this->p->Cslices>0 ) { // penalty
-        NUMBER C = this->p->Cw[fb->Cslice];
-        NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
-        for(i=0; i<fb->nS; i++)
-            for(j=0; j<fb->nS; j++)
-                fb->gradA[i][j] += L2penalty(C, fb->A[i][j], Ccenter); // PENALTY
-    } // penalty
+    if( this->p->Cslices>0 ) // penalty
+        fb->addL2Penalty(FBV_A, this->p, (NUMBER)ndat);
 }
 
 void HMMProblemPiAGK::toFile(const char *filename) {

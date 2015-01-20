@@ -160,7 +160,7 @@ NUMBER HMMProblemPiGKww::getPI(struct data* dt, NPAR i) {
 
 void HMMProblemPiGKww::setGradPI(FitBit *fb){
     if(this->p->block_fitting[0]>0) return;
-    NDAT t = 0;
+    NDAT t = 0, ndat = 0;
     NPAR i, o;
     NUMBER combined, deriv_logit;
     //    o = dt->obs[t];
@@ -168,6 +168,7 @@ void HMMProblemPiGKww::setGradPI(FitBit *fb){
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
+        ndat += dt->n;
         o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
     
 //    // a logit(k) + b logit(u)
@@ -213,7 +214,7 @@ void HMMProblemPiGKww::setGradPI(FitBit *fb){
 
 void HMMProblemPiGKww::setGradWW(FitBit *fb){
     if(this->p->block_fitting[0]>0) return;
-    NDAT t = 0;
+    NDAT t = 0, ndat = 0;
     NPAR i, o;
     NUMBER combined, deriv_logit0, deriv_logit1/*, deriv_logit2*/;
     //    o = dt->obs[t];
@@ -221,6 +222,7 @@ void HMMProblemPiGKww::setGradWW(FitBit *fb){
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
+        ndat += dt->n;
         o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
         for(i=0; i<fb->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->pi[k][i]) + logit(this->PIg[g][i]) );

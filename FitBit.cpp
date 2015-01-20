@@ -374,24 +374,24 @@ void FitBit::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
 	if(this->B  != NULL) doLog10Scale2DGentle(a_B,  this->B,  this->nS, this->nO);
 }
 
-void FitBit::addL2Penalty(enum FIT_BIT_VAR fbv, param* param) {
+void FitBit::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor) {
     NPAR i, j, m;
     if(param->Cslices==0) return;
     NUMBER C = param->Cw[this->Cslice];
     switch (fbv) {
         case FBV_PI:
             for(i=0; i<this->nS; i++)
-                this->gradPI[i] += L2penalty(C, this->pi[i], param->Ccenters[ this->Cslice * 3 + 0] );
+                this->gradPI[i] += factor * L2penalty(C, this->pi[i], param->Ccenters[ this->Cslice * 3 + 0] );
             break;
         case FBV_A:
             for(i=0; i<this->nS; i++)
                 for(j=0; j<this->nS; j++)
-                    this->gradA[i][j] += L2penalty(C, this->A[i][j], param->Ccenters[ this->Cslice * 3 + 1] );
+                    this->gradA[i][j] += factor * L2penalty(C, this->A[i][j], param->Ccenters[ this->Cslice * 3 + 1] );
             break;
         case FBV_B:
             for(i=0; i<this->nS; i++)
                 for(m=0; m<this->nO; m++)
-                    this->gradB[i][m] += L2penalty(C, this->B[i][m], param->Ccenters[ this->Cslice * 3 + 2] );
+                    this->gradB[i][m] += factor * L2penalty(C, this->B[i][m], param->Ccenters[ this->Cslice * 3 + 2] );
             break;
             
         default:

@@ -79,6 +79,13 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
             case  'd':
 				param.multiskill = argv[i][0]; // just grab first character (later, maybe several)
                 break;
+            case 'z':
+                param.sliced = (NPAR)atoi(argv[i]);
+                if(param.sliced!=0 && param.sliced!=1) {
+                    fprintf(stderr,"ERROR! Time parameter should be either 0 (off) or 1(om)\n");
+                    exit_with_help();
+                }
+                break;
 			default:
 				fprintf(stderr,"unknown option: -%c\n", argv[i-1][1]);
 				exit_with_help();

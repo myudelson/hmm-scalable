@@ -221,10 +221,6 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
 		if( (obs >= 0) && ((param->nO-1) < obs) )
 			param->nO = (NPAR)(obs + 1); // obs[t] + 1;
 
-        if(obs<0) {
-            int a = 0;
-        }
-        
 		// Group
 		col = strtok(NULL,"\t\n\r");
 		if(col == NULL) {
@@ -396,14 +392,7 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
     
     // copy striped to lined
     param->dat_obs = striped_dat_obs->toArray();
-    
-    for(NDAT t=0; t<param->N; t++) {
-        if( param->dat_obs[t] <0 ) {
-            int a = 0;
-        }
-    }
-    
-    
+  
     delete striped_dat_obs;
     param->dat_group = striped_dat_group->toArray();
     delete striped_dat_group;
@@ -721,6 +710,7 @@ bool InputUtil::toBin(struct param * param, const char *fn) {
     for (it =  param->map_step_bwd->begin(); it != param->map_step_bwd->end(); ++it) {
         writeString(fid, it->second);
     }
+    
     
     fclose(fid);
     return true;

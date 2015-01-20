@@ -177,11 +177,6 @@ int main (int argc, char ** argv) {
 //    double _tm_read = omp_get_wtime(); //PAR
     int read_ok = read_and_structure_data(input_file, fid_console);
     tm_read = (clock_t)(clock()-tm_read);//SEQ
-    for(NDAT t=0; t<param.N; t++) {
-        if( param.dat_obs[t] <0 ) {
-            int a  = 0;
-        }
-    }
     
 //    _tm_read = omp_get_wtime()-_tm_read;//PAR
     
@@ -250,12 +245,6 @@ int main (int argc, char ** argv) {
     clock_t tm_predict; //SEQ
 //    double _tm_fit;//PAR
 //    double _tm_predict;//PAR
-    
-    for(NDAT t=0; t<param.N; t++) {
-        if( param.dat_obs[t] <0 ) {
-            int a  = 0;
-        }
-    }
     
     if(param.cv_folds==0) { // not cross-validation
         // create problem
@@ -1075,11 +1064,6 @@ bool read_and_structure_data(const char *filename, FILE *fid_console) {
 	g_countk = Calloc(NDAT, (size_t)param.nG); // track current skill in group
 	for(t=0; t<param.N; t++) {
 		g = param.dat_group[t];
-        
-        if( param.dat_obs[t] < 0) {
-            int a = 0;
-        }
-        
 //		o = param.dat_obs->get(t);
 //        if(param.sliced)
 //            tm = param.dat_slice[t];
@@ -1252,6 +1236,9 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
             case STRUCTURE_SKILL: // Conjugate Gradient Descent
             case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblem(&param);
+                break;
+            case STRUCTURE_SKABslc: // Conjugate Gradient Descent
+                hmms[f] = new HMMProblemSliced(&param);
                 break;
 //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
 //                hmm = new HMMProblemPiG(&param);
@@ -1496,11 +1483,6 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
     NDAT *fold_counts = Calloc(NDAT, (size_t)param.cv_folds);
     srand ( (unsigned int)time(NULL) ); // randomize
 
-    for(NDAT t=0; t<param.N; t++) {
-        if( param.dat_obs[t] <0 ) {
-            int a  = 0;
-        }
-    }
     // folds file
     if(param.cv_folds_file[0] > 0) { // file is specified
         if(param.cv_inout_flag=='i') {
@@ -1544,12 +1526,6 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
         if(param.cv_inout_flag=='i')
             free(line);
     }
-    for(NDAT t=0; t<param.N; t++) {
-        if( param.dat_obs[t] <0 ) {
-            int a  = 0;
-        }
-    }
-    
     
     // count number of items in each fold
     //    for(I=0; I<param.nI; I++) fold_shortcounts[ folds[I] ]++; // produce folds
@@ -1568,6 +1544,9 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
                 //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
                 //                hmm = new HMMProblemPiG(&param);
                 //                break;
+            case STRUCTURE_SKABslc: // Conjugate Gradient Descent
+                hmms[f] = new HMMProblemSliced(&param);
+                break;
             case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
                 hmms[f] = new HMMProblemPiGK(&param);
                 break;
@@ -1596,11 +1575,6 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
         // now compute
         tm0 = clock(); //SEQ
 //        _tm0 = omp_get_wtime(); //PAR
-        for(NDAT t=0; t<param.N; t++) {
-            if( param.dat_obs[t] <0 ) {
-                int a  = 0;
-            }
-        }
         
         hmms[f]->fit();
         *(tm_fit) += (clock_t)(clock()- tm0);//SEQ
@@ -1866,6 +1840,9 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fi
             case STRUCTURE_SKILL: // Conjugate Gradient Descent
             case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblem(&param);
+                break;
+            case STRUCTURE_SKABslc: // Conjugate Gradient Descent
+                hmms[f] = new HMMProblemSliced(&param);
                 break;
 //                //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
 //                //                hmm = new HMMProblemPiG(&param);

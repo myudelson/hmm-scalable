@@ -441,17 +441,7 @@ void HMMProblem::initBeta(NCAT xndat, struct data** x_data) {
 
 NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
     //    NUMBER mult_c, old_pOparam, neg_sum_log_c;
-    for(NDAT t=0; t<this->p->N; t++) {
-        if( this->p->dat_obs[t] <0 ) {
-            int a  = 0;
-        }
-    }
 	initAlpha(xndat, x_data);
-    for(NDAT t=0; t<this->p->N; t++) {
-        if( this->p->dat_obs[t] <0 ) {
-            int a  = 0;
-        }
-    }
     NPAR nS = this->p->nS;
     NDAT  ndat = 0;
 //    int parallel_now = this->p->parallel==2; //PAR
@@ -464,10 +454,8 @@ NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
 		for(t=0; t<x_data[x]->n; t++) {
 //			o = x_data[x]->obs[t];
 			o = this->p->dat_obs[ x_data[x]->ix[t] ];//->get( x_data[x]->ix[t] );
-            if( o < 0) {
-                int a = 0;
-            }
-			if(t==0) { // it's alpha(1,i)
+
+            if(t==0) { // it's alpha(1,i)
                 // compute \alpha_1(i) = \pi_i b_i(o_1)
 				for(i=0; i<nS; i++) {
 					x_data[x]->alpha[t][i] = getPI(x_data[x],i) * ((o<0)?1:getB(x_data[x],i,o)); // if observatiob unknown use 1
@@ -571,34 +559,31 @@ void HMMProblem::computeXiGamma(NCAT xndat, struct data** x_data){
 
 void HMMProblem::setGradPI(FitBit *fb){
     if(this->p->block_fitting[0]>0) return;
-    NDAT t = 0;
+    NDAT t = 0, ndat = 0;
     NPAR i, o;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
+        ndat += dt->n;
         o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
         for(i=0; i<this->p->nS; i++) {
             fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
     }
-    if( this->p->Cslices>0 ) { // penalty
-        NUMBER C = this->p->Cw[fb->Cslice];
-        NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 0];
-        for(i=0; i<fb->nS; i++) {
-            fb->gradPI[i] += L2penalty(C, fb->pi[i], Ccenter); // PENALTY
-        }
-    } // penalty
+    if( this->p->Cslices>0 ) // penalty
+        fb->addL2Penalty(FBV_PI, this->p, (NUMBER)ndat);
 }
 
 void HMMProblem::setGradA (FitBit *fb){
     if(this->p->block_fitting[1]>0) return;
-    NDAT t;
+    NDAT t, ndat = 0;
     NPAR o, i, j;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
+        ndat += dt->n;
         for(t=1; t<dt->n; t++) {
             o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
             for(i=0; i<this->p->nS; i++)
@@ -606,23 +591,19 @@ void HMMProblem::setGradA (FitBit *fb){
                     fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
         }
     }
-    if( this->p->Cslices>0 ) { // penalty
-        NUMBER C = this->p->Cw[fb->Cslice];
-        NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
-        for(i=0; i<fb->nS; i++)
-            for(j=0; j<fb->nS; j++)
-                fb->gradA[i][j] += L2penalty(C, fb->A[i][j], Ccenter); // PENALTY
-    } // penalty
+    if( this->p->Cslices>0 ) // penalty
+        fb->addL2Penalty(FBV_A, this->p, (NUMBER)ndat);
 }
 
 void HMMProblem::setGradB (FitBit *fb){
     if(this->p->block_fitting[2]>0) return;
-    NDAT t;
-    NPAR o, o0, i, j, m;
+    NDAT t, ndat = 0;
+    NPAR o, o0, i, j;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
+        ndat += dt->n;
 //        for(t=0; t<dt->n; t++) { // old
         for(t=0; t<dt->n; t++) { // Levinson MMFST
             o  = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
@@ -640,13 +621,8 @@ void HMMProblem::setGradB (FitBit *fb){
                 }
         }
     }
-    if( this->p->Cslices>0 ) { // penalty
-        NUMBER C = this->p->Cw[fb->Cslice];
-        NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 2];
-        for(i=0; i<fb->nS; i++)
-            for(m=0; m<fb->nO; m++)
-                fb->gradB[i][m] += L2penalty(C, fb->B[i][m], Ccenter); // PENALTY
-    } // penalty
+    if( this->p->Cslices>0 ) // penalty
+        fb->addL2Penalty(FBV_B, this->p, (NUMBER)ndat);
 }
 
 NDAT HMMProblem::computeGradients(FitBit *fb){
@@ -1466,11 +1442,6 @@ NUMBER HMMProblem::BaumWelch() {
 //    {//PAR
 //        #pragma omp for schedule(dynamic) reduction(+:loglik) //PAR
         for(k=0; k<this->p->nK; k++) {
-            for(NDAT t=0; t<this->p->N; t++) {
-                if( this->p->dat_obs[t] <0 ) {
-                    int a  = 0;
-                }
-            }
             FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
             fb->link(this->getPI(k), this->getA(k), this->getB(k), this->p->k_numg[k], this->p->k_g_data[k]);
             if(this->p->block_fitting[0]!=0) fb->pi = NULL;
@@ -1481,11 +1452,6 @@ NUMBER HMMProblem::BaumWelch() {
             fb->init(FBS_PARm2);
             
             FitResult fr;
-            for(NDAT t=0; t<this->p->N; t++) {
-                if( this->p->dat_obs[t] <0 ) {
-                    int a  = 0;
-                }
-            }
             fr = BaumWelchBit(fb);
             delete fb;
             
@@ -1508,12 +1474,6 @@ FitResult HMMProblem::BaumWelchBit(FitBit *fb) {
     fr.ndat = 0;
     NCAT xndat = fb->xndat;
     struct data **x_data = fb->x_data;
-    
-    for(NDAT t=0; t<this->p->N; t++) {
-        if( this->p->dat_obs[t] <0 ) {
-            int a  = 0;
-        }
-    }
     
     while( !fr.conv && fr.iter<=this->p->maxiter ) {
         fr.ndat = -1; // no accounting so far

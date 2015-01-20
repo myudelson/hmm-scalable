@@ -237,13 +237,14 @@ NUMBER HMMProblemAGK::getB(struct data* dt, NPAR i, NPAR m) {
 }
 
 void HMMProblemAGK::setGradA (FitBit *fb){
-    NDAT t;
+    NDAT t, ndat = 0;
     NPAR o, i, j;
     NUMBER combined, deriv_logit;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
+        ndat += dt->n;
         for(t=1; t<dt->n; t++) {
 //            o = dt->obs[t];
             o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
@@ -255,13 +256,8 @@ void HMMProblemAGK::setGradA (FitBit *fb){
                 }
         }
     }
-    if( this->p->Cslices>0 ) { // penalty
-        NUMBER C = this->p->Cw[fb->Cslice];
-        NUMBER Ccenter = this->p->Ccenters[ fb->Cslice * 3 + 1];
-        for(i=0; i<fb->nS; i++)
-            for(j=0; j<fb->nS; j++)
-                fb->gradA[i][j] += L2penalty(C, fb->A[i][j], Ccenter); // PENALTY
-    } // penalty
+    if( this->p->Cslices>0 ) // penalty
+        fb->addL2Penalty(FBV_A, this->p, (NUMBER)ndat);
 }
 
 void HMMProblemAGK::toFile(const char *filename) {

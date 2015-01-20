@@ -625,29 +625,31 @@ void HMMProblemSliced::computeXiGamma(NCAT xndat, struct data** x_data){
 
 void HMMProblemSliced::setGradPI(FitBit *fb){
     if(this->p->block_fitting[0]>0) return;
-    NDAT t = 0;
+    NDAT t = 0, ndat = 0;
     NPAR i, o;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
+        ndat += dt->n;
         o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
         for(i=0; i<this->p->nS; i++) {
             fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,t,i,o)) / safe0num(dt->p_O_param);
         }
     }
     if( this->p->Cslices>0 ) // penalty
-        fb->addL2Penalty(FBV_PI, this->p);
+        fb->addL2Penalty(FBV_PI, this->p, (NUMBER)ndat);
 }
 
 void HMMProblemSliced::setGradA (FitBit *fb){
     if(this->p->block_fitting[1]>0) return;
-    NDAT t;
+    NDAT t, ndat = 0;
     NPAR o, i, j, z;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
+        ndat += dt->n;
         for(t=1; t<dt->n; t++) {
             z = this->p->dat_slice[ dt->ix[t] ];
             if(z == fb->tag) { // tag contains the current slice
@@ -660,17 +662,18 @@ void HMMProblemSliced::setGradA (FitBit *fb){
     }
     // penalty
     if( this->p->Cslices>0 )
-        fb->addL2Penalty(FBV_A, this->p);
+        fb->addL2Penalty(FBV_A, this->p, (NUMBER)ndat);
 }
 
 void HMMProblemSliced::setGradB (FitBit *fb){
     if(this->p->block_fitting[2]>0) return;
-    NDAT t;
+    NDAT t, ndat = 0;
     NPAR o, o0, i, j, z;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
+        ndat += dt->n;
 //        for(t=0; t<dt->n; t++) { // old
         for(t=0; t<dt->n; t++) { // Levinson MMFST
             z = this->p->dat_slice[ dt->ix[t] ];
@@ -693,7 +696,7 @@ void HMMProblemSliced::setGradB (FitBit *fb){
     }
     // penalty
     if( this->p->Cslices>0 ) {
-        fb->addL2Penalty(FBV_B, this->p);
+        fb->addL2Penalty(FBV_B, this->p, (NUMBER)ndat);
     }
 }
 
