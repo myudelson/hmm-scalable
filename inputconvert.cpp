@@ -126,6 +126,13 @@ int main (int argc, char ** argv) {
     
     if( source_format=='t') {
         InputUtil::readTxt(input_file, &param);
+//        // vvv temporary
+//        FILE *fid = fopen(output_file,"w");
+//        for(NCAT i=0; i<param.map_group_bwd->size(); i++) {
+//            fprintf(fid,"%s\n",param.map_group_bwd->find((NCAT)i)->second.c_str());
+//        }
+//        fclose(fid);
+//        // ^^^ temporary
         InputUtil::toBin(&param, output_file);
     }
     else {

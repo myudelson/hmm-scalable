@@ -61,9 +61,9 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
 void parse_arguments_step2(int argc, char **argv, FILE *fid_console); // things that do need data file read, namely, number of observations
 
 bool read_and_structure_data(const char *filename, FILE *fid_console);
-void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
-void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
-void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
+void cross_validate(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
+void cross_validate_item(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
+void cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
 //void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console);//PAR
 //void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console);//PAR
 //void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console);//PAR
@@ -347,15 +347,15 @@ int main (int argc, char ** argv) {
         NUMBER* metrics = Calloc(NUMBER, (size_t)7); // AIC, BIC, RMSE, RMSE no null
         switch (param.cv_strat) {
             case CV_GROUP:
-                cross_validate(metrics, predict_file, &tm_fit, &tm_predict, fid_console);//SEQ
+                cross_validate(metrics, predict_file, output_file, &tm_fit, &tm_predict, fid_console);//SEQ
 //                cross_validate(metrics, predict_file, &_tm_fit, &_tm_predict, fid_console);//PAR
                 break;
             case CV_ITEM:
-                cross_validate_item(metrics, predict_file, &tm_fit, &tm_predict, fid_console);//SEQ
+                cross_validate_item(metrics, predict_file, output_file, &tm_fit, &tm_predict, fid_console);//SEQ
 //                cross_validate_item(metrics, predict_file, &_tm_fit, &_tm_predict, fid_console);//PAR
                 break;
             case CV_NSTR:
-                cross_validate_nstrat(metrics, predict_file, &tm_fit, &tm_predict, fid_console);//SEQ
+                cross_validate_nstrat(metrics, predict_file, output_file, &tm_fit, &tm_predict, fid_console);//SEQ
 //                cross_validate_nstrat(metrics, predict_file, &_tm_fit, &_tm_predict, fid_console);//PAR
                 break;
             default:
@@ -369,6 +369,7 @@ int main (int argc, char ** argv) {
 //            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
 //            if(param.duplicate_console==1) fprintf(fid_console,"%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
 //        }
+        
         free(metrics);
     }
 	// free data
@@ -1157,7 +1158,7 @@ bool read_and_structure_data(const char *filename, FILE *fid_console) {
     return true;
 }
 
-void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
+void cross_validate(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
 //void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
@@ -1280,6 +1281,11 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
         hmms[f]->fit();
         *(tm_fit) += (clock_t)(clock()- tm0);//SEQ
 //        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
+        
+        // write model
+        char fname[1024];
+        sprintf(fname,"%s_%i",model_file_name,f);
+        hmms[f]->toFile(fname);
         
         // UN-block respective data
         for(g=0; g<param.nG; g++) // for all groups
@@ -1457,7 +1463,7 @@ void cross_validate(NUMBER* metrics, const char *filename, clock_t *tm_fit, cloc
     metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }
 
-void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
+void cross_validate_item(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
 //void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
     NUMBER rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
@@ -1579,6 +1585,11 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
         hmms[f]->fit();
         *(tm_fit) += (clock_t)(clock()- tm0);//SEQ
 //        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
+        
+        // write model
+        char fname[1024];
+        sprintf(fname,"%s_%i",model_file_name,f);
+        hmms[f]->toFile(fname);
         
         // UN-block respective data
         count_saved = 0;
@@ -1751,7 +1762,7 @@ void cross_validate_item(NUMBER* metrics, const char *filename, clock_t *tm_fit,
     metrics[6] = accuracy_no_null / (param.N - param.N_null);
 }
 
-void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
+void cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
 //void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
@@ -1878,6 +1889,11 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, clock_t *tm_fi
         hmms[f]->fit();
         *(tm_fit) += (clock_t)(clock()- tm0);//SEQ
 //        *(tm_fit) += omp_get_wtime()-_tm0;//PAR
+        
+        // write model
+        char fname[1024];
+        sprintf(fname,"%s_%i",model_file_name,f);
+        hmms[f]->toFile(fname);
         
         // UN-block respective data
         count_saved = 0;
