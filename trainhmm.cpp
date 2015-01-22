@@ -348,15 +348,15 @@ int main (int argc, char ** argv) {
         switch (param.cv_strat) {
             case CV_GROUP:
                 cross_validate(metrics, predict_file, output_file, &tm_fit, &tm_predict, fid_console);//SEQ
-//                cross_validate(metrics, predict_file, &_tm_fit, &_tm_predict, fid_console);//PAR
+//                cross_validate(metrics, predict_file, output_file, &_tm_fit, &_tm_predict, fid_console);//PAR
                 break;
             case CV_ITEM:
                 cross_validate_item(metrics, predict_file, output_file, &tm_fit, &tm_predict, fid_console);//SEQ
-//                cross_validate_item(metrics, predict_file, &_tm_fit, &_tm_predict, fid_console);//PAR
+//                cross_validate_item(metrics, predict_file, output_file, &_tm_fit, &_tm_predict, fid_console);//PAR
                 break;
             case CV_NSTR:
                 cross_validate_nstrat(metrics, predict_file, output_file, &tm_fit, &tm_predict, fid_console);//SEQ
-//                cross_validate_nstrat(metrics, predict_file, &_tm_fit, &_tm_predict, fid_console);//PAR
+//                cross_validate_nstrat(metrics, predict_file, output_file, &_tm_fit, &_tm_predict, fid_console);//PAR
                 break;
             default:
                 
