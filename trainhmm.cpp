@@ -64,9 +64,9 @@ bool read_and_structure_data(const char *filename, FILE *fid_console);
 void cross_validate(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
 void cross_validate_item(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
 void cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console);//SEQ
-//void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console);//PAR
-//void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console);//PAR
-//void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console);//PAR
+//void cross_validate(NUMBER* metrics, const char *filename, const char *model_file_name, double *tm_fit, double *tm_predict, FILE *fid_console);//PAR
+//void cross_validate_item(NUMBER* metrics, const char *filename, const char *model_file_name, double *tm_fit, double *tm_predict, FILE *fid_console);//PAR
+//void cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *model_file_name, double *tm_fit, double *tm_predict, FILE *fid_console);//PAR
 
 static int max_line_length;
 static char * line;
@@ -1159,7 +1159,7 @@ bool read_and_structure_data(const char *filename, FILE *fid_console) {
 }
 
 void cross_validate(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
-//void cross_validate(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
+//void cross_validate(NUMBER* metrics, const char *filename, const char *model_file_name, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     clock_t tm0;//SEQ
@@ -1464,7 +1464,7 @@ void cross_validate(NUMBER* metrics, const char *filename, const char *model_fil
 }
 
 void cross_validate_item(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
-//void cross_validate_item(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
+//void cross_validate_item(NUMBER* metrics, const char *filename, const char *model_file_name, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
     NUMBER rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
     NCAT g,k;
@@ -1763,7 +1763,7 @@ void cross_validate_item(NUMBER* metrics, const char *filename, const char *mode
 }
 
 void cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
-//void cross_validate_nstrat(NUMBER* metrics, const char *filename, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
+//void cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *model_file_name, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
     NUMBER rmse = 0.0;
     NUMBER rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NPAR f;
