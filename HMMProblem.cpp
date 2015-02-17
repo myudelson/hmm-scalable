@@ -901,13 +901,27 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 //        if( fabs(sum-1)>SAFETY ) {
 //            int a = 0;
 //        }
+        
+//        // total unknown
+//        NPAR O = 0;
+//        NUMBER pOmax = local_pred[0];
+//        for(i=1; i<nO; i++) {
+//            if( local_pred[i] > pOmax ) {
+//                O = i;
+//                pOmax = local_pred[i];
+//            }
+//        }
+//        o = O;
 
         // update pL
         for(int l=0; l<n; l++) {
             k = ar[l];
             dt->k = k;
 //          NUMBER* pLbit = gsm(g,k); //BOOST
-            if(o>-1) { // known observations
+            
+//            if(o<0) o=O; // guess unknown
+            
+            if(o>-1) { // known observations //
                 // update p(L)
                 pLe_denom = 0.0;
                 // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );

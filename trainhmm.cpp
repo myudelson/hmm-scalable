@@ -642,7 +642,7 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                         ch = strtok(NULL,",\t\n\r");
                     }
                     if( (tmp_array->getSize() % 4) != 0 ) {
-                        fprintf(stderr,"The number of recularization parameters should be a multiple of 4 and it is %d\n",tmp_array->getSize());
+                        fprintf(stderr,"The number of regularization parameters should be a multiple of 4 and it is %d\n",tmp_array->getSize());
                         exit_with_help();
                     }
                     param.Cslices = (NPAR) tmp_array->getSize() / 4;
