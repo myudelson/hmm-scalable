@@ -214,8 +214,8 @@ struct param {
 	char multiskill; // multiskill per observation flag, 0 - single skill, [separator character] otherwise
     // parse running settings
     bool init_reset; // init parameters specified
-    bool lo_lims_specd; // parameter limits s`pecified
-    bool hi_lims_specd; // parameter limits s`pecified
+    bool lo_lims_specd; // parameter limits specified
+    bool hi_lims_specd; // parameter limits specified
     bool stat_specd_gt2; // number of states specified to be >2
     // vocabilaries
     map<string,NCAT> *map_group_fwd; // string to id

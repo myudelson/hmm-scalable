@@ -835,19 +835,19 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
         } // end switch
     }// end for
     // post parse actions
-    if(!param.lo_lims_specd) { // if not specified, set to 0
+    
+    if(!param.lo_lims_specd && (param.nS!=2 || param.nO!=2) ) { // if not specified, and it's not 2-state 2-obs case, set to 0
         if(param.param_lo!=NULL) free(param.param_lo);
         param.param_lo = Calloc(NUMBER, (size_t)( param.nS*(1+param.nS+param.nO) ) );
     }
-        
-
-    if(!param.hi_lims_specd) {
+ 
+    if(!param.hi_lims_specd && (param.nS!=2 || param.nO!=2) ) {  // if not specified, and it's not 2-state 2-obs case, set to 1
         if(param.param_hi!=NULL) free(param.param_hi);  // if not specified, set to 1
         param.param_hi = Calloc(NUMBER, (size_t)( param.nS*(1+param.nS+param.nO) ) );
         for(int j=0; j<( param.nS*(1+param.nS+param.nO) ); j++)
             param.param_hi[j] = (NUMBER)1.0;
     }
-        
+    
     // post-argument checks - TODO - enable
     if( param.cv_target_obs>(param.nO-1)) {
         fprintf(stderr,"target observation to be cross-validated against cannot be '%d'\n",param.cv_target_obs+1);
