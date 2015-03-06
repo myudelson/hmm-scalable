@@ -1,10 +1,10 @@
 = Tool for fitting Bayesian Knowledge Tracing models =
 
 This tool is developed to fit Bayesian Knowledge Training models efficiently on
-large datasets. It is a command line utility written in C/C++. Most of the
-development was done while the author was a post-doc at Human-Computer
-Interaction Institute, Carnegie Mellon University. These sources are published
-under BSD-new (3-clause BSD) license.
+large datasets. It is a command line utility written in C/C++. The project
+started while the author was a post-doc at Human-Computer Interaction Institute,
+Carnegie Mellon University. These sources are published under BSD-new (3-clause
+BSD) license.
 
 = Bayesian Knowledge Tracing =
 
@@ -29,14 +29,14 @@ skill mastery.
 
 Parameters of the BKT can be represented in the matrix form. Priors -- \pi --
 are a vector 1*N, where N is the number of states. Traditionally, for a 2-state
-BKT, we assume that the first element of the \pi vector is the apriory
+BKT, we assume that the first element of the \pi vector is the a priory
 probability of knowing the skill. pLearn is part of the transitions matrix A
-that captures probabilities of state chages from row to column and is N*N. No
+that captures probabilities of state changes from row to column and is N*N. No
 forgetting is captured by setting A[1,2] = 0 (from mastered to unmastered).
 pLearn corresponds to A[2,1] - from unmastered to mastered. pGuess and pSlip are
 specified in B -- observation matrix N*M, where M is the number of observations.
 First column corresponds to correct observation, second -- incorrect. For two
-onservations, typical for BKT, pGuess is B[2,1] -- unmastered skill but a
+observations, typical for BKT, pGuess is B[2,1] -- unmastered skill but a
 correct response, and pSlip is B[1,2] - mastered skill but incorrect response.
 
 \pi .-------------------.
@@ -76,9 +76,9 @@ by a character of your choice (do not use tab). An example of few lines of input
 is below where tilde symbol '~' is used as delimiter.
 
 -- input file --
-2   student_001 unit1-secion1-problem5-step1  addition~multiplication
-1   student_001 unit1-secion1-problem5-step2  multiplication
-1   student_001 unit1-secion1-problem5-step3  addition
+2   student_001 unit1-section1-problem5-step1  addition~multiplication
+1   student_001 unit1-section1-problem5-step2  multiplication
+1   student_001 unit1-section1-problem5-step3  addition
 -- input file --
 
 If there is no skill label for a particular row of data use '.' (dot) symbol.
@@ -93,7 +93,7 @@ skills and number of problems/problem steps; as well as the model parameters.
 Prediction file consists of model predictions for each row of the input file.
 Depending on the option (see parameter specifications below), you can print out
 probability distribution for student's response (probability of correct and
-probability of incorrect, if the observation node is binarye) and, additionally,
+probability of incorrect, if the observation node is binary) and, additionally,
 print out probability distributions over the values of the hidden state for all
 skills specified for the data point. The probability values are tab separated.
 See examples of a outputs file below.
@@ -153,8 +153,9 @@ options:
 -l : lower boundaries for parameters, comma-separated for priors, transition,
      and emission probabilities (without skips); default 0,0,1,0,0,0,0,0,0,0
 -u : upper boundaries for params, comma-separated for priors, transition,
-     and emission probabilities (without skips); default 0,0,1,0,0,0,0,0,0,0
--c : specification of the C weight and cetroids for L2 penalty, empty (default).
+     and emission probabilities (without skips); default 1,1,1,1,1,1,1,0.3,0.3,1
+     with slip and guess capped at 0.3.
+-c : specification of the C weight and centroids for L2 penalty, empty (default).
      For standard BKT - 4 comma-separated numbers: C weight of the penalty and
      centroids, for PI, A, and B matrices respectively. If used for iBKT with
      student effects, 8 values will be used with 4 additional values for student
@@ -179,9 +180,9 @@ options:
 -b : treat input file as binary input file created from text file by
      inputconvert utility.
 -B : block re-estimation of prior, transitions, or emissions parameters
-     respectively (defailt is '-B 0,0,0'), to block re-estimation of transition
+     respectively (default is '-B 0,0,0'), to block re-estimation of transition
      probabilities specify '-B 0,1,0'.
--P : use parallel processing, defaul - 0 (no parallel processing), 1 - fit
+-P : use parallel processing, default - 0 (no parallel processing), 1 - fit
      separate skills/students separately, 2 - fit separate sequences within
      skill/student separately.
 -o : in addition to printing to console, print output to the file specified
