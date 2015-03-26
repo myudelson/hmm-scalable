@@ -2097,8 +2097,8 @@ void HMMProblemSliced::readModelBody(FILE *fid, struct param* param, NDAT *line_
         fscanf(fid,"%[^\n]\n",col);// read last one
         this->pi[idxk][i] = atof(col);
         (*line_no)++;
-		// read A
         for(z=0; z<param->nZ; z++) {
+            // read A
             fscanf(fid,"A - slice %hhu\t",&slice);
             for(i=0; i<this->p->nS; i++)
                 for(j=0; j<this->p->nS; j++) {
@@ -2112,9 +2112,7 @@ void HMMProblemSliced::readModelBody(FILE *fid, struct param* param, NDAT *line_
                     }
                 }
             (*line_no)++;
-        }
-		// read B
-        for(z=0; z<param->nZ; z++) {
+            // read B
             fscanf(fid,"B - slice %hhu\t",&slice);
             for(i=0; i<this->p->nS; i++)
                 for(m=0; m<this->p->nO; m++) {
