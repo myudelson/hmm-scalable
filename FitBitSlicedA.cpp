@@ -26,14 +26,15 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  
  */
+#include <iostream>
+#include "FitBitSlicedA.h"
 
-#include "FitBit.h"
-
-FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol) {
+FitBitSlicedA::FitBitSlicedA(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol) {
     this->nS = a_nS;
     this->nO = a_nO;
     this->nG = a_nG;
     this->nK = a_nK;
+    this->nZ = a_nZ;
     this->tol = a_tol;
     this->pi = NULL;
     this->A = NULL;
@@ -60,14 +61,14 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol) {
     this->x_data = 0;
     this->projecttosimplex = 1;
     this->Cslice = 0;
-    this->tag = 0;
 }
 
-FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_projecttosimplex){
+FitBitSlicedA::FitBitSlicedA(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol, NPAR a_projecttosimplex) {
     this->nS = a_nS;
     this->nO = a_nO;
     this->nG = a_nG;
     this->nK = a_nK;
+    this->nZ = a_nZ;
     this->tol = a_tol;
     this->pi = NULL;
     this->A = NULL;
@@ -94,34 +95,33 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_
     this->x_data = 0;
     this->projecttosimplex = a_projecttosimplex;
     this->Cslice = 0;
-    this->tag = 0;
 }
 
-FitBit::~FitBit() {
+FitBitSlicedA::~FitBitSlicedA() {
 //    if(this->pi != NULL) free(this->PI); // these are usually linked
 //    if(this->A != NULL) free2D<NUMBER>(this->A, this->nS); // these are usually linked
 //    if(this->B != NULL) free2D<NUMBER>(this->B, this->nS); // these are usually linked
     if(this->PIm1 != NULL) free(this->PIm1);
-    if(this->Am1 != NULL) free2D<NUMBER>(this->Am1, (NDAT)this->nS);
+    if(this->Am1 != NULL) free3D<NUMBER>(this->Am1, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->Bm1 != NULL) free2D<NUMBER>(this->Bm1, (NDAT)this->nS);
     if(this->PIm2 != NULL) free(this->PIm2);
-    if(this->Am2 != NULL) free2D<NUMBER>(this->Am2, (NDAT)this->nS);
+    if(this->Am2 != NULL) free3D<NUMBER>(this->Am2, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->Bm2 != NULL) free2D<NUMBER>(this->Bm2, (NDAT)this->nS);
     if(this->gradPI != NULL) free(this->gradPI);
-    if(this->gradA != NULL) free2D<NUMBER>(this->gradA, (NDAT)this->nS);
+    if(this->gradA != NULL) free3D<NUMBER>(this->gradA, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->gradB != NULL) free2D<NUMBER>(this->gradB, (NDAT)this->nS);
     if(this->gradPIm1 != NULL) free(this->gradPIm1);
-    if(this->gradAm1 != NULL) free2D<NUMBER>(this->gradAm1, (NDAT)this->nS);
+    if(this->gradAm1 != NULL) free3D<NUMBER>(this->gradAm1, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->gradBm1 != NULL) free2D<NUMBER>(this->gradBm1, (NDAT)this->nS);
     if(this->PIcopy != NULL) free(this->PIcopy);
-    if(this->Acopy != NULL) free2D<NUMBER>(this->Acopy, (NDAT)this->nS);
+    if(this->Acopy != NULL) free3D<NUMBER>(this->Acopy, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->Bcopy != NULL) free2D<NUMBER>(this->Bcopy, (NDAT)this->nS);
     if(this->dirPIm1 != NULL) free(this->dirPIm1);
-    if(this->dirAm1 != NULL) free2D<NUMBER>(this->dirAm1, (NDAT)this->nS);
+    if(this->dirAm1 != NULL) free3D<NUMBER>(this->dirAm1, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->dirBm1 != NULL) free2D<NUMBER>(this->dirBm1, (NDAT)this->nS);
 }
 
-void FitBit::init(NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B) {
+void FitBitSlicedA::init(NUMBER* &a_PI, NUMBER*** &a_A, NUMBER** &a_B) {
     if(this->pi != NULL) {
         if(a_PI == NULL)
             a_PI = init1D<NUMBER>((NDAT)this->nS); // init1DNumber(this->nS);
@@ -130,19 +130,19 @@ void FitBit::init(NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B) {
     }
     if(this->A  != NULL) {
         if(a_A == NULL)
-            a_A  = init2D<NUMBER>((NDAT)this->nS, (NDAT)this->nS);
+            a_A  = init3D<NUMBER>((NDAT)this->nZ, (NDAT)this->nS, (NDAT)this->nS);
         else
-            toZero2D<NUMBER>(a_A,  (NDAT)this->nS, (NDAT)this->nS);
+            toZero3D<NUMBER>(a_A, (NDAT)this->nZ, (NDAT)this->nS, (NDAT)this->nS);
     }
     if(this->B  != NULL) {
         if(a_B == NULL)
-            a_B  = init2D<NUMBER>((NDAT)this->nS, (NDAT)this->nO);
+            a_B  = init2D<NUMBER>( (NDAT)this->nS, (NDAT)this->nO);
         else
             toZero2D<NUMBER>(a_B, (NDAT)this->nS, (NDAT)this->nO);
     }
 }
 
-void FitBit::link(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NCAT a_xndat, struct data** a_x_data) {
+void FitBitSlicedA::link(NUMBER *a_PI, NUMBER ***a_A, NUMBER **a_B, NCAT a_xndat, struct data** a_x_data) {
     this->pi = a_PI;
     this->A  = a_A;
     this->B  = a_B;
@@ -150,34 +150,34 @@ void FitBit::link(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NCAT a_xndat, struct
     this->x_data = a_x_data;
 }
 
-void FitBit::toZero(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B) {
+void FitBitSlicedA::toZero(NUMBER *a_PI, NUMBER ***a_A, NUMBER **a_B) {
     if(this->pi != NULL && a_PI != NULL) toZero1D<NUMBER>(a_PI, (NDAT)this->nS);
-    if(this->A  != NULL && a_A  != NULL) toZero2D<NUMBER>(a_A,  (NDAT)this->nS, (NDAT)this->nS);
+    if(this->A  != NULL && a_A  != NULL) toZero3D<NUMBER>(a_A,  (NDAT)this->nZ, (NDAT)this->nS, (NDAT)this->nS);
     if(this->B  != NULL && a_B  != NULL) toZero2D<NUMBER>(a_B,  (NDAT)this->nS, (NDAT)this->nO);
 }
 
-void FitBit::copy(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB){
+void FitBitSlicedA::copy(NUMBER* &soursePI, NUMBER*** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER*** &targetA, NUMBER** &targetB){
     if(this->pi != NULL) cpy1D<NUMBER>(soursePI, targetPI, (NDAT)this->nS);
-    if(this->A  != NULL) cpy2D<NUMBER>(sourseA,  targetA,  (NDAT)this->nS, (NDAT)this->nS);
+    if(this->A  != NULL) cpy3D<NUMBER>(sourseA,  targetA,  (NDAT)this->nZ, (NDAT)this->nS, (NDAT)this->nS);
     if(this->B  != NULL) cpy2D<NUMBER>(sourseB,  targetB,  (NDAT)this->nS, (NDAT)this->nO);
 }
 
-void FitBit::add(NUMBER *soursePI, NUMBER **sourseA, NUMBER **sourseB, NUMBER *targetPI, NUMBER **targetA, NUMBER **targetB){
+void FitBitSlicedA::add(NUMBER *soursePI, NUMBER ***sourseA, NUMBER **sourseB, NUMBER *targetPI, NUMBER ***targetA, NUMBER **targetB){
     if(this->pi != NULL) add1DNumbersWeighted(soursePI, targetPI, this->nS, 1.0);
-    if(this->A  != NULL) add2DNumbersWeighted(sourseA,  targetA,  this->nS, this->nS, 1.0);
+    if(this->A  != NULL) add3DNumbersWeighted(sourseA,  targetA,  this->nZ, this->nS, this->nS, 1.0);
     if(this->B  != NULL) add2DNumbersWeighted(sourseB,  targetB,  this->nS, this->nO, 1.0);
 }
 
-void FitBit::destroy(NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B) {
+void FitBitSlicedA::destroy(NUMBER* &a_PI, NUMBER*** &a_A, NUMBER** &a_B) {
     if(this->pi != NULL && a_PI != NULL) free(a_PI);
-    if(this->A  != NULL && a_A  != NULL) free2D<NUMBER>(a_A, (NDAT)this->nS);
+    if(this->A  != NULL && a_A  != NULL) free3D<NUMBER>(a_A, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->B  != NULL && a_B  != NULL) free2D<NUMBER>(a_B, (NDAT)this->nS);
     a_PI = NULL;
     a_A  = NULL;
     a_B  = NULL;
 }
 
-void FitBit::init(enum FIT_BIT_SLOT fbs){
+void FitBitSlicedA::init(enum FIT_BIT_SLOT fbs){
     switch (fbs) {
         case FBS_PAR:
             init(this->pi, this->A, this->B);
@@ -205,7 +205,7 @@ void FitBit::init(enum FIT_BIT_SLOT fbs){
     }
 }
 
-void FitBit::toZero(enum FIT_BIT_SLOT fbs){
+void FitBitSlicedA::toZero(enum FIT_BIT_SLOT fbs){
     switch (fbs) {
         case FBS_PAR:
             toZero(this->pi, this->A, this->B);
@@ -233,7 +233,7 @@ void FitBit::toZero(enum FIT_BIT_SLOT fbs){
     }
 }
 
-void FitBit::destroy(enum FIT_BIT_SLOT fbs){
+void FitBitSlicedA::destroy(enum FIT_BIT_SLOT fbs){
     switch (fbs) {
         case FBS_PAR:
             destroy(this->pi, this->A, this->B);
@@ -261,7 +261,7 @@ void FitBit::destroy(enum FIT_BIT_SLOT fbs){
     }
 }
 
-void FitBit::get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B) {
+void FitBitSlicedA::get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER*** &a_A, NUMBER** &a_B) {
     switch (fbs) {
         case FBS_PAR:
             a_PI = this->pi;
@@ -303,79 +303,73 @@ void FitBit::get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &
     }
 }
 
-void FitBit::copy(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
+void FitBitSlicedA::copy(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
     NUMBER *soursePI = NULL;
-    NUMBER **sourseA = NULL;
+    NUMBER ***sourseA = NULL;
     NUMBER **sourseB = NULL;
     get(sourse_fbs, soursePI, sourseA, sourseB);
     NUMBER *targetPI = NULL;
-    NUMBER **targetA = NULL;
+    NUMBER ***targetA = NULL;
     NUMBER **targetB = NULL;
     get(target_fbs, targetPI, targetA, targetB);
     
     copy(soursePI, sourseA, sourseB, targetPI, targetA, targetB);
 }
 
-void FitBit::add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
+void FitBitSlicedA::add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
     NUMBER *soursePI = NULL;
-    NUMBER **sourseA = NULL;
+    NUMBER ***sourseA = NULL;
     NUMBER **sourseB = NULL;
     get(sourse_fbs, soursePI, sourseA, sourseB);
     NUMBER *targetPI = NULL;
-    NUMBER **targetA = NULL;
+    NUMBER ***targetA = NULL;
     NUMBER **targetB = NULL;
     get(target_fbs, targetPI, targetA, targetB);
     
     add(soursePI, sourseA, sourseB, targetPI, targetA, targetB);
 }
 
-bool FitBit::checkConvergence(FitResult *fr) {
+bool FitBitSlicedA::checkConvergence(FitResult *fr) {
 
 	NUMBER critetion = 0;
-	for(NPAR i=0; i<this->nS; i++)
-	{
-		if(this->pi != NULL) critetion += pow( this->pi[i]-this->PIm1[i], 2 )/*:0*/;
-		for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
-			critetion += pow(this->A[i][j] - this->Am1[i][j],2);
-		}
-		for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
-			critetion += pow(this->B[i][k] - this->Bm1[i][k],2);
-		}
-	}
-    
-    NUMBER critetion_oscil = 0; // oscillation between PAR and PARm1, i.e. PAR is close to PARm2
-    if( (!(sqrt(critetion) < this->tol)) && ( this->PIm2 != NULL || this->Am2 != NULL || this->Bm2 != NULL ) ) {
+    for(NPAR i=0; i<this->nS; i++)
+        if(this->pi != NULL) critetion += pow( this->pi[i]-this->PIm1[i], 2 )/*:0*/;
+
+    for(NPAR z=0; z<this->nZ; z++)
         for(NPAR i=0; i<this->nS; i++)
         {
-            if(this->pi != NULL) critetion_oscil += pow( this->pi[i]-this->PIm2[i], 2 )/*:0*/;
             for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
-                critetion_oscil += pow(this->A[i][j] - this->Am2[i][j],2);
+                critetion += pow(this->A[z][i][j] - this->Am1[z][i][j],2);
             }
-            for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
-                critetion_oscil += pow(this->B[i][k] - this->Bm2[i][k],2);
-            }
+            
         }
-        return sqrt(critetion_oscil) < this->tol; // double the truth or false
+    for(NPAR i=0; i<this->nS; i++)
+    {
+        for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
+            critetion += pow(this->B[i][k] - this->Bm1[i][k],2);
+        }
     }
-    else
-        return sqrt(critetion) < this->tol; // double the truth or false
+	return sqrt(critetion) < this->tol; // double the truth or false
         
 //    return (fr->pOmid - fr->pO) < this->tol;
 }
 
-void FitBit::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
+void FitBitSlicedA::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
     // fbs - gradient or direction
     NUMBER *a_PI = NULL;
-    NUMBER **a_A = NULL;
+    NUMBER ***a_A = NULL;
     NUMBER **a_B = NULL;
     get(fbs, a_PI, a_A, a_B);
 	if(this->pi != NULL) doLog10Scale1DGentle(a_PI, this->pi, this->nS);
-	if(this->A  != NULL) doLog10Scale2DGentle(a_A,  this->A,  this->nS, this->nS);
-	if(this->B  != NULL) doLog10Scale2DGentle(a_B,  this->B,  this->nS, this->nO);
+    if(this->A  != NULL)
+        for(NPAR z=0; z<this->nZ; z++)
+            doLog10Scale2DGentle(a_A[z],  this->A[z], this->nS, this->nS);
+	if(this->B  != NULL)
+        doLog10Scale2DGentle(a_B,  this->B, this->nS, this->nO);
 }
 
-void FitBit::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor) {
-    NPAR i, j, m;
+void FitBitSlicedA::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor) {
+    NPAR i, j, m, z;
     if(param->Cslices==0) return;
     NUMBER C = param->Cw[this->Cslice];
     switch (fbv) {
@@ -384,9 +378,10 @@ void FitBit::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor) {
                 this->gradPI[i] += factor * L2penalty(C, this->pi[i], param->Ccenters[ this->Cslice * 3 + 0] );
             break;
         case FBV_A:
-            for(i=0; i<this->nS; i++)
-                for(j=0; j<this->nS; j++)
-                    this->gradA[i][j] += factor * L2penalty(C, this->A[i][j], param->Ccenters[ this->Cslice * 3 + 1] );
+            for(z=0; z<this->nZ; z++)
+                for(i=0; i<this->nS; i++)
+                    for(j=0; j<this->nS; j++)
+                        this->gradA[z][i][j] += factor * L2penalty(C, this->A[z][i][j], param->Ccenters[ this->Cslice * 3 + 1] );
             break;
         case FBV_B:
             for(i=0; i<this->nS; i++)
@@ -395,7 +390,7 @@ void FitBit::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor) {
             break;
             
         default:
-            fprintf(stderr,"Error, there is no such FitBit variable\n");
+            fprintf(stderr,"Error, there is no such FitBitSlicedA variable\n");
             break;
     }
 }

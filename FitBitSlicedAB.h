@@ -31,8 +31,8 @@
 // encapsulator of results of a fitting [sub-]job
 //
 
-#ifndef __HMM__FitBitSliced__
-#define __HMM__FitBitSliced__
+#ifndef __HMM__FitBitSlicedAB__
+#define __HMM__FitBitSlicedAB__
 
 #include "utils.h"
 
@@ -55,7 +55,7 @@ enum FIT_BIT_VAR {
 };
 #endif /* fit bit enums*/
 
-class FitBitSliced {
+class FitBitSlicedAB {
 public:
     NPAR nO, nS, nZ; // copies
     NCAT nG, nK; // copies
@@ -85,9 +85,9 @@ public:
     NPAR projecttosimplex; // whether projection to simplex should be done
     NPAR Cslice; // current slice during L2 norm penalty fitting
     
-    FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol);
-    FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol, NPAR a_projecttosimplex);
-    ~FitBitSliced();
+    FitBitSlicedAB(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol);
+    FitBitSlicedAB(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol, NPAR a_projecttosimplex);
+    ~FitBitSlicedAB();
     void init(enum FIT_BIT_SLOT fbs);
     void link(NUMBER *a_PI, NUMBER ***a_A, NUMBER ***a_B, NCAT a_xndat, struct data** a_x_data);
     void toZero(enum FIT_BIT_SLOT fbs);
@@ -98,7 +98,7 @@ public:
     void doLog10ScaleGentle(enum FIT_BIT_SLOT fbs);
     
     // adding penalties
-    void addL2Penalty(enum FIT_BIT_VAR fbv, param* param);
+    void addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor);
 private:
     NUMBER tol;
 
@@ -110,4 +110,4 @@ private:
     void copy(NUMBER* &soursePI, NUMBER*** &sourseA, NUMBER*** &sourseB, NUMBER* &targetPI, NUMBER*** &targetA, NUMBER*** &targetB);
 };
 
-#endif /* defined(__HMM__FitBitSliced__) */
+#endif /* defined(__HMM__FitBitSlicedAB__) */

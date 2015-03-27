@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		713EFA001AC58AA2000301B4 /* HMMProblemSlicedA.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713EF9FE1AC58AA2000301B4 /* HMMProblemSlicedA.cpp */; };
+		713EFA031AC5C70B000301B4 /* FitBitSlicedA.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713EFA021AC5C70B000301B4 /* FitBitSlicedA.cpp */; };
 		715BD81117AD95BD00C9B6D3 /* HMMProblem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D234A417540A7C006985EB /* HMMProblem.cpp */; };
 		715BD81217AD95CD00C9B6D3 /* HMMProblemPiGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBD201D615F103CD003E97BF /* HMMProblemPiGK.cpp */; };
 		715BD81317AD95D100C9B6D3 /* HMMProblemAGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBADDC9F160211F000C6865E /* HMMProblemAGK.cpp */; };
@@ -30,8 +32,8 @@
 		71A39CB3179DB063000F9610 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D234AA17540AE7006985EB /* utils.cpp */; };
 		71A39CB4179DB071000F9610 /* inputconvert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71A39C9F179DAAC6000F9610 /* inputconvert.cpp */; };
 		71A39CB5179DB074000F9610 /* InputUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D4587D17972C0400356EE4 /* InputUtil.cpp */; };
-		71BD6F9019F4660800978D44 /* HMMProblemSliced.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71BD6F8F19F4660800978D44 /* HMMProblemSliced.cpp */; };
-		71BD6F9319F468F800978D44 /* FitBitSliced.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71BD6F9219F468F800978D44 /* FitBitSliced.cpp */; };
+		71BD6F9019F4660800978D44 /* HMMProblemSlicedAB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71BD6F8F19F4660800978D44 /* HMMProblemSlicedAB.cpp */; };
+		71BD6F9319F468F800978D44 /* FitBitSlicedAB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71BD6F9219F468F800978D44 /* FitBitSlicedAB.cpp */; };
 		71D4589017981E6600356EE4 /* InputUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D4587D17972C0400356EE4 /* InputUtil.cpp */; };
 		EB256607167FBF4000E9082A /* FitBit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB994B9216288D0C0098D5ED /* FitBit.cpp */; };
 		EB5D902B158B7C8C007ECB58 /* StripedArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB5D902A158B7C8C007ECB58 /* StripedArray.cpp */; };
@@ -52,6 +54,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		713EF9FE1AC58AA2000301B4 /* HMMProblemSlicedA.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HMMProblemSlicedA.cpp; sourceTree = "<group>"; };
+		713EF9FF1AC58AA2000301B4 /* HMMProblemSlicedA.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMMProblemSlicedA.h; sourceTree = "<group>"; };
+		713EFA011AC5C6FE000301B4 /* FitBitSlicedA.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FitBitSlicedA.h; sourceTree = "<group>"; };
+		713EFA021AC5C70B000301B4 /* FitBitSlicedA.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FitBitSlicedA.cpp; sourceTree = "<group>"; };
 		715EE5B017F0BF290079E646 /* SparseArray2D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SparseArray2D.cpp; sourceTree = "<group>"; };
 		715EE5B117F0BF290079E646 /* SparseArray2D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SparseArray2D.h; sourceTree = "<group>"; };
 		71602EF817BBA3270001BF2B /* readme.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = readme.txt; sourceTree = "<group>"; };
@@ -59,10 +65,10 @@
 		719E18D418CF8CA3004ED5C4 /* HMMProblemPiGKww.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = HMMProblemPiGKww.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		71A39C9F179DAAC6000F9610 /* inputconvert.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = inputconvert.cpp; sourceTree = "<group>"; };
 		71A39CA9179DB04F000F9610 /* inputconvert */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = inputconvert; sourceTree = BUILT_PRODUCTS_DIR; };
-		71BD6F8E19F4660100978D44 /* HMMProblemSliced.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMMProblemSliced.h; sourceTree = "<group>"; };
-		71BD6F8F19F4660800978D44 /* HMMProblemSliced.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HMMProblemSliced.cpp; sourceTree = "<group>"; };
-		71BD6F9119F468EF00978D44 /* FitBitSliced.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FitBitSliced.h; sourceTree = "<group>"; };
-		71BD6F9219F468F800978D44 /* FitBitSliced.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FitBitSliced.cpp; sourceTree = "<group>"; };
+		71BD6F8E19F4660100978D44 /* HMMProblemSlicedAB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMMProblemSlicedAB.h; sourceTree = "<group>"; };
+		71BD6F8F19F4660800978D44 /* HMMProblemSlicedAB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HMMProblemSlicedAB.cpp; sourceTree = "<group>"; };
+		71BD6F9119F468EF00978D44 /* FitBitSlicedAB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FitBitSlicedAB.h; sourceTree = "<group>"; };
+		71BD6F9219F468F800978D44 /* FitBitSlicedAB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FitBitSlicedAB.cpp; sourceTree = "<group>"; };
 		71D234A417540A7C006985EB /* HMMProblem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = HMMProblem.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		71D234A617540A80006985EB /* HMMProblem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMMProblem.h; sourceTree = "<group>"; };
 		71D234A717540AB6006985EB /* trainhmm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = trainhmm.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
@@ -156,8 +162,10 @@
 				EBE1877915531289001CD83C /* HMMProblemNew.cpp */,
 				71D234A617540A80006985EB /* HMMProblem.h */,
 				71D234A417540A7C006985EB /* HMMProblem.cpp */,
-				71BD6F8E19F4660100978D44 /* HMMProblemSliced.h */,
-				71BD6F8F19F4660800978D44 /* HMMProblemSliced.cpp */,
+				713EF9FF1AC58AA2000301B4 /* HMMProblemSlicedA.h */,
+				713EF9FE1AC58AA2000301B4 /* HMMProblemSlicedA.cpp */,
+				71BD6F8E19F4660100978D44 /* HMMProblemSlicedAB.h */,
+				71BD6F8F19F4660800978D44 /* HMMProblemSlicedAB.cpp */,
 				EBADDCA316021E5900C6865E /* HMMProblemKT.h */,
 				EBADDCA216021E5900C6865E /* HMMProblemKT.cpp */,
 				EB8BF8AA15E7F71E00B8D6B0 /* HMMProblemPiG.h */,
@@ -185,8 +193,10 @@
 				EB5D902A158B7C8C007ECB58 /* StripedArray.cpp */,
 				EB994B9316288D0D0098D5ED /* FitBit.h */,
 				EB994B9216288D0C0098D5ED /* FitBit.cpp */,
-				71BD6F9119F468EF00978D44 /* FitBitSliced.h */,
-				71BD6F9219F468F800978D44 /* FitBitSliced.cpp */,
+				713EFA011AC5C6FE000301B4 /* FitBitSlicedA.h */,
+				713EFA021AC5C70B000301B4 /* FitBitSlicedA.cpp */,
+				71BD6F9119F468EF00978D44 /* FitBitSlicedAB.h */,
+				71BD6F9219F468F800978D44 /* FitBitSlicedAB.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -326,16 +336,18 @@
 			buildActionMask = 2147483647;
 			files = (
 				EB5D902B158B7C8C007ECB58 /* StripedArray.cpp in Sources */,
-				71BD6F9319F468F800978D44 /* FitBitSliced.cpp in Sources */,
+				71BD6F9319F468F800978D44 /* FitBitSlicedAB.cpp in Sources */,
 				EB994B9416288D0D0098D5ED /* FitBit.cpp in Sources */,
 				71D4589017981E6600356EE4 /* InputUtil.cpp in Sources */,
 				715BD81117AD95BD00C9B6D3 /* HMMProblem.cpp in Sources */,
 				719E18D518CF8CA3004ED5C4 /* HMMProblemPiGKww.cpp in Sources */,
 				715BD81217AD95CD00C9B6D3 /* HMMProblemPiGK.cpp in Sources */,
 				715BD81317AD95D100C9B6D3 /* HMMProblemAGK.cpp in Sources */,
+				713EFA001AC58AA2000301B4 /* HMMProblemSlicedA.cpp in Sources */,
+				713EFA031AC5C70B000301B4 /* FitBitSlicedA.cpp in Sources */,
 				715BD81517AD95D900C9B6D3 /* HMMProblemPiAGK.cpp in Sources */,
 				715BD81617AD95DD00C9B6D3 /* HMMProblemPiABGK.cpp in Sources */,
-				71BD6F9019F4660800978D44 /* HMMProblemSliced.cpp in Sources */,
+				71BD6F9019F4660800978D44 /* HMMProblemSlicedAB.cpp in Sources */,
 				715BD81717AD95E100C9B6D3 /* trainhmm.cpp in Sources */,
 				715BD81817AD95EF00C9B6D3 /* utils.cpp in Sources */,
 				715EE5B217F0BF290079E646 /* SparseArray2D.cpp in Sources */,

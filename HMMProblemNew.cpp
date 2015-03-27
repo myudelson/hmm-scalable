@@ -2373,18 +2373,18 @@ NUMBER HMMProblem::doConjugateLinearStep(NCAT ix1, NCAT n, struct data* data, NC
 //            for(i=0; i<nS; i++)
 //            {
 //                if(fb->PI != NULL) {
-//                    beta_grad_num = fb->gradPI  [i]*fb->gradPI   [i];
-//                    beta_grad_den = fb->gradPIm1[i]*fb->gradPIm1[i];
+//                    beta_grad_num += fb->gradPI  [i]*fb->gradPI   [i];
+//                    beta_grad_den += fb->gradPIm1[i]*fb->gradPIm1[i];
 //                }
 //                if(fb->A  != NULL)
 //                    for(j=0; j<nS; j++) {
-//                        beta_grad_num = fb->gradA  [i][j]*fb->gradA   [i][j];
-//                        beta_grad_den = fb->gradAm1[i][j]*fb->gradAm1[i][j];
+//                        beta_grad_num += fb->gradA  [i][j]*fb->gradA   [i][j];
+//                        beta_grad_den += fb->gradAm1[i][j]*fb->gradAm1[i][j];
 //                    }
 //                if(fb->B  != NULL)
 //                    for(m=0; m<nO; m++) {
-//                        beta_grad_num = fb->gradB  [i][m]*fb->gradB  [i][m];
-//                        beta_grad_den = fb->gradBm1[i][m]*fb->gradBm1[i][m];
+//                        beta_grad_num += fb->gradB  [i][m]*fb->gradB  [i][m];
+//                        beta_grad_den += fb->gradBm1[i][m]*fb->gradBm1[i][m];
 //                    }
 //            }
 //            break;
@@ -2392,18 +2392,18 @@ NUMBER HMMProblem::doConjugateLinearStep(NCAT ix1, NCAT n, struct data* data, NC
 //            for(i=0; i<nS; i++)
 //            {
 //                if(fb->PI != NULL) {
-//                    beta_grad_num = -fb->gradPI[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
-//                    beta_grad_den =  fb->gradPIm1[i]*fb->gradPIm1[i];
+//                    beta_grad_num += -fb->gradPI[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
+//                    beta_grad_den +=  fb->gradPIm1[i]*fb->gradPIm1[i];
 //                }
 //                if(fb->A != NULL)
 //                    for(j=0; j<nS; j++) {
-//                        beta_grad_num = -fb->gradA[i][j]*(-fb->gradA[i][j] + fb->gradAm1[i][j]);
-//                        beta_grad_den =  fb->gradAm1[i][j]*fb->gradAm1[i][j];
+//                        beta_grad_num += -fb->gradA[i][j]*(-fb->gradA[i][j] + fb->gradAm1[i][j]);
+//                        beta_grad_den +=  fb->gradAm1[i][j]*fb->gradAm1[i][j];
 //                    }
 //                if(fb->B  != NULL)
 //                    for(m=0; m<nO; m++) {
-//                        beta_grad_num = -fb->gradB[i][j]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
-//                        beta_grad_den =  fb->gradBm1[i][m]*fb->gradBm1[i][m];
+//                        beta_grad_num += -fb->gradB[i][j]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
+//                        beta_grad_den +=  fb->gradBm1[i][m]*fb->gradBm1[i][m];
 //                    }
 //            }
 //            break;
@@ -2411,18 +2411,18 @@ NUMBER HMMProblem::doConjugateLinearStep(NCAT ix1, NCAT n, struct data* data, NC
 //            for(i=0; i<nS; i++)
 //            {
 //                if(fb->PI != NULL) {
-//                    beta_grad_num = -fb->gradPI[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
-//                    beta_grad_den =  fb->dirPIm1[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
+//                    beta_grad_num += -fb->gradPI[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
+//                    beta_grad_den +=  fb->dirPIm1[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
 //                }
 //                if(fb->A  != NULL)
 //                    for(j=0; j<nS; j++) {
-//                        beta_grad_num = -fb->gradA[i][j]*(-fb->gradA[i][j] + fb->gradAm1[i][j]);
-//                        beta_grad_den =  fb->dirAm1[i][j]*(-fb->gradA[i][j] + fb->gradAm1[i][j]);
+//                        beta_grad_num += -fb->gradA[i][j]*(-fb->gradA[i][j] + fb->gradAm1[i][j]);
+//                        beta_grad_den +=  fb->dirAm1[i][j]*(-fb->gradA[i][j] + fb->gradAm1[i][j]);
 //                    }
 //                if(fb->B  != NULL)
 //                    for(m=0; m<nO; m++) {
-//                        beta_grad_num = -fb->gradB[i][j]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
-//                        beta_grad_den =  fb->dirBm1[i][m]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
+//                        beta_grad_num += -fb->gradB[i][j]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
+//                        beta_grad_den +=  fb->dirBm1[i][m]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
 //                    }
 //            }
 //            break;

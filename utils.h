@@ -108,6 +108,7 @@ enum STRUCTURE {
     STRUCTURE_GROUP   = 2,  // 2 - all by group (user)
     STRUCTURE_PIg     = 3,  // 3 - PI by group, A,B by skill
     STRUCTURE_SKABslc = 11, // all by skill - sliced A and B
+    STRUCTURE_SKAslc  = 12, // all by skill - sliced A
     STRUCTURE_PIgk    = 4,  // 4 - PI by skll&group, A,B by skill
     STRUCTURE_PIgkww  = 10, // 4 - PI by skll&group with weights, A,B by skill
     STRUCTURE_PIAgk   = 5,  // 5 - PI, A by skll&group, B by skill

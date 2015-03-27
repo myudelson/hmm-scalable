@@ -47,7 +47,8 @@
 #include "HMMProblemPiAGK.h"
 #include "HMMProblemPiABGK.h"
 //#include "HMMProblemKT.h"
-#include "HMMProblemSliced.h"
+#include "HMMProblemSlicedAB.h"
+#include "HMMProblemSlicedA.h"
 #include "StripedArray.h"
 //#include "SparseArray2D.h"
 //#include <boost/numeric/ublas/matrix_sparse.hpp>//BOOST
@@ -259,7 +260,10 @@ int main (int argc, char ** argv) {
                 //                hmm = new HMMProblemPiG(&param);
                 //                break;
             case STRUCTURE_SKABslc: // Conjugate Gradient Descent
-                hmm = new HMMProblemSliced(&param);
+                hmm = new HMMProblemSlicedAB(&param);
+                break;
+            case STRUCTURE_SKAslc: // Conjugate Gradient Descent
+                hmm = new HMMProblemSlicedA(&param);
                 break;
             case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
                 hmm = new HMMProblemPiGK(&param);
@@ -519,7 +523,8 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                    param.structure != STRUCTURE_PIg   && param.structure != STRUCTURE_PIgk  &&
                    param.structure != STRUCTURE_PIAgk && param.structure != STRUCTURE_Agk &&
                    param.structure != STRUCTURE_PIABgk && param.structure != STRUCTURE_Agki &&
-                   param.structure != STRUCTURE_PIgkww && param.structure != STRUCTURE_SKABslc) {
+                   param.structure != STRUCTURE_PIgkww && param.structure != STRUCTURE_SKABslc &&
+                   param.structure != STRUCTURE_SKAslc ) {
                     fprintf(stderr, "Model Structure specified (%d) is out of range of allowed values\n",param.structure);
 					exit_with_help();
                 }
@@ -529,7 +534,7 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                     fprintf(stderr, "Method specified (%d) is out of range of allowed values\n",param.solver);
 					exit_with_help();
                 }
-                if( param.structure == STRUCTURE_SKABslc && param.solver == METHOD_BW) {
+                if( (param.structure == STRUCTURE_SKABslc || param.structure == STRUCTURE_SKAslc) && param.solver == METHOD_BW) {
                     fprintf(stderr, "Method specified (%d) is not defined for this structure (%d) \n",param.solver,param.structure);
                     exit_with_help();
                 }
@@ -693,8 +698,8 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
         exit_with_help();
     }
     // STRUCTURE_SKABslc solver and -t 1 should be set together
-    if( (param.sliced==1) != (param.structure == STRUCTURE_SKABslc) ) {
-        fprintf(stderr,"Error! sliced parameter ('-t 1') and STRUCTURE_SKABslc structure should be either both set on or off.\n");
+    if( (param.sliced==1) != (param.structure == STRUCTURE_SKABslc || param.structure == STRUCTURE_SKAslc) ) {
+        fprintf(stderr,"Error! sliced parameter ('-t 1') and STRUCTURE_SKABslc or STRUCTURE_SKAslc structure should be either both set on or off.\n");
         exit_with_help();
     }
     
@@ -1239,7 +1244,10 @@ void cross_validate(NUMBER* metrics, const char *filename, const char *model_fil
                 hmms[f] = new HMMProblem(&param);
                 break;
             case STRUCTURE_SKABslc: // Conjugate Gradient Descent
-                hmms[f] = new HMMProblemSliced(&param);
+                hmms[f] = new HMMProblemSlicedAB(&param);
+                break;
+            case STRUCTURE_SKAslc: // Conjugate Gradient Descent
+                hmms[f] = new HMMProblemSlicedA(&param);
                 break;
 //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
 //                hmm = new HMMProblemPiG(&param);
@@ -1551,7 +1559,10 @@ void cross_validate_item(NUMBER* metrics, const char *filename, const char *mode
                 //                hmm = new HMMProblemPiG(&param);
                 //                break;
             case STRUCTURE_SKABslc: // Conjugate Gradient Descent
-                hmms[f] = new HMMProblemSliced(&param);
+                hmms[f] = new HMMProblemSlicedAB(&param);
+                break;
+            case STRUCTURE_SKAslc: // Conjugate Gradient Descent
+                hmms[f] = new HMMProblemSlicedA(&param);
                 break;
             case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
                 hmms[f] = new HMMProblemPiGK(&param);
@@ -1853,7 +1864,10 @@ void cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *mo
                 hmms[f] = new HMMProblem(&param);
                 break;
             case STRUCTURE_SKABslc: // Conjugate Gradient Descent
-                hmms[f] = new HMMProblemSliced(&param);
+                hmms[f] = new HMMProblemSlicedAB(&param);
+                break;
+            case STRUCTURE_SKAslc: // Conjugate Gradient Descent
+                hmms[f] = new HMMProblemSlicedA(&param);
                 break;
 //                //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
 //                //                hmm = new HMMProblemPiG(&param);

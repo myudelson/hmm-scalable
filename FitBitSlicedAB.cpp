@@ -27,9 +27,9 @@
  
  */
 #include <iostream>
-#include "FitBitSliced.h"
+#include "FitBitSlicedAB.h"
 
-FitBitSliced::FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol) {
+FitBitSlicedAB::FitBitSlicedAB(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol) {
     this->nS = a_nS;
     this->nO = a_nO;
     this->nG = a_nG;
@@ -63,7 +63,7 @@ FitBitSliced::FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ
     this->Cslice = 0;
 }
 
-FitBitSliced::FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol, NPAR a_projecttosimplex) {
+FitBitSlicedAB::FitBitSlicedAB(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol, NPAR a_projecttosimplex) {
     this->nS = a_nS;
     this->nO = a_nO;
     this->nG = a_nG;
@@ -97,7 +97,7 @@ FitBitSliced::FitBitSliced(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ
     this->Cslice = 0;
 }
 
-FitBitSliced::~FitBitSliced() {
+FitBitSlicedAB::~FitBitSlicedAB() {
 //    if(this->pi != NULL) free(this->PI); // these are usually linked
 //    if(this->A != NULL) free2D<NUMBER>(this->A, this->nS); // these are usually linked
 //    if(this->B != NULL) free2D<NUMBER>(this->B, this->nS); // these are usually linked
@@ -121,7 +121,7 @@ FitBitSliced::~FitBitSliced() {
     if(this->dirBm1 != NULL) free3D<NUMBER>(this->dirBm1, (NDAT)this->nZ, (NDAT)this->nS);
 }
 
-void FitBitSliced::init(NUMBER* &a_PI, NUMBER*** &a_A, NUMBER*** &a_B) {
+void FitBitSlicedAB::init(NUMBER* &a_PI, NUMBER*** &a_A, NUMBER*** &a_B) {
     if(this->pi != NULL) {
         if(a_PI == NULL)
             a_PI = init1D<NUMBER>((NDAT)this->nS); // init1DNumber(this->nS);
@@ -142,7 +142,7 @@ void FitBitSliced::init(NUMBER* &a_PI, NUMBER*** &a_A, NUMBER*** &a_B) {
     }
 }
 
-void FitBitSliced::link(NUMBER *a_PI, NUMBER ***a_A, NUMBER ***a_B, NCAT a_xndat, struct data** a_x_data) {
+void FitBitSlicedAB::link(NUMBER *a_PI, NUMBER ***a_A, NUMBER ***a_B, NCAT a_xndat, struct data** a_x_data) {
     this->pi = a_PI;
     this->A  = a_A;
     this->B  = a_B;
@@ -150,25 +150,25 @@ void FitBitSliced::link(NUMBER *a_PI, NUMBER ***a_A, NUMBER ***a_B, NCAT a_xndat
     this->x_data = a_x_data;
 }
 
-void FitBitSliced::toZero(NUMBER *a_PI, NUMBER ***a_A, NUMBER ***a_B) {
+void FitBitSlicedAB::toZero(NUMBER *a_PI, NUMBER ***a_A, NUMBER ***a_B) {
     if(this->pi != NULL && a_PI != NULL) toZero1D<NUMBER>(a_PI, (NDAT)this->nS);
     if(this->A  != NULL && a_A  != NULL) toZero3D<NUMBER>(a_A,  (NDAT)this->nZ, (NDAT)this->nS, (NDAT)this->nS);
     if(this->B  != NULL && a_B  != NULL) toZero3D<NUMBER>(a_B,  (NDAT)this->nZ, (NDAT)this->nS, (NDAT)this->nO);
 }
 
-void FitBitSliced::copy(NUMBER* &soursePI, NUMBER*** &sourseA, NUMBER*** &sourseB, NUMBER* &targetPI, NUMBER*** &targetA, NUMBER*** &targetB){
+void FitBitSlicedAB::copy(NUMBER* &soursePI, NUMBER*** &sourseA, NUMBER*** &sourseB, NUMBER* &targetPI, NUMBER*** &targetA, NUMBER*** &targetB){
     if(this->pi != NULL) cpy1D<NUMBER>(soursePI, targetPI, (NDAT)this->nS);
     if(this->A  != NULL) cpy3D<NUMBER>(sourseA,  targetA,  (NDAT)this->nZ, (NDAT)this->nS, (NDAT)this->nS);
     if(this->B  != NULL) cpy3D<NUMBER>(sourseB,  targetB,  (NDAT)this->nZ, (NDAT)this->nS, (NDAT)this->nO);
 }
 
-void FitBitSliced::add(NUMBER *soursePI, NUMBER ***sourseA, NUMBER ***sourseB, NUMBER *targetPI, NUMBER ***targetA, NUMBER ***targetB){
+void FitBitSlicedAB::add(NUMBER *soursePI, NUMBER ***sourseA, NUMBER ***sourseB, NUMBER *targetPI, NUMBER ***targetA, NUMBER ***targetB){
     if(this->pi != NULL) add1DNumbersWeighted(soursePI, targetPI, this->nS, 1.0);
     if(this->A  != NULL) add3DNumbersWeighted(sourseA,  targetA,  this->nZ, this->nS, this->nS, 1.0);
     if(this->B  != NULL) add3DNumbersWeighted(sourseB,  targetB,  this->nZ, this->nS, this->nO, 1.0);
 }
 
-void FitBitSliced::destroy(NUMBER* &a_PI, NUMBER*** &a_A, NUMBER*** &a_B) {
+void FitBitSlicedAB::destroy(NUMBER* &a_PI, NUMBER*** &a_A, NUMBER*** &a_B) {
     if(this->pi != NULL && a_PI != NULL) free(a_PI);
     if(this->A  != NULL && a_A  != NULL) free3D<NUMBER>(a_A, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->B  != NULL && a_B  != NULL) free3D<NUMBER>(a_B, (NDAT)this->nZ, (NDAT)this->nS);
@@ -177,7 +177,7 @@ void FitBitSliced::destroy(NUMBER* &a_PI, NUMBER*** &a_A, NUMBER*** &a_B) {
     a_B  = NULL;
 }
 
-void FitBitSliced::init(enum FIT_BIT_SLOT fbs){
+void FitBitSlicedAB::init(enum FIT_BIT_SLOT fbs){
     switch (fbs) {
         case FBS_PAR:
             init(this->pi, this->A, this->B);
@@ -205,7 +205,7 @@ void FitBitSliced::init(enum FIT_BIT_SLOT fbs){
     }
 }
 
-void FitBitSliced::toZero(enum FIT_BIT_SLOT fbs){
+void FitBitSlicedAB::toZero(enum FIT_BIT_SLOT fbs){
     switch (fbs) {
         case FBS_PAR:
             toZero(this->pi, this->A, this->B);
@@ -233,7 +233,7 @@ void FitBitSliced::toZero(enum FIT_BIT_SLOT fbs){
     }
 }
 
-void FitBitSliced::destroy(enum FIT_BIT_SLOT fbs){
+void FitBitSlicedAB::destroy(enum FIT_BIT_SLOT fbs){
     switch (fbs) {
         case FBS_PAR:
             destroy(this->pi, this->A, this->B);
@@ -261,7 +261,7 @@ void FitBitSliced::destroy(enum FIT_BIT_SLOT fbs){
     }
 }
 
-void FitBitSliced::get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER*** &a_A, NUMBER*** &a_B) {
+void FitBitSlicedAB::get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER*** &a_A, NUMBER*** &a_B) {
     switch (fbs) {
         case FBS_PAR:
             a_PI = this->pi;
@@ -303,7 +303,7 @@ void FitBitSliced::get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER*** &a_A, NUM
     }
 }
 
-void FitBitSliced::copy(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
+void FitBitSlicedAB::copy(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
     NUMBER *soursePI = NULL;
     NUMBER ***sourseA = NULL;
     NUMBER ***sourseB = NULL;
@@ -316,7 +316,7 @@ void FitBitSliced::copy(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_f
     copy(soursePI, sourseA, sourseB, targetPI, targetA, targetB);
 }
 
-void FitBitSliced::add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
+void FitBitSlicedAB::add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
     NUMBER *soursePI = NULL;
     NUMBER ***sourseA = NULL;
     NUMBER ***sourseB = NULL;
@@ -329,7 +329,7 @@ void FitBitSliced::add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fb
     add(soursePI, sourseA, sourseB, targetPI, targetA, targetB);
 }
 
-bool FitBitSliced::checkConvergence(FitResult *fr) {
+bool FitBitSlicedAB::checkConvergence(FitResult *fr) {
 
 	NUMBER critetion = 0;
     for(NPAR i=0; i<this->nS; i++)
@@ -350,7 +350,7 @@ bool FitBitSliced::checkConvergence(FitResult *fr) {
 //    return (fr->pOmid - fr->pO) < this->tol;
 }
 
-void FitBitSliced::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
+void FitBitSlicedAB::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
     // fbs - gradient or direction
     NUMBER *a_PI = NULL;
     NUMBER ***a_A = NULL;
@@ -367,30 +367,30 @@ void FitBitSliced::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
 //        doLog10Scale3DGentle(a_B,  this->B,  this->nZ, this->nS, this->nO);
 }
 
-void FitBitSliced::addL2Penalty(enum FIT_BIT_VAR fbv, param* param) {
+void FitBitSlicedAB::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor) {
     NPAR i, j, m, z;
-    if(param->Cslices) return;
+    if(param->Cslices==0) return;
     NUMBER C = param->Cw[this->Cslice];
     switch (fbv) {
         case FBV_PI:
             for(i=0; i<this->nS; i++)
-                this->gradPI[i] += L2penalty(C, this->pi[i], param->Ccenters[ this->Cslice * 3 + 0] );
+                this->gradPI[i] += factor * L2penalty(C, this->pi[i], param->Ccenters[ this->Cslice * 3 + 0] );
             break;
         case FBV_A:
-            for(i=0; i<this->nS; i++)
-                for(j=0; j<this->nS; j++)
-                    for(z=0; z<this->nZ; z++)
-                        this->gradA[z][i][j] += L2penalty(C, this->A[z][i][j], param->Ccenters[ this->Cslice * 3 + 1] );
+            for(z=0; z<this->nZ; z++)
+                for(i=0; i<this->nS; i++)
+                    for(j=0; j<this->nS; j++)
+                        this->gradA[z][i][j] += factor * L2penalty(C, this->A[z][i][j], param->Ccenters[ this->Cslice * 3 + 1] );
             break;
         case FBV_B:
-            for(i=0; i<this->nS; i++)
-                for(m=0; m<this->nO; m++)
-                    for(z=0; z<this->nZ; z++)
-                        this->gradB[z][i][m] += L2penalty(C, this->B[z][i][m], param->Ccenters[ this->Cslice * 3 + 2] );
+            for(z=0; z<this->nZ; z++)
+             for(i=0; i<this->nS; i++)
+                 for(m=0; m<this->nO; m++)
+                     this->gradB[z][i][m] += factor * L2penalty(C, this->B[z][i][m], param->Ccenters[ this->Cslice * 3 + 2] );
             break;
             
         default:
-            fprintf(stderr,"Error, there is no such FitBitSliced variable\n");
+            fprintf(stderr,"Error, there is no such FitBitSlicedA variable\n");
             break;
     }
 }
