@@ -1529,7 +1529,9 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
     
 	NUMBER e = this->p->ArmijoSeed; // step seed
 	bool compliesArmijo = false;
-	bool compliesWolfe2 = false; // second wolfe condition is turned off
+	bool compliesWolfe2 = false; // second wolfe condition is turned on, if satisfied - honored, if not, just the 1st is used
+    NUMBER e_Armijo = 1; // e (step size) at which Armijo (Wolfe 1) criterion is satisfied, 'cos both criterions are sometimes not met.
+    NUMBER f_xkplus1_Armijo = 0; // f_xkplus1_Armijo at which Armijo (Wolfe 1) criterion is satisfied, 'cos both criterions are sometimes not met.
 	NUMBER f_xk = HMMProblem::getSumLogPOPara(xndat, x_data);
 	NUMBER f_xkplus1 = 0;
 	
@@ -1606,6 +1608,11 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
         }
         compliesWolfe2 = (p_k_by_neg_p_kp1 >= this->p->ArmijoC2 * p_k_by_neg_p_k);
         
+        if( compliesArmijo && e_Armijo==1 ){
+            e_Armijo = e; // save the first time Armijo is statisfied, in case we'll roll back to it when Wolfe 2 is finnaly not satisfied
+            f_xkplus1_Armijo = f_xkplus1;
+        }
+        
 		e /= (compliesArmijo && compliesWolfe2)?1:this->p->ArmijoReduceFactor;
 		iter++;
 	} // armijo loop
@@ -1613,6 +1620,51 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
         e = 0;
         fb->copy(FBS_PARcopy, FBS_PAR);
         f_xkplus1 = f_xk;
+    } else if(compliesArmijo && !compliesWolfe2) { // we couldn't step away from current, copy the inital point back
+        e = e_Armijo;
+        f_xkplus1 = f_xkplus1_Armijo;
+        // create new versions of FBS_PAR using e_Armijo as a step
+        // update
+        for(i=0; i<nS; i++) {
+            if(fb->pi != NULL) {
+                fb->pi[i] = fb->PIcopy[i] - e * fb->gradPI[i];
+                if( (fb->pi[i]<0 || fb->pi[i] >1) && (fb->pi[i] > 0) && (fb->pi[i] < 1) ) {
+                    fprintf(stderr, "ERROR! pi value is not within [0, 1] range!\n");
+                }
+            }
+            if(fb->A  != NULL)
+                for(j=0; j<nS; j++) {
+                    fb->A[i][j] = fb->Acopy[i][j] - e * fb->gradA[i][j];
+                    if( (fb->A[i][j]<0 || fb->A[i][j] >1) && (fb->A[i][j] > 0) && (fb->A[i][j] < 1) ) {
+                        fprintf(stderr, "ERROR! A value is not within [0, 1] range!\n");
+                    }
+                }
+            if(fb->B  != NULL)
+                for(m=0; m<nO; m++) {
+                    fb->B[i][m] = fb->Bcopy[i][m] - e * fb->gradB[i][m];
+                    if( (fb->B[i][m]<0 || fb->B[i][m] >1) && (fb->B[i][m] > 0) && (fb->B[i][m] < 1) ) {
+                        fprintf(stderr, "ERROR! B value is not within [0, 1] range!\n");
+                    }
+                }
+        }
+        // project parameters to simplex if needs be
+        if(fb->projecttosimplex==1) {
+            // scale
+            if( !this->hasNon01Constraints() ) {
+                if(fb->pi != NULL) projectsimplex(fb->pi, nS);
+                for(i=0; i<nS; i++) {
+                    if(fb->A  != NULL) projectsimplex(fb->A[i], nS);
+                    if(fb->B  != NULL) projectsimplex(fb->B[i], nO);
+                }
+            } else {
+                if(fb->pi != NULL) projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
+                for(i=0; i<nS; i++) {
+                    if(fb->A  != NULL) projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
+                    if(fb->B  != NULL) projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nO);
+                }
+            }
+        }
+        // ^^^^^ end of create new versions of FBS_PAR using e_Armijo as a step
     }
     fb->destroy(FBS_PARcopy);
     return f_xkplus1;
@@ -1926,18 +1978,18 @@ NUMBER HMMProblem::doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs) {
                 for(i=0; i<nS; i++)
                 {
                     if(fbs[q]->pi != NULL) {
-                        beta_grad_num = fbs[q]->gradPI  [i]*fbs[q]->gradPI  [i];
-                        beta_grad_den = fbs[q]->gradPIm1[i]*fbs[q]->gradPIm1[i];
+                        beta_grad_num += fbs[q]->gradPI  [i]*fbs[q]->gradPI  [i];
+                        beta_grad_den += fbs[q]->gradPIm1[i]*fbs[q]->gradPIm1[i];
                     }
                     if(fbs[q]->A  != NULL)
                         for(j=0; j<nS; j++) {
-                            beta_grad_num = fbs[q]->gradA  [i][j]*fbs[q]->gradA  [i][j];
-                            beta_grad_den = fbs[q]->gradAm1[i][j]*fbs[q]->gradAm1[i][j];
+                            beta_grad_num += fbs[q]->gradA  [i][j]*fbs[q]->gradA  [i][j];
+                            beta_grad_den += fbs[q]->gradAm1[i][j]*fbs[q]->gradAm1[i][j];
                         }
                     if(fbs[q]->B  != NULL)
                         for(m=0; m<nO; m++) {
-                            beta_grad_num = fbs[q]->gradB  [i][m]*fbs[q]->gradB  [i][m];
-                            beta_grad_den = fbs[q]->gradBm1[i][m]*fbs[q]->gradBm1[i][m];
+                            beta_grad_num += fbs[q]->gradB  [i][m]*fbs[q]->gradB  [i][m];
+                            beta_grad_den += fbs[q]->gradBm1[i][m]*fbs[q]->gradBm1[i][m];
                         }
                 }
                 break;
@@ -1945,18 +1997,18 @@ NUMBER HMMProblem::doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs) {
                 for(i=0; i<nS; i++)
                 {
                     if(fbs[q]->pi != NULL) {
-                        beta_grad_num = -fbs[q]->gradPI[i]*(-fbs[q]->gradPI[i] + fbs[q]->gradPIm1[i]);
-                        beta_grad_den =  fbs[q]->gradPIm1[i]*fbs[q]->gradPIm1[i];
+                        beta_grad_num += -fbs[q]->gradPI[i]*(-fbs[q]->gradPI[i] + fbs[q]->gradPIm1[i]);
+                        beta_grad_den +=  fbs[q]->gradPIm1[i]*fbs[q]->gradPIm1[i];
                     }
                     if(fbs[q]->A != NULL)
                         for(j=0; j<nS; j++) {
-                            beta_grad_num = -fbs[q]->gradA[i][j]*(-fbs[q]->gradA[i][j] + fbs[q]->gradAm1[i][j]);
-                            beta_grad_den =  fbs[q]->gradAm1[i][j]*fbs[q]->gradAm1[i][j];
+                            beta_grad_num += -fbs[q]->gradA[i][j]*(-fbs[q]->gradA[i][j] + fbs[q]->gradAm1[i][j]);
+                            beta_grad_den +=  fbs[q]->gradAm1[i][j]*fbs[q]->gradAm1[i][j];
                         }
                     if(fbs[q]->B  != NULL)
                         for(m=0; m<nO; m++) {
-                            beta_grad_num = -fbs[q]->gradB[i][j]*(-fbs[q]->gradB[i][j] + fbs[q]->gradBm1[i][j]);
-                            beta_grad_den =  fbs[q]->gradBm1[i][m]*fbs[q]->gradBm1[i][m];
+                            beta_grad_num += -fbs[q]->gradB[i][j]*(-fbs[q]->gradB[i][j] + fbs[q]->gradBm1[i][j]);
+                            beta_grad_den +=  fbs[q]->gradBm1[i][m]*fbs[q]->gradBm1[i][m];
                         }
                 }
                 break;
@@ -1964,18 +2016,18 @@ NUMBER HMMProblem::doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs) {
                 for(i=0; i<nS; i++)
                 {
                     if(fbs[q]->pi != NULL) {
-                        beta_grad_num = -fbs[q]->gradPI[i]*( -fbs[q]->gradPI[i] + fbs[q]->gradPIm1[i]);
-                        beta_grad_den =  fbs[q]->dirPIm1[i]*(-fbs[q]->gradPI[i] + fbs[q]->gradPIm1[i]);
+                        beta_grad_num += -fbs[q]->gradPI[i]*( -fbs[q]->gradPI[i] + fbs[q]->gradPIm1[i]);
+                        beta_grad_den +=  fbs[q]->dirPIm1[i]*(-fbs[q]->gradPI[i] + fbs[q]->gradPIm1[i]);
                     }
                     if(fbs[q]->A  != NULL)
                         for(j=0; j<nS; j++) {
-                            beta_grad_num = -fbs[q]->gradA[i][j]*( -fbs[q]->gradA[i][j] + fbs[q]->gradAm1[i][j]);
-                            beta_grad_den =  fbs[q]->dirAm1[i][j]*(-fbs[q]->gradA[i][j] + fbs[q]->gradAm1[i][j]);
+                            beta_grad_num += -fbs[q]->gradA[i][j]*( -fbs[q]->gradA[i][j] + fbs[q]->gradAm1[i][j]);
+                            beta_grad_den +=  fbs[q]->dirAm1[i][j]*(-fbs[q]->gradA[i][j] + fbs[q]->gradAm1[i][j]);
                         }
                     if(fbs[q]->B  != NULL)
                         for(m=0; m<nO; m++) {
-                            beta_grad_num = -fbs[q]->gradB[i][j]*( -fbs[q]->gradB[i][j] + fbs[q]->gradBm1[i][j]);
-                            beta_grad_den =  fbs[q]->dirBm1[i][m]*(-fbs[q]->gradB[i][j] + fbs[q]->gradBm1[i][j]);
+                            beta_grad_num += -fbs[q]->gradB[i][j]*( -fbs[q]->gradB[i][j] + fbs[q]->gradBm1[i][j]);
+                            beta_grad_den +=  fbs[q]->dirBm1[i][m]*(-fbs[q]->gradB[i][j] + fbs[q]->gradBm1[i][j]);
                         }
                 }
                 break;
