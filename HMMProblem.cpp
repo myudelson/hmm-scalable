@@ -1182,8 +1182,9 @@ FitResult HMMProblem::GradientDescentBit(FitBit *fb) {
         } else {
             // if Conjugate Gradient
             if (this->p->solver==METHOD_CGD) {
-                fb->copy(FBS_GRAD, FBS_GRADm1);
                 if( fr->iter==1 ) fb->copy(FBS_GRAD, FBS_DIRm1);
+                else              fb->copy(FBS_DIR,  FBS_DIRm1);
+                fb->copy(FBS_GRAD, FBS_GRADm1);
             }
             // if Barzilai Borwein Gradient Method
             if (this->p->solver==METHOD_GBB) {
@@ -1244,8 +1245,9 @@ FitResult HMMProblem::GradientDescentBitBig(FitBit **fbs, NCAT nfbs) {
         } else {
             for(q=0; q<nfbs; q++) {
                 if (this->p->solver==METHOD_CGD) {
-                    fbs[q]->copy(FBS_GRAD, FBS_GRADm1);
                     if( fr->iter==1 ) fbs[q]->copy(FBS_GRAD, FBS_DIRm1);
+                    else              fbs[q]->copy(FBS_DIR,  FBS_DIRm1);
+                    fbs[q]->copy(FBS_GRAD, FBS_GRADm1);
                 }
             }
         }
@@ -1291,8 +1293,9 @@ NUMBER HMMProblem::GradientDescent() {
         fb->init(FBS_PARm1);
         fb->init(FBS_GRAD);
         if(this->p->solver==METHOD_CGD) {
-            fb->init(FBS_GRADm1);
+            fb->init(FBS_DIR);
             fb->init(FBS_DIRm1);
+            fb->init(FBS_GRADm1);
         }
         if(this->p->solver==METHOD_GBB) {
             fb->init(FBS_GRADm1);
@@ -1348,8 +1351,9 @@ NUMBER HMMProblem::GradientDescent() {
             fb->init(FBS_PARm1);
             fb->init(FBS_GRAD);
             if(this->p->solver==METHOD_CGD) {
-                fb->init(FBS_GRADm1);
+                fb->init(FBS_DIR);
                 fb->init(FBS_DIRm1);
+                fb->init(FBS_GRADm1);
             }
             if(this->p->solver==METHOD_GBB) {
                 fb->init(FBS_GRADm1);
@@ -1391,8 +1395,9 @@ NUMBER HMMProblem::GradientDescent() {
         fbs[x]->init(FBS_PARm1);
         fbs[x]->init(FBS_GRAD);
         if(this->p->solver==METHOD_CGD) {
-            fbs[x]->init(FBS_GRADm1);
+            fbs[x]->init(FBS_DIR);
             fbs[x]->init(FBS_DIRm1);
+            fbs[x]->init(FBS_GRADm1);
         }
     }
     /*FitResult fr=*/GradientDescentBitBig(fbs, nX);
@@ -1427,8 +1432,9 @@ NUMBER HMMProblem::BaumWelch() {
         fb->init(FBS_PARm2);
         fb->init(FBS_GRAD);
         if(this->p->solver==METHOD_CGD) {
-            fb->init(FBS_GRADm1);
+            fb->init(FBS_DIR);
             fb->init(FBS_DIRm1);
+            fb->init(FBS_GRADm1);
         }
 
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
@@ -1835,7 +1841,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
                 }
                 if(fb->A  != NULL)
                     for(j=0; j<nS; j++) {
-                        beta_grad_num += fb->gradA  [i][j]*fb->gradA   [i][j];
+                        beta_grad_num += fb->gradA  [i][j]*fb->gradA  [i][j];
                         beta_grad_den += fb->gradAm1[i][j]*fb->gradAm1[i][j];
                     }
                 if(fb->B  != NULL)
@@ -1868,18 +1874,18 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
             for(i=0; i<nS; i++)
             {
                 if(fb->pi != NULL) {
-                    beta_grad_num += -fb->gradPI[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
-                    beta_grad_den +=  fb->dirPIm1[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
+                    beta_grad_num -= -fb->gradPI[i]* (-fb->gradPI[i] + fb->gradPIm1[i]);
+                    beta_grad_den -=  fb->dirPIm1[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
                 }
                 if(fb->A  != NULL)
                     for(j=0; j<nS; j++) {
-                        beta_grad_num += -fb->gradA[i][j]*(-fb->gradA[i][j] + fb->gradAm1[i][j]);
-                        beta_grad_den +=  fb->dirAm1[i][j]*(-fb->gradA[i][j] + fb->gradAm1[i][j]);
+                        beta_grad_num -= -fb->gradA[i][j]* (-fb->gradA[i][j] + fb->gradAm1[i][j]);
+                        beta_grad_den -=  fb->dirAm1[i][j]*(-fb->gradA[i][j] + fb->gradAm1[i][j]);
                     }
                 if(fb->B  != NULL)
                     for(m=0; m<nO; m++) {
-                        beta_grad_num += -fb->gradB[i][j]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
-                        beta_grad_den +=  fb->dirBm1[i][m]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
+                        beta_grad_num -= -fb->gradB[i][j]* (-fb->gradB[i][j] + fb->gradBm1[i][j]);
+                        beta_grad_den -=  fb->dirBm1[i][m]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
                     }
             }
             break;

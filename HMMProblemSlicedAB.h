@@ -29,7 +29,7 @@
 
 #include "utils.h"
 #include "HMMProblem.h"
-#include "FitBit.h"
+#include "FitBitSlicedAB.h"
 #include "StripedArray.h"
 
 //#include <boost/numeric/ublas/matrix_sparse.hpp>//BOOST
@@ -62,9 +62,9 @@ public:
     virtual NUMBER getAz (struct data* dt, NPAR z, NPAR i, NPAR j);
     virtual NUMBER getBz (struct data* dt, NPAR z, NPAR i, NPAR m);
     // getters for computing gradients of alpha, beta, gamma
-    virtual void setGradPI(FitBit *fb);
-    virtual void setGradA (FitBit *fb);
-    virtual void setGradB (FitBit *fb);
+    virtual void setGradPI(FitBitSlicedAB *fb);
+    virtual void setGradA (FitBitSlicedAB *fb);
+    virtual void setGradB (FitBitSlicedAB *fb);
 	virtual void toFile(const char *filename);
 	NUMBER getSumLogPOPara(NCAT xndat, struct data **x_data); // generic per k/g-slice
 	bool hasNon01Constraints();
@@ -124,16 +124,16 @@ protected:
     void cpy3Params(NUMBER* &soursePI, NUMBER*** &sourseA, NUMBER*** &sourseB, NUMBER* &targetPI, NUMBER*** &targetA, NUMBER*** &targetB, NPAR nZ, NPAR nS, NPAR nO);// sliced
 
     // predicting
-	virtual NDAT computeGradients(FitBit *fb);
-    virtual NUMBER doLinearStep(FitBit *fb);
-    virtual NUMBER doLagrangeStep(FitBit *fb);
-    NUMBER doConjugateLinearStep(FitBit *fb);
-    NUMBER doBaumWelchStep(FitBit *fb);
-//    FitResult GradientDescentBit(FitBitSliced *fb); // for 1 skill or 1 group, all 1 skill for all data
-    FitResult GradientDescentBit(FitBit *fb); // for 1 skill or 1 group, all 1 skill for all data
-    FitResult BaumWelchBit(FitBit *fb);
+	virtual NDAT computeGradients(FitBitSlicedAB *fb);
+    virtual NUMBER doLinearStep(FitBitSlicedAB *fb);
+    virtual NUMBER doLagrangeStep(FitBitSlicedAB *fb);
+    NUMBER doConjugateLinearStep(FitBitSlicedAB *fb);
+    NUMBER doBaumWelchStep(FitBitSlicedAB *fb);
+//    FitResult GradientDescentBit(FitBitSlicedABSliced *fb); // for 1 skill or 1 group, all 1 skill for all data
+    FitResult GradientDescentBit(FitBitSlicedAB *fb); // for 1 skill or 1 group, all 1 skill for all data
+    FitResult BaumWelchBit(FitBitSlicedAB *fb);
     
-    NUMBER doBarzilaiBorweinStep(FitBit *fb);
+    NUMBER doBarzilaiBorweinStep(FitBitSlicedAB *fb);
 //    NUMBER doBarzilaiBorweinStep(NCAT xndat, struct data** x_data, NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NUMBER *a_PI_m1, NUMBER **a_A_m1, NUMBER **a_B_m1, NUMBER *a_gradPI_m1, NUMBER **a_gradA_m1, NUMBER **a_gradB_m1, NUMBER *a_gradPI, NUMBER **a_gradA, NUMBER **a_gradB, NUMBER *a_dirPI_m1, NUMBER **a_dirA_m1, NUMBER **a_dirB_m1);
 //    virtual NUMBER GradientDescent0(); // return -LL for the model
     virtual NUMBER GradientDescent(); // return -LL for the model

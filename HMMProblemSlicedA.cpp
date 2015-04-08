@@ -1213,8 +1213,9 @@ FitResult HMMProblemSlicedA::GradientDescentBit(FitBitSlicedA *fb) {
         } else {
             // if Conjugate Gradient
             if (this->p->solver==METHOD_CGD) {
-                fb->copy(FBS_GRAD, FBS_GRADm1);
                 if( fr->iter==1 ) fb->copy(FBS_GRAD, FBS_DIRm1);
+                else              fb->copy(FBS_DIR,  FBS_DIRm1);
+                fb->copy(FBS_GRAD, FBS_GRADm1);
             }
             // if Barzilai Borwein Gradient Method
             if (this->p->solver==METHOD_GBB) {
@@ -1263,8 +1264,9 @@ NUMBER HMMProblemSlicedA::GradientDescent() {
         fb->init(FBS_PARm1);
         fb->init(FBS_GRAD);
         if(this->p->solver==METHOD_CGD) {
-            fb->init(FBS_GRADm1);
+            fb->init(FBS_DIR);
             fb->init(FBS_DIRm1);
+            fb->init(FBS_GRADm1);
         }
         if(this->p->solver==METHOD_GBB) {
             fb->init(FBS_GRADm1);
@@ -1282,9 +1284,8 @@ NUMBER HMMProblemSlicedA::GradientDescent() {
                 for(NCAT y=0; y<this->sizes[0]; y++) { // copy the rest
                     NUMBER *aPI = this->getPI(y);
                     cpy1D<NUMBER>(fb->pi, aPI, this->p->nS);
-                    for(NPAR z=0; y<this->p->nZ; z++)
-                        cpy3D<NUMBER>(fb->A,  this->getA(y), this->p->nZ, this->p->nS, this->p->nS);
-                    cpy2D<NUMBER>(fb->B,  this->getB(y),  this->p->nS, this->p->nO);
+                    cpy3D<NUMBER>(fb->A,  this->getA(y), this->p->nZ, this->p->nS, this->p->nS);
+                    cpy2D<NUMBER>(fb->B,  this->getB(y), this->p->nS, this->p->nO);
                 }
         }// force single skill
         delete fb;
@@ -1332,8 +1333,9 @@ NUMBER HMMProblemSlicedA::GradientDescent() {
             fb->init(FBS_PARm1);
             fb->init(FBS_GRAD);
             if(this->p->solver==METHOD_CGD) {
-                fb->init(FBS_GRADm1);
+                fb->init(FBS_DIR);
                 fb->init(FBS_DIRm1);
+                fb->init(FBS_GRADm1);
             }
             if(this->p->solver==METHOD_GBB) {
                 fb->init(FBS_GRADm1);
@@ -1385,8 +1387,9 @@ NUMBER HMMProblemSlicedA::BaumWelch() {
         fb->init(FBS_PARm2);
         fb->init(FBS_GRAD);
         if(this->p->solver==METHOD_CGD) {
-            fb->init(FBS_GRADm1);
+            fb->init(FBS_DIR);
             fb->init(FBS_DIRm1);
+            fb->init(FBS_GRADm1);
         }
         
         NCAT* original_ks = Calloc(NCAT, (size_t)this->p->nSeq);
@@ -1732,19 +1735,19 @@ NUMBER HMMProblemSlicedA::doConjugateLinearStep(FitBitSlicedA *fb) {
             for(i=0; i<nS; i++)
             {
                 if(fb->pi != NULL) {
-                    beta_grad_num += -fb->gradPI [i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
-                    beta_grad_den +=  fb->dirPIm1[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
+                    beta_grad_num -= -fb->gradPI [i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
+                    beta_grad_den -=  fb->dirPIm1[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
                 }
                 if(fb->A  != NULL)
                     for(z=0; z<nZ; z++)
                         for(j=0; j<nS; j++) {
-                            beta_grad_num += -fb->gradA [z][i][j]*(-fb->gradA[z][i][j] + fb->gradAm1[z][i][j]);
-                            beta_grad_den +=  fb->dirAm1[z][i][j]*(-fb->gradA[z][i][j] + fb->gradAm1[z][i][j]);
+                            beta_grad_num -= -fb->gradA [z][i][j]*(-fb->gradA[z][i][j] + fb->gradAm1[z][i][j]);
+                            beta_grad_den -=  fb->dirAm1[z][i][j]*(-fb->gradA[z][i][j] + fb->gradAm1[z][i][j]);
                         }
                 if(fb->B  != NULL)
                     for(m=0; m<nO; m++) {
-                        beta_grad_num += -fb->gradB [i][j]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
-                        beta_grad_den +=  fb->dirBm1[i][m]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
+                        beta_grad_num -= -fb->gradB [i][j]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
+                        beta_grad_den -=  fb->dirBm1[i][m]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
                     }
             }
             break;

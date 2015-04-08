@@ -54,6 +54,9 @@ FitBitSlicedAB::FitBitSlicedAB(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR 
     this->PIcopy = NULL;
     this->Acopy = NULL;
     this->Bcopy = NULL;
+    this->dirPI = NULL;
+    this->dirA = NULL;
+    this->dirB = NULL;
     this->dirPIm1 = NULL;
     this->dirAm1 = NULL;
     this->dirBm1 = NULL;
@@ -88,6 +91,9 @@ FitBitSlicedAB::FitBitSlicedAB(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR 
     this->PIcopy = NULL;
     this->Acopy = NULL;
     this->Bcopy = NULL;
+    this->dirPI = NULL;
+    this->dirA = NULL;
+    this->dirB = NULL;
     this->dirPIm1 = NULL;
     this->dirAm1 = NULL;
     this->dirBm1 = NULL;
@@ -116,6 +122,9 @@ FitBitSlicedAB::~FitBitSlicedAB() {
     if(this->PIcopy != NULL) free(this->PIcopy);
     if(this->Acopy != NULL) free3D<NUMBER>(this->Acopy, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->Bcopy != NULL) free3D<NUMBER>(this->Bcopy, (NDAT)this->nZ, (NDAT)this->nS);
+    if(this->dirPI != NULL) free(this->dirPI);
+    if(this->dirA != NULL) free3D<NUMBER>(this->dirA, (NDAT)this->nZ, (NDAT)this->nS);
+    if(this->dirB != NULL) free3D<NUMBER>(this->dirB, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->dirPIm1 != NULL) free(this->dirPIm1);
     if(this->dirAm1 != NULL) free3D<NUMBER>(this->dirAm1, (NDAT)this->nZ, (NDAT)this->nS);
     if(this->dirBm1 != NULL) free3D<NUMBER>(this->dirBm1, (NDAT)this->nZ, (NDAT)this->nS);
@@ -197,6 +206,9 @@ void FitBitSlicedAB::init(enum FIT_BIT_SLOT fbs){
         case FBS_PARcopy:
             init(this->PIcopy, this->Acopy, this->Bcopy);
             break;
+        case FBS_DIR:
+            init(this->dirPI, this->dirA, this->dirB);
+            break;
         case FBS_DIRm1:
             init(this->dirPIm1, this->dirAm1, this->dirBm1);
             break;
@@ -225,6 +237,9 @@ void FitBitSlicedAB::toZero(enum FIT_BIT_SLOT fbs){
         case FBS_PARcopy:
             toZero(this->PIcopy, this->Acopy, this->Bcopy);
             break;
+        case FBS_DIR:
+            toZero(this->dirPI, this->dirA, this->dirB);
+            break;
         case FBS_DIRm1:
             toZero(this->dirPIm1, this->dirAm1, this->dirBm1);
             break;
@@ -252,6 +267,9 @@ void FitBitSlicedAB::destroy(enum FIT_BIT_SLOT fbs){
             break;
         case FBS_PARcopy:
             destroy(this->PIcopy, this->Acopy, this->Bcopy);
+            break;
+        case FBS_DIR:
+            destroy(this->dirPI, this->dirA, this->dirB);
             break;
         case FBS_DIRm1:
             destroy(this->dirPIm1, this->dirAm1, this->dirBm1);
@@ -292,6 +310,11 @@ void FitBitSlicedAB::get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER*** &a_A, N
             a_PI = this->PIcopy;
             a_A  = this->Acopy;
             a_B  = this->Bcopy;
+            break;
+        case FBS_DIR:
+            a_PI = this->dirPI;
+            a_A  = this->dirA;
+            a_B  = this->dirB;
             break;
         case FBS_DIRm1:
             a_PI = this->dirPIm1;
