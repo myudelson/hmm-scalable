@@ -203,6 +203,9 @@ void FitBit::init(enum FIT_BIT_SLOT fbs){
         case FBS_GRADm1:
             init(this->gradPIm1, this->gradAm1, this->gradBm1);
             break;
+        case FBS_GRADcopy:
+            init(this->gradPIcopy, this->gradAcopy, this->gradBcopy);
+            break;
         case FBS_PARcopy:
             init(this->PIcopy, this->Acopy, this->Bcopy);
             break;
@@ -234,6 +237,9 @@ void FitBit::toZero(enum FIT_BIT_SLOT fbs){
         case FBS_GRADm1:
             toZero(this->gradPIm1, this->gradAm1, this->gradBm1);
             break;
+        case FBS_GRADcopy:
+            toZero(this->gradPIcopy, this->gradAcopy, this->gradBcopy);
+            break;
         case FBS_PARcopy:
             toZero(this->PIcopy, this->Acopy, this->Bcopy);
             break;
@@ -264,6 +270,9 @@ void FitBit::destroy(enum FIT_BIT_SLOT fbs){
             break;
         case FBS_GRADm1:
             destroy(this->gradPIm1, this->gradAm1, this->gradBm1);
+            break;
+        case FBS_GRADcopy:
+            destroy(this->gradPIcopy, this->gradAcopy, this->gradBcopy);
             break;
         case FBS_PARcopy:
             destroy(this->PIcopy, this->Acopy, this->Bcopy);
@@ -305,6 +314,11 @@ void FitBit::get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &
             a_PI = this->gradPIm1;
             a_A  = this->gradAm1;
             a_B  = this->gradBm1;
+            break;
+        case FBS_GRADcopy:
+            a_PI = this->gradPIcopy;
+            a_A  = this->gradAcopy;
+            a_B  = this->gradBcopy;
             break;
         case FBS_PARcopy:
             a_PI = this->PIcopy;

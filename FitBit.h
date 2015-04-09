@@ -44,6 +44,7 @@ enum FIT_BIT_SLOT {
     FBS_PARm2     = 7, // e.g. PIm2
     FBS_GRAD      = 3, // e.g. gradPI
     FBS_GRADm1    = 4, // e.g. gradPIm1
+    FBS_GRADcopy  = 9, // e.g. gradPIcopy
     FBS_PARcopy   = 5, // e.g. PIcopy
     FBS_DIR       = 8, // e.g. gradPIdir
     FBS_DIRm1     = 6  // e.g. gradPIdirm1
@@ -75,9 +76,12 @@ public:
     NUMBER *gradPIm1; // previous gradient
     NUMBER **gradAm1; // previous gradient
     NUMBER **gradBm1; // previous gradient
-    NUMBER *PIcopy; // previous value
-    NUMBER **Acopy; // previous value
-    NUMBER **Bcopy; // previous value
+    NUMBER *gradPIcopy; // gradient copy
+    NUMBER **gradAcopy; // gradient copy
+    NUMBER **gradBcopy; // gradient copy
+    NUMBER *PIcopy; // copy
+    NUMBER **Acopy; // copy
+    NUMBER **Bcopy; // copy
     NUMBER *dirPI; // step direction
     NUMBER **dirA; // step direction
     NUMBER **dirB; // step direction

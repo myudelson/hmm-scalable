@@ -544,7 +544,7 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                 }
                 if( param.solver == METHOD_CGD  &&
                    ( param.solver_setting != 1 && param.solver_setting != 2 &&
-                    param.solver_setting != 3 )
+                    param.solver_setting != 3 && param.solver_setting !=4 )
                    ) {
                     fprintf(stderr, "Conjugate Gradient Descent setting specified (%d) is out of range of allowed values\n",param.solver_setting);
 					exit_with_help();
