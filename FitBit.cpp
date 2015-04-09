@@ -50,6 +50,9 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol) {
     this->gradPIm1 = NULL;
     this->gradAm1 = NULL;
     this->gradBm1 = NULL;
+    this->gradPIcopy = NULL;
+    this->gradAcopy = NULL;
+    this->gradBcopy = NULL;
     this->PIcopy = NULL;
     this->Acopy = NULL;
     this->Bcopy = NULL;
@@ -87,6 +90,9 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_
     this->gradPIm1 = NULL;
     this->gradAm1 = NULL;
     this->gradBm1 = NULL;
+    this->gradPIcopy = NULL;
+    this->gradAcopy = NULL;
+    this->gradBcopy = NULL;
     this->PIcopy = NULL;
     this->Acopy = NULL;
     this->Bcopy = NULL;
@@ -119,6 +125,9 @@ FitBit::~FitBit() {
     if(this->gradPIm1 != NULL) free(this->gradPIm1);
     if(this->gradAm1 != NULL) free2D<NUMBER>(this->gradAm1, (NDAT)this->nS);
     if(this->gradBm1 != NULL) free2D<NUMBER>(this->gradBm1, (NDAT)this->nS);
+    if(this->gradPIcopy != NULL) free(this->gradPIcopy);
+    if(this->gradAcopy != NULL) free2D<NUMBER>(this->gradAcopy, (NDAT)this->nS);
+    if(this->gradBcopy != NULL) free2D<NUMBER>(this->gradBcopy, (NDAT)this->nS);
     if(this->PIcopy != NULL) free(this->PIcopy);
     if(this->Acopy != NULL) free2D<NUMBER>(this->Acopy, (NDAT)this->nS);
     if(this->Bcopy != NULL) free2D<NUMBER>(this->Bcopy, (NDAT)this->nS);
