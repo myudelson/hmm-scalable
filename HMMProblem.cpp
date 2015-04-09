@@ -1552,6 +1552,7 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
 		if(fb->A  != NULL) for(j=0; j<nS; j++) p_k_by_neg_p_k -= fb->gradA[i][j]*fb->gradA[i][j];
 		if(fb->B  != NULL) for(m=0; m<nO; m++) p_k_by_neg_p_k -= fb->gradB[i][m]*fb->gradB[i][m];
 	}
+    
 	int iter = 0; // limit iter steps to 20, via ArmijoMinStep (now 10)
     while( !(compliesArmijo && compliesWolfe2) && e > this->p->ArmijoMinStep) {
 		// update
@@ -1930,6 +1931,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
     fb->doLog10ScaleGentle(FBS_DIRm1);
     
     fb->init(FBS_PARcopy);
+    fb->init(FBS_GRADcopy);
     
 	NUMBER e = this->p->ArmijoSeed; // step seed
 	bool compliesArmijo = false;
@@ -1940,6 +1942,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
 	NUMBER f_xkplus1 = 0;
 	
     fb->copy(FBS_PAR, FBS_PARcopy);
+    fb->copy(FBS_GRAD, FBS_GRADcopy);
 	// compute p_k * -p_k >>>> now current gradient by current direction
 	NUMBER p_k_by_neg_p_k = 0;
 	for(i=0; i<nS; i++)
@@ -2000,6 +2003,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
         e /= (compliesArmijo && compliesWolfe2)?1:this->p->ArmijoReduceFactor;
         iter++;
 	} // armijo loop
+    fb->copy(FBS_GRADcopy, FBS_GRAD); // return the original gradient in its place
     if(!compliesArmijo) { // we couldn't step away from current, copy the inital point back
         e = 0;
         fb->copy(FBS_PARcopy, FBS_PAR);
@@ -2011,21 +2015,21 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
         // update
         for(i=0; i<nS; i++) {
             if(fb->pi != NULL) {
-                fb->pi[i] = fb->PIcopy[i] - e * fb->gradPI[i];
+                fb->pi[i] = fb->PIcopy[i] + e * fb->dirPI[i];
                 if( (fb->pi[i]<0 || fb->pi[i] >1) && (fb->pi[i] > 0) && (fb->pi[i] < 1) ) {
                     fprintf(stderr, "ERROR! pi value is not within [0, 1] range!\n");
                 }
             }
             if(fb->A  != NULL)
                 for(j=0; j<nS; j++) {
-                    fb->A[i][j] = fb->Acopy[i][j] - e * fb->gradA[i][j];
+                    fb->A[i][j] = fb->Acopy[i][j] + e * fb->dirA[i][j];
                     if( (fb->A[i][j]<0 || fb->A[i][j] >1) && (fb->A[i][j] > 0) && (fb->A[i][j] < 1) ) {
                         fprintf(stderr, "ERROR! A value is not within [0, 1] range!\n");
                     }
                 }
             if(fb->B  != NULL)
                 for(m=0; m<nO; m++) {
-                    fb->B[i][m] = fb->Bcopy[i][m] - e * fb->gradB[i][m];
+                    fb->B[i][m] = fb->Bcopy[i][m] + e * fb->dirB[i][m];
                     if( (fb->B[i][m]<0 || fb->B[i][m] >1) && (fb->B[i][m] > 0) && (fb->B[i][m] < 1) ) {
                         fprintf(stderr, "ERROR! B value is not within [0, 1] range!\n");
                     }
@@ -2051,6 +2055,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
         // ^^^^^ end of create new versions of FBS_PAR using e_Armijo as a step
     }
     fb->destroy(FBS_PARcopy);
+    fb->destroy(FBS_GRADcopy);
     return f_xkplus1;
 } // doLinearStep
 
