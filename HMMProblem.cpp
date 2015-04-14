@@ -811,7 +811,7 @@ void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, 
 //void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled) {
 void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, NCAT *dat_skill_stacked, NCAT *dat_skill_rcount, NDAT *dat_skill_rix, bool only_unlabeled) {
 	NDAT t;
-	NCAT g, k;
+	NCAT g, k, it;
 	NPAR i, j, m, o, isTarget = 0;
     NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
 	NUMBER *local_pred = init1D<NUMBER>(nO); // local prediction
@@ -844,6 +844,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
             output_this = false;
 		g = dat_group[t];//[
         dt->g = g;
+        
         if(!only_unlabeled) // this means we were not predicting in the first place
             isTarget = this->p->metrics_target_obs == o;
         NCAT *ar;
@@ -859,6 +860,27 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
             ar = &dat_skill_stacked[ dat_skill_rix[t] ];
             n = dat_skill_rcount[t];
         }
+        
+        // prescriptive pretest
+        it = this->p->dat_item[t];
+        string item_s = this->p->map_step_bwd->find((NCAT)it)->second;
+        std::size_t found_prev = 0, found = item_s.find("PINIT-MANUAL-SET");
+        if (found!=std::string::npos) { // set manually
+            // find last divider
+            found = item_s.find("__");
+            while(found!=std::string::npos) {
+                found_prev = found;
+                found = item_s.find("__", found+1);
+            }
+            // get number
+            NUMBER newPLearn = (NUMBER)atof( item_s.substr(found_prev+2, item_s.length()-2).c_str() );
+            group_skill_map[g][ ar[0] ][0] = newPLearn;
+            for(i=1; i<nS; i++) {
+                group_skill_map[g][ ar[0] ][i] = (1-newPLearn)/(nS-1);
+            }
+            continue;
+        }
+        
         // deal with null skill
         if(ar[0]<0) { // if no skill label
             
@@ -1542,8 +1564,8 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
 	NUMBER f_xk = HMMProblem::getSumLogPOPara(xndat, x_data);
 	NUMBER f_xkplus1 = 0;
 	
-    fb->copy(FBS_PAR, FBS_PARcopy);
-    fb->copy(FBS_GRAD, FBS_GRADcopy);
+    fb->copy(FBS_PAR, FBS_PARcopy); // save original parameters
+    fb->copy(FBS_GRAD, FBS_GRADcopy); // save original gradient
 	// compute p_k * -p_k
 	NUMBER p_k_by_neg_p_k = 0;
 	for(i=0; i<nS; i++)
@@ -1870,7 +1892,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
                     }
                 if(fb->B  != NULL)
                     for(m=0; m<nO; m++) {
-                        beta_grad_num += -fb->gradB[i][j]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
+                        beta_grad_num += -fb->gradB[i][m]*(-fb->gradB[i][m] + fb->gradBm1[i][m]);
                         beta_grad_den +=  fb->gradBm1[i][m]*fb->gradBm1[i][m];
                     }
             }
@@ -1879,18 +1901,18 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
             for(i=0; i<nS; i++)
             {
                 if(fb->pi != NULL) {
-                    beta_grad_num += -fb->gradPI[i]* (-fb->gradPI[i] + fb->gradPIm1[i]);
+                    beta_grad_num +=  fb->gradPI[i]* (-fb->gradPI[i] + fb->gradPIm1[i]); // no -, since neg gradient and - is +
                     beta_grad_den +=  fb->dirPIm1[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
                 }
                 if(fb->A  != NULL)
                     for(j=0; j<nS; j++) {
-                        beta_grad_num += -fb->gradA[i][j]* (-fb->gradA[i][j] + fb->gradAm1[i][j]);
+                        beta_grad_num +=  fb->gradA[i][j]* (-fb->gradA[i][j] + fb->gradAm1[i][j]);
                         beta_grad_den +=  fb->dirAm1[i][j]*(-fb->gradA[i][j] + fb->gradAm1[i][j]);
                     }
                 if(fb->B  != NULL)
                     for(m=0; m<nO; m++) {
-                        beta_grad_num += -fb->gradB[i][j]* (-fb->gradB[i][j] + fb->gradBm1[i][j]);
-                        beta_grad_den +=  fb->dirBm1[i][m]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
+                        beta_grad_num +=  fb->gradB[i][m]* (-fb->gradB[i][m] + fb->gradBm1[i][m]);
+                        beta_grad_den +=  fb->dirBm1[i][m]*(-fb->gradB[i][m] + fb->gradBm1[i][m]);
                     }
             }
             break;
@@ -1898,7 +1920,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
             for(i=0; i<nS; i++)
             {
                 if(fb->pi != NULL) {
-                    beta_grad_num += -fb->gradPI  [i]*fb->gradPI  [i];
+                    beta_grad_num += -fb->gradPI [i]*fb->gradPI  [i];
                     beta_grad_den +=  fb->dirPIm1[i]*(-fb->gradPI[i] + fb->gradPIm1[i]);
                 }
                 if(fb->A  != NULL)
@@ -1909,7 +1931,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
                 if(fb->B  != NULL)
                     for(m=0; m<nO; m++) {
                         beta_grad_num += -fb->gradB [i][m]*fb->gradB  [i][m];
-                        beta_grad_den +=  fb->dirBm1[i][m]*(-fb->gradB[i][j] + fb->gradBm1[i][j]);
+                        beta_grad_den +=  fb->dirBm1[i][m]*(-fb->gradB[i][m] + fb->gradBm1[i][m]);
                     }
             }
             break;
@@ -1927,11 +1949,8 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
 		if(fb->A  != NULL) for(j=0; j<nS; j++) fb->dirA[i][j] = -fb->gradA[i][j] + beta_grad * fb->dirAm1[i][j];
 		if(fb->B  != NULL) for(m=0; m<nO; m++) fb->dirB[i][m] = -fb->gradB[i][m] + beta_grad * fb->dirBm1[i][m];
 	}
-	// scale down direction
-    fb->doLog10ScaleGentle(FBS_DIRm1);
-    
-    fb->init(FBS_PARcopy);
-    fb->init(FBS_GRADcopy);
+	// scale direction
+    fb->doLog10ScaleGentle(FBS_DIR);
     
 	NUMBER e = this->p->ArmijoSeed; // step seed
 	bool compliesArmijo = false;
@@ -1941,8 +1960,11 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
 	NUMBER f_xk = HMMProblem::getSumLogPOPara(fb->xndat, fb->x_data);
 	NUMBER f_xkplus1 = 0;
 	
-    fb->copy(FBS_PAR, FBS_PARcopy);
-    fb->copy(FBS_GRAD, FBS_GRADcopy);
+    fb->init(FBS_PARcopy);
+    fb->init(FBS_GRADcopy);
+    
+    fb->copy(FBS_PAR, FBS_PARcopy); // copy parameter
+    fb->copy(FBS_GRAD, FBS_GRADcopy); // copy initial gradient
 	// compute p_k * -p_k >>>> now current gradient by current direction
 	NUMBER p_k_by_neg_p_k = 0;
 	for(i=0; i<nS; i++)
