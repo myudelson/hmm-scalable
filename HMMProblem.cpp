@@ -1647,6 +1647,9 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
 		e /= (compliesArmijo && compliesWolfe2)?1:this->p->ArmijoReduceFactor;
 		iter++;
 	} // armijo loop
+    
+//    fb->copy(FBS_GRADcopy, FBS_GRAD); // return the original gradient in its place // unnecessary
+    
     if(!compliesArmijo) { // we couldn't step away from current, copy the inital point back
         e = 0;
         fb->copy(FBS_PARcopy, FBS_PAR);
@@ -2025,7 +2028,9 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
         e /= (compliesArmijo && compliesWolfe2)?1:this->p->ArmijoReduceFactor;
         iter++;
 	} // armijo loop
+    
     fb->copy(FBS_GRADcopy, FBS_GRAD); // return the original gradient in its place
+    
     if(!compliesArmijo) { // we couldn't step away from current, copy the inital point back
         e = 0;
         fb->copy(FBS_PARcopy, FBS_PAR);

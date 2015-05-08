@@ -241,7 +241,7 @@ Algebra I set that has about 9 million transactions of over 3300 students. The
 training file should be trimmed to the tool's format. See shell commands below
 that do that.
 
-sh> gawk '-F\t' 'BEGIN{OFS=""} {skill=tolower($20); sub(/~~/, "~", skill); skill=(skill=="")?".":skill; print 2-$14,"\t",$2,"\t",$3,"__",$4,"\t",skill}' algebra_2008_2009_train.txt > a89_kts_train.txt
+sh> gawk '-F\t' 'BEGIN{OFS=""} {skill=tolower($20); gsub(/~~/, "~", skill); skill=(skill=="")?".":skill; print 2-$14,"\t",$2,"\t",$3,"__",$4,"\t",skill}' algebra_2008_2009_train.txt > a89_kts_train.txt
 sh> sed -i '' 1d a89_kts_train.txt
 
 To fit a BKT model of this dataset using gradient descent method as well as to 
