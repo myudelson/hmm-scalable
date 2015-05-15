@@ -226,7 +226,8 @@ void projectsimplex(NUMBER* ar, NPAR size) {
         }
         iter++;
         if(iter==100) {
-            fprintf(stderr,"WARNING! Stuck in projectsimplex().");
+            fprintf(stderr,"WARNING! Stuck in projectsimplex().\n");
+            exit(1);
         }
     } // until satisfied
     // force last to be 1 - sum of all but last -- this code, actually breaks things
@@ -316,7 +317,8 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
         }
         iter++;
         if(iter==100) {
-            fprintf(stderr,"WARNING! Stuck in projectsimplexbounded().");
+            fprintf(stderr,"WARNING! Stuck in projectsimplexbounded().\n");
+            exit(1);
         }
 	} // until satisfied
     // force last to be 1 - sum of all but last -- this code, actually breaks things

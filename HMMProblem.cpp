@@ -1722,40 +1722,46 @@ NUMBER HMMProblem::doLagrangeStep(FitBit *fb) {
     NUMBER buf = 0;
     // collapse
     for(i=0; i<nS; i++) {
-        buf = -fb->pi[i]*fb->gradPI[i]; /*negatie since were going against gradient*/
+        if(fb->pi != NULL)
+            buf = -fb->pi[i]*fb->gradPI[i]; /*negatie since were going against gradient*/
         b_PI_den += buf;
         b_PI[i] += buf;
-        for(j=0; j<nS; j++){
-            buf = -fb->A[i][j]*fb->gradA[i][j]; /*negatie since were going against gradient*/
-            b_A_den[i] += buf;
-            b_A[i][j] += buf;
-        }
-        for(m=0; m<nO; m++) {
-            buf = -fb->B[i][m]*fb->gradB[i][m]; /*negatie since were going against gradient*/
-            b_B_den[i] += buf;
-            b_B[i][m] += buf;
-        }
+        if(fb->A != NULL)
+            for(j=0; j<nS; j++){
+                buf = -fb->A[i][j]*fb->gradA[i][j]; /*negatie since were going against gradient*/
+                b_A_den[i] += buf;
+                b_A[i][j] += buf;
+            }
+        if(fb->B != NULL)
+            for(m=0; m<nO; m++) {
+                buf = -fb->B[i][m]*fb->gradB[i][m]; /*negatie since were going against gradient*/
+                b_B_den[i] += buf;
+                b_B[i][m] += buf;
+            }
     }
     // divide
     for(i=0; i<nS; i++) {
-        fb->pi[i] = (b_PI_den>0) ? (b_PI[i] / b_PI_den) : fb->pi[i];
-        for(j=0; j<nS; j++)
-            fb->A[i][j] = (b_A_den[i]>0) ? (b_A[i][j] / b_A_den[i]) : fb->A[i][j];
-        for(m=0; m<nO; m++)
-            fb->B[i][m] = (b_B_den[i]>0) ? (b_B[i][m] / b_B_den[i]) : fb->B[i][m];
+        if(fb->pi != NULL)
+            fb->pi[i] = (b_PI_den>0) ? (b_PI[i] / b_PI_den) : fb->pi[i];
+        if(fb->A != NULL)
+            for(j=0; j<nS; j++)
+                fb->A[i][j] = (b_A_den[i]>0) ? (b_A[i][j] / b_A_den[i]) : fb->A[i][j];
+        if(fb->B != NULL)
+            for(m=0; m<nO; m++)
+                fb->B[i][m] = (b_B_den[i]>0) ? (b_B[i][m] / b_B_den[i]) : fb->B[i][m];
     }
     // scale
     if( !this->hasNon01Constraints() ) {
-        projectsimplex(fb->pi, nS);
+        if(fb->pi != NULL) projectsimplex(fb->pi, nS);
         for(i=0; i<nS; i++) {
-            projectsimplex(fb->A[i], nS);
-            projectsimplex(fb->B[i], nO);
+            if(fb->A != NULL) projectsimplex(fb->A[i], nS);
+            if(fb->B != NULL) projectsimplex(fb->B[i], nO);
         }
     } else {
-        projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
+        if(fb->pi != NULL) projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
         for(i=0; i<nS; i++) {
-            projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
-            projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nO);
+            if(fb->A != NULL) projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
+            if(fb->B != NULL) projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nO);
         }
     }
     // compute LL
