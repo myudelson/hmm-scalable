@@ -151,6 +151,25 @@ void FitBitSlicedAB::init(NUMBER* &a_PI, NUMBER*** &a_A, NUMBER*** &a_B) {
     }
 }
 
+
+void FitBitSlicedAB::negate(NUMBER* &a_PI, NUMBER*** &a_A, NUMBER*** &a_B) {
+    if(this->pi != NULL) {
+        for(NPAR i=0; i<this->nS; i++) a_PI[i] = -a_PI[i];
+    }
+    if(this->A  != NULL) {
+        for(NPAR z=0; z<this->nZ; z++)
+            for(NPAR i=0; i<this->nS; i++)
+                for(NPAR j=0; j<this->nS; j++)
+                    a_A[z][i][j] = -a_A[z][i][j];
+    }
+    if(this->B  != NULL) {
+        for(NPAR z=0; z<this->nZ; z++)
+            for(NPAR i=0; i<this->nS; i++)
+                for(NPAR m=0; m<this->nO; m++)
+                    a_B[z][i][m] = -a_B[z][i][m];
+    }
+}
+
 void FitBitSlicedAB::link(NUMBER *a_PI, NUMBER ***a_A, NUMBER ***a_B, NCAT a_xndat, struct data** a_x_data) {
     this->pi = a_PI;
     this->A  = a_A;
@@ -211,6 +230,40 @@ void FitBitSlicedAB::init(enum FIT_BIT_SLOT fbs){
             break;
         case FBS_DIRm1:
             init(this->dirPIm1, this->dirAm1, this->dirBm1);
+            break;
+        default:
+            break;
+    }
+}
+
+void FitBitSlicedAB::negate(enum FIT_BIT_SLOT fbs){
+    switch (fbs) {
+        case FBS_PAR:
+            negate(this->pi, this->A, this->B);
+            break;
+        case FBS_PARm1:
+            negate(this->PIm1, this->Am1, this->Bm1);
+            break;
+        case FBS_PARm2:
+            negate(this->PIm2, this->Am2, this->Bm2);
+            break;
+        case FBS_GRAD:
+            negate(this->gradPI, this->gradA, this->gradB);
+            break;
+        case FBS_GRADm1:
+            negate(this->gradPIm1, this->gradAm1, this->gradBm1);
+            break;
+//        case FBS_GRADcopy:
+//            negate(this->gradPIcopy, this->gradAcopy, this->gradBcopy);
+//            break;
+        case FBS_PARcopy:
+            negate(this->PIcopy, this->Acopy, this->Bcopy);
+            break;
+        case FBS_DIR:
+            negate(this->dirPI, this->dirA, this->dirB);
+            break;
+        case FBS_DIRm1:
+            negate(this->dirPIm1, this->dirAm1, this->dirBm1);
             break;
         default:
             break;

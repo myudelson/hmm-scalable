@@ -98,6 +98,7 @@ public:
     FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_projecttosimplex);
     ~FitBit();
     void init(enum FIT_BIT_SLOT fbs);
+    void negate(enum FIT_BIT_SLOT fbs);
     void link(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NCAT a_xndat, struct data** a_x_data);
     void toZero(enum FIT_BIT_SLOT fbs);
     void destroy(enum FIT_BIT_SLOT fbs);
@@ -112,6 +113,7 @@ private:
     NUMBER tol;
 
     void init(NUMBER* &pi, NUMBER** &A, NUMBER** &B);
+    void negate(NUMBER* &pi, NUMBER** &A, NUMBER** &B);
     void toZero(NUMBER *pi, NUMBER **A, NUMBER **B);
     void destroy(NUMBER* &pi, NUMBER** &A, NUMBER** &B);
     void get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B);

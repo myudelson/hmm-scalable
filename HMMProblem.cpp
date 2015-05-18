@@ -1204,8 +1204,11 @@ FitResult HMMProblem::GradientDescentBit(FitBit *fb) {
         } else {
             // if Conjugate Gradient
             if (this->p->solver==METHOD_CGD) {
-                if( fr->iter==1 ) fb->copy(FBS_GRAD, FBS_DIRm1);
-                else              fb->copy(FBS_DIR,  FBS_DIRm1);
+                if( fr->iter==1 ) {
+                    fb->copy(FBS_GRAD, FBS_DIRm1); // gradient is not direction, it's negative direction, hence, need to negate it
+                    fb->negate(FBS_DIRm1);
+                }
+                else fb->copy(FBS_DIR,  FBS_DIRm1);
                 fb->copy(FBS_GRAD, FBS_GRADm1);
             }
             // if Barzilai Borwein Gradient Method
