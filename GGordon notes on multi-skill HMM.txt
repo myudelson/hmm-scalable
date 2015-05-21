@@ -1,0 +1,42 @@
+= Meeting with G.Gordon 2012-05-01, BKT HMM with multi-skill coding =
+
+another hidden variable that governs blame in case of error
+if correct - all correct
+if incorrect
+
+R1..Rk - skill right
+R - problem right
+
+sigma - problem slip 
+gamma - problem guess
+p(R|R1..Rk) = 1-sigma
+p(R|at least one wrong) = gamma
+p(R1…Rk|R) = p(R|R1..Rk)*p(R1…Rk) / pR praise everyone
+p(R1…Rk|~R) = = p(~R|R1..Rk)*p(R1…Rk) / p~R - whom to blame
+
+do these up to n==5 skills
+
+table of all of the R1…Rk values - 2^k entries - k dimentional with 2^k entries 
+fill them acc to each formula
+
+p(R1…Rk)  = prod{ p(corr i) }
+
+marginalize and get p(Ri|R), p(Ri|~R)
+
+use these as proportions (continuous), or do a version of Veterbi to come up with most likely 
+
+^^^ ALL THIS is forward version 
+
+THIS WHOLE THING = Message passing / belief propagation algorithm =
+
+vvvvv BACKWARD VERSION
+rf. kschischang loeliger www.comm.utoronto.ca/frank/papers/KFL01.pdf (msg passing)
+rf. J. Pearl 
+rf. MacKay " Information theory, inference and learning algorithms" (variational approx) p.422
+r.f Neal Hinton "a view of the em algorithm…."
+
+sigma :: regress R~R1...Rk, gamma :: regress !R~R1...Rk
+
+fix sigma and gamma: sigma = mean( p(Si) ), gamma = mean( p(Gi) )
+
+this approach is "variational approximation" and becomes "conjunctive knowledge tracing" (Ken)
