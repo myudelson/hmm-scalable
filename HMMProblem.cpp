@@ -28,6 +28,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -808,10 +809,9 @@ void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, 
 //    free(local_pred_inner);//BOOST
 //}//BOOST
 
-//void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled) {
-void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, NCAT *dat_skill_stacked, NCAT *dat_skill_rcount, NDAT *dat_skill_rix, bool only_unlabeled) {
+void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, NCAT *dat_skill_stacked, NCAT *dat_skill_rcount, NDAT *dat_skill_rix) {
 	NDAT t;
-	NCAT g, k, it;
+	NCAT g, k;
 	NPAR i, j, m, o, isTarget = 0;
     NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
 	NUMBER *local_pred = init1D<NUMBER>(nO); // local prediction
@@ -822,77 +822,129 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
     
     NUMBER ll = 0.0, ll_no_null = 0.0, rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NUMBER p;
-    FILE *fid = NULL; // file for storing prediction should that be necessary
+//    FILE *fid = NULL; // file for storing prediction should that be necessary
     bool output_this; // flag for turning on/off the writing out
-    if(this->p->predictions>0) {
-        fid = fopen(filename,"w");
-        if(fid == NULL)
-        {
-            fprintf(stderr,"Can't write output model file %s\n",filename);
-            exit(1);
+//    if(this->p->predictions>0) {
+//        fid = fopen(filename,"w");
+//        if(fid == NULL)
+//        {
+//            fprintf(stderr,"Can't write output model file %s\n",filename);
+//            exit(1);
+//        }
+//    }
+    
+    NUMBER *dat_predict = NULL;
+    NUMBER *dat_known = NULL;
+    NUMBER *dat_known_stacked = NULL;
+    // if we write prediction
+    if(this->p->predictions>0) { // write predictions file if it was opened
+        dat_predict =  Calloc(NUMBER, (size_t)( this->p->N * (NDAT)this->p->nO ) );
+        
+        if(this->p->predictions==2) {
+            if (this->p->multiskill==0) dat_known = Calloc(NUMBER, (size_t)this->p->N );
+            else dat_known_stacked = Calloc(NUMBER, (size_t)this->p->Nstacked );
         }
     }
     
 	// initialize
     struct data* dt = new data;
     NDAT count = 0;
+    NDAT d = 0;
+    NUMBER *var = NULL, v;
+    NCAT *ar;
+    int n;
+    NDAT ix = 0;
     
-	for(t=0; t<this->p->N; t++) {
+    int threads = 1; // should be 1 here
+//    int parallel_now = this->p->parallel==1; //PAR
+//    #pragma omp parallel if(parallel_now)//num_threads(2)//PAR
+//    {//PAR
+//    threads = omp_get_num_threads();//PAR
+//    }//#omp//PAR
+    printf("threads for printing %i\n",threads);
+//
+    NDAT *starts;
+    starts = (NDAT*)malloc((size_t)(threads+1)*sizeof(NDAT));
+    starts[0]=0;
+    starts[threads]=this->p->N+1; // just for simplicity of adding
+    for(int i=1; i<threads; i++) {
+        starts[i] = (NDAT)i * this->p->N / (NDAT)threads;
+    }
+    
+//    #pragma omp parallel if(parallel_now) shared(output_this) //num_threads(2)//PAR
+//    {//PAR
+//    #pragma omp for schedule(dynamic) reduction(+:rmse,rmse_no_null,accuracy,accuracy_no_null,ll,ll_no_null) //PAR
+    for(int trd=0; trd<threads; trd++) { // all thread buckets
+//        printf("thread %i of %i\n",omp_get_thread_num(),omp_get_num_threads());//PAR
+    
+//    for(t=0; t<this->p->N; t++) {
+    for(t=starts[trd]; t<starts[trd+1]; t++) {
         output_this = true;
+        
+        // peek into the data, not for predict, for update only
 		o = dat_obs[t];//[t];
-        if( only_unlabeled && o>-1 ) // if we only output predictions for unlabelled, it's labelled - turn off
+        
+        
+        if( o>-1 ) // if we only output predictions for unlabelled, it's labelled - turn off
             output_this = false;
 		g = dat_group[t];//[
         dt->g = g;
         
-        if(!only_unlabeled) // this means we were not predicting in the first place
-            isTarget = this->p->metrics_target_obs == o;
-        NCAT *ar;
-        int n;
+        isTarget = this->p->metrics_target_obs == o;
+        
         if(this->p->multiskill==0) {
             k = dat_skill[t];
             ar = &k;
+            if(this->p->predictions==2) {
+                v = dat_known[t];
+                var = &dat_known[t];
+            }
             n = 1;
         } else {
-//            ar = &dat_multiskill->get(t)[1];
-//            n = dat_multiskill->get(t)[0];
-            k = dat_skill_stacked[ dat_skill_rix[t] ];
-            ar = &dat_skill_stacked[ dat_skill_rix[t] ];
+            ix = dat_skill_rix[t];
+            k = dat_skill_stacked[ ix ];
+            ar = &dat_skill_stacked[ ix ];
+            if(this->p->predictions==2) {
+                v = dat_known_stacked[ ix ];
+                var = &dat_known_stacked[ ix ];
+            }
             n = dat_skill_rcount[t];
         }
         
         // prescriptive pretest
-        it = this->p->dat_item[t];
-        string item_s = this->p->map_step_bwd->find((NCAT)it)->second;
-        std::size_t found_prev = 0, found = item_s.find("PINIT-MANUAL-SET");
-        if (found!=std::string::npos) { // set manually
-            // find last divider
-            found = item_s.find("__");
-            while(found!=std::string::npos) {
-                found_prev = found;
-                found = item_s.find("__", found+1);
-            }
-            // get number
-            NUMBER newPLearn = (NUMBER)atof( item_s.substr(found_prev+2, item_s.length()-2).c_str() );
-            group_skill_map[g][ ar[0] ][0] = newPLearn;
-            for(i=1; i<nS; i++) {
-                group_skill_map[g][ ar[0] ][i] = (1-newPLearn)/(nS-1);
-            }
-            continue;
-        }
+//        it = this->p->dat_item[t];
+//        string item_s = this->p->map_step_bwd->find((NCAT)it)->second;
+//        std::size_t found_prev = 0, found = item_s.find("PINIT-MANUAL-SET");
+//        if (found!=std::string::npos) { // set manually
+//            // find last divider
+//            found = item_s.find("__");
+//            while(found!=std::string::npos) {
+//                found_prev = found;
+//                found = item_s.find("__", found+1);
+//            }
+//            // get number
+//            NUMBER newPLearn = (NUMBER)atof( item_s.substr(found_prev+2, item_s.length()-2).c_str() );
+//            group_skill_map[g][ ar[0] ][0] = newPLearn;
+//            for(i=1; i<nS; i++) {
+//                group_skill_map[g][ ar[0] ][i] = (1-newPLearn)/(nS-1);
+//            }
+//            continue;
+//        }
         
         // deal with null skill
         if(ar[0]<0) { // if no skill label
             
-            if(!only_unlabeled) { // this means we were not predicting in the first place
-                isTarget = this->null_skill_obs==o;
-                rmse += pow(isTarget - this->null_skill_obs_prob,2);
-                accuracy += isTarget == (this->null_skill_obs_prob>=0.5);
-                ll -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1 - this->null_skill_obs_prob);
-            }
+            isTarget = this->null_skill_obs==o;
+            rmse = rmse + pow(isTarget - this->null_skill_obs_prob,2);
+            accuracy += isTarget == (this->null_skill_obs_prob>=0.5);
+            ll += - (  isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1 - this->null_skill_obs_prob)  );
+
             if(this->p->predictions>0 && output_this) // write predictions file if it was opened
-                for(m=0; m<nO; m++)
-                    fprintf(fid,"%12.10f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
+                for(m=0; m<nO; m++) {
+                    d = (NDAT)m*this->p->N + t; // save all obs 1 first, then obs 2, then on.
+                    dat_predict[d] = this->null_obs_ratio[m];
+//                    fprintf(fid,"%12.10f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
+                }
             continue;
         }
         // check if {g,k}'s were initialized
@@ -900,8 +952,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
             k = ar[l];
 //          NUMBER *z = gsm(g,k); //BOOST
 //          if( z==NULL )//BOOST
-            if( group_skill_map[g][k][0]==0)//UNBOOST
-            {
+            if( group_skill_map[g][k][0]==0) { //UNBOOST
                 dt->k = k;
 //                NUMBER * pLbit = Calloc(NUMBER, nS);//BOOST
 
@@ -918,6 +969,18 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
         producePCorrect(group_skill_map, local_pred, ar, n, dt); //UNBOOST
 //      producePCorrectBoost(&gsm, local_pred, ar, n, dt); //BOOST
         projectsimplex(local_pred, nO); // addition to make sure there's not side effects
+        
+        // guess the obsevaion using Pi and B
+        NUMBER max_local_pred=0;
+        NPAR ix_local_pred=0;
+        for(m=0; m<nO; m++) {
+            if( local_pred[m]>max_local_pred ) {
+                max_local_pred = local_pred[m];
+                ix_local_pred = m;
+            }
+        }
+        o = ix_local_pred;
+        
 
 //        NUMBER sum=0;
 //        for(m=0; m<this->p->nO; m++)
@@ -988,35 +1051,41 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
         }
         // write prediction out (after update)  
         if(this->p->predictions>0 && output_this) { // write predictions file if it was opened
-            for(m=0; m<nO; m++)
-                fprintf(fid,"%12.10f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
-            if(this->p->predictions==2) { // if we print out states of KC's as welll
-                for(int l=0; l<n; l++) { // all KC here
-         fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
-//           fprintf(fid,"%12.10f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
-                }
+            for(m=0; m<nO; m++) {
+                d = (NDAT)m*this->p->N + t; // save all obs 1 first, then obs 2, then on.
+                dat_predict[d] = this->null_obs_ratio[m];
+//                fprintf(fid,"%12.10f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+            }
+            for(int l=0; l<n; l++) { // all KC here
+//                    fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+                    var[l] = group_skill_map[g][ ar[l] ][0];//UNBOOST
+//                    fprintf(fid,"%12.10f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+//                    var[l] = gsm(g, ar[l] )[0];//BOOST
             }
         }
-        if(!only_unlabeled) { // this means we were not predicting in the first place
-            rmse += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
-            rmse_no_null += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
-            accuracy += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
-            accuracy_no_null += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
-            p = safe01num(local_pred[this->p->metrics_target_obs]);
-            ll -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
-            ll_no_null -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
-            
-            // temporary experimental
-            for(int l=0; this->p->per_kc_rmse_acc && this->p->kc_counts!=NULL && l<n; l++) {
-                //for(m=0; m<nO; m++) local_pred_inner[m] = 0.0;
-                k = ar[l];
-                this->p->kc_counts[k]++;
-                this->p->kc_rmse[k] += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
-                this->p->kc_acc[k]  += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
-            }
-        }
+        rmse += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
+        rmse_no_null += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
+        accuracy += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
+        accuracy_no_null += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
+        p = safe01num(local_pred[this->p->metrics_target_obs]);
+        ll += - (  safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget)  );
+        ll_no_null += - (  safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget)  );
+        
+//        // temporary experimental
+//        for(int l=0; this->p->per_kc_rmse_acc && this->p->kc_counts!=NULL && l<n; l++) {
+//            //for(m=0; m<nO; m++) local_pred_inner[m] = 0.0;
+//            k = ar[l];
+//            this->p->kc_counts[k]++;
+//            this->p->kc_rmse[k] += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
+//            this->p->kc_acc[k]  += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
+//        }
 	} // for all data
     
+    } // end of -- all thread buckets
+//    }//#omp //PAR
+    printf(" rmse was %f\n",rmse);
+
+
     // temporary experimental
     for(int k=0; this->p->per_kc_rmse_acc && this->p->kc_counts!=NULL && k<this->p->nK; k++) {
         this->p->kc_rmse[k] = sqrt(this->p->kc_rmse[k] / this->p->kc_counts[k]);
@@ -1036,20 +1105,57 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 //       for (it2_t itgsm2 = itgsm1.begin(); itgsm2 != itgsm1.end(); itgsm2++)//BOOST
 //           free( gsm( itgsm2.index1(), itgsm2.index2() ) );//BOOST
     
-    if(!only_unlabeled) { // this means we were not predicting in the first place
-        rmse = sqrt(rmse / this->p->N);
-        rmse_no_null = sqrt(rmse_no_null / (this->p->N - this->p->N_null));
-        if(metrics != NULL) {
-            metrics[0] = ll;
-            metrics[1] = ll_no_null;
-            metrics[2] = rmse;
-            metrics[3] = rmse_no_null;
-            metrics[4] = accuracy/this->p->N;
-            metrics[5] = accuracy_no_null/(this->p->N-this->p->N_null);
-        }
+    rmse = sqrt(rmse / this->p->N);
+    rmse_no_null = sqrt(rmse_no_null / (this->p->N - this->p->N_null));
+    if(metrics != NULL) {
+        metrics[0] = ll;
+        metrics[1] = ll_no_null;
+        metrics[2] = rmse;
+        metrics[3] = rmse_no_null;
+        metrics[4] = accuracy/this->p->N;
+        metrics[5] = accuracy_no_null/(this->p->N-this->p->N_null);
     }
-    if(this->p->predictions>0) // close predictions file if it was opened
-        fclose(fid);
+    printf("writing predictions\n");
+    if(this->p->predictions>0) { // close predictions file if it was opened
+        ofstream fout(filename,ios::out);
+        char str[1024];
+        if(!fout)
+        {
+            fprintf(stderr,"Can't write output model file %s\n",filename);
+            exit(1);
+        }
+        for(NDAT t=0; t<this->p->N; t++) {
+            for(m=0; m<nO; m++) {
+                d = (NDAT)m*this->p->N + t;
+                sprintf(str,"%12.10f%s",dat_predict[d],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );
+                fout << str;
+            }
+            if(this->p->predictions==2) { // if we print out states of KC's as welll
+                if(this->p->multiskill==0) {
+                    k = dat_skill[t];
+                    ar = &k;
+                    v = dat_known[t];
+                    var = &v;
+                    n = 1;
+                } else {
+                    k = dat_skill_stacked[ dat_skill_rix[t] ];
+                    ar = &dat_skill_stacked[ dat_skill_rix[t] ];
+                    v = dat_known_stacked[ dat_skill_rix[t] ];
+                    var = &dat_known_stacked[ dat_skill_rix[t] ];
+                    n = dat_skill_rcount[t];
+                }
+                for(int l=0; l<n && ar[0]>-1; l++) { // all KC here
+                    sprintf(str,"%12.10f%s",var[l], (l==(n-1) && l==(n-1))?"\n":"\t");
+                    fout << str;
+                }
+            }
+        }
+        fout.close();
+//        fclose(fid);
+    }
+    free(dat_predict);
+    if(dat_known != NULL) free(dat_known);
+    if(dat_known_stacked != NULL) free(dat_known_stacked);
 }
 
 NUMBER HMMProblem::getLogLik() { // get log likelihood of the fitted model

@@ -298,6 +298,7 @@ bool InputUtil::readTxt(const char *fn, struct param * param) {
         // back to skill processing
 		if( (s_skill.empty() || ( s_skill.size()==1 && (s_skill[0]=='.' || s_skill[0]==' ') ) ) ) { // null skill
             param->N_null++;
+            param->Nstacked++;	// increase stackd count too
             if(param->multiskill == 0) {
                 striped_dat_skill->add(-1); // [t] = -1;
             }

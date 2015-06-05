@@ -847,8 +847,7 @@ void HMMProblemSlicedAB::producePCorrectZ(NUMBER*** group_skill_map, NUMBER* loc
 //    free(local_pred_inner);//BOOST
 //}//BOOST
 
-//void HMMProblemSlicedAB::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill, bool only_unlabeled) {
-void HMMProblemSlicedAB::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, NCAT *dat_skill_stacked, NCAT *dat_skill_rcount, NDAT *dat_skill_rix, bool only_unlabeled) {
+void HMMProblemSlicedAB::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, NCAT *dat_skill_stacked, NCAT *dat_skill_rcount, NDAT *dat_skill_rix) {
 	NDAT t;
 	NCAT g, k;
 	NPAR i, j, m, o, isTarget = 0;
@@ -879,12 +878,11 @@ void HMMProblemSlicedAB::predict(NUMBER* metrics, const char *filename, NPAR* da
 	for(t=0; t<this->p->N; t++) {
         output_this = true;
 		o = dat_obs[t];//[t];
-        if( only_unlabeled && o>-1 ) // if we only output predictions for unlabelled, it's labelled - turn off
+        if( o>-1 ) // if we only output predictions for unlabelled, it's labelled - turn off
             output_this = false;
 		g = dat_group[t];//[
         dt->g = g;
-        if(!only_unlabeled) // this means we were not predicting in the first place
-            isTarget = this->p->metrics_target_obs == o;
+        isTarget = this->p->metrics_target_obs == o;
         NCAT *ar;
         int n;
         if(this->p->multiskill==0) {
@@ -900,13 +898,11 @@ void HMMProblemSlicedAB::predict(NUMBER* metrics, const char *filename, NPAR* da
         }
         // deal with null skill
         if(ar[0]<0) { // if no skill label
-            
-            if(!only_unlabeled) { // this means we were not predicting in the first place
-                isTarget = this->null_skill_obs==o;
-                rmse += pow(isTarget - this->null_skill_obs_prob,2);
-                accuracy += isTarget == (this->null_skill_obs_prob>=0.5);
-                ll -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1 - this->null_skill_obs_prob);
-            }
+            isTarget = this->null_skill_obs==o;
+            rmse += pow(isTarget - this->null_skill_obs_prob,2);
+            accuracy += isTarget == (this->null_skill_obs_prob>=0.5);
+            ll -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1 - this->null_skill_obs_prob);
+
             if(this->p->predictions>0 && output_this) // write predictions file if it was opened
                 for(m=0; m<nO; m++)
                     fprintf(fid,"%12.10f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
@@ -983,24 +979,22 @@ void HMMProblemSlicedAB::predict(NUMBER* metrics, const char *filename, NPAR* da
                 }
             }
         }
-        if(!only_unlabeled) { // this means we were not predicting in the first place
-            rmse += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
-            rmse_no_null += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
-            accuracy += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
-            accuracy_no_null += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
-            p = safe01num(local_pred[this->p->metrics_target_obs]);
-            ll -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
-            ll_no_null -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
-            
-            // temporary experimental
-            for(int l=0; this->p->per_kc_rmse_acc && this->p->kc_counts!=NULL && l<n; l++) {
-                //for(m=0; m<nO; m++) local_pred_inner[m] = 0.0;
-                k = ar[l];
-                this->p->kc_counts[k]++;
-                this->p->kc_rmse[k] += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
-                this->p->kc_acc[k]  += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
-            }
-        }
+        rmse += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
+        rmse_no_null += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
+        accuracy += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
+        accuracy_no_null += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
+        p = safe01num(local_pred[this->p->metrics_target_obs]);
+        ll -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
+        ll_no_null -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
+        
+//        // temporary experimental
+//        for(int l=0; this->p->per_kc_rmse_acc && this->p->kc_counts!=NULL && l<n; l++) {
+//            //for(m=0; m<nO; m++) local_pred_inner[m] = 0.0;
+//            k = ar[l];
+//            this->p->kc_counts[k]++;
+//            this->p->kc_rmse[k] += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
+//            this->p->kc_acc[k]  += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
+//        }
 	} // for all data
     
     // temporary experimental
@@ -1022,17 +1016,15 @@ void HMMProblemSlicedAB::predict(NUMBER* metrics, const char *filename, NPAR* da
 //       for (it2_t itgsm2 = itgsm1.begin(); itgsm2 != itgsm1.end(); itgsm2++)//BOOST
 //           free( gsm( itgsm2.index1(), itgsm2.index2() ) );//BOOST
     
-    if(!only_unlabeled) { // this means we were not predicting in the first place
-        rmse = sqrt(rmse / this->p->N);
-        rmse_no_null = sqrt(rmse_no_null / (this->p->N - this->p->N_null));
-        if(metrics != NULL) {
-            metrics[0] = ll;
-            metrics[1] = ll_no_null;
-            metrics[2] = rmse;
-            metrics[3] = rmse_no_null;
-            metrics[4] = accuracy/this->p->N;
-            metrics[5] = accuracy_no_null/(this->p->N-this->p->N_null);
-        }
+    rmse = sqrt(rmse / this->p->N);
+    rmse_no_null = sqrt(rmse_no_null / (this->p->N - this->p->N_null));
+    if(metrics != NULL) {
+        metrics[0] = ll;
+        metrics[1] = ll_no_null;
+        metrics[2] = rmse;
+        metrics[3] = rmse_no_null;
+        metrics[4] = accuracy/this->p->N;
+        metrics[5] = accuracy_no_null/(this->p->N-this->p->N_null);
     }
     if(this->p->predictions>0) // close predictions file if it was opened
         fclose(fid);
@@ -1894,14 +1886,14 @@ NUMBER HMMProblemSlicedAB::doBarzilaiBorweinStep(FitBitSlicedAB *fb) {
     // compute s_k_m1
   	NUMBER *s_k_m1_PI = init1D<NUMBER>((NDAT)nS);
 	NUMBER **s_k_m1_A = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
-	NUMBER **s_k_m1_B = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
+	NUMBER **s_k_m1_B = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
 	for(i=0; i<nS; i++)
 	{
 		s_k_m1_PI[i] = fb->PIm1[i] - fb->PIm2[i];
         for(j=0; j<nS; j++)
-            s_k_m1_A[i][j] = fb->Am1[i][j] - fb->Am2[i][j];
+            s_k_m1_A[i][j] = fb->Am1[0][i][j] - fb->Am2[0][i][j]; // WARNING 0 instead of z
         for(m=0; m<this->p->nO; m++)
-            s_k_m1_B[i][m] = fb->Bm1[i][m] - fb->Bm2[i][m];
+            s_k_m1_B[i][m] = fb->Bm1[0][i][m] - fb->Bm2[0][i][m];  // WARNING 0 instead of z
 	}
     // compute alpha_step
     NUMBER alpha_step = 0;
@@ -1914,11 +1906,11 @@ NUMBER HMMProblemSlicedAB::doBarzilaiBorweinStep(FitBitSlicedAB *fb) {
 		alpha_step_den = s_k_m1_PI[i]*(fb->gradPI[i] - fb->gradPIm1[i]);
         for(j=0; j<nS; j++) {
             alpha_step_num = s_k_m1_A[i][j]*s_k_m1_A[i][j];
-            alpha_step_den = s_k_m1_A[i][j]*(fb->gradA[i][j] - fb->gradAm1[i][j]);
+            alpha_step_den = s_k_m1_A[i][j]*(fb->gradA[0][i][j] - fb->gradAm1[0][i][j]);  // WARNING 0 instead of z
         }
         for(m=0; m<nO; m++) {
             alpha_step_num = s_k_m1_B[i][m]*s_k_m1_B[i][m];
-            alpha_step_den = s_k_m1_B[i][m]*(fb->gradB[i][m] - fb->gradBm1[i][m]);
+            alpha_step_den = s_k_m1_B[i][m]*(fb->gradB[0][i][m] - fb->gradBm1[0][i][m]);  // WARNING 0 instead of z
         }
 	}
     alpha_step = alpha_step_num / safe0num(alpha_step_den);

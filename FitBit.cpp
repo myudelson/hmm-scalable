@@ -478,7 +478,7 @@ void FitBit::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
         if(this->B  != NULL) for(NPAR m=0; m<nO; m++) { par[cpar++] = this->B[i][m]; grad[cgrad++] = a_B[i][m]; }
     }
     
-    NUMBER scale = doLog10Scale1DGentle(grad, par, n);
+    NUMBER scale = doLog10Scale1DGentle(grad, par, (NPAR)n);
     
     for(NPAR i=0; i<nS; i++) {
         if(this->pi != NULL) { a_PI[i] *= scale; }

@@ -242,8 +242,8 @@ int main (int argc, char ** argv) {
     // erase blocking labels
     zeroLabels(&param);
 
-    clock_t tm_fit; //SEQ
-    clock_t tm_predict; //SEQ
+    clock_t tm_fit = 0; //SEQ
+    clock_t tm_predict = 0; //SEQ
 //    double _tm_fit;//PAR
 //    double _tm_predict;//PAR
     
@@ -312,8 +312,7 @@ int main (int argc, char ** argv) {
             
             tm_predict = clock(); //SEQ
 //            _tm_predict = omp_get_wtime(); //PAR
-//            hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*all, not only unlabelled*/);
-            hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, false/*all, not only unlabelled*/);
+            hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix);
             
             tm_predict = clock()-tm_predict;//SEQ
 //            _tm_predict = omp_get_wtime()-_tm_predict;//PAR

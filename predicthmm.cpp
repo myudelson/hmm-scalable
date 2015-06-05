@@ -142,8 +142,7 @@ int main (int argc, char ** argv) {
 //    if(param.metrics>0 || param.predictions>0) {
         metrics = Calloc(NUMBER, (size_t)7);// LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
 //    }
-//    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_multiskill, false/*only unlabelled*/);
-    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, param.predictions==1/*1 -- only unlabelled, 2 -- all*/);
+    hmm->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix);
 //    predict(predict_file, hmm);
 	if(param.quiet == 0)
 		printf("predicting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
@@ -172,8 +171,8 @@ void exit_with_help() {
            "-d : delimiter for multiple skills per observation; 0-single skill per\n"
            "     observation (default), otherwise -- delimiter character, e.g. '-d ~'.\n"
            "-b : treat input file as binary input file (specifications TBA).\n"
-           "-p : produce model predictions for all rows, not just ones with unknown\n"
-           "     observations.\n"
+           "-p : report model predictions on the train set 0-no (default), 1-yes; 2-yes,\n"
+           "     plus output state probability; works with -v and -m parameters.\n"
 		   );
 	exit(1);
 }

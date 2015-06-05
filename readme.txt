@@ -175,8 +175,8 @@ options:
      '-v 5,n,2,folds.txt,i', folds are actually read [i]n from the file.
 -p : report model predictions on the train set 0-no (default), 1-yes; 2-yes,
      plus output state probability; works with -v and -m parameters.
--d : delimiter for multiple skills per observation; 0-single skill per
-     observation (default), otherwise -- delimiter character, e.g. '-d ~'.
+-d : delimiter for multiple skills per observation; single skill per observation
+     (default), otherwise -- delimiter character, e.g. '-d ~'.
 -b : treat input file as binary input file created from text file by
      inputconvert utility.
 -B : block re-estimation of prior, transitions, or emissions parameters
@@ -200,12 +200,12 @@ options:
      specify observation for which metrics to be reported, list it after ','.
      For example '-m 0', '-m 1' (by default, observation 1 is assumed), '-m 1,2'
      (compute metrics for observation 2). Incompatible with-v option.
--d : delimiter for multiple skills per observation; 0-single skill per
-     observation (default), otherwise -- delimiter character, e.g. '-d ~'.
+-d : delimiter for multiple skills per observation; single skill per observation
+     (default), otherwise -- delimiter character, e.g. '-d ~'.
 -b : treat input file as binary input file  created from text file by
      inputconvert utility.
 -p : report model predictions on the train set 0-no (default), 1-yes; 2-yes,
-plus output state probability; works with -v and -m parameters.
+     plus output state probability; works with -v and -m parameters.
 
 = Examples =
 
