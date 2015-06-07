@@ -823,7 +823,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
     NUMBER ll = 0.0, ll_no_null = 0.0, rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NUMBER p;
 //    FILE *fid = NULL; // file for storing prediction should that be necessary
-    bool output_this; // flag for turning on/off the writing out
+//    bool output_this; // flag for turning on/off the writing out
 //    if(this->p->predictions>0) {
 //        fid = fopen(filename,"w");
 //        if(fid == NULL)
@@ -866,7 +866,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
     NDAT *starts;
     starts = (NDAT*)malloc((size_t)(threads+1)*sizeof(NDAT));
     starts[0]=0;
-    starts[threads]=this->p->N+1; // just for simplicity of adding
+    starts[threads]=this->p->N; // just for simplicity of adding
     for(int i=1; i<threads; i++) {
         starts[i] = (NDAT)i * this->p->N / (NDAT)threads;
     }
@@ -879,14 +879,14 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
     
 //    for(t=0; t<this->p->N; t++) {
     for(t=starts[trd]; t<starts[trd+1]; t++) {
-        output_this = true;
+//        output_this = true;
         
         // peek into the data, not for predict, for update only
 		o = dat_obs[t];//[t];
         
         
-        if( o>-1 ) // if we only output predictions for unlabelled, it's labelled - turn off
-            output_this = false;
+//        if( o>-1 ) // if we only output predictions for unlabelled, it's labelled - turn off
+//            output_this = false;
 		g = dat_group[t];//[
         dt->g = g;
         
@@ -939,7 +939,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
             accuracy += isTarget == (this->null_skill_obs_prob>=0.5);
             ll += - (  isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1 - this->null_skill_obs_prob)  );
 
-            if(this->p->predictions>0 && output_this) // write predictions file if it was opened
+            if(this->p->predictions>0 /*&& output_this*/) // write predictions file if it was opened
                 for(m=0; m<nO; m++) {
                     d = (NDAT)m*this->p->N + t; // save all obs 1 first, then obs 2, then on.
                     dat_predict[d] = this->null_obs_ratio[m];
@@ -1050,17 +1050,19 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 //            }
         }
         // write prediction out (after update)  
-        if(this->p->predictions>0 && output_this) { // write predictions file if it was opened
+        if(this->p->predictions>0/* && output_this*/) { // write predictions file if it was opened
             for(m=0; m<nO; m++) {
                 d = (NDAT)m*this->p->N + t; // save all obs 1 first, then obs 2, then on.
-                dat_predict[d] = this->null_obs_ratio[m];
+                dat_predict[d] = local_pred[m];//this->null_obs_ratio[m];
 //                fprintf(fid,"%12.10f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
             }
-            for(int l=0; l<n; l++) { // all KC here
+            if(this->p->predictions==2) {
+                for(int l=0; l<n; l++) { // all KC here
 //                    fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
                     var[l] = group_skill_map[g][ ar[l] ][0];//UNBOOST
 //                    fprintf(fid,"%12.10f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
 //                    var[l] = gsm(g, ar[l] )[0];//BOOST
+                }
             }
         }
         rmse += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
