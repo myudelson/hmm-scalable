@@ -29,13 +29,14 @@
 #include <iostream>
 #include "FitBitSlicedAB.h"
 
-FitBitSlicedAB::FitBitSlicedAB(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol) {
+FitBitSlicedAB::FitBitSlicedAB(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol, NPAR a_tol_mode) {
     this->nS = a_nS;
     this->nO = a_nO;
     this->nG = a_nG;
     this->nK = a_nK;
     this->nZ = a_nZ;
     this->tol = a_tol;
+    this->tol_mode = a_tol_mode;
     this->pi = NULL;
     this->A = NULL;
     this->B = NULL;
@@ -66,13 +67,14 @@ FitBitSlicedAB::FitBitSlicedAB(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR 
     this->Cslice = 0;
 }
 
-FitBitSlicedAB::FitBitSlicedAB(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol, NPAR a_projecttosimplex) {
+FitBitSlicedAB::FitBitSlicedAB(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NPAR a_nZ, NUMBER a_tol, NPAR a_tol_mode, NPAR a_projecttosimplex) {
     this->nS = a_nS;
     this->nO = a_nO;
     this->nG = a_nG;
     this->nK = a_nK;
     this->nZ = a_nZ;
     this->tol = a_tol;
+    this->tol_mode = a_tol_mode;
     this->pi = NULL;
     this->A = NULL;
     this->B = NULL;
@@ -407,23 +409,32 @@ void FitBitSlicedAB::add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_
 
 bool FitBitSlicedAB::checkConvergence(FitResult *fr) {
 
-	NUMBER critetion = 0;
-    for(NPAR i=0; i<this->nS; i++)
-        if(this->pi != NULL) critetion += pow( this->pi[i]-this->PIm1[i], 2 )/*:0*/;
-
-    for(NPAR z=0; z<this->nZ; z++)
-        for(NPAR i=0; i<this->nS; i++)
-        {
-            for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
-                critetion += pow(this->A[z][i][j] - this->Am1[z][i][j],2);
-            }
-            for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
-                critetion += pow(this->B[z][i][k] - this->Bm1[z][i][k],2);
-            }
-        }
-	return sqrt(critetion) < this->tol; // double the truth or false
-        
-//    return (fr->pOmid - fr->pO) < this->tol;
+	NUMBER criterion = 0;
+    bool res = false;
+    switch (this->tol_mode) {
+        case 'p':
+            for(NPAR i=0; i<this->nS; i++)
+                if(this->pi != NULL) criterion += pow( this->pi[i]-this->PIm1[i], 2 )/*:0*/;
+            
+            for(NPAR z=0; z<this->nZ; z++)
+                for(NPAR i=0; i<this->nS; i++)
+                {
+                    for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
+                        criterion += pow(this->A[z][i][j] - this->Am1[z][i][j],2);
+                    }
+                    for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
+                        criterion += pow(this->B[z][i][k] - this->Bm1[z][i][k],2);
+                    }
+                }
+            res =  sqrt(criterion) < this->tol; // double the truth or false
+            break;
+        case 'l':
+            criterion = (fr->pOmid-fr->pO)/fr->ndat;
+            res = criterion < this->tol;
+            break;
+    }
+    
+    return res;
 }
 
 void FitBitSlicedAB::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {

@@ -3,9 +3,7 @@ HMM for Matlab - http://www.cs.ubc.ca/~murphyk/Software/HMM/hmm.html + literatur
 
 == HMM todo ==
 - finish setting prediction straight (e.g. guessing. observation was added instead of peeking)
-- finish fixing parallel generation of predictions.
 - finish work on parallel iBKT, AGK version has all printouts for it (still deadlocks in all iBKT versions)
-- tolerance: on parameter change (now), on LL change (absolute, per datapoint), until LL improves
 - there is some savings possible when computing forward and backward variables 
     rf. http://en.wikipedia.org/wiki/Forward%E2%80%93backward_algorithm#Example
 - random runs within each "fit bit", e.g. '-r' parameter

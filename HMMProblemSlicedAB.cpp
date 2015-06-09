@@ -1245,7 +1245,7 @@ NUMBER HMMProblemSlicedAB::GradientDescent() {
     if(this->p->single_skill>0) {
         FitResult fr;
         fr.pO = 0;
-        FitBitSlicedAB *fb = new FitBitSlicedAB(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->nZ, this->p->tol);
+        FitBitSlicedAB *fb = new FitBitSlicedAB(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->nZ, this->p->tol, this->p->tol_mode);
         // link accordingly
         fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         if(this->p->block_fitting[0]!=0) fb->pi = NULL;
@@ -1313,7 +1313,7 @@ NUMBER HMMProblemSlicedAB::GradientDescent() {
             // for all slices
             for(NPAR z=0; z<this->p->nZ; z++) {
                 FitResult fr_loc;
-                FitBitSlicedAB *fb = new FitBitSlicedAB(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->nZ, this->p->tol);
+                FitBitSlicedAB *fb = new FitBitSlicedAB(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->nZ, this->p->tol, this->p->tol_mode);
                 fb->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);
 //                fb->tag = z; // mark which slice we are actually fitting
                 
@@ -1366,7 +1366,7 @@ NUMBER HMMProblemSlicedAB::BaumWelch() {
         FitResult fr;
         fr.pO = 0;
         NCAT x;
-        FitBitSlicedAB *fb = new FitBitSlicedAB(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->nZ, this->p->tol);
+        FitBitSlicedAB *fb = new FitBitSlicedAB(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->nZ, this->p->tol, this->p->tol_mode);
         fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         if(this->p->block_fitting[0]!=0) fb->pi = NULL;
         if(this->p->block_fitting[1]!=0) fb->A  = NULL;
@@ -1416,7 +1416,7 @@ NUMBER HMMProblemSlicedAB::BaumWelch() {
             fr.conv = 0; // converged
             fr.ndat = 0;
             for(NPAR z=0; z<this->p->nZ; z++) {
-                FitBitSlicedAB *fb = new FitBitSlicedAB(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->nZ, this->p->tol);
+                FitBitSlicedAB *fb = new FitBitSlicedAB(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->nZ, this->p->tol, this->p->tol_mode);
                 fb->link(this->getPI(k), this->getA(k), this->getB(k), this->p->k_numg[k], this->p->k_g_data[k]);
                 if(this->p->block_fitting[0]!=0 || z>0) fb->pi = NULL;
                 if(this->p->block_fitting[1]!=0) fb->A  = NULL;

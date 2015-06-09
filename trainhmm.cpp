@@ -401,7 +401,9 @@ void exit_with_help() {
            "     For example '-s 1.3.1' would be by skill structure (classical) with\n"
            "     Conjugate Gradient Descent and Hestenes-Stiefel formula, '-s 2.1' would be\n"
            "     by student structure fit using Baum-Welch method.\n"
-           "-e : tolerance of termination criterion (0.01 default)\n"
+           "-e : tolerance of termination criterion (0.01 for parameter change default);\n"
+           "     could be compuconvergeted by the change in log-likelihood per datapoint, e.g.\n"
+           "     '-e 0.00001,l'.\n"
            "-i : maximum iterations (200 by default)\n"
            "-q : quiet mode, without output, 0-no (default), or 1-yes\n"
            "-n : number of hidden states, should be 2 or more (default 2)\n"
@@ -413,10 +415,10 @@ void exit_with_help() {
            "-u : upper boundaries for params, comma-separated for priors, transition,\n"
            "     and emission probabilities (without skips); default 0,0,1,0,0,0,0,0,0,0\n"
            "-c : specification of the C weight and cetroids for L2 penalty, empty (default).\n"
-           "     For standard BKT - 4 comma-separated numbers: C weight of the penalty and "
+           "     For standard BKT - 4 comma-separated numbers: C weight of the penalty and\n"
            "     centroids, for PI, A, and B matrices respectively. If used for iBKT with\n"
            "     student effects, 8 values will be used with 4 additional values for student\n"
-           "     effect matrices. For example, '-c 1.0,0.5,0.5,0.0'."
+           "     effect matrices. For example, '-c 1.0,0.5,0.5,0.0'.\n"
            "-f : fit as one skill, 0-no (default), 1 - fit as one skill and use params as\n"
            "     starting point for multi-skill, 2 - force one skill\n"
            "-m : report model fitting metrics (AIC, BIC, RMSE) 0-no (default), 1-yes. To \n"
@@ -462,15 +464,22 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
 		switch(argv[i-1][1])
 		{
 			case 'e':
-				param.tol = atof(argv[i]);
+				param.tol = atof( strtok(argv[i],",\t\n\r") );
+                ch = strtok(NULL,",\t\n\r"); // could be NULL
+                if(ch != NULL)
+                    param.tol_mode = ch[0];
 				if(param.tol<0) {
 					fprintf(stderr,"ERROR! Fitting tolerance cannot be negative\n");
 					exit_with_help();
 				}
-				if(param.tol>10) {
-					fprintf(stderr,"ERROR! Fitting tolerance cannot be >10\n");
-					exit_with_help();
-				}
+                if(param.tol>10) {
+                    fprintf(stderr,"ERROR! Fitting tolerance cannot be >10\n");
+                    exit_with_help();
+                }
+                if(param.tol_mode!='p' && param.tol_mode!='l') {
+                    fprintf(stderr,"ERROR! Tolerance mode '%c' is not allowed\n",param.tol_mode);
+                    exit_with_help();
+                }
 				break;
 			case 't':
 				param.sliced = (NPAR)atoi(argv[i]);

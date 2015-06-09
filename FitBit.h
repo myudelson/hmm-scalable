@@ -94,8 +94,8 @@ public:
     NPAR Cslice; // current slice during L2 norm penalty fitting
     NPAR tag; // multippurpose
     
-    FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol);
-    FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_projecttosimplex);
+    FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_tol_mode);
+    FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_tol_mode, NPAR a_projecttosimplex);
     ~FitBit();
     void init(enum FIT_BIT_SLOT fbs);
     void negate(enum FIT_BIT_SLOT fbs);
@@ -111,6 +111,7 @@ public:
     void addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor);
 private:
     NUMBER tol;
+    NPAR tol_mode;
 
     void init(NUMBER* &pi, NUMBER** &A, NUMBER** &B);
     void negate(NUMBER* &pi, NUMBER** &A, NUMBER** &B);

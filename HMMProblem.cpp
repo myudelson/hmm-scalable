@@ -879,7 +879,6 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 //    {//PAR
 //    #pragma omp for schedule(dynamic) reduction(+:rmse,rmse_no_null,accuracy,accuracy_no_null,ll,ll_no_null) //PAR
     for(int trd=0; trd<threads; trd++) { // all thread buckets
-////        printf("thread %i of %i\n",omp_get_thread_num(),omp_get_num_threads());//PAR
 //        var = NULL;//PAR
 //        dt = new data;//PAR
 //        local_pred = init1D<NUMBER>(nO); // local prediction//PAR
@@ -1433,7 +1432,7 @@ NUMBER HMMProblem::GradientDescent() {
 	if(this->p->single_skill>0) {
         FitResult fr;
         fr.pO = 0;
-        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
         // link accordingly
         fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         if(this->p->block_fitting[0]!=0) fb->pi = NULL;
@@ -1491,7 +1490,7 @@ NUMBER HMMProblem::GradientDescent() {
                 xndat = 0;
                 x_data = NULL;
             }
-            FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+            FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
             fb->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);
             if(this->p->block_fitting[0]!=0) fb->pi = NULL;
             if(this->p->block_fitting[1]!=0) fb->A  = NULL;
@@ -1539,7 +1538,7 @@ NUMBER HMMProblem::GradientDescent() {
             xndat = 0;
             x_data = NULL;
         }
-        fbs[x] = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+        fbs[x] = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
         fbs[x]->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);
 
         fbs[x]->init(FBS_PARm1);
@@ -1572,7 +1571,7 @@ NUMBER HMMProblem::BaumWelch() {
         FitResult fr;
         fr.pO = 0;
         NCAT x;
-        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
         fb->link( this->getPI(0), this->getA(0), this->getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         if(this->p->block_fitting[0]!=0) fb->pi = NULL;
         if(this->p->block_fitting[1]!=0) fb->A  = NULL;
@@ -1614,7 +1613,7 @@ NUMBER HMMProblem::BaumWelch() {
 //    {//PAR
 //        #pragma omp for schedule(dynamic) reduction(+:loglik) //PAR
         for(k=0; k<this->p->nK; k++) {
-            FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+            FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
             fb->link(this->getPI(k), this->getA(k), this->getB(k), this->p->k_numg[k], this->p->k_g_data[k]);
             if(this->p->block_fitting[0]!=0) fb->pi = NULL;
             if(this->p->block_fitting[1]!=0) fb->A  = NULL;
@@ -1647,10 +1646,10 @@ FitResult HMMProblem::BaumWelchBit(FitBit *fb) {
     NCAT xndat = fb->xndat;
     struct data **x_data = fb->x_data;
     
+    fr.ndat = -1; // no accounting so far
     while( !fr.conv && fr.iter<=this->p->maxiter ) {
-        fr.ndat = -1; // no accounting so far
         if(fr.iter==1) {
-            computeAlphaAndPOParam(xndat, x_data);
+            fr.ndat = computeAlphaAndPOParam(xndat, x_data);
             fr.pO0 = HMMProblem::getSumLogPOPara(xndat, x_data);
             fr.pOmid = fr.pO0;
         }

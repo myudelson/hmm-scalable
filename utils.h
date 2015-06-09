@@ -155,6 +155,7 @@ struct param {
 	NUMBER *param_lo;
 	NUMBER *param_hi;
 	NUMBER tol;  // tolerance of termination criterion (0.0001 by default)
+    NPAR tol_mode; // tolerance mode: by prameter change, or by loglikelihood change
     NPAR scaled;
     NPAR do_not_check_constraints;
     NPAR sliced; // 1-read slice data from 5th column (0-default), slices - different versions of A and B matrices

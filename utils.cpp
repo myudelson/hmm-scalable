@@ -633,7 +633,8 @@ NUMBER elnprod(NUMBER eln_x, NUMBER eln_y) {
 void set_param_defaults(struct param *param) {
     param->item_complexity = NULL;
 	// configurable - set
-	param->tol                   = 0.01;
+    param->tol                   = 0.01;
+    param->tol_mode              = 'p';
 	param->scaled                = 0;
     param->do_not_check_constraints = 0;
 	param->sliced                = 0;

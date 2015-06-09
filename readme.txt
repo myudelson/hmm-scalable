@@ -143,7 +143,9 @@ options:
 -S : perform scaling of forward/backward variables: 0 - off (default), 1 - on.
      Only allowed for Baum-Welch solver ('-s 1.1' setting), otherwise auto-set
      to off.
--e : tolerance of termination criterion (0.01 default)
+-e : tolerance of termination criterion (0.01 for parameter change default);
+     could be computed by the change in log-likelihood per datapoint, e.g.
+    '-e 0.00001,l'.
 -i : maximum number of iterations (200 by default)
 -q : quiet mode, without output, 0-no (default), or 1-yes
 -n : number of hidden states, should be 2 or more (default 2)

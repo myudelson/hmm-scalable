@@ -1,6 +1,6 @@
 CC=g++ #//PAR
 CXX=g++ #//PAR
-CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp -g #UNBOOST
+CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp #UNBOOST
 #CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp -I boost #BOOST
 SHVER = 1
 OS = $(shell uname)

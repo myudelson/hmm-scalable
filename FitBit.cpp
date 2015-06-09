@@ -29,12 +29,13 @@
 
 #include "FitBit.h"
 
-FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol) {
+FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_tol_mode) {
     this->nS = a_nS;
     this->nO = a_nO;
     this->nG = a_nG;
     this->nK = a_nK;
     this->tol = a_tol;
+    this->tol_mode = a_tol_mode;
     this->pi = NULL;
     this->A = NULL;
     this->B = NULL;
@@ -69,12 +70,13 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol) {
     this->tag = 0;
 }
 
-FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_projecttosimplex){
+FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_tol_mode, NPAR a_projecttosimplex){
     this->nS = a_nS;
     this->nO = a_nO;
     this->nG = a_nG;
     this->nK = a_nK;
     this->tol = a_tol;
+    this->tol_mode = a_tol_mode;
     this->pi = NULL;
     this->A = NULL;
     this->B = NULL;
@@ -427,36 +429,44 @@ void FitBit::add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
 
 bool FitBit::checkConvergence(FitResult *fr) {
 
-	NUMBER critetion = 0;
-	for(NPAR i=0; i<this->nS; i++)
-	{
-		if(this->pi != NULL) critetion += pow( this->pi[i]-this->PIm1[i], 2 )/*:0*/;
-		for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
-			critetion += pow(this->A[i][j] - this->Am1[i][j],2);
-		}
-		for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
-			critetion += pow(this->B[i][k] - this->Bm1[i][k],2);
-		}
-	}
-    
-    NUMBER critetion_oscil = 0; // oscillation between PAR and PARm1, i.e. PAR is close to PARm2
-    if( (!(sqrt(critetion) < this->tol)) && ( this->PIm2 != NULL || this->Am2 != NULL || this->Bm2 != NULL ) ) {
-        for(NPAR i=0; i<this->nS; i++)
-        {
-            if(this->pi != NULL) critetion_oscil += pow( this->pi[i]-this->PIm2[i], 2 )/*:0*/;
-            for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
-                critetion_oscil += pow(this->A[i][j] - this->Am2[i][j],2);
+	NUMBER criterion = 0;
+    NUMBER criterion_oscil = 0; // oscillation between PAR and PARm1, i.e. PAR is close to PARm2
+    bool res = false;
+    switch (this->tol_mode) {
+        case 'p':
+            for(NPAR i=0; i<this->nS; i++)
+            {
+                if(this->pi != NULL) criterion += pow( this->pi[i]-this->PIm1[i], 2 )/*:0*/;
+                for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
+                    criterion += pow(this->A[i][j] - this->Am1[i][j],2);
+                }
+                for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
+                    criterion += pow(this->B[i][k] - this->Bm1[i][k],2);
+                }
             }
-            for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
-                critetion_oscil += pow(this->B[i][k] - this->Bm2[i][k],2);
+            
+            if( (!(sqrt(criterion) < this->tol)) && ( this->PIm2 != NULL || this->Am2 != NULL || this->Bm2 != NULL ) ) {
+                for(NPAR i=0; i<this->nS; i++)
+                {
+                    if(this->pi != NULL) criterion_oscil += pow( this->pi[i]-this->PIm2[i], 2 )/*:0*/;
+                    for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
+                        criterion_oscil += pow(this->A[i][j] - this->Am2[i][j],2);
+                    }
+                    for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
+                        criterion_oscil += pow(this->B[i][k] - this->Bm2[i][k],2);
+                    }
+                }
+                res = sqrt(criterion_oscil) < this->tol; // double the truth or false
             }
-        }
-        return sqrt(critetion_oscil) < this->tol; // double the truth or false
+            else
+                res = sqrt(criterion) < this->tol; // double the truth or false
+            break;
+        case 'l':
+            criterion = (fr->pOmid-fr->pO)/fr->ndat;
+            res = criterion < this->tol;
+            break;
     }
-    else
-        return sqrt(critetion) < this->tol; // double the truth or false
-        
-//    return (fr->pOmid - fr->pO) < this->tol;
+    return res;
 }
 
 void FitBit::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {

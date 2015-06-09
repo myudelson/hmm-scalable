@@ -318,7 +318,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 	// fit all as 1 skill first, set group gradients to 0, and do not fit them
 	//
 	if(this->p->single_skill>0) {
-        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
         fb->link( HMMProblem::getPI(0), HMMProblem::getA(0), HMMProblem::getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         if(this->p->block_fitting[0]!=0) fb->pi = NULL;
         if(this->p->block_fitting[1]!=0) fb->A  = NULL;
@@ -365,7 +365,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                 for(k=0; k<nK; k++) { // for all A,B-by-skill
                     if(iter_qual_skill[k]==iterations_to_qualify)
                         continue;
-                    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
                     // link
                     fb->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
                     if(this->p->block_fitting[0]!=0) fb->pi = NULL;
@@ -413,7 +413,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                 for(g=0; g<nG; g++) { // for all PI-by-user
                     if(iter_qual_group[g]==iterations_to_qualify)
                         continue;
-                    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
                     // link
                     fb->link(this->getPIg(g), NULL, NULL, this->p->g_numk[g], this->p->g_k_data[g]);
                     if(this->p->block_fitting[0]!=0) fb->pi = NULL;
@@ -485,13 +485,13 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                 x = q;
                 xndat = this->p->k_numg[x];
                 x_data = this->p->k_g_data[x];
-                fbs[q] = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                fbs[q] = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
                 fbs[q]->link( HMMProblem::getPI(x), HMMProblem::getA(x), HMMProblem::getB(x), xndat, x_data);
             } else { // groups
                 x = q - this->p->nK;
                 xndat = this->p->g_numk[x];
                 x_data = this->p->g_k_data[x];
-                fbs[q] = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                fbs[q] = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
                 fbs[q]->link( this->getPIg(x), NULL, NULL, xndat, x_data);
             }
             fbs[q]->init(FBS_PARm1);

@@ -441,7 +441,7 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
 	// fit all as 1 skill first, set group gradients to 0, and do not fit them
 	//
 	if(this->p->single_skill>0) {
-        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
         fb->link( HMMProblem::getPI(0), HMMProblem::getA(0), HMMProblem::getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
         if(this->p->block_fitting[0]!=0) fb->pi = NULL;
         if(this->p->block_fitting[1]!=0) fb->A  = NULL;
@@ -488,7 +488,7 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                     for(k=0; k<nK; k++) { // for all A,B-by-skill
                         if(iter_qual_skill[k]==iterations_to_qualify)
                             continue;
-                        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
                         // link and fit
                         fb->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
                         if(this->p->block_fitting[0]!=0) fb->pi = NULL;
@@ -536,7 +536,7 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                     for(g=0; g<nG; g++) { // for all PI-by-user
                         if(iter_qual_group[g]==iterations_to_qualify)
                             continue;
-                        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
+                        FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
                         // link
                         // vvvvvvvvvvvvvvvvvvvvv ONLY PART THAT IS DIFFERENT FROM HMMProblemPiGK
                         fb->link(this->getPIg(g), this->getAg(g), this->getBg(g), this->p->g_numk[g], this->p->g_k_data[g]);
