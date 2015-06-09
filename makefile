@@ -1,6 +1,6 @@
 CC=g++ #//PAR
 CXX=g++ #//PAR
-CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp #UNBOOST
+CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp -g #UNBOOST
 #CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp -I boost #BOOST
 SHVER = 1
 OS = $(shell uname)
@@ -8,7 +8,7 @@ OS = $(shell uname)
 #LIBS = blas/blas.a
 #LIBS = -lblas
 
-all: train predict input tidy
+all: train predict input 
 
 train: utils.o StripedArray.o FitBit.o FitBitSlicedA.o FitBitSlicedAB.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemSlicedAB.o HMMProblemSlicedA.o InputUtil.o trainhmm.cpp
 	$(CXX) $(CFLAGS) -o trainhmm trainhmm.cpp utils.o FitBit.o FitBitSlicedA.o FitBitSlicedAB.o InputUtil.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemSlicedAB.o HMMProblemSlicedA.o StripedArray.o

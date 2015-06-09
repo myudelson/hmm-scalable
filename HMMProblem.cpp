@@ -814,8 +814,10 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 	NCAT g, k;
 	NPAR i, j, m, o, isTarget = 0;
     NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
-	NUMBER *local_pred = init1D<NUMBER>(nO); // local prediction
-	NUMBER *pLe = init1D<NUMBER>(nS);// p(L|evidence);
+	NUMBER *local_pred = init1D<NUMBER>(nO); // local prediction//SEQ
+	NUMBER *pLe = init1D<NUMBER>(nS);// p(L|evidence);//SEQ
+//    NUMBER *local_pred = NULL; // local prediction//PAR
+//    NUMBER *pLe = NULL;// p(L|evidence);//PAR
 	NUMBER pLe_denom; // p(L|evidence) denominator
     NUMBER ***group_skill_map = init3D<NUMBER>(nG, nK, nS);//UNBOOST
 //   ::boost::numeric::ublas::mapped_matrix<NUMBER*> gsm (nG, nK);//BOOST
@@ -847,7 +849,8 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
     }
     
 	// initialize
-    struct data* dt = new data;
+    struct data* dt = new data;//SEQ
+//    struct data* dt = NULL;//PAR
     NDAT count = 0;
     NDAT d = 0;
     NUMBER *var = NULL, v;
@@ -861,7 +864,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 //    {//PAR
 //    threads = omp_get_num_threads();//PAR
 //    }//#omp//PAR
-    printf("threads for printing %i\n",threads);
+//    printf("threads for printing %i\n",threads);
 //
     NDAT *starts;
     starts = (NDAT*)malloc((size_t)(threads+1)*sizeof(NDAT));
@@ -870,15 +873,24 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
     for(int i=1; i<threads; i++) {
         starts[i] = (NDAT)i * this->p->N / (NDAT)threads;
     }
-    
-//    #pragma omp parallel if(parallel_now) shared(output_this) //num_threads(2)//PAR
+
+//    #pragma omp parallel if(parallel_now) private(i,j,m,t,d,dt,var,v,o,g,k,ar,ix,n,isTarget,pLe_denom,pLe,local_pred) shared(group_skill_map,nS,nO,nK,nG,starts,threads,dat_predict,dat_known,dat_known_stacked) // num_threads(2)//PAR
+    //
 //    {//PAR
 //    #pragma omp for schedule(dynamic) reduction(+:rmse,rmse_no_null,accuracy,accuracy_no_null,ll,ll_no_null) //PAR
     for(int trd=0; trd<threads; trd++) { // all thread buckets
-//        printf("thread %i of %i\n",omp_get_thread_num(),omp_get_num_threads());//PAR
+////        printf("thread %i of %i\n",omp_get_thread_num(),omp_get_num_threads());//PAR
+//        var = NULL;//PAR
+//        dt = new data;//PAR
+//        local_pred = init1D<NUMBER>(nO); // local prediction//PAR
+//        pLe = init1D<NUMBER>(nS);// p(L|evidence);//PAR
     
 //    for(t=0; t<this->p->N; t++) {
     for(t=starts[trd]; t<starts[trd+1]; t++) {
+        
+        
+        
+        
 //        output_this = true;
         
         // peek into the data, not for predict, for update only
@@ -1023,10 +1035,9 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
                     group_skill_map[g][k][i]= 0.0; //UNBOOST
 //                  pLbit[i]= 0.0; //BOOST
                 for(j=0; j<nS; j++)
-                    for(j=0; j<nS; j++)
-                        for(i=0; i<nS; i++)
-                            group_skill_map[g][k][j] += pLe[i] * getA(dt,i,j);//A[i][j]; //UNBOOST
-//                          pLbit[j] += pLe[i] * getA(dt,i,j);//A[i][j]; //BOOST
+                    for(i=0; i<nS; i++)
+                        group_skill_map[g][k][j] += pLe[i] * getA(dt,i,j);//A[i][j]; //UNBOOST
+//                        pLbit[j] += pLe[i] * getA(dt,i,j);//A[i][j]; //BOOST
             } else { // unknown observation
                 // 2. L = (pL'*A)';
                 for(i=0; i<nS; i++)
@@ -1081,11 +1092,15 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 //            this->p->kc_rmse[k] += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
 //            this->p->kc_acc[k]  += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
 //        }
-	} // for all data
+    } // for all data
     
+//        delete(dt);//PAR
+//        free(local_pred);//PAR
+//        free(pLe);//PAR
+        
     } // end of -- all thread buckets
 //    }//#omp //PAR
-    printf(" rmse was %f\n",rmse);
+//    printf(" rmse was %f\n",rmse);
 
 
     // temporary experimental
@@ -1094,11 +1109,11 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
         this->p->kc_acc[k]  =      this->p->kc_acc[k]  / this->p->kc_counts[k];
     }
     
-    delete(dt);
-	free(local_pred);
-	free(pLe);
+    delete(dt);//SEQ
+	free(local_pred);//SEQ
+	free(pLe);//SEQ
 //	free(local_pred_inner);
-//    free3D<NUMBER>(group_skill_map, nG, nK); 
+    free3D<NUMBER>(group_skill_map, nG, nK); 
     
 //    gsm.clear();//BOOST
 //    typedef boost::numeric::ublas::mapped_matrix<NUMBER *>::iterator1 it1_t;//BOOST
@@ -1117,7 +1132,8 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
         metrics[4] = accuracy/this->p->N;
         metrics[5] = accuracy_no_null/(this->p->N-this->p->N_null);
     }
-    printf("writing predictions\n");
+//    printf("writing predictions\n");
+    
     if(this->p->predictions>0) { // close predictions file if it was opened
         ofstream fout(filename,ios::out);
         char str[1024];
@@ -1126,6 +1142,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
             fprintf(stderr,"Can't write output model file %s\n",filename);
             exit(1);
         }
+        
         for(NDAT t=0; t<this->p->N; t++) {
             for(m=0; m<nO; m++) {
                 d = (NDAT)m*this->p->N + t;
