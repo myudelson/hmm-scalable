@@ -825,7 +825,6 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
     NUMBER ll = 0.0, ll_no_null = 0.0, rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
     NUMBER p;
 //    FILE *fid = NULL; // file for storing prediction should that be necessary
-//    bool output_this; // flag for turning on/off the writing out
 //    if(this->p->predictions>0) {
 //        fid = fopen(filename,"w");
 //        if(fid == NULL)
@@ -886,19 +885,11 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
     
 //    for(t=0; t<this->p->N; t++) {
     for(t=starts[trd]; t<starts[trd+1]; t++) {
-        
-        
-        
-        
-//        output_this = true;
-        
-        // peek into the data, not for predict, for update only
+        // we are setting it to the actual prediction (could be unknown), but
+        // we might end up not using it later
 		o = dat_obs[t];//[t];
         
-        
-//        if( o>-1 ) // if we only output predictions for unlabelled, it's labelled - turn off
-//            output_this = false;
-		g = dat_group[t];//[
+		g = dat_group[t];//
         dt->g = g;
         
         isTarget = this->p->metrics_target_obs == o;
@@ -950,7 +941,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
             accuracy += isTarget == (this->null_skill_obs_prob>=0.5);
             ll += - (  isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1 - this->null_skill_obs_prob)  );
 
-            if(this->p->predictions>0 /*&& output_this*/) // write predictions file if it was opened
+            if(this->p->predictions>0) // write predictions file if it was opened
                 for(m=0; m<nO; m++) {
                     d = (NDAT)m*this->p->N + t; // save all obs 1 first, then obs 2, then on.
                     dat_predict[d] = this->null_obs_ratio[m];
@@ -980,17 +971,19 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
         producePCorrect(group_skill_map, local_pred, ar, n, dt); //UNBOOST
 //      producePCorrectBoost(&gsm, local_pred, ar, n, dt); //BOOST
         projectsimplex(local_pred, nO); // addition to make sure there's not side effects
-        
-        // guess the obsevaion using Pi and B
-        NUMBER max_local_pred=0;
-        NPAR ix_local_pred=0;
-        for(m=0; m<nO; m++) {
-            if( local_pred[m]>max_local_pred ) {
-                max_local_pred = local_pred[m];
-                ix_local_pred = m;
+
+        // if necessary guess the obsevaion using Pi and B
+        if(this->p->update_known=='g') {
+            NUMBER max_local_pred=0;
+            NPAR ix_local_pred=0;
+            for(m=0; m<nO; m++) {
+                if( local_pred[m]>max_local_pred ) {
+                    max_local_pred = local_pred[m];
+                    ix_local_pred = m;
+                }
             }
+            o = ix_local_pred;
         }
-        o = ix_local_pred;
         
 
 //        NUMBER sum=0;
@@ -1019,7 +1012,8 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
             
 //            if(o<0) o=O; // guess unknown
             
-            if(o>-1) { // known observations //
+            // known observation (both if 'reveal' or 'guess'), or uknown and 'guess' anyway
+            if(o>-1 || this->p->update_unknown=='g') {
                 // update p(L)
                 pLe_denom = 0.0;
                 // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
@@ -1037,7 +1031,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
                     for(i=0; i<nS; i++)
                         group_skill_map[g][k][j] += pLe[i] * getA(dt,i,j);//A[i][j]; //UNBOOST
 //                        pLbit[j] += pLe[i] * getA(dt,i,j);//A[i][j]; //BOOST
-            } else { // unknown observation
+            } else { // unknown observation and 'transition' (not 'guess')
                 // 2. L = (pL'*A)';
                 for(i=0; i<nS; i++)
                     pLe[i] = group_skill_map[g][k][i]; // copy first; //UNBOOST
@@ -1060,7 +1054,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 //            }
         }
         // write prediction out (after update)  
-        if(this->p->predictions>0/* && output_this*/) { // write predictions file if it was opened
+        if(this->p->predictions>0) { // write predictions file if it was opened
             for(m=0; m<nO; m++) {
                 d = (NDAT)m*this->p->N + t; // save all obs 1 first, then obs 2, then on.
                 dat_predict[d] = local_pred[m];//this->null_obs_ratio[m];

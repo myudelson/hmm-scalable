@@ -67,8 +67,8 @@ using namespace std;
 
 
 typedef signed char NPAR; // number of observations or states, now 128 max, KEEP THIS SIGNED, we need -1 code for NULL
-typedef signed int NCAT;  // number of categories, groups or skills, now 32K max; LEAVE THIS UNSIGNED, we need -1 code for NULL
-typedef signed int NDAT;  // number of data rows, now 4 bill max
+typedef signed int NCAT;  // number of categories, groups or skills, now 2bil max; LEAVE THIS UNSIGNED, we need -1 code for NULL
+typedef signed int NDAT;  // number of data rows, now 2 bill max
 typedef double NUMBER;    // numeric float format
 const NUMBER pi = 3.141592653589793;
 
@@ -173,6 +173,8 @@ struct param {
 	int metrics;   // compute AIC, BIC, RMSE of training
 	int metrics_target_obs;   // target observation for RMSE of training
     int predictions; // report predictions on training data
+    char update_known; // controls how update of the probabilities of the states is done when the observations are known
+    char update_unknown; // controls how update of the probabilities of the states is done when the observations are not known
     int binaryinput; // input file is in binary format
     char initfile[1024]; // flag if we are using a model file as input
 	NPAR cv_folds; // cross-validation folds

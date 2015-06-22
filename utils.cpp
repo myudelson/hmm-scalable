@@ -648,6 +648,8 @@ void set_param_defaults(struct param *param) {
     param->metrics               = 0;
     param->metrics_target_obs    = 0;
     param->predictions           = 0;
+    param->update_known          = 'r';
+    param->update_unknown        = 't';
     param->binaryinput           = 0;
 	param->Cw                     = Calloc(NUMBER, (size_t)1);
     param->Cw[0]                  = 0;

@@ -433,6 +433,21 @@ void exit_with_help() {
            "     c.-v. predicting state 1.\n"
            "-p : report model predictions on the train set 0-no (default), 1-yes; 2-yes,\n"
            "     plus output state probability; works with -v and -m parameters.\n"
+           "-U : controls how update to the probability distribution of the states is\n"
+           "     updated. Takes the following format '-U r|g[,t|g]', where first\n"
+           "     character controls how prediction treats known observations, second -- how\n"
+           "     prediction treats unknown observations, and third -- whether to output\n"
+           "     probabilities of priors. Dealing with known observations 'r' - reveal\n"
+           "     actual observations for the update of state probability distribution (makes\n"
+           "     sense for modeling how an actual system would work), 'g' - 'guessing' the\n"
+           "     observation based on the predicted outcomes (arg max) -- more appropriate\n"
+           "     when comparing models (so that no information about observation is never\n"
+           "     revealed). Dealing with unknown observations (marked as '.' -- dot): 't' --\n"
+           "     use transition matrix only, 'g' -- 'guess' the observation.\n"
+           "     Default (if ommitted) is '-U r,t'.\n"
+           "     For examle, '-U g,g would require 'guessing' of what the observation was\n"
+           "     using model parameters and the running value of the probabilities of state\n"
+           "     distributions.\n"
            "-d : delimiter for multiple skills per observation; 0-single skill per\n"
            "     observation (default), otherwise -- delimiter character, e.g. '-d ~'.\n"
            "-b : treat input file as binary input file (specifications TBA).\n"
@@ -617,11 +632,22 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                 
 				break;
             case  'p':
-				param.predictions = atoi(argv[i]);
-				if(param.predictions<0 || param.predictions>2) {
-					fprintf(stderr,"a flag of whether to report predictions for training data (-p) should be 0, 1 or 2\n");
-					exit_with_help();
-				}
+                param.predictions = atoi(argv[i]);
+                if(param.predictions<0 || param.predictions>2) {
+                    fprintf(stderr,"a flag of whether to report predictions for training data (-p) should be 0, 1 or 2\n");
+                    exit_with_help();
+                }
+                break;
+            case  'U':
+                param.update_known = *strtok(argv[i],",\t\n\r");
+                ch = strtok(NULL, ",\t\n\r");
+                param.update_unknown = ch[0];
+                
+                if( (param.update_known!='r' && param.update_known!='g') ||
+                   (param.update_unknown!='t' && param.update_unknown!='g') ) {
+                    fprintf(stderr,"specification of how probabilities of states should be updated (-U) is incorrect, it sould be r|g[,t|g] \n");
+                    exit_with_help();
+                }
                 break;
             case  'd':
 				param.multiskill = argv[i][0]; // just grab first character (later, maybe several)

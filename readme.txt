@@ -136,7 +136,7 @@ options:
 -s : structure.solver[.solver setting], structures: 1-by skill, 2-by user;
      solvers: 1-Baum-Welch, 2-Gradient Descent, 3-Conjugate Gradient Descent;
      Conjugate Gradient Descent has 3 settings: 1-Polak-Ribiere,
-     2-Fletcher–Reeves, 3-Hestenes-Stiefel.
+     2-Fletcher–Reeves, 3-Hestenes-Stiefel, and 4-Dai-Yuan.
      For example '-s 1.3.1' would be by skill structure (classical) with
      Conjugate Gradient Descent and Hestenes-Stiefel formula, '-s 2.1' would be
      by student structure fit using Baum-Welch method.
@@ -177,6 +177,21 @@ options:
      '-v 5,n,2,folds.txt,i', folds are actually read [i]n from the file.
 -p : report model predictions on the train set 0-no (default), 1-yes; 2-yes,
      plus output state probability; works with -v and -m parameters.
+-U : controls how update to the probability distribution of the states is
+     updated. Takes the following format '-U r|g[,t|g]', where first
+     character controls how prediction treats known observations, second -- how
+     prediction treats unknown observations, and third -- whether to output
+     probabilities of priors. Dealing with known observations 'r' - reveal
+     actual observations for the update of state probability distribution (makes
+     sense for modeling how an actual system would work), 'g' - 'guessing' the
+     observation based on the predicted outcomes (arg max) -- more appropriate
+     when comparing models (so that no information about observation is never
+     revealed). Dealing with unknown observations (marked as '.' -- dot): 't' --
+     use transition matrix only, 'g' -- 'guess' the observation.
+     Default (if ommitted) is '-U r,t'.
+     For examle, '-U g,g would require 'guessing' of what the observation was
+     using model parameters and the running value of the probabilities of state
+     distributions.
 -d : delimiter for multiple skills per observation; single skill per observation
      (default), otherwise -- delimiter character, e.g. '-d ~'.
 -b : treat input file as binary input file created from text file by
@@ -208,6 +223,21 @@ options:
      inputconvert utility.
 -p : report model predictions on the train set 0-no (default), 1-yes; 2-yes,
      plus output state probability; works with -v and -m parameters.
+-U : controls how update to the probability distribution of the states is
+     updated. Takes the following format '-U r|g[,t|g]', where first
+     character controls how prediction treats known observations, second -- how
+     prediction treats unknown observations, and third -- whether to output
+     probabilities of priors. Dealing with known observations 'r' - reveal
+     actual observations for the update of state probability distribution (makes
+     sense for modeling how an actual system would work), 'g' - 'guessing' the
+     observation based on the predicted outcomes (arg max) -- more appropriate
+     when comparing models (so that no information about observation is never
+     revealed). Dealing with unknown observations (marked as '.' -- dot): 't' --
+     use transition matrix only, 'g' -- 'guess' the observation.
+     Default (if ommitted) is '-U r,t'.
+     For examle, '-U g,g would require 'guessing' of what the observation was
+     using model parameters and the running value of the probabilities of state
+     distributions.
 
 = Examples =
 

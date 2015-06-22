@@ -878,6 +878,8 @@ void HMMProblemSlicedA::predict(NUMBER* metrics, const char *filename, NPAR* dat
     
 	for(t=0; t<this->p->N; t++) {
         output_this = true;
+        // we are setting it to the actual prediction (could be unknown), but
+        // we might end up not using it later
 		o = dat_obs[t];//[t];
         if( o>-1 ) // if we only output predictions for unlabelled, it's labelled - turn off
             output_this = false;
@@ -931,12 +933,29 @@ void HMMProblemSlicedA::predict(NUMBER* metrics, const char *filename, NPAR* dat
         // produce prediction and copy to result
         producePCorrectZ(group_skill_map, local_pred, ar, n, dt,this->p->dat_slice[t]); //UNBOOST
 //      producePCorrectBoost(&gsm, local_pred, ar, n, dt, t); //BOOST
+        projectsimplex(local_pred, nO); // addition to make sure there's not side effects
+
+        // if necessary guess the obsevaion using Pi and B
+        if(this->p->update_known=='g') {
+            NUMBER max_local_pred=0;
+            NPAR ix_local_pred=0;
+            for(m=0; m<nO; m++) {
+                if( local_pred[m]>max_local_pred ) {
+                    max_local_pred = local_pred[m];
+                    ix_local_pred = m;
+                }
+            }
+            o = ix_local_pred;
+        }
+        
+        
         // update pL
         for(int l=0; l<n; l++) {
             k = ar[l];
             dt->k = k;
 //          NUMBER* pLbit = gsm(g,k); //BOOST
-            if(o>-1) { // known observations
+            // known observation (both if 'reveal' or 'guess'), or uknown and 'guess' anyway
+            if(o>-1 || this->p->update_unknown=='g') {
                 // update p(L)
                 pLe_denom = 0.0;
                 // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
@@ -955,7 +974,7 @@ void HMMProblemSlicedA::predict(NUMBER* metrics, const char *filename, NPAR* dat
                         for(i=0; i<nS; i++)
                             group_skill_map[g][k][j] += pLe[i] * getAz(dt,this->p->dat_slice[t],i,j);//A[i][j]; //UNBOOST
 //                          pLbit[j] += pLe[i] * getAz(dt,this->p->dat_slice[t],i,j);//A[i][j]; //BOOST
-            } else { // unknown observation
+            } else { // unknown observation and 'transition' (not 'guess')
                 // 2. L = (pL'*A)';
                 for(i=0; i<nS; i++)
                     pLe[i] = group_skill_map[g][k][i]; // copy first; //UNBOOST
