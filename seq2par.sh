@@ -1,12 +1,15 @@
 #!/bin/bash
 
 # PAR to SEQ
+# convert sequential (SEQ) code to parallel (PAR)
 
 # find . -name '*.cpp' -type f -print | xargs grep -e '^\(.*\)//PAR$' | wc -l
 
-# //PAR comment, //SEQ uncomment
-find . -name '*.cpp' -type f -print | xargs perl -i -p -e  's/^(.*)\/\/SEQ$/\/\/\1\/\/SEQ/g'
-find . -name '*.cpp' -type f -print | xargs perl -i -p -e  's/^\/\/(.*)\/\/PAR$/\1\/\/PAR/g'
 
-find . -name '*.h' -type f -print | xargs perl -i -p -e  's/^(.*)\/\/SEQ$/\/\/\1\/\/SEQ/g'
-find . -name '*.h' -type f -print | xargs perl -i -p -e  's/^\/\/(.*)\/\/PAR$/\1\/\/PAR/g'
+# implementation
+find . -name '*.cpp' -type f -print | xargs perl -i -p -e  's/^(\s*)[^\/\/](.*)\/\/SEQ$/\/\/\1\2\/\/SEQ/g'
+find . -name '*.cpp' -type f -print | xargs perl -i -p -e  's/^(\s*)\/\/(.*)\/\/PAR$/\1\2\/\/PAR/g'
+
+# headers
+find . -name '*.h' -type f -print | xargs perl -i -p -e  's/^(\s*)[^\/\/](.*)\/\/SEQ$/\/\/\1\2\/\/SEQ/g'
+find . -name '*.h' -type f -print | xargs perl -i -p -e  's/^(\s*)\/\/(.*)\/\/PAR$/\1\2\/\/PAR/g'

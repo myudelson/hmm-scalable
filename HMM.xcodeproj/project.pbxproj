@@ -54,6 +54,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		711CD38A1B3879E800F10BD3 /* par2seq.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = par2seq.sh; sourceTree = "<group>"; };
+		711CD38B1B3879E800F10BD3 /* seq2par.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = seq2par.sh; sourceTree = "<group>"; };
 		713EF9FE1AC58AA2000301B4 /* HMMProblemSlicedA.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HMMProblemSlicedA.cpp; sourceTree = "<group>"; };
 		713EF9FF1AC58AA2000301B4 /* HMMProblemSlicedA.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMMProblemSlicedA.h; sourceTree = "<group>"; };
 		713EFA011AC5C6FE000301B4 /* FitBitSlicedA.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FitBitSlicedA.h; sourceTree = "<group>"; };
@@ -130,6 +132,8 @@
 				71602EF817BBA3270001BF2B /* readme.txt */,
 				EB02599C162C61B600442454 /* makefile */,
 				EB9D16B3162C60A7006E5A98 /* todo.txt */,
+				711CD38A1B3879E800F10BD3 /* par2seq.sh */,
+				711CD38B1B3879E800F10BD3 /* seq2par.sh */,
 				08FB7795FE84155DC02AAC07 /* Source */,
 				C6A0FF2B0290797F04C91782 /* Documentation */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
