@@ -1,6 +1,6 @@
 /*
  
- Copyright (c) 2012-2014, Michael (Mikhail) Yudelson
+ Copyright (c) 2012-2015, Michael (Mikhail) Yudelson
  All rights reserved.
  
  Redistribution and use in source and binary forms, with or without
