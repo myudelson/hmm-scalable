@@ -71,6 +71,9 @@
 		71BD6F8F19F4660800978D44 /* HMMProblemSlicedAB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HMMProblemSlicedAB.cpp; sourceTree = "<group>"; };
 		71BD6F9119F468EF00978D44 /* FitBitSlicedAB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FitBitSlicedAB.h; sourceTree = "<group>"; };
 		71BD6F9219F468F800978D44 /* FitBitSlicedAB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FitBitSlicedAB.cpp; sourceTree = "<group>"; };
+		71C72EDB1B3C8695004124A8 /* numeric-1.2.6.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "numeric-1.2.6.js"; sourceTree = "<group>"; };
+		71C72EDC1B3C8695004124A8 /* prototype.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = prototype.js; sourceTree = "<group>"; };
+		71C72EDD1B3C8695004124A8 /* web_ui.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = web_ui.html; sourceTree = "<group>"; };
 		71D234A417540A7C006985EB /* HMMProblem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = HMMProblem.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		71D234A617540A80006985EB /* HMMProblem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMMProblem.h; sourceTree = "<group>"; };
 		71D234A717540AB6006985EB /* trainhmm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = trainhmm.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
@@ -137,6 +140,7 @@
 				08FB7795FE84155DC02AAC07 /* Source */,
 				C6A0FF2B0290797F04C91782 /* Documentation */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
+				71C72ED91B3C8695004124A8 /* web_ui */,
 			);
 			name = HMM;
 			sourceTree = "<group>";
@@ -193,6 +197,24 @@
 				71A39CA9179DB04F000F9610 /* inputconvert */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		71C72ED91B3C8695004124A8 /* web_ui */ = {
+			isa = PBXGroup;
+			children = (
+				71C72EDA1B3C8695004124A8 /* assets */,
+				71C72EDD1B3C8695004124A8 /* web_ui.html */,
+			);
+			path = web_ui;
+			sourceTree = "<group>";
+		};
+		71C72EDA1B3C8695004124A8 /* assets */ = {
+			isa = PBXGroup;
+			children = (
+				71C72EDB1B3C8695004124A8 /* numeric-1.2.6.js */,
+				71C72EDC1B3C8695004124A8 /* prototype.js */,
+			);
+			path = assets;
 			sourceTree = "<group>";
 		};
 		C6A0FF2B0290797F04C91782 /* Documentation */ = {

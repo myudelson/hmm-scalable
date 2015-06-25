@@ -24,8 +24,8 @@ function compute() {
 		if( $(tblResults).rows[i].id == "result")
 			$(tblResults).deleteRow(i);
 	// answers
-	var ans = $(observations).value.split(" ");
-	var obs = $(observations).value.split(" ");
+	var ans = $(observations).value.trim().split(" ");
+	var obs = $(observations).value.trim().split(" ");
 	for(var i=0; i<ans.length; i++) { ans[i] = ans[i]|0; obs[i] = 1 - ans[i]; } 
 	// compute
 	var pL_arr = [], pC_arr = [], alpha_arr = [];
@@ -45,21 +45,21 @@ function compute() {
 		alpha_arr.push(alpha);
 
 		// propagation
+		pC =  numeric.dot(pL, B);
+		pC_arr.push(pC);
+
 		pLE = numeric.div(   numeric.mul( pL, col(B,o) ),  numeric.dot( pL, col(B,o) )   );
 		pL = numeric.dot(pLE, A);
-		pC =  numeric.dot(pL, B);
 		pL_arr.push(pL);
-		pC_arr.push(pC);
 	}
 	
 	// add rows
 	for(var i=0; i<obs.length; i++) {
 		$$('#tblResults tr').last().insert({after:
 			'<tr id="result"><td>'+(i+1)+'</td><td>'+ans[i]+'</td><td>'+pL_arr[i][0].toFixed(3)+'</td><td>'+pC_arr[i][0].toFixed(3)+'</td>'+
-			'<td>'+alpha_arr[i][0].toFixed(6)+'</td><td>'+alpha_arr[i][1].toFixed(6)+'</td></tr>'
+			'<td>'+alpha_arr[i][0].toFixed(12)+'</td><td>'+alpha_arr[i][1].toFixed(12)+'</td></tr>'
 			});
 	}
-	var a = 0;
 }
 </script>
 <body onLoad="compute()">
