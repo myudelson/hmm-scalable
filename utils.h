@@ -40,6 +40,7 @@
 #include <memory.h>
 #include "StripedArray.h"
 #include <time.h>
+#include <limits>
 
 //#include <omp.h> //PAR
 
