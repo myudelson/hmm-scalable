@@ -902,7 +902,7 @@ void HMMProblemSlicedAB::predict(NUMBER* metrics, const char *filename, NPAR* da
         if(ar[0]<0) { // if no skill label
             isTarget = this->null_skill_obs==o;
             rmse += pow(isTarget - this->null_skill_obs_prob,2);
-            accuracy += isTarget == (this->null_skill_obs_prob>=0.5);
+            accuracy += isTarget == (this->null_obs_ratio[this->p->metrics_target_obs]==maxn(this->null_obs_ratio,nO) && this->null_obs_ratio[this->p->metrics_target_obs]>(1/nO));
             ll -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1 - this->null_skill_obs_prob);
 
             if(this->p->predictions>0 && output_this) // write predictions file if it was opened
@@ -999,8 +999,8 @@ void HMMProblemSlicedAB::predict(NUMBER* metrics, const char *filename, NPAR* da
         }
         rmse += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
         rmse_no_null += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
-        accuracy += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
-        accuracy_no_null += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
+        accuracy += isTarget == (local_pred[this->p->metrics_target_obs]==maxn(local_pred,nO) && local_pred[this->p->metrics_target_obs]>(1/nO));
+        accuracy_no_null += isTarget == (local_pred[this->p->metrics_target_obs]==maxn(local_pred,nO) && local_pred[this->p->metrics_target_obs]>(1/nO));
         p = safe01num(local_pred[this->p->metrics_target_obs]);
         ll -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
         ll_no_null -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
@@ -1011,7 +1011,7 @@ void HMMProblemSlicedAB::predict(NUMBER* metrics, const char *filename, NPAR* da
 //            k = ar[l];
 //            this->p->kc_counts[k]++;
 //            this->p->kc_rmse[k] += pow(isTarget-local_pred[this->p->metrics_target_obs],2);
-//            this->p->kc_acc[k]  += isTarget == (local_pred[this->p->metrics_target_obs]>=0.5);
+//            this->p->kc_acc[k]  += isTarget == (local_pred[this->p->metrics_target_obs]>=(1/nO));
 //        }
 	} // for all data
     

@@ -172,7 +172,7 @@ struct param {
     NUMBER* Cw;// weight of the L2 norm penalty, for skill or group parameters (or however many there might be)
     NUMBER* Ccenters;// center values for L2 penalties
 	int metrics;   // compute AIC, BIC, RMSE of training
-	int metrics_target_obs;   // target observation for RMSE of training
+	char metrics_target_obs;   // target observation for RMSE of training
     int predictions; // report predictions on training data
     char update_known; // controls how update of the probabilities of the states is done when the observations are known
     char update_unknown; // controls how update of the probabilities of the states is done when the observations are not known
@@ -412,6 +412,7 @@ template<typename T> void swap4D(T**** source, T**** target, NDAT size1, NDAT si
     free4D<T>(buffer, size1, size2, size3);
 }
 
+// helper functions for real numbers
 NUMBER safe01num(NUMBER val); // convert number to a safe [0, 1] range
 NUMBER safe0num(NUMBER val); // convert number to a safe (0, inf) or (-inf, 0) range
 NUMBER itself(NUMBER val);
@@ -421,6 +422,8 @@ NUMBER deprecated_fsafelog(NUMBER val); // fast and safe log for params
 NUMBER safelog(NUMBER val); // safe log for prediction
 NUMBER sgn(NUMBER val);
 NUMBER pairing(NUMBER p, NUMBER q); // computes sigmoid( logit(p) + logit(q) )
+
+NUMBER maxn(NUMBER *ar, NDAT n); // max value of n
 
 void add1DNumbersWeighted(NUMBER* sourse, NUMBER* target, NPAR size, NUMBER weight);
 void add2DNumbersWeighted(NUMBER** sourse, NUMBER** target, NPAR size1, NPAR size2, NUMBER weight);

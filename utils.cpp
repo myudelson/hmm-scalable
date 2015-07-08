@@ -426,6 +426,14 @@ NUMBER  pairing(NUMBER p, NUMBER q) {
     return 1/( 1 + (1-P)*(1-Q)/(P*Q) );
 }
 
+// max value of n
+NUMBER maxn(NUMBER *ar, NDAT n) {
+	NUMBER mx = ar[0];
+	for(NDAT i=1; i<n; i++)
+		if(ar[i]>mx) mx = ar[i];
+	return mx;
+}
+
 //#define logit(y)
 //#define logit(y)
 //NUMBER logit(NUMBER val) {
@@ -767,7 +775,8 @@ void destroy_input_data(struct param *param) {
     
     // not null skills
     for(NDAT kg=0;kg<param->nSeq; kg++) {
-        free(param->all_data[kg].ix); // was obs;
+		free(param->all_data[kg].ix); // was obs;
+		if( param->all_data[kg].ix_stacked != NULL ) free(param->all_data[kg].ix_stacked); // was obs;
 //        if(param->sliced) // handled via one global array and ix indexing
 //            free(param->all_data[kg].time);
     }
