@@ -1395,7 +1395,7 @@ NUMBER cross_validate(NUMBER* metrics, const char *filename, const char *model_f
 }
 
 NUMBER cross_validate_item(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
-//void cross_validate_item(NUMBER* metrics, const char *filename, const char *model_file_name, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
+//NUMBER cross_validate_item(NUMBER* metrics, const char *filename, const char *model_file_name, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
     NPAR f;
     NCAT I; // item
     NDAT t;
@@ -1563,7 +1563,7 @@ NUMBER cross_validate_item(NUMBER* metrics, const char *filename, const char *mo
 }
 
 NUMBER cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *model_file_name, clock_t *tm_fit, clock_t *tm_predict, FILE *fid_console) {//SEQ
-//void cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *model_file_name, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
+//NUMBER cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *model_file_name, double *tm_fit, double *tm_predict, FILE *fid_console) {//PAR
     NPAR f;
     NCAT U; // unstratified
     NDAT t;
