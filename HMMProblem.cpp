@@ -867,23 +867,23 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 	NUMBER ll = 0.0, ll_no_null = 0.0, rmse = 0.0, rmse_no_null = 0.0, accuracy = 0.0, accuracy_no_null = 0.0;
 	NUMBER p;
 	
-	NUMBER *dat_predict = Calloc(NUMBER, N * nO);
+//	NUMBER *dat_predict = Calloc(NUMBER, N * nO);
 	
 	
-//	FILE *fid = NULL; // file for storing prediction should that be necessary
-//	if(this->p->predictions>0) {
-//		fid = fopen(filename,"w");
-//		if(fid == NULL)
-//		{
-//			fprintf(stderr,"Can't write output model file %s\n",filename);
-//			exit(1);
-//		}
-//	}
+	FILE *fid = NULL; // file for storing prediction should that be necessary
+	if(f_predictions>0) {
+		fid = fopen(filename,"w");
+		if(fid == NULL)
+		{
+			fprintf(stderr,"Can't write output model file %s\n",filename);
+			exit(1);
+		}
+	}
 	
 	// initialize
 	struct data* dt = new data;
 	NDAT count = 0;
-	NDAT d = 0;
+//	NDAT d = 0;
 	HMMProblem *hmm;
 	
 	for(t=0; t<N; t++) {
@@ -937,9 +937,9 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 			ll -= isTarget*safelog(hmm->null_skill_obs_prob) + (1-isTarget)*safelog(1 - hmm->null_skill_obs_prob);
 //			if(this->p->predictions>0 && output_this) // write predictions file if it was opened
 			for(m=0; m<nO; m++) {
-//				fprintf(fid,"%12.10f%s",this->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
-				d = (NDAT)m*N + t;
-				dat_predict[ d ] = hmm->null_obs_ratio[m];
+				fprintf(fid,"%12.10f%s",hmm->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
+//				d = (NDAT)m*N + t;
+//				dat_predict[ d ] = hmm->null_obs_ratio[m];
 			}
 			
 			continue;
@@ -1026,9 +1026,9 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 		// write prediction out (after update)
 		if(f_predictions>0 /*&& output_this*/) { // write predictions file if it was opened
 			for(m=0; m<nO; m++) {
-//				fprintf(fid,"%12.10f%s",local_pred[m],(m<(nO-1))?"\t": ((this->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
-				d = (NDAT)m*N + t;
-				dat_predict[ d ] = local_pred[m];
+				fprintf(fid,"%12.10f%s",local_pred[m],(m<(nO-1))?"\t": ((hmm->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+//				d = (NDAT)m*N + t;
+//				dat_predict[ d ] = local_pred[m];
 			}
 //			if(f_predictions==2) { // if we print out states of KC's as welll
 //				for(int l=0; l<n; l++) { // all KC here
@@ -1084,48 +1084,48 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 	}
 	
 	
-	if(f_predictions>0) { // close predictions file if it was opened
-		ofstream fout(filename,ios::out);
-		char str[1024];
-		if(!fout)
-		{
-			fprintf(stderr,"WARNINT! Failed to open output prediction file %s for writing\n",filename);
-			//exit(1); // do not exit with error
-		}
-		
-		for(NDAT t=0; t<N; t++) {
-			for(m=0; m<nO; m++) {
-				d = (NDAT)m*N + t;
-				sprintf(str,"%12.10f%s",dat_predict[d],(m<(nO-1))?"\t": ((f_predictions==1)?"\n":"\t") );
-				fout << str;
-			}
-//			if(f_predictions==2) { // if we print out states of KC's as welll
-//				if(f_multiskill==0) {
-//					k = dat_skill[t];
-//					ar = &k;
-//					v = dat_known[t];
-//					var = &v;
-//					n = 1;
-//				} else {
-//					k = dat_skill_stacked[ dat_skill_rix[t] ];
-//					ar = &dat_skill_stacked[ dat_skill_rix[t] ];
-//					v = dat_known_stacked[ dat_skill_rix[t] ];
-//					var = &dat_known_stacked[ dat_skill_rix[t] ];
-//					n = dat_skill_rcount[t];
-//				}
-//				for(int l=0; l<n && ar[0]>-1; l++) { // all KC here
-//					sprintf(str,"%12.10f%s",var[l], (l==(n-1) && l==(n-1))?"\n":"\t");
-//					fout << str;
-//				}
+//	if(f_predictions>0) { // close predictions file if it was opened
+//		ofstream fout(filename,ios::out);
+//		char str[1024];
+//		if(!fout)
+//		{
+//			fprintf(stderr,"WARNINT! Failed to open output prediction file %s for writing\n",filename);
+//			//exit(1); // do not exit with error
+//		}
+//		
+//		for(NDAT t=0; t<N; t++) {
+//			for(m=0; m<nO; m++) {
+//				d = (NDAT)m*N + t;
+//				sprintf(str,"%12.10f%s",dat_predict[d],(m<(nO-1))?"\t": ((f_predictions==1)?"\n":"\t") );
+//				fout << str;
 //			}
-		}
-		fout.close();
-	}
-	free(dat_predict);
+////			if(f_predictions==2) { // if we print out states of KC's as welll
+////				if(f_multiskill==0) {
+////					k = dat_skill[t];
+////					ar = &k;
+////					v = dat_known[t];
+////					var = &v;
+////					n = 1;
+////				} else {
+////					k = dat_skill_stacked[ dat_skill_rix[t] ];
+////					ar = &dat_skill_stacked[ dat_skill_rix[t] ];
+////					v = dat_known_stacked[ dat_skill_rix[t] ];
+////					var = &dat_known_stacked[ dat_skill_rix[t] ];
+////					n = dat_skill_rcount[t];
+////				}
+////				for(int l=0; l<n && ar[0]>-1; l++) { // all KC here
+////					sprintf(str,"%12.10f%s",var[l], (l==(n-1) && l==(n-1))?"\n":"\t");
+////					fout << str;
+////				}
+////			}
+//		}
+//		fout.close();
+//	}
+//	free(dat_predict);
+//	
 	
-	
-//	if(this->p->predictions>0) // close predictions file if it was opened
-//		fclose(fid);
+	if(f_predictions>0) // close predictions file if it was opened
+		fclose(fid);
 }
 
 /*
