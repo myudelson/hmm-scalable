@@ -20,16 +20,14 @@ For each skill BKT has four parameters.
 1) pInit or pLo - is a probability the skill was known a priori,
 2) pLearn or pT - is a probability the skill will transition into "mastered"
     state upon practice attempt,
-3) pSlip or pS - is a probability that a known skill is applied incorrectly, and
-4) pGuess or pG - is a probability that unknown skill will be applied correctly.
-
-There is no forgetting in BKT and it's pForget or pF is set to zero. In
-addition, there is a pKnown or pL parameter, which is a running estimate of the
-skill mastery.
+3) pForget or pF - is a probability that the skill will transition into "not
+mastered state" upon practice attempt. Traditionally, pForget is set to zero.
+4) pSlip or pS - is a probability that a known skill is applied incorrectly, and
+5) pGuess or pG - is a probability that unknown skill will be applied correctly.
 
 Parameters of the BKT can be represented in the matrix form. Priors -- \pi --
-are a vector 1*N, where N is the number of states. Traditionally, for a 2-state
-BKT, we assume that the first element of the \pi vector is the a priory
+are a vector 1*N, where N is the number of states. Throughout this discussion,
+we will we assume that the first element of the \pi vector is the a priory
 probability of knowing the skill. pLearn is part of the transitions matrix A
 that captures probabilities of state changes from row to column and is N*N. No
 forgetting is captured by setting A[1,2] = 0 (from mastered to unmastered).
@@ -59,11 +57,21 @@ For more details on BKT refer to [1]. [2], among other things, discusses how
 a gradient-based fitting of HMM can be implemented. [3, 4] cover additional
 topics relevant for the implementation.
 
-= Compilation =
+= Getting and Compiling the Code =
 
-If you are on a Linux or Mac OS X system, simply use 'make all' command. If you
-are on Windows, you might need to install cygwin and have g++/gcc compiler
-available and be sure to install 'make' command with cygwin.
+Open version of of the code is available via International Educational Data
+Mining Society GitHub repository [http://goo.gl/5DqpkW]. If you have git tool
+installed, use the following command to get the source code.
+
+git clone https://github.com/IEDMS/standard-bkt
+
+To compile issue 'make all' command. If you are on Linux, the g++/gcc compiler
+and Open MP library should already be installed. In Mac OX, you would need
+command line tools of Xcode to be installed. g++/gcc compiler with Open MP (no
+longer bundled with Mac OS X by default) could be downloaded from
+hpc.sourceforge.net. If you are on Windows, you might need to install cygwin and
+have g++/gcc compiler available and be sure to install 'make' command with
+cygwin.
 
 = Data =
 
@@ -273,8 +281,7 @@ Algebra I set that has about 9 million transactions of over 3300 students. The
 training file should be trimmed to the tool's format. See shell commands below
 that do that.
 
-sh> gawk '-F\t' 'BEGIN{OFS=""} {skill=tolower($20); gsub(/~~/, "~", skill); skill=(skill=="")?".":skill; print 2-$14,"\t",$2,"\t",$3,"__",$4,"\t",skill}' algebra_2008_2009_train.txt > a89_kts_train.txt
-sh> sed -i '' 1d a89_kts_train.txt
+sh> gawk -F"\t" 'BEGIN{OFS=""} {if(NR==1)next; skill=$20; gsub("~~", "~", skill); skill=(skill=="")?".":($3"__"skill); print 2-$14,$2,$3"__"$4,skill;}' algebra_2008_2009_train.txt > a89_kts_train.txt
 
 To fit a BKT model of this dataset using gradient descent method as well as to 
 compute fit metrics and the prediction run the following command:
