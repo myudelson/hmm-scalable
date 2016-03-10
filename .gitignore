@@ -5,3 +5,4 @@ predicthmm
 boost/**/*
 papers/*
 *.o
+d/**/*
