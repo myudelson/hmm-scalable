@@ -4,3 +4,4 @@ trainhmm
 predicthmm
 boost/**/*
 papers/*
+*.o
