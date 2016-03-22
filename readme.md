@@ -63,7 +63,9 @@ Open version of of the code is available via International Educational Data
 Mining Society GitHub repository [http://goo.gl/5DqpkW]. If you have git tool
 installed, use the following command to get the source code.
 
+```sh
 git clone https://github.com/IEDMS/standard-bkt
+```
 
 To compile issue 'make all' command. If you are on Linux, the g++/gcc compiler
 and Open MP library should already be installed. In Mac OX, you would need
@@ -106,6 +108,7 @@ print out probability distributions over the values of the hidden state for all
 skills specified for the data point. The probability values are tab separated.
 See examples of a outputs file below.
 
+```
 -- model file --
 SolverId	1.1
 nK	1
@@ -118,6 +121,7 @@ PI	0.45000000	0.55000000
 A	1.00000000  0.00000000	0.40000000	0.60000000
 B	0.79000000	0.21000000	0.22000000	0.78000000
 -- model file --
+```
 
 In the model file example above, we see a specification of the solver algorithm
 (to be discussed below), one skill (nK=1), one student in the data (nG=1), two
@@ -127,13 +131,14 @@ and B correspond to priors, transition, and observation matrices written row by
 row. Thus, first element of PI is pLo=0.55, 3rd element of A is pT=0.4, 2nd and
 3rd elements of B are pS=0.12 and pG=0.22 respectively.
 
+```
 -- prediction file --
 0.73    0.27
 0.88    0.12
 0.94    0.06
 0.99    0.01
 -- prediction file --
-
+```
 
 # Training BKT models 
 
@@ -254,7 +259,9 @@ parameters: pLo=0.4, pT=0.35, pS=0.25, pG=0.12 .
 
 To fit a BKT model of this data using an EM algorithm run the following command:
 
+```sh
 sh> ./trainhmm -s 1.1 -m 1 -p 1 toy_data.txt model.txt predict.txt
+```
 
 The model will have 90% accuracy and root mean squared error (RMSE) = 0.302691
 and the recovered BKT parameters would be: pLo=0.00000000, pT=0.16676161,
@@ -270,7 +277,7 @@ To generate predictions using a previously fit model run the following command
 (do not forget that prediction will only be generated for rows where observation
 is not known -- marked with '.'):
 
-```
+```sh
 sh> ./predicthmm -p 1 toy_data_test.txt model.txt predict.txt
 ```
 
