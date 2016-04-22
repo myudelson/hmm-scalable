@@ -551,7 +551,7 @@ void HMMProblem::computeXiGamma(NCAT xndat, struct data** x_data){
             }
 			for(i=0; i<nS; i++) {
 				for(j=0; j<nS; j++) {
-                    x_data[x]->xi[t][i][j] = x_data[x]->alpha[t][i] * getA(x_data[x],i,j) * x_data[x]->beta[t+1][j] * getB(x_data[x],j,o_tp1) / ((denom>0)?denom:1); //
+                    x_data[x]->xi[t][i][j] = x_data[x]->alpha[t][i] * getA(x_data[x],i,j) * x_data[x]->beta[t+1][j] * ((o_tp1<0)?1:getB(x_data[x],j,o_tp1)) / ((denom>0)?denom:1); //
                     x_data[x]->gamma[t][i] += x_data[x]->xi[t][i][j];
                 }
             }
