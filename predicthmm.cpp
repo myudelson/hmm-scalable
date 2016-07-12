@@ -43,6 +43,7 @@
 #include "HMMProblemPiGK.h"
 #include "HMMProblemAGK.h"
 #include "HMMProblemPiAGK.h"
+#include "HMMProblemPiABGK.h"
 using namespace std;
 
 #define COLUMNS 4
@@ -99,7 +100,10 @@ int main (int argc, char ** argv) {
     
     // copy partial info from param_model to param
     if(param.nO==0) param.nO = param_model.nO;
-	
+    param.structure = param_model.structure;
+    param.solver = param_model.solver;
+    param.solver_setting = param_model.solver_setting;
+    
     // copy number of states from the model
     param.nS = param_model.nS;
     
@@ -128,6 +132,9 @@ int main (int argc, char ** argv) {
             break;
         case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
             hmm = new HMMProblemAGK(&param);
+            break;
+        case STRUCTURE_PIABgk:
+            hmm = new HMMProblemPiABGK(&param);
             break;
     }
     // read model body

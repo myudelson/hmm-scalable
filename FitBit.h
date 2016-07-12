@@ -105,6 +105,7 @@ public:
     void copy(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs);
     void add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs);
     bool checkConvergence(FitResult *fr);
+    bool checkConvergenceSingle(FitResult *fr); // without checking for oscillation, actually, afer copying t-1 to t-2 and t to t-1, it is used to check for oscillation
     void doLog10ScaleGentle(enum FIT_BIT_SLOT fbs);
 
     // adding penalties

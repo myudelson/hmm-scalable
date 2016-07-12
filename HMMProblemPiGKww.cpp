@@ -375,6 +375,8 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
         NCAT iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
         NCAT* iter_qual_skill = Calloc(NCAT, (size_t)nK);
         NCAT* iter_qual_group = Calloc(NCAT, (size_t)nG);
+        NCAT* iter_fail_skill = Calloc(NCAT, (size_t)nK); // counting concecutive number of failures to converge for skills
+        NCAT* iter_fail_group = Calloc(NCAT, (size_t)nG); // counting concecutive number of failures to converge for groups
         int skip_k = 0, skip_g = 0;
         
         
@@ -384,7 +386,7 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
             // Skills first
             //
             for(k=0; k<nK && skip_k<nK; k++) { // for all A,B-by-skill
-                if(iter_qual_skill[k]==iterations_to_qualify)
+                if(iter_qual_skill[k]==iterations_to_qualify || iter_fail_skill[k]==iterations_to_qualify)
                     continue;
                 FitBit *fb = new FitBit(nS, nO, nK, nG, this->p->tol, this->p->tol_mode);
                 // link and fit
@@ -393,6 +395,7 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
                 if(this->p->block_fitting[1]!=0) fb->A  = NULL;
                 if(this->p->block_fitting[2]!=0) fb->B  = NULL;
 
+                fb->Cslice = 0;
                 fb->init(FBS_PARm1);
                 fb->init(FBS_PARm2);
                 fb->init(FBS_GRAD);
@@ -522,6 +525,8 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
         // recycle qualifications
         if( iter_qual_skill != NULL ) free(iter_qual_skill);
         if( iter_qual_group != NULL) free(iter_qual_group);
+        if( iter_fail_skill != NULL ) free(iter_fail_skill);
+        if( iter_fail_group != NULL) free(iter_fail_group);
     } // if not "force single skill
     
     // compute loglik

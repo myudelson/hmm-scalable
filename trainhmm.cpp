@@ -382,8 +382,8 @@ int main (int argc, char ** argv) {
 		
 		
 //        if(!param.quiet) { // allow to report c-v result anyway
-//            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
-//            if(param.duplicate_console==1) fprintf(fid_console, "%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
+            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
+            if(param.duplicate_console==1) fprintf(fid_console, "%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
 //
 //            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
 //            if(param.duplicate_console==1) fprintf(fid_console,"%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
@@ -689,7 +689,9 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                     param.iterations_to_qualify   = (NPAR)atoi(ch);
                 }
 				break;
+            /*
             case 'c': {
+                    // this version is with single center of gravity per Pi, A, and B
                     StripedArray<NUMBER> * tmp_array = new StripedArray<NUMBER>();
                     ch = strtok(argv[i],",\t\n\r");
                     while( ch != NULL ) {
@@ -711,6 +713,9 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                     }
                     delete tmp_array;
                 }
+                break;
+                */
+            case 'c': // just to keep it a valid option
                 break;
             case 'o':
                 param.duplicate_console = 1;
@@ -887,6 +892,35 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
                     exit_with_help();
                 }
 				break;
+                case 'c': {
+                    // this version with per-parameter center of gravity in Pi, A, and B
+                    NPAR nS = param.nS;
+                    NPAR nO = param.nO;
+                    NPAR nPerSlice = 1 + nS + nS*nS + nS*nO; // parameters per slice
+                    NPAR nCenters = nS + nS*nS + nS*nO; // centers per slice
+                    StripedArray<NUMBER> * tmp_array = new StripedArray<NUMBER>();
+                    ch = strtok(argv[i],",\t\n\r");
+                    while( ch != NULL ) {
+                        tmp_array->add( atof(ch) );
+                        ch = strtok(NULL,",\t\n\r");
+                    }
+                    if( (tmp_array->getSize() % nPerSlice) != 0 ) {
+                        fprintf(stderr,"The number of regularization parameters should be a multiple of %d and it is %d\n",nPerSlice,tmp_array->getSize());
+                        exit_with_help();
+                    }
+                    param.Cslices = (NPAR) tmp_array->getSize() / nPerSlice;
+                    param.Cw = Calloc(NUMBER, (size_t)param.Cslices);
+                    param.Ccenters = Calloc(NUMBER, (size_t)(param.Cslices * nCenters) );
+                    int c1 = 0/*counter for weights*/, c2 = 0/*counter for centers*/, i = 0/*counter for tmp_array*/;
+                    for(int l=0; l<(int)tmp_array->getSize() / nPerSlice; l++) {
+                        param.Cw[c1++] = tmp_array->get((NDAT)i++);
+                        for(int j=0; j<nCenters; j++)
+                            param.Ccenters[c2++] = tmp_array->get((NDAT)i++);
+                    }
+                    delete tmp_array;
+                }
+                break;
+                
         } // end switch
     }// end for
     // post parse actions
@@ -1288,7 +1322,7 @@ NUMBER cross_validate(NUMBER* metrics, const char *filename, const char *model_f
     // create and fit multiple problems
     HMMProblem* hmms[param.cv_folds];
     int q = param.quiet;
-    param.quiet = 1;
+//    param.quiet = 1;
     for(f=0; f<param.cv_folds; f++) {
         switch(param.structure)
         {
@@ -1359,10 +1393,10 @@ NUMBER cross_validate(NUMBER* metrics, const char *filename, const char *model_f
             if( param.null_skills[x].g == f)
                 param.null_skills[x].cnt = 0;
         }
-        if(q == 0) {
+//        if(q == 0) {
             printf("fold %d is done\n",f+1);
             if(param.duplicate_console==1) fprintf(fid_console,"fold %d is done\n",f+1);
-        }
+//        }
     }
     param.quiet = (NPAR)q;
     
@@ -1467,7 +1501,7 @@ NUMBER cross_validate_item(NUMBER* metrics, const char *filename, const char *mo
     // create and fit multiple problems
     HMMProblem* hmms[param.cv_folds];
     int q = param.quiet;
-    param.quiet = 1;
+//    param.quiet = 1;
     for(f=0; f<param.cv_folds; f++) {
         switch(param.structure)
         {
@@ -1528,10 +1562,10 @@ NUMBER cross_validate_item(NUMBER* metrics, const char *filename, const char *mo
             if( folds[ param.dat_item[t]/*->get(t)*/ ] == f )
                 param.dat_obs[t]=saved_obs[count_saved++];//->set(t, saved_obs[count_saved++]);
         free(saved_obs);
-        if(q == 0) {
+//        if(q == 0) {
             printf("fold %d is done\n",f+1);
             if(param.duplicate_console==1) fprintf(fid_console, "fold %d is done\n",f+1);
-        }
+//        }
     }
     free(fold_counts);
     param.quiet = (NPAR)q;
@@ -1637,7 +1671,7 @@ NUMBER cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *
     // create and fit multiple problems
     HMMProblem* hmms[param.cv_folds];
     int q = param.quiet;
-    param.quiet = 1;
+//    param.quiet = 1;
     for(f=0; f<param.cv_folds; f++) {
         switch(param.structure)
         {
@@ -1697,10 +1731,10 @@ NUMBER cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *
             if( folds[ param.dat_item[t]/*->get(t)*/ ] == f )
                 param.dat_obs[t]=saved_obs[count_saved++];//->set(t, saved_obs[count_saved++]);
         free(saved_obs);
-        if(q == 0) {
+//        if(q == 0) {
             printf("fold %d is done\n",f+1);
             if(param.duplicate_console==1) fprintf(fid_console, "fold %d is done\n",f+1);
-        }
+//        }
     }
     free(fold_counts);
     param.quiet = (NPAR)q;

@@ -470,8 +470,10 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
     if( this->p->single_skill!=2 ) { // if not "force single skill"
         NCAT first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
         NCAT iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
-        NCAT* iter_qual_skill = Calloc(NCAT, (size_t)nK);
-        NCAT* iter_qual_group = Calloc(NCAT, (size_t)nG);
+        NCAT* iter_qual_skill = Calloc(NCAT, (size_t)nK); // counting concecutive number of convergences for skills
+        NCAT* iter_qual_group = Calloc(NCAT, (size_t)nG); // counting concecutive number of convergences for groups
+        NCAT* iter_fail_skill = Calloc(NCAT, (size_t)nK); // counting concecutive number of failures to converge for skills
+        NCAT* iter_fail_group = Calloc(NCAT, (size_t)nG); // counting concecutive number of failures to converge for groups
         int skip_k = 0, skip_g = 0;
         // utilize fitting larger data first
         
@@ -486,7 +488,7 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                 if(skip_k<nK) {
 //                    #pragma omp for schedule(dynamic) //PAR
                     for(k=0; k<nK; k++) { // for all A,B-by-skill
-                        if(iter_qual_skill[k]==iterations_to_qualify)
+                        if(iter_qual_skill[k]==iterations_to_qualify || iter_fail_skill[k]==iterations_to_qualify)
                             continue;
                         FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
                         // link and fit
@@ -495,6 +497,7 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                         if(this->p->block_fitting[1]!=0) fb->A  = NULL;
                         if(this->p->block_fitting[2]!=0) fb->B  = NULL;
 
+                        fb->Cslice = 0;
                         fb->init(FBS_PARm1);
                         fb->init(FBS_PARm2);
                         fb->init(FBS_GRAD);
@@ -503,6 +506,14 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                             fb->init(FBS_DIRm1);
                         }
                         FitResult fr = GradientDescentBit(fb);
+                        
+                        // count number of concecutive failures
+                        if(fr.iter==this->p->maxiter) {
+                            iter_fail_skill[k]++;
+                        } else {
+                            iter_fail_skill[k]=0;
+                        }
+
                         // decide on convergence
                         if(i>=first_iteration_qualify || fb->xndat==0) {
                             if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG || fb->xndat==0) { // converged quick, or don't care (others all converged
@@ -521,9 +532,18 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                                         printf("run %2d skipK %4d skill %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",i,skip_k,k,fr.iter,fr.pO0,fr.pO,fr.conv);
                                     }
                                 }
-                            }
-                            else
+                            } else
                                 iter_qual_skill[k]=0;
+                            // failed too many times in a row
+                            if( iter_fail_skill[k]==iterations_to_qualify ) {
+//                                #pragma omp critical(update_skip_k)//PAR
+//                                {//PAR
+                                skip_k++;
+//                                }//PAR
+                                if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
+                                    printf("run %2d skipK %4d skill %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",i,skip_k,k,fr.iter,fr.pO0,fr.pO,fr.conv);
+                                }
+                            }
                         } // decide on convergence
                         delete fb;
                     } // for all skills
@@ -534,7 +554,7 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                 if(skip_g<nG){
 //                    #pragma omp for schedule(dynamic)//PAR
                     for(g=0; g<nG; g++) { // for all PI-by-user
-                        if(iter_qual_group[g]==iterations_to_qualify)
+                        if(iter_qual_group[g]==iterations_to_qualify || iter_fail_group[g]==iterations_to_qualify)
                             continue;
                         FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
                         // link
@@ -554,6 +574,14 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                             fb->init(FBS_DIRm1);
                         }
                         FitResult fr = GradientDescentBit(fb);
+
+                        // count number of concecutive failures
+                        if(fr.iter==this->p->maxiter) {
+                            iter_fail_group[g]++;
+                        } else {
+                            iter_fail_group[g]=0;
+                        }
+
                         // decide on convergence
                         if(i>=first_iteration_qualify || fb->xndat==0) { //can qualify or  student had no skill labelled rows
                             if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==nK || fb->xndat==0) { // converged quick, or don't care (others all converged), or
@@ -575,6 +603,16 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
                             }
                             else
                                 iter_qual_group[g]=0;
+                            // failed too many times in a row
+                            if( iter_fail_group[g]==iterations_to_qualify ) {
+//                                #pragma omp critical(update_skip_k)//PAR
+//                                {//PAR
+                                skip_g++;
+//                                }//PAR
+                                if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
+                                    printf("run %2d skipG %4d group %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",i,skip_g,g,fr.iter,fr.pO0,fr.pO,fr.conv);
+                                }
+                            }
                         } // decide on convergence
                         delete fb;
                     } // for all groups
@@ -588,6 +626,8 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
         // recycle qualifications
         if( iter_qual_skill != NULL ) free(iter_qual_skill);
         if( iter_qual_group != NULL) free(iter_qual_group);
+        if( iter_fail_skill != NULL ) free(iter_fail_skill);
+        if( iter_fail_group != NULL) free(iter_fail_group);
         
     } // if not "force single skill
     

@@ -935,13 +935,13 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 //			rmse += pow(isTarget - hmm->null_skill_obs_prob,2);
 //			accuracy += isTarget == (hmm->null_skill_obs_prob>=0.5);
 			ll -= isTarget*safelog(hmm->null_skill_obs_prob) + (1-isTarget)*safelog(1 - hmm->null_skill_obs_prob);
-//			if(this->p->predictions>0 && output_this) // write predictions file if it was opened
-			for(m=0; m<nO; m++) {
-				fprintf(fid,"%12.10f%s",hmm->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
-//				d = (NDAT)m*N + t;
-//				dat_predict[ d ] = hmm->null_obs_ratio[m];
-			}
-			
+            if(f_predictions>0 /*&& output_this*/) { // write predictions file if it was opened
+                for(m=0; m<nO; m++) {
+                    fprintf(fid,"%12.10f%s",hmm->null_obs_ratio[m],(m<(nO-1))?"\t":"\n");
+    //				d = (NDAT)m*N + t;
+    //				dat_predict[ d ] = hmm->null_obs_ratio[m];
+                }
+            }
 			continue;
 		}
 		// check if {g,k}'s were initialized
@@ -1136,8 +1136,8 @@ void HMMProblem::predictNEW(NUMBER* metrics, const char *filename, NPAR* dat_obs
 	NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
 	NUMBER *local_pred = init1D<NUMBER>(nO); // local prediction//SEQ
 	NUMBER *pLe = init1D<NUMBER>(nS);// p(L|evidence);//SEQ
-	//    NUMBER *local_pred = NULL; // local prediction//PAR
-	//    NUMBER *pLe = NULL;// p(L|evidence);//PAR
+//	    NUMBER *local_pred = NULL; // local prediction//PAR
+//	    NUMBER *pLe = NULL;// p(L|evidence);//PAR
 	NUMBER pLe_denom; // p(L|evidence) denominator
 	NUMBER ***group_skill_map = init3D<NUMBER>(nG, nK, nS);//UNBOOST
 //	//   ::boost::numeric::ublas::mapped_matrix<NUMBER*> gsm (nG, nK);//BOOST
@@ -1356,7 +1356,7 @@ void HMMProblem::predictNEW(NUMBER* metrics, const char *filename, NPAR* dat_obs
 		free(pLe);
 	} // for all skill sequences
 	
-	//    }//#omp //PAR
+//	    }//#omp //PAR
 	
 	// recycly non-sparse skill map
 	free3D<NUMBER>(group_skill_map, nG, nK);//UNBOOST
@@ -1547,11 +1547,13 @@ void HMMProblem::FitNullSkill(NUMBER* loglik_rmse, bool keep_SE) {
         dat = &this->p->null_skills[g];
         if(dat->cnt != 0)
             continue; // observe block
-        count_all_null_skill += dat->n;
+//        count_all_null_skill += dat->n; // does not work for item- and non- stratified cross-validations
         for(t=0; t<dat->n; t++) {
             o = this->p->dat_obs[ dat->ix[t] ];//->get( dat->ix[t] );
-            if(((int)o)>=0) // -1 we skip \xff in char notation
+            if(((int)o)>=0) { // -1 we skip \xff in char notation
                 this->null_obs_ratio[ o ]++;
+                count_all_null_skill++; // crude, but works properly for all cross validations
+            }
         }
     }
     // produce means
@@ -1668,6 +1670,11 @@ FitResult HMMProblem::GradientDescentBit(FitBit *fb) {
     // cleanup
     RecycleFitData(xndat, x_data, this->p); // recycle memory (Alpha, Beta, p_O_param, Xi, Gamma)
     fr->iter--;
+    // this is the case when 2 steps lead to step back to the initial value, i.e. oscillation
+    if(fr->iter==2 && fr->conv && fb->checkConvergenceSingle(fr) ) {
+        // decrease iteration counter to 1
+        fr->iter--;
+    }
     
     res.iter = fr->iter;
     res.pO0  = fr->pO0;

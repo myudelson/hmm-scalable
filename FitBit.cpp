@@ -428,8 +428,8 @@ void FitBit::add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs) {
 }
 
 bool FitBit::checkConvergence(FitResult *fr) {
-
-	NUMBER criterion = 0;
+    
+    NUMBER criterion = 0;
     NUMBER criterion_oscil = 0; // oscillation between PAR and PARm1, i.e. PAR is close to PARm2
     bool res = false;
     switch (this->tol_mode) {
@@ -461,6 +461,31 @@ bool FitBit::checkConvergence(FitResult *fr) {
             else
                 res = sqrt(criterion) < this->tol; // double the truth or false
             break;
+        case 'l':
+            criterion = (fr->pOmid-fr->pO)/fr->ndat;
+            res = criterion < this->tol;
+            break;
+    }
+    return res;
+}
+// without checking for oscillation, actually, afer copying t-1 to t-2 and t to t-1, it is used to check for oscillation
+bool FitBit::checkConvergenceSingle(FitResult *fr) {
+    
+    NUMBER criterion = 0;
+    bool res = false;
+    switch (this->tol_mode) {
+        case 'p':
+            for(NPAR i=0; i<this->nS; i++)
+            {
+                if(this->pi != NULL) criterion += pow( this->pi[i]-this->PIm1[i], 2 )/*:0*/;
+                for(NPAR j=0; (this->A != NULL) && j<this->nS; j++) {
+                    criterion += pow(this->A[i][j] - this->Am1[i][j],2);
+                }
+                for(NPAR k=0; (this->B != NULL) && k<this->nO; k++) {
+                    criterion += pow(this->B[i][k] - this->Bm1[i][k],2);
+                }
+            }
+            
         case 'l':
             criterion = (fr->pOmid-fr->pO)/fr->ndat;
             res = criterion < this->tol;
@@ -504,23 +529,40 @@ void FitBit::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
 }
 
 void FitBit::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor) {
-    NPAR i, j, m;
+    NPAR i, j, m, matrixOff, rowOff;
     if(param->Cslices==0) return;
     NUMBER C = param->Cw[this->Cslice];
+    NPAR nCenters = param->nS + param->nS*param->nS + param->nS*param->nO; // centers per slice
     switch (fbv) {
         case FBV_PI:
-            for(i=0; i<this->nS; i++)
-                this->gradPI[i] += factor * L2penalty(C, this->pi[i], param->Ccenters[ this->Cslice * 3 + 0] );
+            for(i=0; i<this->nS; i++) {
+                // single center of gravity per matrix
+//                this->gradPI[i] += factor * L2penalty(C, this->pi[i], param->Ccenters[ this->Cslice * 3 + 0] );
+                // center of gravity per parameter of matrix
+                this->gradPI[i] += factor * L2penalty(C, this->pi[i], param->Ccenters[ this->Cslice * nCenters + i] );
+            }
             break;
         case FBV_A:
             for(i=0; i<this->nS; i++)
-                for(j=0; j<this->nS; j++)
-                    this->gradA[i][j] += factor * L2penalty(C, this->A[i][j], param->Ccenters[ this->Cslice * 3 + 1] );
+                for(j=0; j<this->nS; j++) {
+                    // single center of gravity per matrix
+//                    this->gradA[i][j] += factor * L2penalty(C, this->A[i][j], param->Ccenters[ this->Cslice * 3 + 1] );
+                    // center of gravity per parameter of matrix
+                    matrixOff = this->nS;
+                    rowOff = i*this->nS;
+                    this->gradA[i][j] += factor * L2penalty(C, this->A[i][j], param->Ccenters[ this->Cslice * nCenters + matrixOff + rowOff + j] );
+                }
             break;
         case FBV_B:
             for(i=0; i<this->nS; i++)
-                for(m=0; m<this->nO; m++)
-                    this->gradB[i][m] += factor * L2penalty(C, this->B[i][m], param->Ccenters[ this->Cslice * 3 + 2] );
+                for(m=0; m<this->nO; m++) {
+                    // single center of gravity per matrix
+//                    this->gradB[i][m] += factor * L2penalty(C, this->B[i][m], param->Ccenters[ this->Cslice * 3 + 2] );
+                    // center of gravity per parameter of matrix
+                    matrixOff = this->nS + this->nS*this->nS;
+                    rowOff = i*this->nS;
+                    this->gradB[i][m] += factor * L2penalty(C, this->B[i][m], param->Ccenters[ this->Cslice * nCenters + matrixOff + rowOff + j] );
+                }
             break;
             
         default:
