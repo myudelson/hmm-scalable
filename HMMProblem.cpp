@@ -42,7 +42,7 @@
 HMMProblem::HMMProblem() {
     // set fields to null that you don't want to be messing up the code in the overriding classes
     // e.g., *sliced* classses would redefine A and possibly B and the HMMProblem descroy method
-    // would still try to free the "old" A or B that were never initialized 
+    // would still try to free the "old" A or B that were never initialized
     this->pi = NULL;
     this->A = NULL;
     this->B = NULL;

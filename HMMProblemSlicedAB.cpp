@@ -39,6 +39,8 @@
 #include <map>
 
 HMMProblemSlicedAB::HMMProblemSlicedAB() {
+    this->A = NULL;
+    this->B = NULL;
 }
 
 HMMProblemSlicedAB::HMMProblemSlicedAB(struct param *param) {
@@ -181,8 +183,6 @@ HMMProblemSlicedAB::~HMMProblemSlicedAB() {
 void HMMProblemSlicedAB::destroy() {
     NPAR nS = this->p->nS, nZ = this->p->nZ;
 	// destroy model data
-    if(this->null_obs_ratio != NULL) free(this->null_obs_ratio);
-	if(this->pi != NULL) free2D<NUMBER>(this->pi, this->sizes[0]);
 	if(this->A  != NULL) free4D<NUMBER>(this->A,  this->sizes[1], this->p->nZ, this->p->nS);
 	if(this->B  != NULL) free4D<NUMBER>(this->B,  this->sizes[2], this->p->nZ, this->p->nS);
 	if(this->lbPI!=NULL) free(this->lbPI);
@@ -193,9 +193,9 @@ void HMMProblemSlicedAB::destroy() {
 	if(this->ubB!=NULL) free3D<NUMBER>(this->ubB, nZ, nS);
 }// ~HMMProblemSlicedAB
 
-bool HMMProblemSlicedAB::hasNon01Constraints() {
-	return this->non01constraints;
-}
+//bool HMMProblemSlicedAB::hasNon01Constraints() {
+//	return this->non01constraints;
+//}
 
 NUMBER** HMMProblemSlicedAB::getPI() {
 	return this->pi;
@@ -416,102 +416,102 @@ bool HMMProblemSlicedAB::checkPIABConstraints(NUMBER* a_PI, NUMBER*** a_A, NUMBE
 	return true;
 }
 
-NUMBER HMMProblemSlicedAB::getSumLogPOPara(NCAT xndat, struct data** x_data) {
-	NUMBER result = 0.0;
-	for(NCAT x=0; x<xndat; x++) result += (x_data[x]->cnt==0)?x_data[x]->loglik:0;
-	return result;
-}
+//NUMBER HMMProblemSlicedAB::getSumLogPOPara(NCAT xndat, struct data** x_data) {
+//	NUMBER result = 0.0;
+//	for(NCAT x=0; x<xndat; x++) result += (x_data[x]->cnt==0)?x_data[x]->loglik:0;
+//	return result;
+//}
 
-void HMMProblemSlicedAB::initAlpha(NCAT xndat, struct data** x_data) {
-	NPAR nS = this->p->nS;
-//    int parallel_now = this->p->parallel==2; //PAR
-//    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
-	for(NCAT x=0; x<xndat; x++) {
-        NDAT t;
-        NPAR i;
-		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
-		// alpha
-		if( x_data[x]->alpha == NULL ) {
-			x_data[x]->alpha = Calloc(NUMBER*, (size_t)x_data[x]->n);
-			for(t=0; t<x_data[x]->n; t++)
-				x_data[x]->alpha[t] = Calloc(NUMBER, (size_t)nS);
-			
-		} else {
-			for(t=0; t<x_data[x]->n; t++)
-				for(i=0; i<nS; i++)
-					x_data[x]->alpha[t][i] = 0.0;
-		}
-		// p_O_param
-		x_data[x]->p_O_param = 0.0;
-		x_data[x]->loglik = 0.0;
-        // c - scaling
-		if( x_data[x]->c == NULL ) {
-            x_data[x]->c = Calloc(NUMBER, (size_t)x_data[x]->n);
-        } else {
-			for(t=0; t<x_data[x]->n; t++)
-                x_data[x]->c[t] = 0.0;
-        }
-	} // for all groups in skill
-}
+//void HMMProblemSlicedAB::initAlpha(NCAT xndat, struct data** x_data) {
+//	NPAR nS = this->p->nS;
+////    int parallel_now = this->p->parallel==2; //PAR
+////    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
+//	for(NCAT x=0; x<xndat; x++) {
+//        NDAT t;
+//        NPAR i;
+//		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
+//		// alpha
+//		if( x_data[x]->alpha == NULL ) {
+//			x_data[x]->alpha = Calloc(NUMBER*, (size_t)x_data[x]->n);
+//			for(t=0; t<x_data[x]->n; t++)
+//				x_data[x]->alpha[t] = Calloc(NUMBER, (size_t)nS);
+//			
+//		} else {
+//			for(t=0; t<x_data[x]->n; t++)
+//				for(i=0; i<nS; i++)
+//					x_data[x]->alpha[t][i] = 0.0;
+//		}
+//		// p_O_param
+//		x_data[x]->p_O_param = 0.0;
+//		x_data[x]->loglik = 0.0;
+//        // c - scaling
+//		if( x_data[x]->c == NULL ) {
+//            x_data[x]->c = Calloc(NUMBER, (size_t)x_data[x]->n);
+//        } else {
+//			for(t=0; t<x_data[x]->n; t++)
+//                x_data[x]->c[t] = 0.0;
+//        }
+//	} // for all groups in skill
+//}
 
-void HMMProblemSlicedAB::initXiGamma(NCAT xndat, struct data** x_data) {
-    NPAR nS = this->p->nS;
-//    int parallel_now = this->p->parallel==2; //PAR
-//    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
-	for(NCAT x=0; x<xndat; x++) {
-        NDAT t;
-        NPAR i, j;
-		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
-		// Xi
-		if( x_data[x]->gamma == NULL ) {
-			x_data[x]->gamma = Calloc(NUMBER*, (size_t)x_data[x]->n);
-			for(t=0; t<x_data[x]->n; t++)
-				x_data[x]->gamma[t] = Calloc(NUMBER, (size_t)nS);
-			
-		} else {
-			for(t=0; t<x_data[x]->n; t++)
-				for(i=0; i<nS; i++)
-					x_data[x]->gamma[t][i] = 0.0;
-		}
-		// Gamma
-		if( x_data[x]->xi == NULL ) {
-			x_data[x]->xi = Calloc(NUMBER**, (size_t)x_data[x]->n);
-			for(t=0; t<x_data[x]->n; t++) {
-				x_data[x]->xi[t] = Calloc(NUMBER*, (size_t)nS);
-				for(i=0; i<nS; i++)
-					x_data[x]->xi[t][i] = Calloc(NUMBER, (size_t)nS);
-			}
-			
-		} else {
-			for(t=0; t<x_data[x]->n; t++)
-				for(i=0; i<nS; i++)
-					for(j=0; j<nS; j++)
-						x_data[x]->xi[t][i][j] = 0.0;
-		}
-	} // for all groups in skill
-}
+//void HMMProblemSlicedAB::initXiGamma(NCAT xndat, struct data** x_data) {
+//    NPAR nS = this->p->nS;
+////    int parallel_now = this->p->parallel==2; //PAR
+////    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
+//	for(NCAT x=0; x<xndat; x++) {
+//        NDAT t;
+//        NPAR i, j;
+//		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
+//		// Xi
+//		if( x_data[x]->gamma == NULL ) {
+//			x_data[x]->gamma = Calloc(NUMBER*, (size_t)x_data[x]->n);
+//			for(t=0; t<x_data[x]->n; t++)
+//				x_data[x]->gamma[t] = Calloc(NUMBER, (size_t)nS);
+//			
+//		} else {
+//			for(t=0; t<x_data[x]->n; t++)
+//				for(i=0; i<nS; i++)
+//					x_data[x]->gamma[t][i] = 0.0;
+//		}
+//		// Gamma
+//		if( x_data[x]->xi == NULL ) {
+//			x_data[x]->xi = Calloc(NUMBER**, (size_t)x_data[x]->n);
+//			for(t=0; t<x_data[x]->n; t++) {
+//				x_data[x]->xi[t] = Calloc(NUMBER*, (size_t)nS);
+//				for(i=0; i<nS; i++)
+//					x_data[x]->xi[t][i] = Calloc(NUMBER, (size_t)nS);
+//			}
+//			
+//		} else {
+//			for(t=0; t<x_data[x]->n; t++)
+//				for(i=0; i<nS; i++)
+//					for(j=0; j<nS; j++)
+//						x_data[x]->xi[t][i][j] = 0.0;
+//		}
+//	} // for all groups in skill
+//}
 
-void HMMProblemSlicedAB::initBeta(NCAT xndat, struct data** x_data) {
-	NPAR nS = this->p->nS;
-//    int parallel_now = this->p->parallel==2; //PAR
-//    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
-	for(NCAT x=0; x<xndat; x++) {
-        NDAT t;
-        NPAR i;
-		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
-		// beta
-		if( x_data[x]->beta == NULL ) {
-			x_data[x]->beta = Calloc(NUMBER*, (size_t)x_data[x]->n);
-			for(t=0; t<x_data[x]->n; t++)
-				x_data[x]->beta[t] = Calloc(NUMBER, (size_t)nS);
-			
-		} else {
-			for(t=0; t<x_data[x]->n; t++)
-				for(i=0; i<nS; i++)
-					x_data[x]->beta[t][i] = 0.0;
-		}
-	} // for all groups in skill
-} // initBeta
+//void HMMProblemSlicedAB::initBeta(NCAT xndat, struct data** x_data) {
+//	NPAR nS = this->p->nS;
+////    int parallel_now = this->p->parallel==2; //PAR
+////    #pragma omp parallel for schedule(dynamic) if(parallel_now) //PAR
+//	for(NCAT x=0; x<xndat; x++) {
+//        NDAT t;
+//        NPAR i;
+//		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
+//		// beta
+//		if( x_data[x]->beta == NULL ) {
+//			x_data[x]->beta = Calloc(NUMBER*, (size_t)x_data[x]->n);
+//			for(t=0; t<x_data[x]->n; t++)
+//				x_data[x]->beta[t] = Calloc(NUMBER, (size_t)nS);
+//			
+//		} else {
+//			for(t=0; t<x_data[x]->n; t++)
+//				for(i=0; i<nS; i++)
+//					x_data[x]->beta[t][i] = 0.0;
+//		}
+//	} // for all groups in skill
+//} // initBeta
 
 NDAT HMMProblemSlicedAB::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
     //    NUMBER mult_c, old_pOparam, neg_sum_log_c;
@@ -1048,17 +1048,17 @@ void HMMProblemSlicedAB::predict(NUMBER* metrics, const char *filename, NPAR* da
         fclose(fid);
 }
 
-NUMBER HMMProblemSlicedAB::getLogLik() { // get log likelihood of the fitted model
-    return neg_log_lik;
-}
-
-NCAT HMMProblemSlicedAB::getNparams() {
-    return this->n_params;
-}
-
-NUMBER HMMProblemSlicedAB::getNullSkillObs(NPAR m) {
-    return this->null_obs_ratio[m];
-}
+//NUMBER HMMProblemSlicedAB::getLogLik() { // get log likelihood of the fitted model
+//    return neg_log_lik;
+//}
+//
+//NCAT HMMProblemSlicedAB::getNparams() {
+//    return this->n_params;
+//}
+//
+//NUMBER HMMProblemSlicedAB::getNullSkillObs(NPAR m) {
+//    return this->null_obs_ratio[m];
+//}
 
 void HMMProblemSlicedAB::fit() {
     NUMBER* loglik_rmse = init1D<NUMBER>(2);
@@ -1082,60 +1082,60 @@ void HMMProblemSlicedAB::fit() {
     free(loglik_rmse);
 }
 
-void HMMProblemSlicedAB::FitNullSkill(NUMBER* loglik_rmse, bool keep_SE) {
-    if(this->p->n_null_skill_group==0) {
-        this->null_obs_ratio[0] = 1; // set first obs to 1, simplex preserved
-        return; // 0 loglik
-    }
-    NDAT count_all_null_skill = 0;
-    struct data *dat; // used as pointer
-    // count occurrences
-    NCAT g;
-    NDAT t;
-    NPAR isTarget, o, m;
-    for(g=0; g<this->p->n_null_skill_group; g++) {
-        dat = &this->p->null_skills[g];
-        if(dat->cnt != 0)
-            continue; // observe block
-        count_all_null_skill += dat->n;
-        for(t=0; t<dat->n; t++) {
-            o = this->p->dat_obs[ dat->ix[t] ];//->get( dat->ix[t] );
-            if(((int)o)>=0) // -1 we skip \xff in char notation
-                this->null_obs_ratio[ o ]++;
-        }
-    }
-    // produce means
-    this->null_skill_obs = 0;
-    this->null_skill_obs_prob = 0;
-    for(m=0; m<this->p->nO; m++) {
-        this->null_obs_ratio[m] /= count_all_null_skill;
-        if( this->null_obs_ratio[m] > this->null_skill_obs_prob ) {
-            this->null_skill_obs_prob = this->null_obs_ratio[m];
-            this->null_skill_obs = m;
-        }
-    }
-    this->null_skill_obs_prob = safe01num(this->null_skill_obs_prob); // safety for logging
-    // compute loglik
-    NDAT N = 0;
-    for(g=0; g<this->p->n_null_skill_group; g++) {
-        dat = &this->p->null_skills[g];
-        if(dat->cnt != 0)
-            continue; // observe block
-        for(t=0; t<dat->n; t++) {
-            N += dat->n;
-            isTarget = this->p->dat_obs[ dat->ix[t] ]/*->get( dat->ix[t] )*/ == this->null_skill_obs;
-            loglik_rmse[0] -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1-this->null_skill_obs_prob);
-            loglik_rmse[1] += pow(isTarget - this->null_skill_obs_prob, 2);
-        }
-    }
-    if(!keep_SE) loglik_rmse[1] = sqrt(loglik_rmse[1]/N);
-}
-
-void HMMProblemSlicedAB::init3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO) { // regular
-    PI = init1D<NUMBER>((NDAT)nS);
-    A  = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
-    B  = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
-}
+//void HMMProblemSlicedAB::FitNullSkill(NUMBER* loglik_rmse, bool keep_SE) {
+//    if(this->p->n_null_skill_group==0) {
+//        this->null_obs_ratio[0] = 1; // set first obs to 1, simplex preserved
+//        return; // 0 loglik
+//    }
+//    NDAT count_all_null_skill = 0;
+//    struct data *dat; // used as pointer
+//    // count occurrences
+//    NCAT g;
+//    NDAT t;
+//    NPAR isTarget, o, m;
+//    for(g=0; g<this->p->n_null_skill_group; g++) {
+//        dat = &this->p->null_skills[g];
+//        if(dat->cnt != 0)
+//            continue; // observe block
+//        count_all_null_skill += dat->n;
+//        for(t=0; t<dat->n; t++) {
+//            o = this->p->dat_obs[ dat->ix[t] ];//->get( dat->ix[t] );
+//            if(((int)o)>=0) // -1 we skip \xff in char notation
+//                this->null_obs_ratio[ o ]++;
+//        }
+//    }
+//    // produce means
+//    this->null_skill_obs = 0;
+//    this->null_skill_obs_prob = 0;
+//    for(m=0; m<this->p->nO; m++) {
+//        this->null_obs_ratio[m] /= count_all_null_skill;
+//        if( this->null_obs_ratio[m] > this->null_skill_obs_prob ) {
+//            this->null_skill_obs_prob = this->null_obs_ratio[m];
+//            this->null_skill_obs = m;
+//        }
+//    }
+//    this->null_skill_obs_prob = safe01num(this->null_skill_obs_prob); // safety for logging
+//    // compute loglik
+//    NDAT N = 0;
+//    for(g=0; g<this->p->n_null_skill_group; g++) {
+//        dat = &this->p->null_skills[g];
+//        if(dat->cnt != 0)
+//            continue; // observe block
+//        for(t=0; t<dat->n; t++) {
+//            N += dat->n;
+//            isTarget = this->p->dat_obs[ dat->ix[t] ]/*->get( dat->ix[t] )*/ == this->null_skill_obs;
+//            loglik_rmse[0] -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1-this->null_skill_obs_prob);
+//            loglik_rmse[1] += pow(isTarget - this->null_skill_obs_prob, 2);
+//        }
+//    }
+//    if(!keep_SE) loglik_rmse[1] = sqrt(loglik_rmse[1]/N);
+//}
+//
+//void HMMProblemSlicedAB::init3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS, NPAR nO) { // regular
+//    PI = init1D<NUMBER>((NDAT)nS);
+//    A  = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
+//    B  = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
+//}
 
 void HMMProblemSlicedAB::init3Params(NUMBER* &PI, NUMBER*** &A, NUMBER*** &B, NPAR nZ, NPAR nS, NPAR nO) {  // sliced
     PI = init1D<NUMBER>((NDAT)nS);
@@ -1149,11 +1149,11 @@ void HMMProblemSlicedAB::toZero3Params(NUMBER* &PI, NUMBER*** &A, NUMBER*** &B, 
     toZero3D<NUMBER>(B,  (NDAT)nZ, (NDAT)nS, (NDAT)nO);
 }
 
-void HMMProblemSlicedAB::cpy3Params(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB, NPAR nS, NPAR nO) { // regular
-    cpy1D<NUMBER>(soursePI, targetPI, (NDAT)nS);
-    cpy2D<NUMBER>(sourseA,  targetA,  (NDAT)nS, (NDAT)nS);
-    cpy2D<NUMBER>(sourseB,  targetB,  (NDAT)nS, (NDAT)nO);
-}
+//void HMMProblemSlicedAB::cpy3Params(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB, NPAR nS, NPAR nO) { // regular
+//    cpy1D<NUMBER>(soursePI, targetPI, (NDAT)nS);
+//    cpy2D<NUMBER>(sourseA,  targetA,  (NDAT)nS, (NDAT)nS);
+//    cpy2D<NUMBER>(sourseB,  targetB,  (NDAT)nS, (NDAT)nO);
+//}
 
 void HMMProblemSlicedAB::cpy3Params(NUMBER* &soursePI, NUMBER*** &sourseA, NUMBER*** &sourseB, NUMBER* &targetPI, NUMBER*** &targetA, NUMBER*** &targetB, NPAR nZ, NPAR nS, NPAR nO) {  // sliced
     cpy1D<NUMBER>(soursePI, targetPI, (NDAT)nS);
@@ -1161,14 +1161,14 @@ void HMMProblemSlicedAB::cpy3Params(NUMBER* &soursePI, NUMBER*** &sourseA, NUMBE
     cpy3D<NUMBER>(sourseB,  targetB,  (NDAT)nZ, (NDAT)nS, (NDAT)nO);
 }
 
-void HMMProblemSlicedAB::free3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS) {  // regular
-    free(PI);
-    free2D<NUMBER>(A, (NDAT)nS);
-    free2D<NUMBER>(B, (NDAT)nS);
-    PI = NULL;
-    A  = NULL;
-    B  = NULL;
-}
+//void HMMProblemSlicedAB::free3Params(NUMBER* &PI, NUMBER** &A, NUMBER** &B, NPAR nS) {  // regular
+//    free(PI);
+//    free2D<NUMBER>(A, (NDAT)nS);
+//    free2D<NUMBER>(B, (NDAT)nS);
+//    PI = NULL;
+//    A  = NULL;
+//    B  = NULL;
+//}
 
 void HMMProblemSlicedAB::free3Params(NUMBER* &PI, NUMBER*** &A, NUMBER*** &B, NPAR nZ, NPAR nS) {  // sliced
     free(PI);
@@ -1655,9 +1655,9 @@ NUMBER HMMProblemSlicedAB::doLagrangeStep(FitBitSlicedAB *fb) {
         if( fb->pi != NULL )
             fb->pi[i] = (b_PI_den>0) ? (b_PI[i] / b_PI_den) : fb->pi[i];
         if( fb->A != NULL )
-            for(j=0; j<nS; j++)
-                for(z=0; z<nZ; z++)
-                    fb->A[z][i][j] = (b_A_den[i]>0) ? (b_A[z][i][j] / b_A_den[z][i]) : fb->A[z][i][j];
+            for(z=0; z<nZ; z++)
+                for(j=0; j<nS; j++)
+                    fb->A[z][i][j] = (b_A_den[z][i]>0) ? (b_A[z][i][j] / b_A_den[z][i]) : fb->A[z][i][j];
         if( fb->B != NULL )
             for(m=0; m<nO; m++)
                 for(z=0; z<nZ; z++)
@@ -2083,28 +2083,28 @@ NUMBER HMMProblemSlicedAB::doBaumWelchStep(FitBitSlicedAB *fb) {
     return ll;
 }
 
-void HMMProblemSlicedAB::readNullObsRatio(FILE *fid, struct param* param, NDAT *line_no) {
-	NPAR i;
-	//
-	// read null skill ratios
-	//
-    fscanf(fid, "Null skill ratios\t");
-    this->null_obs_ratio =Calloc(NUMBER, (size_t)this->p->nO);
-    this->null_skill_obs      = 0;
-    this->null_skill_obs_prob = 0;
-	for(i=0; i<param->nO; i++) {
-        if( i==(param->nO-1) ) // end
-            fscanf(fid,"%lf\n",&this->null_obs_ratio[i] );
-        else
-            fscanf(fid,"%lf\t",&this->null_obs_ratio[i] );
-		
-        if( this->null_obs_ratio[i] > this->null_skill_obs_prob ) {
-            this->null_skill_obs_prob = this->null_obs_ratio[i];
-            this->null_skill_obs = i;
-        }
-	}
-    (*line_no)++;
-}
+//void HMMProblemSlicedAB::readNullObsRatio(FILE *fid, struct param* param, NDAT *line_no) {
+//	NPAR i;
+//	//
+//	// read null skill ratios
+//	//
+//    fscanf(fid, "Null skill ratios\t");
+//    this->null_obs_ratio =Calloc(NUMBER, (size_t)this->p->nO);
+//    this->null_skill_obs      = 0;
+//    this->null_skill_obs_prob = 0;
+//	for(i=0; i<param->nO; i++) {
+//        if( i==(param->nO-1) ) // end
+//            fscanf(fid,"%lf\n",&this->null_obs_ratio[i] );
+//        else
+//            fscanf(fid,"%lf\t",&this->null_obs_ratio[i] );
+//		
+//        if( this->null_obs_ratio[i] > this->null_skill_obs_prob ) {
+//            this->null_skill_obs_prob = this->null_obs_ratio[i];
+//            this->null_skill_obs = i;
+//        }
+//	}
+//    (*line_no)++;
+//}
 
 void HMMProblemSlicedAB::readModel(const char *filename, bool overwrite) {
 	FILE *fid = fopen(filename,"r");
