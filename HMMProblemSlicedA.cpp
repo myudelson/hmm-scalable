@@ -109,7 +109,7 @@ void HMMProblemSlicedA::init(struct param *param) {
         offset = (NPAR)((nS-1) + nZ*nS*(nS-1));
         for(i=0; i<nS; i++) {
             for(m=0; m<((nO)-1); m++) {
-                idx = (NPAR)(offset + z * nS * ((nO)-1) + i*((nO)-1) + m);
+                idx = (NPAR)(offset + i*((nO)-1) + m);
                 a_B[i][m] = this->p->init_params[idx];
                 sumB[i] += this->p->init_params[idx];
             }
@@ -125,11 +125,9 @@ void HMMProblemSlicedA::init(struct param *param) {
         for(x=0; x<this->sizes[0]; x++)
             cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
         for(x=0; x<this->sizes[1]; x++)
-            for(z=0; z<nZ; z++)
-                cpy3D<NUMBER>(a_A, this->A[x], (NDAT)nZ, (NDAT)nS, (NDAT)nS);
+            cpy3D<NUMBER>(a_A, this->A[x], (NDAT)nZ, (NDAT)nS, (NDAT)nS);
         for(x=0; x<this->sizes[2]; x++)
-            for(z=0; z<nZ; z++)
-                cpy2D<NUMBER>(a_B, this->B[x], (NDAT)nS, (NDAT)nO);
+            cpy2D<NUMBER>(a_B, this->B[x], (NDAT)nS, (NDAT)nO);
         // destroy setup params
         free(a_PI);
         free3D<NUMBER>(a_A, (NDAT)nZ, (NDAT)nS);

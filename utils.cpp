@@ -271,8 +271,8 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
         if(ar[i]!=ar[i]) {
             fprintf(stderr,"WARNING! NaN detected!\n");
         }
-    
-	while( !issimplexbounded(ar, lb, ub, size) ) {
+    bool doexit = false;
+	while( !issimplexbounded(ar, lb, ub, size) && !doexit ) {
         lambda = 0;
 		num_at_hi = 0;
 		num_at_lo = 0;
@@ -351,6 +351,7 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
         iter++;
         if(iter==100) {
             fprintf(stderr,"WARNING! Stuck in projectsimplexbounded().\n");
+//            doexit = true;
             exit(1);
         }
 	} // until satisfied
