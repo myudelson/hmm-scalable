@@ -106,7 +106,7 @@ protected:
 	// Derived
 	//
 	virtual void init(struct param *param); // non-fit specific initialization
-	virtual void destroy(); // non-fit specific descruction
+    virtual void destroy(); // non-fit specific descruction
 	void initAlpha(NCAT xndat, struct data** x_data); // generic
 	void initXiGamma(NCAT xndat, struct data** x_data); // generic
 	void initBeta(NCAT xndat, struct data** x_data); // generic

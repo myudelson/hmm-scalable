@@ -312,8 +312,13 @@ int main (int argc, char ** argv) {
             
             tm_predict = clock(); //SEQ
 //            _tm_predict = omp_get_wtime(); //PAR
-			HMMProblem::predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, &hmm, 1, NULL);
-            
+            if(param.structure==STRUCTURE_SKAslc) {
+                ((HMMProblemSlicedA *)hmm)->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix);
+            } else if(param.structure==STRUCTURE_SKABslc) {
+                ((HMMProblemSlicedAB *)hmm)->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix);
+            } else {
+                HMMProblem::predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, &hmm, 1, NULL);
+            }
             tm_predict = clock()-tm_predict;//SEQ
 //            _tm_predict = omp_get_wtime()-_tm_predict;//PAR
             
@@ -515,7 +520,7 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
 			case 't':
 				param.sliced = (NPAR)atoi(argv[i]);
 				if(param.sliced!=0 && param.sliced!=1) {
-					fprintf(stderr,"ERROR! Time parameter should be either 0 (off) or 1(om)\n");
+					fprintf(stderr,"ERROR! Time parameter should be either 0 (off) or 1(on)\n");
 					exit_with_help();
 				}
 				break;
@@ -783,7 +788,7 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
     
     // at this time we do know nO (the number of observations)
 	int i;
-    int n;
+    int n, expected_n;
     char *ch;
 	for(i=1;i<argc;i++)
 	{
@@ -832,6 +837,14 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
 //                        int a = 0;
 //                    }
                 }
+                // check if the number of lower boundaries corresponds
+                expected_n = param.nS +
+                    ((param.sliced==1 && (param.structure==STRUCTURE_SKAslc || param.structure==STRUCTURE_SKABslc) )?param.nZ:1)*param.nS*param.nS +
+                    ((param.sliced==1 && param.structure==STRUCTURE_SKABslc )?param.nZ:1)*param.nS*param.nO;
+                if( n != expected_n ) {
+                    fprintf(stderr,"The expected number of lower parameter boundaries is %d and it is %d\n",expected_n,n);
+                    exit_with_help();
+                }
                 param.lo_lims_specd = true;
 				break;
 			case 'u': // upper boundaries
@@ -850,6 +863,14 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
 //                    if(param.param_hi[j] < 1) {
 //                        int a = 0;
 //                    }
+                }
+                // check if the number of upper boundaries corresponds
+                expected_n = param.nS +
+                    ((param.sliced==1 && (param.structure==STRUCTURE_SKAslc || param.structure==STRUCTURE_SKABslc) )?param.nZ:1)*param.nS*param.nS +
+                    ((param.sliced==1 && param.structure==STRUCTURE_SKABslc )?param.nZ:1)*param.nS*param.nO;
+                if( n != expected_n ) {
+                    fprintf(stderr,"The expected number of upper parameter boundaries is %d and it is %d\n",expected_n,n);
+                    exit_with_help();
                 }
                 param.hi_lims_specd = true;
 				break;
@@ -937,7 +958,7 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
             param.param_hi[j] = (NUMBER)1.0;
     }
     
-    // post-argument checks - TODO - enable
+    // post-argument checks
     if( param.cv_target_obs>(param.nO-1)) {
         fprintf(stderr,"target observation to be cross-validated against cannot be '%d'\n",param.cv_target_obs+1);
         if(param.duplicate_console==1) fprintf(fid_console,"target observation to be cross-validated against cannot be '%d'\n",param.cv_target_obs+1);
@@ -948,6 +969,14 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
         if(param.duplicate_console==1) fprintf(fid_console,"target observation to compute metrics against cannot be '%d'\n",param.metrics_target_obs+1);
         exit_with_help();
     }
+    
+    // upper and lower bounds
+    if( (param.sliced==1) && (param.structure == STRUCTURE_SKABslc || param.structure == STRUCTURE_SKAslc) &&
+       !(param.lo_lims_specd && param.hi_lims_specd)) {
+        fprintf(stderr,"Error! when parameter slicing is enabled, lower and upper boundaries for all parameters have to be set explicitly.\n");
+        exit_with_help();
+    }
+
     
 }
 
