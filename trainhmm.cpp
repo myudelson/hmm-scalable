@@ -312,13 +312,13 @@ int main (int argc, char ** argv) {
             
             tm_predict = clock(); //SEQ
 //            _tm_predict = omp_get_wtime(); //PAR
-            if(param.structure==STRUCTURE_SKAslc) {
-                ((HMMProblemSlicedA *)hmm)->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix);
-            } else if(param.structure==STRUCTURE_SKABslc) {
-                ((HMMProblemSlicedAB *)hmm)->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix);
-            } else {
+//            if(param.structure==STRUCTURE_SKAslc) {
+//                ((HMMProblemSlicedA *)hmm)->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix);
+//            } else if(param.structure==STRUCTURE_SKABslc) {
+//                ((HMMProblemSlicedAB *)hmm)->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix);
+//            } else {
                 HMMProblem::predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, &hmm, 1, NULL);
-            }
+//            }
             tm_predict = clock()-tm_predict;//SEQ
 //            _tm_predict = omp_get_wtime()-_tm_predict;//PAR
             
@@ -1094,6 +1094,7 @@ bool read_and_structure_data(const char *filename, FILE *fid_console) {
 				param.null_skills[gidx].g = g;
 				param.null_skills[gidx].k = -1;
                 param.null_skills[gidx].cnt = 0;
+                param.null_skills[gidx].t   = -1;
                 //                param.null_skills[gidx].obs = Calloc(NPAR, count_null_skill_group[g]);
 				param.null_skills[gidx].ix = Calloc(NDAT, (size_t)count_null_skill_group[g]);
 				if(param.multiskill!=0)
@@ -1136,6 +1137,7 @@ bool read_and_structure_data(const char *filename, FILE *fid_console) {
                 param.all_data[n_all_data].k = k; // init k
                 param.all_data[n_all_data].g = g; // init g
                 param.all_data[n_all_data].cnt = 0;
+                param.all_data[n_all_data].t   = -1;
                 //                param.all_data[n_all_data].obs = NULL;
                 param.all_data[n_all_data].ix = NULL;
                 param.all_data[n_all_data].ix_stacked = NULL;
@@ -1429,7 +1431,7 @@ NUMBER cross_validate(NUMBER* metrics, const char *filename, const char *model_f
 	NPAR *dat_fold = Calloc(NPAR, param.N);
 	for(NDAT t=0; t<param.N; t++) dat_fold[t] = folds[ param.dat_group[t] ];
 	//		predict
-	HMMProblem::predict(metrics, filename, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, hmms, param.cv_folds/*nhmms*/, dat_fold);
+	hmms[0]->predict(metrics, filename, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, hmms, param.cv_folds/*nhmms*/, dat_fold);
 	
     printf("Cross-validation is done wrong, if A or B matrices are 'sliced'\n");
     

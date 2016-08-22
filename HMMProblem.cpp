@@ -768,10 +768,29 @@ void HMMProblem::toFileGroup(const char *filename) {
 	fclose(fid);
 }
 
-void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt) {
+//void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt) {
+void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NDAT t) {
     NPAR m, i;
     NCAT k;
     NUMBER *local_pred_inner = init1D<NUMBER>(this->p->nO);
+    char f_multiskill = this->p->multiskill;
+    
+    struct data* dt = new data;
+    NCAT *ks;
+    int nks;
+    if(f_multiskill==0) {
+        k = this->p->dat_skill[t];
+        ks = &k;
+        nks = 1;
+    } else {
+        NDAT rix = this->p->dat_skill_rix[t];
+        k = this->p->dat_skill_stacked[ rix ];
+        ks = &this->p->dat_skill_stacked[ rix ];
+        nks = this->p->dat_skill_rcount[t];
+    }
+    
+    dt->g = this->p->dat_group[t];
+    dt->t = t;
     for(m=0; m<this->p->nO; m++) local_pred[m] = 0.0;
     for(int l=0; l<nks; l++) {
         for(m=0; m<this->p->nO; m++) local_pred_inner[m] = 0.0;
@@ -788,6 +807,7 @@ void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, 
             local_pred[m] /= nks;
     }
     
+    delete(dt);
 //    NUMBER sum=0;
 //    for(m=0; m<this->p->nO; m++)
 //        sum+=local_pred[m];
@@ -798,15 +818,15 @@ void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, 
     free(local_pred_inner);
 }
 
-void HMMProblem::producePDObs(NUMBER*** group_skill_map, NUMBER* local_pred, struct data* dt) {
-	NPAR m, i;
-	for(m=0; m<this->p->nO; m++) {
-		local_pred[m] = 0.0;
-		for(m=0; m<this->p->nO; m++)
-			for(i=0; i<this->p->nS; i++)
-				local_pred[m] += group_skill_map[dt->g][dt->k][i] * getB(dt,i,m);
-	}
-}
+//void HMMProblem::producePDObs(NUMBER*** group_skill_map, NUMBER* local_pred, struct data* dt) {
+//	NPAR m, i;
+//	for(m=0; m<this->p->nO; m++) {
+//		local_pred[m] = 0.0;
+//		for(m=0; m<this->p->nO; m++)
+//			for(i=0; i<this->p->nS; i++)
+//				local_pred[m] += group_skill_map[dt->g][dt->k][i] * getB(dt,i,m);
+//	}
+//}
 
 //void HMMProblem::producePCorrectBoost(boost::numeric::ublas::mapped_matrix<NUMBER*> *group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt) {//BOOST
 //    NPAR m, i;//BOOST
@@ -903,6 +923,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 		o = dat_obs[t];
 		g = dat_group[t];
 		dt->g = g;
+        dt->t = t;
 		
 		hmm = (nhmms==1)?hmms[0]:hmms[hmm_idx[t]]; // if just one hmm, use 0's, otherwise take the index value
 		
@@ -976,8 +997,9 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 		}// for all skills at this transaction
 		
 		// produce prediction and copy to result
-		hmm->producePCorrect(group_skill_map, local_pred, ar, n, dt); //UNBOOST
-//		hmm->producePCorrectBoost(&gsm, local_pred, ar, n, dt); //BOOST
+//        hmm->producePCorrect(group_skill_map, local_pred, ar, n, dt); //UNBOOST
+        hmm->producePCorrect(group_skill_map, local_pred, t); //UNBOOST
+//		hmm->producePCorrectBoost(&gsm, local_pred, t); //BOOST
 		projectsimplex(local_pred, nO); // addition to make sure there's not side effects
 		
 		// if necessary guess the obsevaion using Pi and B

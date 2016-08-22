@@ -71,9 +71,10 @@ public:
     // fitting (the only public method)
     virtual void fit(); // return -LL for the model
     // predicting
-	virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
+//    virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
+    virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NDAT t);
 //    virtual void producePCorrectBoost(boost::numeric::ublas::mapped_matrix<NUMBER*> *group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);//BOOST
-	virtual void producePDObs(NUMBER*** group_skill_map, NUMBER* local_pred, struct data* dt); // probability distribution of observations, single skill label
+//	virtual void producePDObs(NUMBER*** group_skill_map, NUMBER* local_pred, struct data* dt); // probability distribution of observations, single skill label
 //	virtual void producePDObsBoost(boost::numeric::ublas::mapped_matrix<NUMBER*> *group_skill_map, NUMBER* local_pred, struct data* dt);//BOOST
     static void predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, NCAT *dat_skill_stacked, NCAT *dat_skill_rcount, NDAT *dat_skill_rix, HMMProblem **hmms, NPAR nhmms, NPAR *hmm_idx);
 	

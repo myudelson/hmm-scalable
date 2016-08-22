@@ -133,6 +133,7 @@ struct FitResult {
 struct data {
 	NDAT n; // number of data points (observations)
 	NDAT cnt;  // help counter, used for building the data and "banning" data from being fit when cross-valudating based on group
+    NDAT t; // to be used to as an absolute 1..N pointer to a current transaction, or simply a "state" of an otherwise stateless data structure
     //	NPAR *obs; // onservations array - will become the pointer array to the big data
     NDAT *ix; // these are 'ndat' indices to the through arrays (e.g. param.dat_obs and param.dat_item)
     NDAT *ix_stacked; // these are 'ndat' indices to the stacked version through arrays (for example the case of multi-skills per row)
