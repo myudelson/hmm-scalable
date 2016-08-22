@@ -561,7 +561,7 @@ void FitBit::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor) {
                     // center of gravity per parameter of matrix
                     matrixOff = this->nS + this->nS*this->nS;
                     rowOff = i*this->nS;
-                    this->gradB[i][m] += factor * L2penalty(C, this->B[i][m], param->Ccenters[ this->Cslice * nCenters + matrixOff + rowOff + j] );
+                    this->gradB[i][m] += factor * L2penalty(C, this->B[i][m], param->Ccenters[ this->Cslice * nCenters + matrixOff + rowOff + m] );
                 }
             break;
             

@@ -106,7 +106,7 @@ enum CROSS_VALIDATION {
 // "Structure" of the model we are fitting with a method
 enum STRUCTURE {
     STRUCTURE_SKILL   = 1,  // 1 - all by skill
-    STRUCTURE_GROUP   = 2,  // 2 - all by group (user)
+//    STRUCTURE_GROUP   = 2,  // 2 - all by group (user) // doesn't make sense anymore
     STRUCTURE_PIg     = 3,  // 3 - PI by group, A,B by skill
     STRUCTURE_SKABslc = 11, // all by skill - sliced A and B
     STRUCTURE_SKAslc  = 12, // all by skill - sliced A

@@ -61,10 +61,10 @@ HMMProblem::HMMProblem(struct param *param) {
             for(i=0; i<3; i++) this->sizes[i] = param->nK;
             this->n_params = param->nK * 4;
             break;
-        case STRUCTURE_GROUP: // Gradient Descent by group
-            for(i=0; i<3; i++) this->sizes[i] = param->nG;
-            this->n_params = param->nG * 4;
-            break;
+//        case STRUCTURE_GROUP: // Gradient Descent by group
+//            for(i=0; i<3; i++) this->sizes[i] = param->nG;
+//            this->n_params = param->nG * 4;
+//            break;
         default:
             fprintf(stderr,"Structure specified is not supported and should have been caught earlier\n");
             break;
@@ -275,9 +275,9 @@ NUMBER HMMProblem::getPI(struct data* dt, NPAR i) {
         case STRUCTURE_SKILL:
             return this->pi[dt->k][i];
             break;
-        case STRUCTURE_GROUP:
-            return this->pi[dt->g][i];
-            break;
+//        case STRUCTURE_GROUP:
+//            return this->pi[dt->g][i];
+//            break;
         default:
             fprintf(stderr,"Solver specified is not supported.\n");
             exit(1);
@@ -292,9 +292,9 @@ NUMBER HMMProblem::getA (struct data* dt, NPAR i, NPAR j) {
         case STRUCTURE_SKILL:
             return this->A[dt->k][i][j];
             break;
-        case STRUCTURE_GROUP:
-            return this->A[dt->g][i][j];
-            break;
+//        case STRUCTURE_GROUP:
+//            return this->A[dt->g][i][j];
+//            break;
         default:
             fprintf(stderr,"Solver specified is not supported.\n");
             exit(1);
@@ -313,9 +313,9 @@ NUMBER HMMProblem::getB (struct data* dt, NPAR i, NPAR m) {
         case STRUCTURE_SKILL:
             return this->B[dt->k][i][m];
             break;
-        case STRUCTURE_GROUP:
-            return this->B[dt->g][i][m];
-            break;
+//        case STRUCTURE_GROUP:
+//            return this->B[dt->g][i][m];
+//            break;
         default:
             fprintf(stderr,"Solver specified is not supported.\n");
             exit(1);
@@ -691,9 +691,9 @@ void HMMProblem::toFile(const char *filename) {
         case STRUCTURE_SKILL:
             toFileSkill(filename);
             break;
-        case STRUCTURE_GROUP:
-            toFileGroup(filename);
-            break;
+//        case STRUCTURE_GROUP:
+//            toFileGroup(filename);
+//            break;
         default:
             fprintf(stderr,"Solver specified is not supported.\n");
             break;
@@ -1760,8 +1760,8 @@ NUMBER HMMProblem::GradientDescent() {
 	NCAT x, nX;
     if(this->p->structure==STRUCTURE_SKILL)
         nX = this->p->nK;
-    else if (this->p->structure==STRUCTURE_GROUP)
-        nX = this->p->nG;
+//    else if (this->p->structure==STRUCTURE_GROUP)
+//        nX = this->p->nG;
     else
         exit(1);
     NUMBER loglik = 0.0;
@@ -1824,9 +1824,9 @@ NUMBER HMMProblem::GradientDescent() {
             if(this->p->structure==STRUCTURE_SKILL) {
                 xndat = this->p->k_numg[x];
                 x_data = this->p->k_g_data[x];
-            } else if(this->p->structure==STRUCTURE_GROUP) {
-                xndat = this->p->g_numk[x];
-                x_data = this->p->g_k_data[x];
+//            } else if(this->p->structure==STRUCTURE_GROUP) {
+//                xndat = this->p->g_numk[x];
+//                x_data = this->p->g_k_data[x];
             } else {
                 xndat = 0;
                 x_data = NULL;
@@ -1872,9 +1872,9 @@ NUMBER HMMProblem::GradientDescent() {
         if(this->p->structure==STRUCTURE_SKILL) {
             xndat = this->p->k_numg[x];
             x_data = this->p->k_g_data[x];
-        } else if(this->p->structure==STRUCTURE_GROUP) {
-            xndat = this->p->g_numk[x];
-            x_data = this->p->g_k_data[x];
+//        } else if(this->p->structure==STRUCTURE_GROUP) {
+//            xndat = this->p->g_numk[x];
+//            x_data = this->p->g_k_data[x];
         } else {
             xndat = 0;
             x_data = NULL;

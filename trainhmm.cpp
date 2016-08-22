@@ -253,7 +253,7 @@ int main (int argc, char ** argv) {
         switch(param.structure)
         {
             case STRUCTURE_SKILL: // Conjugate Gradient Descent
-            case STRUCTURE_GROUP: // Conjugate Gradient Descent
+//            case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmm = new HMMProblem(&param);
                 break;
                 //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
@@ -386,14 +386,6 @@ int main (int argc, char ** argv) {
 											   metrics[4], metrics[5]); // acc's
 		
 		
-//        if(!param.quiet) { // allow to report c-v result anyway
-            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
-            if(param.duplicate_console==1) fprintf(fid_console, "%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //SEQ
-//
-//            printf("%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
-//            if(param.duplicate_console==1) fprintf(fid_console,"%d-fold cross-validation: LL=%15.7f, AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",param.cv_folds, metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]); //PAR
-//        }
-        
         free(metrics);
     }
 	// free data
@@ -563,7 +555,7 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                 ch = strtok(NULL,"\t\n\r"); // could be NULL (default GD solver)
                 if(ch != NULL)
                     param.solver_setting = (NPAR)atoi(ch);
-                if( param.structure != STRUCTURE_SKILL && param.structure != STRUCTURE_GROUP &&
+                if( param.structure != STRUCTURE_SKILL && // param.structure != STRUCTURE_GROUP &&
                    param.structure != STRUCTURE_PIg   && param.structure != STRUCTURE_PIgk  &&
                    param.structure != STRUCTURE_PIAgk && param.structure != STRUCTURE_Agk &&
                    param.structure != STRUCTURE_PIABgk && param.structure != STRUCTURE_Agki &&
@@ -582,7 +574,7 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                     fprintf(stderr, "Method specified (%d) is not defined for this structure (%d) \n",param.solver,param.structure);
                     exit_with_help();
                 }
-                if( param.solver == METHOD_BW && ( param.solver != STRUCTURE_SKILL && param.solver != STRUCTURE_GROUP ) ) {
+                if( param.solver == METHOD_BW && ( param.solver != STRUCTURE_SKILL /*&& param.solver != STRUCTURE_GROUP*/ ) ) {
                     fprintf(stderr, "Baum-Welch solver does not support model structure specified (%d)\n",param.solver);
 					exit_with_help();
                 }
@@ -1356,7 +1348,7 @@ NUMBER cross_validate(NUMBER* metrics, const char *filename, const char *model_f
         switch(param.structure)
         {
             case STRUCTURE_SKILL: // Conjugate Gradient Descent
-            case STRUCTURE_GROUP: // Conjugate Gradient Descent
+//            case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblem(&param);
                 break;
             case STRUCTURE_SKABslc: // Conjugate Gradient Descent
@@ -1438,7 +1430,18 @@ NUMBER cross_validate(NUMBER* metrics, const char *filename, const char *model_f
 	for(NDAT t=0; t<param.N; t++) dat_fold[t] = folds[ param.dat_group[t] ];
 	//		predict
 	HMMProblem::predict(metrics, filename, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, hmms, param.cv_folds/*nhmms*/, dat_fold);
-	free(dat_fold);
+	
+    printf("Cross-validation is done wrong, if A or B matrices are 'sliced'\n");
+    
+//    if(param.structure==STRUCTURE_SKAslc) {
+//        ((HMMProblemSlicedA *)hmm)->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix);
+//    } else if(param.structure==STRUCTURE_SKABslc) {
+//        ((HMMProblemSlicedAB *)hmm)->predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix);
+//    } else {
+//        HMMProblem::predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, &hmm, 1, NULL);
+//    }
+    
+    free(dat_fold);
 	
 	*(tm_predict) += (clock_t)(clock()- tm0);//SEQ
 //    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
@@ -1535,7 +1538,7 @@ NUMBER cross_validate_item(NUMBER* metrics, const char *filename, const char *mo
         switch(param.structure)
         {
             case STRUCTURE_SKILL: // Conjugate Gradient Descent
-            case STRUCTURE_GROUP: // Conjugate Gradient Descent
+//            case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblem(&param);
                 break;
 //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
@@ -1608,7 +1611,10 @@ NUMBER cross_validate_item(NUMBER* metrics, const char *filename, const char *mo
 	for(NDAT t=0; t<param.N; t++) dat_fold[t] = folds[ param.dat_item[t] ];
 	//		predict
 	HMMProblem::predict(metrics, filename, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, hmms, param.cv_folds/*nhmms*/, dat_fold);
-	free(dat_fold);
+
+    printf("Cross-validation is done wrong, if A or B matrices are 'sliced'\n");
+    
+    free(dat_fold);
 	
 	*(tm_predict) += (clock_t)(clock()- tm0);//SEQ
 //    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
@@ -1705,7 +1711,7 @@ NUMBER cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *
         switch(param.structure)
         {
             case STRUCTURE_SKILL: // Conjugate Gradient Descent
-            case STRUCTURE_GROUP: // Conjugate Gradient Descent
+//            case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblem(&param);
                 break;
             case STRUCTURE_SKABslc: // Conjugate Gradient Descent
@@ -1775,6 +1781,8 @@ NUMBER cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *
 	//		predict
 	HMMProblem::predict(metrics, filename, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, hmms, param.cv_folds/*nhmms*/, folds);
 	
+    printf("Cross-validation is done wrong, if A or B matrices are 'sliced'\n");
+    
 	*(tm_predict) += (clock_t)(clock()- tm0);//SEQ
 //    *(tm_predict) += omp_get_wtime()-_tm0;//PAR
     
