@@ -529,10 +529,11 @@ void FitBit::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
 }
 
 void FitBit::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor) {
-    NPAR i, j, m, matrixOff, rowOff;
+    NPAR i, j, m;
+    int matrixOff, rowOff;
     if(param->Cslices==0) return;
     NUMBER C = param->Cw[this->Cslice];
-    NPAR nCenters = param->nS + param->nS*param->nS + param->nS*param->nO; // centers per slice
+    int nCenters = (param->nS + param->nS*param->nS + param->nS*param->nO); // centers per slice
     switch (fbv) {
         case FBV_PI:
             for(i=0; i<this->nS; i++) {

@@ -49,7 +49,7 @@ using namespace std;
 #define COLUMNS 4
 
 struct param param;
-static char *line = NULL;
+//static char *line = NULL;
 NUMBER* metrics;
 map<string,NCAT> data_map_group_fwd;
 map<NCAT,string> data_map_group_bwd;
@@ -118,7 +118,7 @@ int main (int argc, char ** argv) {
     switch(param.structure)
     {
         case STRUCTURE_SKILL: // Conjugate Gradient Descent
-        case STRUCTURE_GROUP: // Conjugate Gradient Descent
+//        case STRUCTURE_GROUP: // Conjugate Gradient Descent
             hmm = new HMMProblem(&param);
             break;
 //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill

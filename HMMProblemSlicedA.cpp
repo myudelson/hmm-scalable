@@ -1295,15 +1295,21 @@ NUMBER HMMProblemSlicedA::doConjugateLinearStep(FitBitSlicedA *fb) {
     // compute new direction (in place of old)
 	for(i=0; i<nS; i++)
 	{
-		if(fb->pi != NULL)
+        if(fb->pi != NULL) {
             fb->dirPIm1[i] = -fb->gradPI[i] + beta_grad * fb->dirPIm1[i];
-		if(fb->A  != NULL)
-            for(z=0; z<nZ; z++)
-                for(j=0; j<nS; j++)
+        }
+        if(fb->A  != NULL) {
+            for(z=0; z<nZ; z++) {
+                for(j=0; j<nS; j++) {
                     fb->dirAm1[z][i][j] = -fb->gradA[z][i][j] + beta_grad * fb->dirAm1[z][i][j];
-		if(fb->B  != NULL)
-            for(m=0; m<nO; m++)
+                }
+            }
+        }
+        if(fb->B  != NULL) {
+            for(m=0; m<nO; m++) {
                 fb->dirBm1[i][m] = -fb->gradB[i][m] + beta_grad * fb->dirBm1[i][m];
+            }
+        }
 	}
 	// scale down direction
     fb->doLog10ScaleGentle(FBS_DIRm1);
@@ -1320,46 +1326,70 @@ NUMBER HMMProblemSlicedA::doConjugateLinearStep(FitBitSlicedA *fb) {
 	NUMBER p_k_by_neg_p_k = 0;
 	for(i=0; i<nS; i++)
 	{
-		if(fb->pi != NULL)
+        if(fb->pi != NULL) {
             p_k_by_neg_p_k = fb->gradPI[i]*fb->dirPIm1[i];
-		if(fb->A  != NULL)
-            for(z=0; z<nZ; z++)
-                for(j=0; j<nS; j++)
+        }
+        if(fb->A  != NULL) {
+            for(z=0; z<nZ; z++) {
+                for(j=0; j<nS; j++) {
                     p_k_by_neg_p_k = fb->gradA[z][i][j]*fb->dirAm1[z][i][j];
-		if(fb->B  != NULL)
-            for(m=0; m<nO; m++)
+                }
+            }
+        }
+        if(fb->B  != NULL) {
+            for(m=0; m<nO; m++) {
                 p_k_by_neg_p_k = fb->gradB[i][m]*fb->dirBm1[i][m];
+            }
+        }
 	}
 	int iter = 0; // limit iter steps to 20, actually now 10, via ArmijoMinStep
 	while( !compliesArmijo && e > this->p->ArmijoMinStep) {
 		// update
 		for(i=0; i<nS; i++) {
-			if(fb->pi != NULL)
+            if(fb->pi != NULL) {
                 fb->pi[i] = fb->PIcopy[i] + e * fb->dirPIm1[i];
-            if(fb->A  != NULL)
-                for(z=0; z<nZ; z++)
-                    for(j=0; j<nS; j++)
+            }
+            if(fb->A  != NULL) {
+                for(z=0; z<nZ; z++) {
+                    for(j=0; j<nS; j++) {
                         fb->A[z][i][j] = fb->Acopy[z][i][j] + e * fb->dirAm1[z][i][j];
-            if(fb->B  != NULL)
-                for(m=0; m<nO; m++)
+                    }
+                }
+            }
+            if(fb->B  != NULL) {
+                for(m=0; m<nO; m++) {
                     fb->B[i][m] = fb->Bcopy[i][m] + e * fb->dirBm1[i][m];
+                }
+            }
 		}
 		// scale
 		if( !this->hasNon01Constraints() ) {
-			if(fb->pi != NULL) projectsimplex(fb->pi, nS);
+            if(fb->pi != NULL) {
+                projectsimplex(fb->pi, nS);
+            }
             for(i=0; i<nS; i++) {
-                if(fb->A != NULL)
-                    for(z=0; z<nZ; z++)
+                if(fb->A != NULL) {
+                    for(z=0; z<nZ; z++) {
                         projectsimplex(fb->A[z][i], nS);
-                if(fb->B != NULL) projectsimplex(fb->B[i], nS);
+                    }
+                }
+                if(fb->B != NULL) {
+                    projectsimplex(fb->B[i], nS);
+                }
 			}
 		} else {
-			if(fb->pi != NULL) projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
+            if(fb->pi != NULL) {
+                projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
+            }
             for(i=0; i<nS; i++) {
-                if(fb->A != NULL)
-                    for(z=0; z<nZ; z++)
+                if(fb->A != NULL) {
+                    for(z=0; z<nZ; z++) {
                         projectsimplexbounded(fb->A[z][i], this->getLbA()[z][i], this->getUbA()[z][i], nS); // tag is currently fit slice
-                if(fb->B != NULL) projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
+                    }
+                }
+                if(fb->B != NULL) {
+                    projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
+                }
             }
 		}
 		// recompute alpha and p(O|param)
@@ -1493,61 +1523,69 @@ NUMBER HMMProblemSlicedA::doBaumWelchStep(FitBitSlicedA *fb) {
 
 	for(x=0; x<xndat; x++) {
         if( x_data[x]->cnt!=0 ) continue;
-        if(fb->pi != NULL)
-            for(i=0; i<nS; i++)
+        if(fb->pi != NULL) {
+            for(i=0; i<nS; i++) {
                 b_PI[i] += x_data[x]->gamma[0][i] / xndat;
+            }
+        }
 		
 		for(t=0;t<(x_data[x]->n-1);t++) {
             //			o = x_data[x]->obs[t];
             o = this->p->dat_obs[ x_data[x]->ix[t] ];//->get( x_data[x]->ix[t] );
 			for(i=0; i<nS; i++) {
-                if(fb->A != NULL)
+                if(fb->A != NULL) {
                     for(j=0; j<nS; j++){
                         z = this->p->dat_slice[ fb->x_data[x]->ix[t] ];
                         b_A_num[z][i][j] += x_data[x]->xi[t][i][j];
                         b_A_den[z][i][j] += x_data[x]->gamma[t][i];
                     }
-                if(fb->B != NULL)
+                }
+                if(fb->B != NULL) {
                     for(m=0; m<nO; m++) {
                         b_B_num[i][m] += (m==o) * x_data[x]->gamma[t][i];
                         b_B_den[i][m] += x_data[x]->gamma[t][i];
                     }
+                }
 			}
 		}
 	} // for all groups within a skill
 	// set params
 	for(i=0; i<nS; i++) {
-        if(fb->pi != NULL)
-		fb->pi[i] = b_PI[i];
-        if(fb->A != NULL)
-            for(z=0; z<nZ; z++)
-                for(j=0; j<nS; j++)
+        if(fb->pi != NULL) fb->pi[i] = b_PI[i];
+        if(fb->A != NULL) {
+            for(z=0; z<nZ; z++) {
+                for(j=0; j<nS; j++) {
                     fb->A[z][i][j] = b_A_num[z][i][j] / safe0num(b_A_den[z][i][j]);
-        if(fb->B != NULL)
-            for(m=0; m<nO; m++)
+                }
+            }
+        }
+        if(fb->B != NULL) {
+            for(m=0; m<nO; m++) {
                 fb->B[i][m] = b_B_num[i][m] / safe0num(b_B_den[i][m]);
+            }
+        }
 	}
     // scale
     if( !this->hasNon01Constraints() ) {
-        if(fb->pi != NULL)
-            projectsimplex(fb->pi, nS);
+        if(fb->pi != NULL) projectsimplex(fb->pi, nS);
         for(i=0; i<nS; i++) {
-            if(fb->A != NULL)
-                for(z=0; z<nZ; z++)
+            if(fb->A != NULL) {
+                for(z=0; z<nZ; z++) {
                     projectsimplex(fb->A[z][i], nS);
-            if(fb->B != NULL)
-                projectsimplex(fb->B[i], nS);
+                }
+            }
+            if(fb->B != NULL) projectsimplex(fb->B[i], nS);
         }
     } else {
-        if(fb->pi != NULL)
-            projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
+        if(fb->pi != NULL) projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
         for(i=0; i<nS; i++) {
-            if(fb->A != NULL)
-                for(z=0; z<nZ; z++)
+            if(fb->A != NULL) {
+                for(z=0; z<nZ; z++) {
                     projectsimplexbounded(fb->A[z][i], this->getLbA()[z][i], this->getUbA()[z][i], nS); // tag is currently fit slice
-            if(fb->B != NULL)
-                projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
+                }
             }
+            if(fb->B != NULL) projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nS);
+        }
     }
     // compute LL
     computeAlphaAndPOParam(fb->xndat, fb->x_data);

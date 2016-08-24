@@ -117,7 +117,7 @@ void write_pLo_irt() {
             }
             obs = param.dat_obs[ dat->ix[0] ]; //->get( dat->ix[0] );
             NPAR count = 0; // 557687 >> 499117
-            for(int l=0; l<n; l++)
+            for(int l=0; l<n; l++) {
                 count = (NPAR)(count + (group_skill_mask[g][ ar[l] ] == 1));
                 if(count<n) {
                     fprintf(fid0,"%s %u:1", ((1-obs)==0)?"-1":"+1",dat->g+1);
@@ -128,6 +128,7 @@ void write_pLo_irt() {
                     }
                     fprintf(fid0,"\n");
                 }
+            }
         }
     }
     fclose(fid0);
@@ -592,8 +593,9 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
 			case 'm':
                 param.metrics = atoi( strtok(argv[i],",\t\n\r"));
                 ch = strtok(NULL, "\t\n\r");
-                if(ch!=NULL)
-                    param.metrics_target_obs = atoi(ch)-1;
+                if(ch!=NULL) {
+                    param.metrics_target_obs = (NPAR)(atoi(ch)-1);
+                }
 				if(param.metrics<0 || param.metrics>1) {
 					fprintf(stderr,"value for -m should be either 0 or 1.\n");
 					exit_with_help();
@@ -834,6 +836,7 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
                     ((param.sliced==1 && (param.structure==STRUCTURE_SKAslc || param.structure==STRUCTURE_SKABslc) )?param.nZ:1)*param.nS*param.nS +
                     ((param.sliced==1 && param.structure==STRUCTURE_SKABslc )?param.nZ:1)*param.nS*param.nO;
                 if( n != expected_n ) {
+//                    fprintf(stderr,"Structure=%d, nS=%d, nO=%d, nZ=%d, The expected n=%d specified=%d\n",param.structure,param.nS,param.nO,param.nZ,expected_n,n);
                     fprintf(stderr,"The expected number of lower parameter boundaries is %d and it is %d\n",expected_n,n);
                     exit_with_help();
                 }
@@ -909,8 +912,8 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
                     // this version with per-parameter center of gravity in Pi, A, and B
                     NPAR nS = param.nS;
                     NPAR nO = param.nO;
-                    NPAR nPerSlice = 1 + nS + nS*nS + nS*nO; // parameters per slice
-                    NPAR nCenters = nS + nS*nS + nS*nO; // centers per slice
+                    int nPerSlice = 1 + nS + nS*nS + nS*nO; // parameters per slice
+                    int nCenters = nS + nS*nS + nS*nO; // centers per slice
                     StripedArray<NUMBER> * tmp_array = new StripedArray<NUMBER>();
                     ch = strtok(argv[i],",\t\n\r");
                     while( ch != NULL ) {
@@ -921,7 +924,7 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
                         fprintf(stderr,"The number of regularization parameters should be a multiple of %d and it is %d\n",nPerSlice,tmp_array->getSize());
                         exit_with_help();
                     }
-                    param.Cslices = (NPAR) tmp_array->getSize() / nPerSlice;
+                    param.Cslices = (NPAR) ( tmp_array->getSize() / nPerSlice );
                     param.Cw = Calloc(NUMBER, (size_t)param.Cslices);
                     param.Ccenters = Calloc(NUMBER, (size_t)(param.Cslices * nCenters) );
                     int c1 = 0/*counter for weights*/, c2 = 0/*counter for centers*/, i = 0/*counter for tmp_array*/;
@@ -974,12 +977,14 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
 
 bool read_and_structure_data(const char *filename, FILE *fid_console) {
     bool readok = true;
-    if(param.binaryinput==0)
+    if(param.binaryinput==0) {
         readok = InputUtil::readTxt(filename, &param);
-    else
+    } else {
         readok = InputUtil::readBin(filename, &param);
-    if(! readok )
+    }
+    if(! readok ) {
         return false;
+    }
     
 	//	2. distribute data into nK skill bins
 	//		create

@@ -876,10 +876,10 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 	char f_update_known = hmms[0]->p->update_known;
 	char f_update_unknown = hmms[0]->p->update_unknown;
 	int f_predictions = hmms[0]->p->predictions;
-	char f_metrics_target_obs = hmms[0]->p->metrics_target_obs;
+	int f_metrics_target_obs = hmms[0]->p->metrics_target_obs;
 	for(i=1; i<nhmms; i++) {
 		if( nS != hmms[i]->p->nS || nO != hmms[i]->p->nO || nK != hmms[i]->p->nK ||
-		   nG != hmms[i]->p->nG || hmms[i]->p->N != hmms[i]->p->N || hmms[i]->p->N_null != hmms[i]->p->N_null ||
+		   nG != hmms[i]->p->nG || N != hmms[i]->p->N || N_null != hmms[i]->p->N_null ||
 		   f_multiskill != hmms[i]->p->multiskill ||
 		   f_update_known != hmms[i]->p->update_known ||
 		   f_update_unknown != hmms[i]->p->update_unknown ||
@@ -2845,24 +2845,28 @@ NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
 //        toZero2D(b_B_num, (NDAT)nS, (NDAT)nO); // A,B average across sequences
 //        toZero2D(b_B_den, (NDAT)nS, (NDAT)nO); // A,B average across sequences
         
-        if(fb->pi != NULL)
-            for(i=0; i<nS; i++)
+        if(fb->pi != NULL) {
+            for(i=0; i<nS; i++) {
                 b_PI[i] += x_data[x]->gamma[0][i] / xndat;
+            }
+        }
 		
 		for(t=0;t<(x_data[x]->n-1);t++) {
             //			o = x_data[x]->obs[t];
             o = this->p->dat_obs[ x_data[x]->ix[t] ];//->get( x_data[x]->ix[t] );
 			for(i=0; i<nS; i++) {
-                if(fb->A != NULL)
+                if(fb->A != NULL) {
                     for(j=0; j<nS; j++){
                         b_A_num[i][j] += x_data[x]->xi[t][i][j];
                         b_A_den[i][j] += x_data[x]->gamma[t][i];
                     }
-                if(fb->B != NULL)
+                }
+                if(fb->B != NULL) {
                     for(m=0; m<nO; m++) {
                         b_B_num[i][m] += (m==o) * x_data[x]->gamma[t][i];
                         b_B_den[i][m] += x_data[x]->gamma[t][i];
                     }
+                }
 			}
 		}
 //        if(fb->A != NULL)  // A,B average across sequences
@@ -2874,35 +2878,46 @@ NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
 	} // for all groups within a skill
 	// set params
 	for(i=0; i<nS; i++) {
-        if(fb->pi != NULL)
+        if(fb->pi != NULL) {
             fb->pi[i] = b_PI[i];
-        if(fb->A != NULL)
-            for(j=0; j<nS; j++)
+        }
+        if(fb->A != NULL) {
+            for(j=0; j<nS; j++) {
                 fb->A[i][j] = b_A_num[i][j] / safe0num(b_A_den[i][j]);
 //                fb->A[i][j] = c_A[i][j] / xndat; // A,B average across sequences
-        if(fb->B != NULL)
-            for(m=0; m<nO; m++)
+            }
+        }
+        if(fb->B != NULL) {
+            for(m=0; m<nO; m++) {
                 fb->B[i][m] = b_B_num[i][m] / safe0num(b_B_den[i][m]);
 //                fb->B[i][m] = c_B[i][m] / xndat; // A,B average across sequences
+            }
+        }
 	}
     // scale
     if( !this->hasNon01Constraints() ) {
-        if(fb->pi != NULL)
+        if(fb->pi != NULL) {
             projectsimplex(fb->pi, nS);
+        }
         for(i=0; i<nS; i++) {
-            if(fb->A != NULL)
+            if(fb->A != NULL) {
                 projectsimplex(fb->A[i], nS);
-            if(fb->B != NULL)
+            }
+            if(fb->B != NULL) {
                 projectsimplex(fb->B[i], nO);
+            }
         }
     } else {
-        if(fb->pi != NULL)
+        if(fb->pi != NULL) {
             projectsimplexbounded(fb->pi, this->getLbPI(), this->getUbPI(), nS);
+        }
         for(i=0; i<nS; i++) {
-            if(fb->A != NULL)
+            if(fb->A != NULL) {
                 projectsimplexbounded(fb->A[i], this->getLbA()[i], this->getUbA()[i], nS);
-            if(fb->B != NULL)
+            }
+            if(fb->B != NULL) {
                 projectsimplexbounded(fb->B[i], this->getLbB()[i], this->getUbB()[i], nO);
+            }
         }
     }
     

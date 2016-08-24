@@ -377,8 +377,9 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
         if(ar[i]<0 || ar[i] >1)
             fprintf(stderr, "ERROR! projected value is not within [0, 1] range!\n");
     }
-    if( fabs(sum-1)>SAFETY)
+    if( fabs(sum-1)>SAFETY) {
         fprintf(stderr, "ERROR! projected simplex does not sum to 1!\n");
+    }
     
 	free(at_hi);
 	free(at_lo);

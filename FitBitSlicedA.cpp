@@ -447,39 +447,47 @@ void FitBitSlicedA::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
     NUMBER **a_B = NULL;
     get(fbs, a_PI, a_A, a_B);
 	if(this->pi != NULL) doLog10Scale1DGentle(a_PI, this->pi, this->nS);
-    if(this->A  != NULL)
-        for(NPAR z=0; z<this->nZ; z++)
+    if(this->A  != NULL) {
+        for(NPAR z=0; z<this->nZ; z++) {
             doLog10Scale2DGentle(a_A[z],  this->A[z], this->nS, this->nS);
-	if(this->B  != NULL)
+        }
+    }
+    if(this->B  != NULL) {
         doLog10Scale2DGentle(a_B,  this->B, this->nS, this->nO);
+    }
 }
 
 void FitBitSlicedA::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor) {
-    NPAR i, j, m, z, matrixOff, rowOff;
+    NPAR i, j, m, z;
+    int matrixOff, rowOff;
     if(param->Cslices==0) return;
     NUMBER C = param->Cw[this->Cslice];
-    NPAR nCenters = param->nS + param->nS*param->nS + param->nS*param->nO; // centers per slice
+    int nCenters = param->nS + param->nS*param->nS + param->nS*param->nO; // centers per slice
     switch (fbv) {
         case FBV_PI:
-            for(i=0; i<this->nS; i++)
+            for(i=0; i<this->nS; i++) {
                 this->gradPI[i] += factor * L2penalty(C, this->pi[i], param->Ccenters[ this->Cslice * nCenters + i] );
+            }
             break;
         case FBV_A:
-            for(z=0; z<this->nZ; z++)
-                for(i=0; i<this->nS; i++)
+            for(z=0; z<this->nZ; z++) {
+                for(i=0; i<this->nS; i++) {
                     for(j=0; j<this->nS; j++) {
                         matrixOff = this->nS;
                         rowOff = i*this->nS;
                         this->gradA[z][i][j] += factor * L2penalty(C, this->A[z][i][j], param->Ccenters[ this->Cslice * nCenters + matrixOff + rowOff + j] );
                     }
+                }
+            }
             break;
         case FBV_B:
-            for(i=0; i<this->nS; i++)
+            for(i=0; i<this->nS; i++) {
                 for(m=0; m<this->nO; m++) {
                     matrixOff = this->nS + this->nS*this->nS;
                     rowOff = i*this->nS;
                     this->gradB[i][m] += factor * L2penalty(C, this->B[i][m], param->Ccenters[ this->Cslice * nCenters + matrixOff + rowOff + m] );
                 }
+            }
             break;
             
         default:
