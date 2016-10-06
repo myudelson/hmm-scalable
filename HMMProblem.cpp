@@ -1002,6 +1002,21 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 //		hmm->producePCorrectBoost(&gsm, local_pred, t); //BOOST
 		projectsimplex(local_pred, nO); // addition to make sure there's not side effects
 		
+        // write prediction out (before pKnown update)
+        if(f_predictions>0 /*&& output_this*/) { // write predictions file if it was opened
+            for(m=0; m<nO; m++) {
+                fprintf(fid,"%12.10f%s",local_pred[m],(m<(nO-1))?"\t": ((f_predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+                //				d = (NDAT)m*N + t;
+                //				dat_predict[ d ] = local_pred[m];
+            }
+            if(f_predictions==2) { // if we print out states of KC's as welll
+                for(int l=0; l<n; l++) { // all KC here
+                    fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+                    //					fprintf(fid,"%12.10f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+                }
+            }
+        }
+        
 		// if necessary guess the obsevaion using Pi and B
 		if(f_update_known=='g') {
 			NUMBER max_local_pred=0;
@@ -1057,20 +1072,6 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 //            projectsimplex(pLbit, nS); // addition to make sure there's not side effects //BOOST
 		}
 		
-		// write prediction out (after update)
-		if(f_predictions>0 /*&& output_this*/) { // write predictions file if it was opened
-			for(m=0; m<nO; m++) {
-				fprintf(fid,"%12.10f%s",local_pred[m],(m<(nO-1))?"\t": ((hmm->p->predictions==1)?"\n":"\t") );// if we print states of KCs, continut
-//				d = (NDAT)m*N + t;
-//				dat_predict[ d ] = local_pred[m];
-			}
-//			if(f_predictions==2) { // if we print out states of KC's as welll
-//				for(int l=0; l<n; l++) { // all KC here
-//					fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
-////					fprintf(fid,"%12.10f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
-//				}
-//			}
-		}
 		rmse += pow(isTarget-local_pred[f_metrics_target_obs],2);
 		rmse_no_null += pow(isTarget-local_pred[f_metrics_target_obs],2);
 		accuracy += isTarget == (local_pred[f_metrics_target_obs]==maxn(local_pred,nO) && local_pred[f_metrics_target_obs]>1/nO);
