@@ -252,9 +252,9 @@ void projectsimplex(NUMBER* ar, NPAR size) {
         if(ar[i]<0 || ar[i] >1)
             fprintf(stderr, "ERROR! projected value is not within [0, 1] range!\n");
     }
-    if( fabs(sum-1)>SAFETY)
-        fprintf(stderr, "ERROR! projected simplex does not sum to 1!\n");
-    
+//    if( fabs(sum-1)>SAFETY)
+//        fprintf(stderr, "ERROR! projected simplex does not sum to 1!\n");
+	
     free(at_hi);
     free(at_lo);
 }
@@ -377,10 +377,10 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
         if(ar[i]<0 || ar[i] >1)
             fprintf(stderr, "ERROR! projected value is not within [0, 1] range!\n");
     }
-    if( fabs(sum-1)>SAFETY) {
-        fprintf(stderr, "ERROR! projected simplex does not sum to 1!\n");
-    }
-    
+//    if( fabs(sum-1)>SAFETY) {
+//        fprintf(stderr, "ERROR! projected simplex does not sum to 1!\n");
+//    }
+	
 	free(at_hi);
 	free(at_lo);
 }
@@ -745,7 +745,7 @@ void set_param_defaults(struct param *param) {
 	param->ArmijoC1            = 1e-4;
 	param->ArmijoC2            = 0.9; // since we're not newton method
 	param->ArmijoReduceFactor  = 2;//1/0.9;//
-	param->ArmijoSeed          = 0.5; //1; - since we use smooth stepping 1 is the only thing we need
+	param->ArmijoSeed          = 1.0; //1; - since we use smooth stepping 1 is the only thing we need
     param->ArmijoMinStep       = 0.001; //  0.000001~20steps, 0.001~10steps
     // coord descend
     param->first_iteration_qualify = 0;
@@ -766,6 +766,7 @@ void set_param_defaults(struct param *param) {
     param->dat_item = NULL;
 //    param->dat_multiskill = NULL;
     param->dat_slice = NULL;
+	param->tag1 = 0;
 }
 
 void destroy_input_data(struct param *param) {

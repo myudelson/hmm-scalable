@@ -127,6 +127,8 @@ and B correspond to priors, transition, and observation matrices written row by
 row. Thus, first element of PI is pLo=0.55, 3rd element of A is pT=0.4, 2nd and
 3rd elements of B are pS=0.12 and pG=0.22 respectively.
 
+Prediction file, for a standard BKT model with nO=2 observations would contain 2 tab-separated columns. First column is correspond to the model-estimated prior probability of student being correct for that particular observation. The second column is the compliment of the probabilit of correct -- probability of being incorrect (see an example below).
+
 -- prediction file --
 0.73    0.27
 0.88    0.12

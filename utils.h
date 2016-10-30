@@ -106,7 +106,7 @@ enum CROSS_VALIDATION {
 // "Structure" of the model we are fitting with a method
 enum STRUCTURE {
     STRUCTURE_SKILL   = 1,  // 1 - all by skill
-//    STRUCTURE_GROUP   = 2,  // 2 - all by group (user) // doesn't make sense anymore
+//  STRUCTURE_GROUP   = 2,  // 2 - all by group (user) // doesn't make sense anymore
     STRUCTURE_PIg     = 3,  // 3 - PI by group, A,B by skill
     STRUCTURE_SKABslc = 11, // all by skill - sliced A and B
     STRUCTURE_SKAslc  = 12, // all by skill - sliced A
@@ -116,7 +116,8 @@ enum STRUCTURE {
     STRUCTURE_Agk     = 6,  // 6 - A by skll&group, PI,B by skill
     STRUCTURE_PIABgk  = 7,  // 5 - PI, A, B by skll&group
     STRUCTURE_SKILL_T = 8,  // 6 - by skill with transfer matrix
-    STRUCTURE_Agki    = 9   //     A by skll&group & interaction, PI,B by skill
+	STRUCTURE_Agki    = 9,  //     A by skll&group & interaction, PI,B by skill
+	STRUCTURE_COMP    = 13  // Compensatory BKT for multi-skill rows
 };
 
 // return type cummrizing a result of a fir of the [subset of the] data
@@ -246,6 +247,7 @@ struct param {
     NUMBER *kc_rmse;  // per-kc RMSE
     NUMBER *kc_acc;  // per-kc Accuracy
     NDAT *kc_counts;// number of kc datapoints
+	NDAT tag1; // helper tag for stateful processing of data
 };
 
 void destroy_input_data(struct param *param);

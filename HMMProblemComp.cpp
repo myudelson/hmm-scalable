@@ -57,10 +57,24 @@ void HMMProblemComp::init(struct param *param) {
     NUMBER *a_PI, ** a_A, ** a_B;
     init3Params(a_PI, a_A, a_B, nS, nO);
     
-    //
+	// is_multi
+	this->is_multi = Calloc(NPAR, (size_t)this->p->nK);
+	// assign is_multi labels
+	NCAT k, n;
+	for(NDAT t=0; t<this->p->N; t++) {
+		n = this->p->dat_skill_rcount[t];
+		if(n>1) {
+			for(NCAT l=0; l<n; l++) {
+				k = this->p->dat_skill_stacked[ this->p->dat_skill_rix[t] + l ];
+				is_multi[k] = 1;
+			}
+		}
+	}
+
+	//
     // setup params
     //
-	NPAR i, j, idx, offset;
+	NPAR i, j, m, idx, offset;
 	NUMBER sumPI = 0;
 	NUMBER sumA[nS];
 	NUMBER sumB[nS];
@@ -105,9 +119,19 @@ void HMMProblemComp::init(struct param *param) {
     this->B   = init3D<NUMBER>(nK, nS, nO);
     NCAT x;
     for(x=0; x<nK; x++) {
-        cpy1D<NUMBER>(a_PI, this->pi[x], nS);
-        cpy2D<NUMBER>(a_A,  this->A[x],  nS, nS);
-        cpy2D<NUMBER>(a_B,  this->B[x],  nS, nO);
+//		if(this->is_multi[x]==0) {
+			cpy1D<NUMBER>(a_PI, this->pi[x], nS);
+			cpy2D<NUMBER>(a_A,  this->A[x],  nS, nS);
+			cpy2D<NUMBER>(a_B,  this->B[x],  nS, nO);
+//		} else {
+//			for(i=0; i<nS; i++) {
+//				this->pi[x][i] = 0.5;
+//				for(j=0; j<nS; j++)
+//					this->A[x][i][j] = 0.5;
+//				for(m=0; m<nO; m++)
+//					this->B[x][i][m] = 0.5;
+//			}
+//		}
     }
     // PIg start with same params
     // destroy setup params
@@ -144,19 +168,6 @@ void HMMProblemComp::init(struct param *param) {
 			lbB[i][j] = this->p->param_lo[idx];
 			ubB[i][j] = this->p->param_hi[idx];
 		}
-    // is_multi
-    this->is_multi = Calloc(NPAR, (size_t)this->p->nK);
-    // assign is_multi labels
-    NCAT k, n;
-    for(NDAT t=0; t<this->p->N; t++) {
-        n = this->p->dat_skill_rcount[t];
-        if(n>1) {
-            for(NCAT l=0; l<n; l++) {
-                k = this->p->dat_skill_stacked[ this->p->dat_skill_rix[t] + l ];
-                is_multi[k] = 1;
-            }
-        }
-    }
 }
 
 HMMProblemComp::~HMMProblemComp() {
@@ -172,50 +183,50 @@ void HMMProblemComp::destroy() {
 //	return this->pi;
 //}
 //
-//NUMBER* HMMProblemComp::getPI(NCAT x) { // same as getPIk(x)
-//	if( x > (this->p->nK-1) ) {
-//		fprintf(stderr,"While accessing PI_k, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
-//		exit(1);
-//	}
-//	return this->pi[x];
-//}
-//
-//NUMBER** HMMProblemComp::getA(NCAT x) {
-//	if( x > (this->p->nK-1) ) {
-//		fprintf(stderr,"While accessing A, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
-//		exit(1);
-//	}
-//	return this->A[x];
-//}
-//
-//NUMBER** HMMProblemComp::getB(NCAT x) {
-//	if( x > (this->p->nK-1) ) {
-//		fprintf(stderr,"While accessing B, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
-//		exit(1);
-//	}
-//	return this->B[x];
-//}
+NUMBER* HMMProblemComp::getPI(NCAT x) { // same as getPIk(x)
+	if( x > (this->p->nK-1) ) {
+		fprintf(stderr,"While accessing PI_k, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
+		exit(1);
+	}
+	return this->pi[x];
+}
+
+NUMBER** HMMProblemComp::getA(NCAT x) {
+	if( x > (this->p->nK-1) ) {
+		fprintf(stderr,"While accessing A, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
+		exit(1);
+	}
+	return this->A[x];
+}
+
+NUMBER** HMMProblemComp::getB(NCAT x) {
+	if( x > (this->p->nK-1) ) {
+		fprintf(stderr,"While accessing B, skill index %d exceeded last index of the data %d.\n", x, this->p->nK-1);
+		exit(1);
+	}
+	return this->B[x];
+}
 
 // Stateful, depends on whether the flag 'cnt' is on/off and the skill is_multi and the other skill parameters
 NUMBER HMMProblemComp::getPI(struct data* dt, NPAR i) {
 	NUMBER r = 0;
 	// dt->cnt==0 means, get dt->k'th skill only
-	// if dt->cnt==1, try and see whether there are other "neighbours"
+	// if param->tag1==1, try and see whether there are other "neighbours"
 	// dt->t should be set to the global index of the row in question
-	if( dt->cnt==0 && this->is_multi[dt->k] == 0) { // this skill is never multiskill
+	if( this->p->tag1==0 || this->is_multi[dt->k] == 0) { // we ask for single skill specifically or this skill is never multiskill
 		r = this->pi[dt->k][i];
 	} else {
 		NCAT n_skills = this->p->dat_skill_rcount[ dt->t ];
 		if( n_skills==1 ) { // this skill is alone on row dt->t
 			r = this->pi[dt->k][i];
 		} else { // collect multiple \pi[i]
-			NUMBER* p = Calloc(NUMBER, (size_t)n_skills );
+			NUMBER* q = Calloc(NUMBER, (size_t)n_skills );
 			NCAT k=0;
 			for(NCAT l=0; l<n_skills; l++) {
 				k = this->p->dat_skill_stacked[ this->p->dat_skill_rix[ dt->t ]+l ];
-				p[l] = this->pi[k][i];
-				r = squishing(p, n_skills);
+				q[l] = this->pi[k][i];
 			}
+			r = squishing(q, n_skills);
 		} // definitely multiskill
 	} // end sometimes multiskill
     return r;
@@ -225,22 +236,22 @@ NUMBER HMMProblemComp::getPI(struct data* dt, NPAR i) {
 NUMBER HMMProblemComp::getA(struct data* dt, NPAR i, NPAR j) {
 	NUMBER r = 0;
 	// dt->cnt==0 means, get dt->k'th skill only
-	// if dt->cnt==1, try and see whether there are other "neighbours"
+	// if param->tag1==1, try and see whether there are other "neighbours"
 	// dt->t should be set to the global index of the row in question
-	if( dt->cnt==0 && this->is_multi[dt->k] == 0) { // this skill is never multiskill
+	if( this->p->tag1==0 || this->is_multi[dt->k] == 0) { // we ask for single skill specifically or this skill is never multiskill
 		r = this->A[dt->k][i][j];
 	} else {
 		NCAT n_skills = this->p->dat_skill_rcount[ dt->t ];
 		if( n_skills==1 ) { // this skill is alone on row dt->t
 			r = this->A[dt->k][i][j];
 		} else { // collect multiple \pi[i]
-			NUMBER* p = Calloc(NUMBER, (size_t)n_skills );
+			NUMBER* q = Calloc(NUMBER, (size_t)n_skills );
 			NCAT k=0;
 			for(NCAT l=0; l<n_skills; l++) {
 				k = this->p->dat_skill_stacked[ this->p->dat_skill_rix[ dt->t ]+l ];
-				p[l] = this->A[k][i][j];
-				r = squishing(p, n_skills);
+				q[l] = this->A[k][i][j];
 			}
+			r = squishing(q, n_skills);
 		} // definitely multiskill
 	} // end sometimes multiskill
 	return r;
@@ -250,100 +261,150 @@ NUMBER HMMProblemComp::getA(struct data* dt, NPAR i, NPAR j) {
 NUMBER HMMProblemComp::getB(struct data* dt, NPAR i, NPAR m) {
 	NUMBER r = 0;
 	// dt->cnt==0 means, get dt->k'th skill only
-	// if dt->cnt==1, try and see whether there are other "neighbours"
+	// if param->tag1==1, try and see whether there are other "neighbours"
 	// dt->t should be set to the global index of the row in question
 
 	// special attention for "unknonw" observations, i.e. the observation was there but we do not know what it is
 	// in this case we simply return 1, effectively resulting in no change in \alpha or \beta vatiables
 	if(m<0) {
 		r = 1;
-	} else if( dt->cnt==0 && this->is_multi[dt->k] == 0) { // this skill is never multiskill
+	} else if( this->p->tag1==0 || this->is_multi[dt->k] == 0) { // we ask for single skill specifically or this skill is never multiskill
 		r = this->B[dt->k][i][m];
 	} else {
 		NCAT n_skills = this->p->dat_skill_rcount[ dt->t ];
 		if( n_skills==1 ) { // this skill is alone on row dt->t
 			r = this->B[dt->k][i][m];
 		} else { // collect multiple \pi[i]
-			NUMBER* p = Calloc(NUMBER, (size_t)n_skills );
+			NUMBER* q = Calloc(NUMBER, (size_t)n_skills );
 			NCAT k=0;
 			for(NCAT l=0; l<n_skills; l++) {
 				k = this->p->dat_skill_stacked[ this->p->dat_skill_rix[ dt->t ]+l ];
-				p[l] = this->B[k][i][m];
-				r = squishing(p, n_skills);
+				q[l] = this->B[k][i][m];
 			}
+			r = squishing(q, n_skills);
 		} // definitely multiskill
 	} // end sometimes multiskill
 	return r;
 }
 
-
+//
 void HMMProblemComp::setGradPI(FitBit *fb){
-    if(this->p->block_fitting[0]>0) return;
-    NDAT t = 0, ndat = 0;
-    NPAR i, o;
-    NUMBER combined, deriv_logit;
-    struct data* dt;
-    for(NCAT x=0; x<fb->xndat; x++) {
-        dt = fb->x_data[x];
-        if( dt->cnt!=0 ) continue;
-        ndat += dt->n;
-//    o = dt->obs[t];
-        o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
-        for(i=0; i<fb->nS; i++) {
-            combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
-            deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );
-            fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
-        }
-    }
-    if( this->p->Cslices>0 ) // penalty
-        fb->addL2Penalty(FBV_PI, this->p, (NUMBER)ndat);
+	if(this->p->block_fitting[0]>0) return;
+	NDAT t = 0, ndat = 0;
+	NPAR i, o;
+	NUMBER combined, deriv_logit;
+	struct data* dt;
+	NDAT tag1 = this->p->tag1;
+	this->p->tag1 = 1;
+//	this->p->tag1 = 0; // only get parameter values not united with "neighburs", the only difference
+	for(NCAT x=0; x<fb->xndat; x++) {
+		dt = fb->x_data[x];
+		if( dt->cnt!=0 ) continue;
+		ndat += dt->n;
+		o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
+		dt->t = dt->ix[t]; // statefullness
+		for(i=0; i<this->p->nS; i++) {
+			NCAT n_skills = this->p->dat_skill_rcount[ dt->t ];
+			if( this->is_multi[dt->k] == 0 || n_skills == 1) {
+				fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
+			} else {
+				combined = getPI(dt,i);
+				deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );
+				fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
+			}
+		}
+	}
+	if( this->p->Cslices>0 ) // penalty
+		fb->addL2Penalty(FBV_PI, this->p, (NUMBER)ndat);
+	this->p->tag1 = tag1;
 }
 
-void HMMProblemComp::toFile(const char *filename) {
-	FILE *fid = fopen(filename,"w");
-	if(fid == NULL) {
-		fprintf(stderr,"Can't write output model file %s\n",filename);
-		exit(1);
+
+void HMMProblemComp::setGradA (FitBit *fb){
+	if(this->p->block_fitting[1]>0) return;
+	NDAT t, ndat = 0;
+	NPAR o, i, j;
+	NUMBER combined, deriv_logit;
+	struct data* dt;
+	NDAT tag1 = this->p->tag1;
+	this->p->tag1 = 1;
+//	this->p->tag1 = 0; // only get parameter values not united with "neighburs", the only difference
+	for(NCAT x=0; x<fb->xndat; x++) {
+		dt = fb->x_data[x];
+		if( dt->cnt!=0 ) continue;
+		ndat += dt->n;
+		for(t=1; t<dt->n; t++) {
+			o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
+			dt->t = dt->ix[t]; // statefullness
+			for(i=0; i<this->p->nS; i++) {
+				for(j=0; j<this->p->nS; j++) {
+					NCAT n_skills = this->p->dat_skill_rcount[ dt->t ];
+					if( this->is_multi[dt->k] == 0 || n_skills == 1) {
+						fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:fb->B[j][o]) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
+					} else {
+						combined = getA(dt,i,j);
+						deriv_logit = 1 / safe0num( fb->A[i][j] * (1-fb->A[i][j]) );
+						fb->gradA[i][j] -= combined * safe0num(1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:fb->B[j][o]) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
+					}
+				}
+			}
+		}
 	}
-    
-    // write solved id
-    writeSolverInfo(fid, this->p);
-    
-	fprintf(fid,"Null skill ratios\t");
-	for(NPAR m=0; m<this->p->nO; m++)
-		fprintf(fid," %12.10f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
-	NCAT k, g;
-    NPAR i,j,m;
-	std::map<NCAT,std::string>::iterator it;
-	for(g=0;g<this->p->nG; g++) {
-		it = this->p->map_group_bwd->find(g);
-		fprintf(fid,"%d\t%s\n",g,it->second.c_str());
-		fprintf(fid,"PIg\t");
-		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%12.10f%s",this->PIg[g][i],(i==(this->p->nS-1))?"\n":"\t");
-    }
-	for(k=0;k<this->p->nK;k++) {
-		it = this->p->map_skill_bwd->find(k);
-		fprintf(fid,"%d\t%s\n",k,it->second.c_str());
-		fprintf(fid,"PIk\t");
-		for(i=0; i<this->p->nS; i++)
-			fprintf(fid,"%12.10f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
-		fprintf(fid,"A\t");
-		for(i=0; i<this->p->nS; i++)
-			for(j=0; j<this->p->nS; j++)
-				fprintf(fid,"%12.10f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
-		fprintf(fid,"B\t");
-		for(i=0; i<this->p->nS; i++)
-			for(m=0; m<this->p->nO; m++)
-				fprintf(fid,"%12.10f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
-	}
-	fclose(fid);
+	if( this->p->Cslices>0 ) // penalty
+		fb->addL2Penalty(FBV_A, this->p, (NUMBER)ndat);
+	this->p->tag1 = tag1;
 }
+
+
+void HMMProblemComp::setGradB (FitBit *fb){
+	if(this->p->block_fitting[2]>0) return;
+	NDAT t, ndat = 0;
+	NPAR o, o0, i;//, j;
+	struct data* dt;
+	NUMBER combined, deriv_logit;
+	NDAT tag1 = this->p->tag1;
+	this->p->tag1 = 1;
+//	this->p->tag1 = 0; // only get parameter values not united with "neighburs", the only difference
+	for(NCAT x=0; x<fb->xndat; x++) {
+		dt = fb->x_data[x];
+		if( dt->cnt!=0 ) continue;
+		ndat += dt->n;
+		for(t=0; t<dt->n; t++) { // Levinson MMFST
+			dt->t = dt->ix[t]; // statefullness
+			o  = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
+			o0 = this->p->dat_obs[ dt->ix[0] ];//->get( dt->ix[t] );
+			if(o<0) // if no observation -- skip
+				continue;
+			for(i=0; i<this->p->nS; i++) {
+				NCAT n_skills = this->p->dat_skill_rcount[ dt->t ];
+				if( this->is_multi[dt->k] == 0 || n_skills == 1) {
+					fb->gradB[i][o] -= dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * fb->B[i][o]);
+				} else {
+					combined = getB(dt,i,o);
+					deriv_logit = 1 / safe0num( fb->B[i][o] * (1-fb->B[i][o]) );
+					fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * ((o<0)?1:fb->B[i][o]));
+				}
+			}
+			
+//			for(j=0; j<this->p->nS; j++)
+//				if(t==0) {
+//					fb->gradB[j][o] -= (o0==o) * fb->pi[j] * dt->beta[t][j];
+//				} else {
+//					for(i=0; i<this->p->nS; i++)
+//						fb->gradB[j][o] -= ( dt->alpha[t-1][i] * fb->A[i][j] * dt->beta[t][j] /*+ (o0==o) * getPI(dt,j) * dt->beta[0][j]*/ ) / safe0num(dt->p_O_param); // Levinson MMFST
+//				}
+		}
+	}
+	if( this->p->Cslices>0 ) // penalty
+		fb->addL2Penalty(FBV_B, this->p, (NUMBER)ndat);
+	this->p->tag1 = tag1;
+}
+
 
 void HMMProblemComp::fit() {
     NUMBER* loglik_rmse = init1D<NUMBER>(2);
     FitNullSkill(loglik_rmse, false /*do not need RMSE/SE*/);
-    if(this->p->structure == STRUCTURE_PIgk) {
+    if(this->p->structure == STRUCTURE_COMP) {
         loglik_rmse[0] += GradientDescent();
     } else {
         fprintf(stderr,"Solver specified is not supported.\n");
@@ -351,11 +412,14 @@ void HMMProblemComp::fit() {
     }
     this->neg_log_lik = loglik_rmse[0];
     free(loglik_rmse);
+	
+	this->p->tag1 = 1; // for prediction needs after this
 }
 
+
 NUMBER HMMProblemComp::GradientDescent() {
-	NCAT k, g, /*ki, gi, nX, */x;
-    NCAT nK = this->p->nK, nG = this->p->nG;
+	NCAT k, x;
+    NCAT nK = this->p->nK;
 
 	//
 	// fit all as 1 skill first, set group gradients to 0, and do not fit them
@@ -384,31 +448,79 @@ NUMBER HMMProblemComp::GradientDescent() {
             printf("single skill iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
         delete fb;
     }
-	//
-	// Main fit
-	//
     if( this->p->single_skill!=2 ) { // if not "force single skill"
-        NCAT first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
-        NCAT iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
-        NCAT* iter_qual_skill = Calloc(NCAT, (size_t)nK);
-        NCAT* iter_qual_group = Calloc(NCAT, (size_t)nG);
-        NCAT* iter_fail_skill = Calloc(NCAT, (size_t)nK); // counting concecutive number of failures to converge for skills
-        NCAT* iter_fail_group = Calloc(NCAT, (size_t)nG); // counting concecutive number of failures to converge for groups
-        int skip_k = 0, skip_g = 0;
+		NCAT first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
+		NCAT iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
+		NCAT* iter_qual_skill = Calloc(NCAT, (size_t)nK); //
+		NCAT* iter_fail_skill = Calloc(NCAT, (size_t)nK); // counting concecutive number of failures to converge for skills
+		int skip_k = 0;
+		//
+		// Main fit Stage 1. Single-skills, skills that only show up on single-skill rows.
+		//
 
+//		int parallel_now = this->p->parallel==1; //PAR
+//		#pragma omp parallel if(parallel_now) shared(iter_qual_skill)//PAR
+//		{//PAR
+//		#pragma omp for schedule(dynamic) //PAR
+		
+		NDAT sum_is_multi = 0;
+		for(x=0; x<nK; x++) {
+			sum_is_multi += (this->is_multi[x] == 1);
+//			if(this->is_multi[x] == 0) {
+				// vvvv Extract from HMMProblem.cpp
+				NCAT xndat;
+				struct data** x_data;
+				xndat = this->p->k_numg[x];
+				x_data = this->p->k_g_data[x];
+				FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
+				fb->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);
+				if(this->p->block_fitting[0]!=0) fb->pi = NULL;
+				if(this->p->block_fitting[1]!=0) fb->A  = NULL;
+				if(this->p->block_fitting[2]!=0) fb->B  = NULL;
+				
+				FitResult fr;
+				fb->init(FBS_PARm1);
+				fb->init(FBS_GRAD);
+				if(this->p->solver==METHOD_CGD) {
+					fb->init(FBS_DIR);
+					fb->init(FBS_DIRm1);
+					fb->init(FBS_GRADm1);
+				}
+				if(this->p->solver==METHOD_GBB) {
+					fb->init(FBS_GRADm1);
+				}
+				fb->init(FBS_PARm2); // do this for all in order to capture oscillation, e.g. if new param at t is close to param at t-2 (tolerance)
+				
+				fr = GradientDescentBit(fb);
+				delete fb;
+				
+				if( ( (fr.conv || fr.iter==this->p->maxiter) )) {
+					if(!this->p->quiet)
+						printf("skill %5d, seq %5d, dat %8d, iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n", x, xndat, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
+				}
+				// ^^^^
+				skip_k++;
+//			}
+		}
+		/**/
+//        }//PAR
+		
+		//
+		// Main fit Stage 2. Multi-skills (skills that at least sometimes show up in multi-skil rows
+		//
+		skip_k -= sum_is_multi; // update skills showing up in multi-skill rows
         int i = 0; // count runs
 //        int parallel_now = this->p->parallel==1; //PAR
-//        #pragma omp parallel if(parallel_now) shared(iter_qual_group,iter_qual_skill)//PAR
+//        #pragma omp parallel if(parallel_now) shared(iter_qual_skill)//PAR
 //        {//PAR
-        while(skip_k<nK || skip_g<nG) {
+        while(skip_k<nK) {
             //
-            // Skills first
+            // Multi-skills, a version of what iBKT was doing
             //
-            
             if(skip_k<nK) {
 //                #pragma omp for schedule(dynamic) //PAR
                 for(k=0; k<nK; k++) { // for all A,B-by-skill
-                    if(iter_qual_skill[k]==iterations_to_qualify || iter_fail_skill[k]==iterations_to_qualify)
+                    if(this->is_multi[k]==0 || iter_qual_skill[k]==iterations_to_qualify || iter_fail_skill[k]==iterations_to_qualify)
                         continue;
                     FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
                     // link
@@ -425,17 +537,19 @@ NUMBER HMMProblemComp::GradientDescent() {
                         fb->init(FBS_GRADm1);
                         fb->init(FBS_DIRm1);
                     }
-                    FitResult fr = GradientDescentBit(fb);
+					NDAT tag1 = this->p->tag1;
+					this->p->tag1 = 1;
+					FitResult fr = GradientDescentBit(fb);
+					this->p->tag1 = tag1;
                     // decide on convergence
                     if(i>=first_iteration_qualify || fb->xndat==0) {
-                        if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG || fb->xndat==0) { // converged quick, or don't care (others all converged
+                        if(fr.iter==1 /*e<=this->p->tol*/ || fb->xndat==0) { // converged quick, or don't care (others all converged
                             iter_qual_skill[k]++;
                             if(fb->xndat==0) {
                                 iter_qual_skill[k]=iterations_to_qualify;
                                 fr.conv = 1;
                             }
-                            if(iter_qual_skill[k]==iterations_to_qualify || skip_g==nG) {// criterion met, or don't care (others all converged)
-                                if(skip_g==nG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
+                            if(iter_qual_skill[k]==iterations_to_qualify ) {// criterion met, or don't care (others all converged)
 //                                #pragma omp critical(update_skip_k)//PAR
 //                                {//PAR
                                     skip_k++;
@@ -451,60 +565,6 @@ NUMBER HMMProblemComp::GradientDescent() {
                     delete fb;
                 } // for all skills
             }
-            //
-            // PIg second
-            //
-            if(skip_g<nG){
-//                #pragma omp for schedule(dynamic)//PAR
-                for(g=0; g<nG; g++) { // for all PI-by-user
-                    if(iter_qual_group[g]==iterations_to_qualify)
-                        continue;
-                    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
-                    // link
-                    fb->link(this->getPIg(g), NULL, NULL, this->p->g_numk[g], this->p->g_k_data[g]);
-                    if(this->p->block_fitting[0]!=0) fb->pi = NULL;
-                    if(this->p->block_fitting[1]!=0) fb->A  = NULL;
-                    if(this->p->block_fitting[2]!=0) fb->B  = NULL;
-
-                    fb->Cslice = 1;
-                    fb->init(FBS_PARm1);
-                    fb->init(FBS_PARm2);
-                    fb->init(FBS_GRAD);
-                    if(this->p->solver==METHOD_CGD) {
-                        fb->init(FBS_GRADm1);
-                        fb->init(FBS_DIRm1);
-                    }
-                    FitResult fr = GradientDescentBit(fb);
-                    // decide on convergence
-                    if(i>=first_iteration_qualify || fb->xndat==0) { //can qualify or  student had no skill labelled rows
-                        if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==nK || fb->xndat==0) { // converged quick, or don't care (others all converged), or
-                            iter_qual_group[g]++;
-                            if(fb->xndat==0) {
-                                iter_qual_group[g]=iterations_to_qualify;
-                                fr.conv = 1;
-                            }
-                            if(iter_qual_group[g]==iterations_to_qualify || skip_k==nK) {// criterion met, or don't care (others all converged)
-                                if(skip_k==nK) iter_qual_group[g]=iterations_to_qualify; // K not changing anymore
-//                                #pragma omp critical(update_skip_g)//PAR
-//                                {//PAR
-                                    skip_g++;
-//                                }//PAR
-                                if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
-                                    printf("run %2d skipG %4d group %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",i,skip_g,g,fr.iter,fr.pO0,fr.pO,fr.conv);
-                                }
-                            }
-                        }
-                        else
-                            iter_qual_group[g]=0;
-                    } // decide on convergence
-                    delete fb;
-                } // for all groups
-            }
-//            fr.conv = checkConvergenceBig(fbs, nK+nG, this->p->tol, &crit);
-//            
-//            computeAlphaAndPOParam(this->p->nSeq, this->p->k_data);
-//            ll = HMMProblem::getSumLogPOPara(this->p->nSeq, this->p->k_data);
-//            printf("*%i ll=%15.7f, crit=%12.10f\n",i,ll,crit);
 //            #pragma omp single//PAR
 //            {//PAR
             i++;
@@ -513,383 +573,114 @@ NUMBER HMMProblemComp::GradientDescent() {
 //        }//PAR
         // recycle qualifications
         if( iter_qual_skill != NULL ) free(iter_qual_skill);
-        if( iter_qual_group != NULL) free(iter_qual_group);
         if( iter_fail_skill != NULL ) free(iter_fail_skill);
-        if( iter_fail_group != NULL) free(iter_fail_group);
 
     } // if not "force single skill
         
-//    for(x=0;x<nX;x++) delete fbs[x];
-//    if(fbs!=NULL) free(fbs);
-        
-    if(false){
-        NCAT q, x;
-        NCAT nQ = this->p->nK + this->p->nG;
-        FitBit **fbs = Calloc(FitBit*, (size_t)nQ);
-        for(q=0;q<nQ;q++) {
-            NCAT xndat;
-            struct data** x_data;
-            if(q<this->p->nK) { // skills
-                x = q;
-                xndat = this->p->k_numg[x];
-                x_data = this->p->k_g_data[x];
-                fbs[q] = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
-                fbs[q]->link( HMMProblem::getPI(x), HMMProblem::getA(x), HMMProblem::getB(x), xndat, x_data);
-            } else { // groups
-                x = q - this->p->nK;
-                xndat = this->p->g_numk[x];
-                x_data = this->p->g_k_data[x];
-                fbs[q] = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
-                fbs[q]->link( this->getPIg(x), NULL, NULL, xndat, x_data);
-            }
-            fbs[q]->init(FBS_PARm1);
-            fbs[q]->init(FBS_GRAD);
-            if(this->p->solver==METHOD_CGD) {
-                fbs[q]->init(FBS_GRADm1);
-                fbs[q]->init(FBS_DIRm1);
-            }
-        }
-        /*FitResult fr=*/GradientDescentBitBig(fbs, nQ);
-        
-        for(q=0;q<nQ;q++) delete fbs[q];
-        if(fbs!=NULL) free(fbs);
-    }
-    
     // compute loglik
     return getSumLogPOPara(this->p->nSeq, this->p->k_data);
 }
 
-
-//struct data***  HMMProblemComp::getExdendedData(NCAT xndat, struct data** x_data, NPAR kg_flag, NCAT* xxndat) {
-//    NCAT q, r, g, k;
-//    struct data*** xx_data;
-//    *xxndat = 0;
-//    NCAT yndat;
-//    struct data** z_data;
-//    struct data** y_data;
-//    if(kg_flag==0) {
-//        for(q=0; q<xndat; q++)
-//            *xxndat += this->p->g_numk[ x_data[q]->g ];
-//        
-//    } else if (kg_flag==1) {
-//        for(q=0; q<xndat; q++)
-//            *xxndat += this->p->k_numg[ x_data[q]->k ];
-//        
-//    } else {
-//        fprintf(stderr,"Unexpected value of kg_flag\n");
-//        return NULL;
-//    }
-//    z_data = (Malloc(struct data *, (size_t)*xxndat));
-//    xx_data = &z_data;
-//    NDAT i = 0;
-//    if(kg_flag==0) {
-//        for(q=0; q<xndat; q++) {
-//            g = x_data[q]->g;
-//            yndat = this->p->g_numk[g];
-//            y_data = this->p->g_k_data[g];
-//            for(r=0; r<yndat; r++)
-//                z_data[i++] = y_data[r];
-//        }
-//        
-//    } else if (kg_flag==1) {
-//        for(q=0; q<xndat; q++) {
-//            k = x_data[q]->k;
-//            yndat = this->p->k_numg[k];
-//            y_data = this->p->k_g_data[k];
-//            for(r=0; r<yndat; r++)
-//                z_data[i++] = y_data[r];
-//        }
-//    }
-//    return xx_data;
-//}
-
-//NUMBER HMMProblemComp::GradientDescentX() {
-//	NCAT k, ki, g, gi;
-//    /*NPAR nS = this->p->nS, nO = this->p->nO;*/ NCAT nK = this->p->nK, nG = this->p->nG;
-//    NUMBER loglik = 0;
-//    FitResult fr;
-//    FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol);
-//    fb->init(FBS_PARm1);
-//    fb->init(FBS_GRAD);
-//    if(this->p->solver==METHOD_CGD) {
-//        fb->init(FBS_GRADm1);
-//        fb->init(FBS_DIRm1);
-//    }
-//	//
-//	// fit all as 1 skill first, set group gradients to 0, and do not fit them
-//	//
-//	if(this->p->single_skill>0) {
-//        fb->linkPar( HMMProblem::getPI(0), HMMProblem::getA(0), HMMProblem::getB(0), this->p->nSeq, this->p->k_data);// link skill 0 (we'll copy fit parameters to others
-//        fr = GradientDescentBit(fb, true /*is1SkillForAll*/);
-//        if( !this->p->quiet )
-//            printf("single skill iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n", fr.iter,fr.pO0,fr.pO,fr.conv);
-//    }
-//	//
-//	// Main fit
-//	//
-//    if( this->p->single_skill!=2 ) { // if not "force single skill"
-//        NCAT first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
-//        NCAT iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
-//        NCAT* iter_qual_skill = Calloc(NCAT, (size_t)nK);
-//        NCAT* iter_qual_group = Calloc(NCAT, (size_t)nG);
-//        int skip_k = 0, skip_g = 0;
-//        
-//        //        NUMBER **cpyPI;
-//        ////        NUMBER **cpyPIg;
-//        //        NUMBER ***cpyA;
-//        //        NUMBER ***cpyB;
-//        //        if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//        //            cpyPI  = init2D<NUMBER>(this->p->nK, this->p->nS);
-//        //            cpyA   = init3D<NUMBER>(this->p->nK, this->p->nS, this->p->nS);
-//        //            cpyB   = init3D<NUMBER>(this->p->nK, this->p->nS, this->p->nO);
-//        ////            cpyPIg = init2D<NUMBER>(this->p->nG, this->p->nS);
-//        //            NCAT x;
-//        //            for(x=0; x<nK; x++) {
-//        //                cpy1D<NUMBER>(this->getPI(x), cpyPI[x], this->p->nS);
-//        //                cpy2D<NUMBER>(this->getA(x),  cpyA[x],  this->p->nS, this->p->nS);
-//        //                cpy2D<NUMBER>(this->getB(x),  cpyB[x],  this->p->nS, this->p->nO);
-//        //            }
-//        ////            // PIg start with same params
-//        ////            for(x=0; x<nG; x++)
-//        ////                cpy1D<NUMBER>(cpyPIg[x], this->PIg[x], this->p->nS);
-//        //        }
-//        
-//        // utilize fitting larger data first
-//        NDAT newnK=0, newnG=0;
-//        this->reorderSequences(&newnK, &newnG);
-//        
-//        
-//        int i = 0; // count runs
-//        while(skip_k<newnK || skip_g<newnG) {
-//            //
-//            // Skills first
-//            //
-//            for(ki=0; ki<newnK && skip_k<newnK; ki++) { // for all A,B-by-skill
-//                k = sortstrip_k[ki].id; // grab reordered k
-//                
-//                if(iter_qual_skill[k]==iterations_to_qualify)
-//                    continue;
-//                NCAT xndat = this->p->k_numg[k];
-//                struct data** x_data = this->p->k_g_data[k];
-//                
-//                NCAT yndat;
-//                struct data** y_data;
-//                y_data = *getExdendedData(xndat, x_data, 0/*skill*/, &yndat);
-//                xndat = yndat;
-//                x_data = y_data;
-//                
-//                // link and fit
-//                fb->linkPar( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k));// link skill 0 (we'll copy fit parameters to others
-//                fr = GradientDescentBit(k/*use skill x*/, xndat, x_data, 0/*skill*/, fb, false /*is1SkillForAll*/);
-//                // decide on convergence
-//                if(i>=first_iteration_qualify) {
-//                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==newnG) { // converged quick, or don't care (others all converged
-//                        iter_qual_skill[k]++;
-//                        if(iter_qual_skill[k]==iterations_to_qualify || skip_g==newnG) {// criterion met, or don't care (others all converged)
-//                            if(skip_g==newnG) iter_qual_skill[k]=iterations_to_qualify; // G not changing anymore
-//                            skip_k++;
-//                            if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
-//                                computeAlphaAndPOParam(xndat, x_data);
-//                                printf("run %2d skipK %4d skill %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",i,skip_k,k,fr.iter,fr.pO0,fr.pO,fr.conv);
-//                            }
-//                        }
-//                    }
-//                    else
-//                        iter_qual_skill[k]=0;
-//                } // decide on convergence
-//                free(y_data);
-//                
-//                //                //
-//                //                // make copies of parameters to do gradient descend, link to copies, but grads computed from actual params
-//                //                //
-//                //                if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//                //                    swap1D<NUMBER>(cpyPI[k], this->getPI(k), this->p->nS);
-//                //                    swap2D<NUMBER>(cpyA[k],   this->getA(k), this->p->nS, this->p->nS);
-//                //                    swap2D<NUMBER>(cpyB[k],   this->getB(k), this->p->nS, this->p->nO);
-//                //                }
-//            } // for all skills
-//            //
-//            // PIg second
-//            //
-//            //            int z = 0;
-//            for(gi=0; gi<newnG && skip_g<newnG; gi++) { // for all PI-by-user
-//                g = sortstrip_g[gi].id; // grab reordered g
-//                
-//                if(iter_qual_group[g]==iterations_to_qualify)
-//                    continue;
-//                NCAT xndat = this->p->g_numk[g];
-//                struct data** x_data = this->p->g_k_data[g];
-//                
-//                NCAT yndat;
-//                struct data** y_data;
-//                y_data = *getExdendedData(xndat, x_data, 1/*group*/, &yndat);
-//                xndat = yndat;
-//                x_data = y_data;
-//                
-//                // vvvvvvvvvvvvvvvvvvvvv ONLY PART THAT IS DIFFERENT FROM others
-//                fb->linkPar(this->getPIg(g), NULL, NULL);
-//                // ^^^^^^^^^^^^^^^^^^^^^
-//                // decide on convergence
-//                fr = GradientDescentBit(g/*use group x*/, xndat, x_data, 1/*group*/, fb, false /*is1SkillForAll*/);
-//                if(i>=first_iteration_qualify || xndat==0) { //can qualify or  student had no skill labelled rows
-//                    if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==newnK || xndat==0) { // converged quick, or don't care (others all converged), or  student had no skill labelled rows
-//                        iter_qual_group[g]++;
-//                        if(xndat==0) {
-//                            iter_qual_group[g]=iterations_to_qualify;
-//                            fr.conv = 1;
-//                        }
-//                        if(iter_qual_group[g]==iterations_to_qualify || skip_k==newnK) {// criterion met, or don't care (others all converged)
-//                            if(skip_k==newnK) iter_qual_group[g]=iterations_to_qualify; // K not changing anymore
-//                            skip_g++;
-//                            if( !this->p->quiet && ( /*(!conv && iter<this->p->maxiter) ||*/ (fr.conv || fr.iter==this->p->maxiter) )) {
-//                                computeAlphaAndPOParam(xndat, x_data);
-//                                printf("run %2d skipG %4d group %4d iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n",i,skip_g,g,fr.iter,fr.pO0,fr.pO,fr.conv);
-//                            }
-//                        }
-//                    }
-//                    else
-//                        iter_qual_group[g]=0;
-//                } // decide on convergence
-//                free(y_data);
-//                //                //
-//                //                // make copies of parameters to do gradient descend, link to copies, but grads computed from actual params
-//                //                //
-//                //                if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//                //                    swap1D<NUMBER>(this->PIg[g], cpyPIg[g], this->p->nS);
-//                //                }
-//            } // for all groups
-//            loglik = getSumLogPOPara(this->p->nSeq, this->p->k_data);
-//            i++;
-//        }
-//        // recycle qualifications
-//        if( iter_qual_skill != NULL ) free(iter_qual_skill);
-//        if( iter_qual_group != NULL) free(iter_qual_group);
-//        
-//        //        if( true /*checkPIABConstraints(a_PI, a_A, a_B)*/ ) {
-//        //            free2D<NUMBER>(cpyPI, nK);
-//        //            free3D<NUMBER>(cpyA,  nK, this->p->nS);
-//        //            free3D<NUMBER>(cpyB,  nK, this->p->nS);
-//        ////            free2D<NUMBER>(cpyPIg, this->p->nG);
-//        //        }
-//    } // if not "force single skill
-//    
-//    delete fb;
-//    // compute loglik
-//    loglik = getSumLogPOPara(this->p->nSeq, this->p->k_data);
-//    return loglik;
-//}
-//
-void HMMProblemComp::readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite) {
-	NPAR i,j,m;
-	NCAT k = 0, g = 0, idxk = 0, idxg = 0;
-	string s;
-    std::map<std::string,NCAT>::iterator it;
-    char col[2048];
-    //
-    readNullObsRatio(fid, param, line_no);
-    //
-    // init param
-    //
-    if(overwrite) {
-        this->p->map_group_fwd = new map<string,NCAT>();
-        this->p->map_group_bwd = new map<NCAT,string>();
-        this->p->map_skill_fwd = new map<string,NCAT>();
-        this->p->map_skill_bwd = new map<NCAT,string>();
-    }
-	//
-	// read grouped PIg
-	//
-    for(g=0; g<this->p->nG; g++) {
-		// read group label
-        fscanf(fid,"%*s\t%[^\n]\n",col);
-        s = string( col );
-        (*line_no)++;        
-        if(overwrite) {
-            this->p->map_group_fwd->insert(pair<string,NCAT>(s, (NCAT)this->p->map_group_fwd->size()));
-            this->p->map_group_bwd->insert(pair<NCAT,string>((NCAT)this->p->map_group_bwd->size(), s));
-            idxg = g;
-        } else {
-            it = this->p->map_group_fwd->find(s);
-            if( it==this->p->map_group_fwd->end() ) { // not found, skip 3 lines and continue
-                fscanf(fid,"%*s\n");
-                fscanf(fid,"%*s\n");
-                fscanf(fid,"%*s\n");
-                continue; // skip this iteration
-            }
-            else
-                idxg =it->second;
-        }
-
-        // read PIg
-        fscanf(fid,"PIg\t");
-        for(i=0; i<(this->p->nS-1); i++) { // read 1 less then necessary
-            fscanf(fid,"%[^\t]\t",col);
-            this->PIg[idxg][i] = atof(col);
-        }
-        fscanf(fid,"%[^\n]\n",col);// read last one
-        this->PIg[idxg][i] = atof(col);
-        (*line_no)++;
-    }
-    //
-    // read skills
-    //
-	for(k=0; k<this->p->nK; k++) {
-		// read skill label
-        fscanf(fid,"%*s\t%[^\n]\n",col);
-        s = string( col );
-        (*line_no)++;
-        if(overwrite) {
-            this->p->map_skill_fwd->insert(pair<string,NCAT>(s, (NCAT)this->p->map_skill_fwd->size()));
-            this->p->map_skill_bwd->insert(pair<NCAT,string>((NCAT)this->p->map_skill_bwd->size(), s));
-            idxk = k;
-        } else {
-            it = this->p->map_skill_fwd->find(s);
-            if( it==this->p->map_skill_fwd->end() ) { // not found, skip 3 lines and continue
-                fscanf(fid,"%*s\n");
-                fscanf(fid,"%*s\n");
-                fscanf(fid,"%*s\n");
-                continue; // skip this iteration
-            }
-            else
-                idxk =it->second;
-        }
-        
-        // read PI
-        fscanf(fid,"PIk\t");
-        for(i=0; i<(this->p->nS-1); i++) { // read 1 less then necessary
-            fscanf(fid,"%[^\t]\t",col);
-            this->pi[idxk][i] = atof(col);
-        }
-        fscanf(fid,"%[^\n]\n",col);// read last one
-        this->pi[idxk][i] = atof(col);
-        (*line_no)++;
-		// read A
-        fscanf(fid,"A\t");
-		for(i=0; i<this->p->nS; i++)
-			for(j=0; j<this->p->nS; j++) {
-                if(i==(this->p->nS-1) && j==(this->p->nS-1)) {
-                    fscanf(fid,"%[^\n]\n", col); // last one;
-                    this->A[idxk][i][j] = atof(col);
-                }
-                else {
-                    fscanf(fid,"%[^\t]\t", col); // not las one
-                    this->A[idxk][i][j] = atof(col);
-                }
-			}
-        (*line_no)++;
-		// read B
-        fscanf(fid,"B\t");
-		for(i=0; i<this->p->nS; i++)
-			for(m=0; m<this->p->nO; m++) {
-                if(i==(this->p->nS-1) && m==(this->p->nO-1)) {
-                    fscanf(fid,"%[^\n]\n", col); // last one;
-                    this->B[idxk][i][m] = atof(col);
-                }
-                else {
-                    fscanf(fid,"%[^\t]\t", col); // not las one
-                    this->B[idxk][i][m] = atof(col);
-                }
-			}
-        (*line_no)++;
-	} // for all k
+void HMMProblemComp::toFile(const char *filename) {
+	switch(this->p->structure)
+	{
+		case STRUCTURE_COMP:
+			toFileSkill(filename);
+			break;
+			//        case STRUCTURE_GROUP:
+			//            toFileGroup(filename);
+			//            break;
+		default:
+			fprintf(stderr,"Solver specified is not supported.\n");
+			break;
+	}
 }
+
+void HMMProblemComp::toFileSkill(const char *filename) {
+	FILE *fid = fopen(filename,"w");
+	if(fid == NULL) {
+		fprintf(stderr,"Can't write output model file %s\n",filename);
+		exit(1);
+	}
+	// write solved id
+	writeSolverInfo(fid, this->p);
+	
+	fprintf(fid,"Null skill ratios\t");
+	for(NPAR m=0; m<this->p->nO; m++)
+		fprintf(fid," %10.7f%s",this->null_obs_ratio[m],(m==(this->p->nO-1))?"\n":"\t");
+	
+	NCAT k;
+	std::map<NCAT,std::string>::iterator it;
+	for(k=0;k<this->p->nK;k++) {
+		it = this->p->map_skill_bwd->find(k);
+		fprintf(fid,"%d\t%s\n",k,it->second.c_str());
+		NPAR i,j,m;
+		fprintf(fid,"PI\t");
+		for(i=0; i<this->p->nS; i++)
+			fprintf(fid,"%12.10f%s",this->pi[k][i],(i==(this->p->nS-1))?"\n":"\t");
+		fprintf(fid,"A\t");
+		for(i=0; i<this->p->nS; i++)
+			for(j=0; j<this->p->nS; j++)
+				fprintf(fid,"%12.10f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
+		fprintf(fid,"B\t");
+		for(i=0; i<this->p->nS; i++)
+			for(m=0; m<this->p->nO; m++)
+				fprintf(fid,"%12.10f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
+	}
+	fclose(fid);
+}
+
+void HMMProblemComp::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NDAT t) {
+	NPAR m, i, l;
+	NCAT k, g, nS = this->p->nS, nO = this->p->nO;
+	NUMBER *a_L = init1D<NUMBER>((NDAT)nS);
+	NUMBER **a_B = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
+	
+	g = this->p->dat_group[t];
+	NCAT *ks;
+	int nks;
+	if(this->p->multiskill==0) {
+		fprintf(stderr,"WARNING! Multi-skill flag should have been set!");
+		k = this->p->dat_skill[t];
+		ks = &k;
+		nks = 1;
+	} else {
+		NDAT rix = this->p->dat_skill_rix[t];
+		k = this->p->dat_skill_stacked[ rix ];
+		ks = &this->p->dat_skill_stacked[ rix ];
+		nks = this->p->dat_skill_rcount[t];
+	}
+	
+	if(nks==1) {
+		for(i=0; i<nS; i++) {
+			a_L[i] = group_skill_map[g][ ks[0] ][i];
+			for(m=0; m<nO; m++)
+				a_B[i][m] = this->B[ ks[0] ][i][m];
+		}
+	} else {
+		NUMBER *q = NULL;
+		for(i=0; i<nS; i++) {
+			q = Calloc(NUMBER, (size_t)nks);
+			for(l=0;l<nks;l++) q[l] = group_skill_map[g][ ks[l] ][i];
+			a_L[i] = squishing(q, nks);
+			free(q);
+
+			for(m=0; m<nO; m++) {
+				q = Calloc(NUMBER, (size_t)nks);
+				for(l=0;l<nks;l++) q[l] = this->B[ ks[l] ][i][m];
+				free(q);
+				a_B[i][m] = squishing(q, nks);
+			}
+		}
+	}
+
+	for(m=0; m<this->p->nO; m++) local_pred[m] = 0.0;
+	for(m=0; m<this->p->nO; m++)
+		for(i=0; i<this->p->nS; i++)
+			local_pred[m] += a_L[i] * a_B[i][m];
+	
+	free(a_L);
+	free2D<NUMBER>(a_B, nS);
+}
+
+

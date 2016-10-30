@@ -469,7 +469,7 @@ NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
 		for(t=0; t<x_data[x]->n; t++) {
 //			o = x_data[x]->obs[t];
 			o = this->p->dat_obs[ x_data[x]->ix[t] ];//->get( x_data[x]->ix[t] );
-
+			x_data[x]->t = x_data[x]->ix[t]; // statefullness
             if(t==0) { // it's alpha(1,i)
                 // compute \alpha_1(i) = \pi_i b_i(o_1)
 				for(i=0; i<nS; i++) {
@@ -521,6 +521,7 @@ void HMMProblem::computeBeta(NCAT xndat, struct data** x_data) {
         NPAR i, j, o;
 		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
 		for(t=(NDAT)(x_data[x]->n)-1; t>=0; t--) {
+			x_data[x]->t = x_data[x]->ix[t]; // statefullness
 			if( t==(x_data[x]->n-1) ) { // last \beta
 				// \beta_T(i) = 1
 				for(i=0; i<nS; i++)
@@ -583,7 +584,7 @@ void HMMProblem::setGradPI(FitBit *fb){
         ndat += dt->n;
         o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
         for(i=0; i<this->p->nS; i++) {
-            fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
+            fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
         }
     }
     if( this->p->Cslices>0 ) // penalty
@@ -603,7 +604,7 @@ void HMMProblem::setGradA (FitBit *fb){
             o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
             for(i=0; i<this->p->nS; i++)
                 for(j=0; j<this->p->nS; j++)
-                    fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
+                    fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:fb->B[j][o]) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
         }
     }
     if( this->p->Cslices>0 ) // penalty
@@ -613,7 +614,7 @@ void HMMProblem::setGradA (FitBit *fb){
 void HMMProblem::setGradB (FitBit *fb){
     if(this->p->block_fitting[2]>0) return;
     NDAT t, ndat = 0;
-    NPAR o, o0, i, j;
+	NPAR o, o0, i;//, j;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
@@ -625,15 +626,15 @@ void HMMProblem::setGradB (FitBit *fb){
             o0 = this->p->dat_obs[ dt->ix[0] ];//->get( dt->ix[t] );
             if(o<0) // if no observation -- skip
                 continue;
-//            for(i=0; i<this->p->nS; i++)
-//                fb->gradB[i][o] -= dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o)); // old
-            for(j=0; j<this->p->nS; j++)
-                if(t==0) {
-                    fb->gradB[j][o] -= (o0==o) * getPI(dt,j) * dt->beta[0][j];
-                } else {
-                    for(i=0; i<this->p->nS; i++)
-                        fb->gradB[j][o] -= ( dt->alpha[t-1][i] * getA(dt,i,j) * dt->beta[t][j] /*+ (o0==o) * getPI(dt,j) * dt->beta[0][j]*/ ) / safe0num(dt->p_O_param); // Levinson MMFST
-                }
+            for(i=0; i<this->p->nS; i++)
+                fb->gradB[i][o] -= dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * fb->B[i][o]); // old
+//            for(j=0; j<this->p->nS; j++)
+//                if(t==0) {
+//                    fb->gradB[j][o] -= (o0==o) * fb->pi[j] * dt->beta[0][j];
+//                } else {
+//                    for(i=0; i<this->p->nS; i++)
+//                        fb->gradB[j][o] -= ( dt->alpha[t-1][i] * fb->A[i][j] * dt->beta[t][j] /*+ (o0==o) * getPI(dt,j) * dt->beta[0][j]*/ ) / safe0num(dt->p_O_param); // Levinson MMFST
+//                }
         }
     }
     if( this->p->Cslices>0 ) // penalty
@@ -790,7 +791,7 @@ void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, 
     }
     
     dt->g = this->p->dat_group[t];
-    dt->t = t;
+    dt->t = t; // statefulness
     for(m=0; m<this->p->nO; m++) local_pred[m] = 0.0;
     for(int l=0; l<nks; l++) {
         for(m=0; m<this->p->nO; m++) local_pred_inner[m] = 0.0;
@@ -923,7 +924,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 		o = dat_obs[t];
 		g = dat_group[t];
 		dt->g = g;
-        dt->t = t;
+        dt->t = t; // statefulness
 		
 		hmm = (nhmms==1)?hmms[0]:hmms[hmm_idx[t]]; // if just one hmm, use 0's, otherwise take the index value
 		
@@ -2040,7 +2041,7 @@ FitResult HMMProblem::BaumWelchBit(FitBit *fb) {
 NUMBER HMMProblem::doLinearStep(FitBit *fb) {
 	NPAR i,j,m;
     NPAR nS = fb->nS, nO = this->p->nO;
-    fb->doLog10ScaleGentle(FBS_GRAD);
+    fb->doLog10ScaleGentleByRow(FBS_GRAD);
 	
     NCAT xndat = fb->xndat;
     struct data **x_data = fb->x_data;
@@ -2120,8 +2121,8 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
         
         // compute Wolfe 2
         NUMBER p_k_by_neg_p_kp1 = 0;
-        computeGradients(fb);
-        fb->doLog10ScaleGentle(FBS_GRAD);
+        NDAT ndat = computeGradients(fb);
+        fb->doLog10ScaleGentleByRow(FBS_GRAD);
         for(i=0; i<nS; i++)
         {
             if(fb->pi != NULL) p_k_by_neg_p_kp1 -= fb->gradPIcopy[i]*fb->gradPI[i];
@@ -2283,7 +2284,7 @@ NUMBER HMMProblem::doLinearStepBig(FitBit **fbs, NCAT nfbs) {
     p_k_by_neg_p_k = 0;
     int iter = 0; // limit iter steps to 20, via ArmijoMinStep (now 10)
     for(q=0; q<nfbs; q++) {
-        fbs[q]->doLog10ScaleGentle(FBS_GRAD);
+        fbs[q]->doLog10ScaleGentleByRow(FBS_GRAD);
         fbs[q]->init(FBS_PARcopy);
         fbs[q]->copy(FBS_PAR, FBS_PARcopy);
         for(i=0; i<fbs[q]->nS; i++)
@@ -2353,7 +2354,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
 	NPAR i=0, j=0, m=0;
     NPAR nS = this->p->nS, nO = this->p->nO;
 	// first scale down gradients
-    fb->doLog10ScaleGentle(FBS_GRAD);
+    fb->doLog10ScaleGentleByRow(FBS_GRAD);
     
     // compute beta_gradient_direction
     NUMBER beta_grad = 0, beta_grad_num = 0, beta_grad_den = 0;
@@ -2450,7 +2451,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
 		if(fb->B  != NULL) for(m=0; m<nO; m++) fb->dirB[i][m] = -fb->gradB[i][m] + beta_grad * fb->dirBm1[i][m];
 	}
 	// scale direction
-    fb->doLog10ScaleGentle(FBS_DIR);
+    fb->doLog10ScaleGentleByRow(FBS_DIR);
     
 	NUMBER e = this->p->ArmijoSeed; // step seed
 	bool compliesArmijo = false;
@@ -2508,7 +2509,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
         // compute Wolfe 2
         NUMBER p_k_by_neg_p_kp1 = 0;
         computeGradients(fb);
-        fb->doLog10ScaleGentle(FBS_GRAD);
+        fb->doLog10ScaleGentleByRow(FBS_GRAD);
         for(i=0; i<nS; i++)
         {
             if(fb->pi != NULL) p_k_by_neg_p_kp1 += fb->dirPI[i]*fb->gradPI[i];
@@ -2593,7 +2594,7 @@ NUMBER HMMProblem::doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs) {
 
     for(q=0;q<nfbs;q++) {
 	// first scale down gradients
-        fbs[q]->doLog10ScaleGentle(FBS_GRAD);
+        fbs[q]->doLog10ScaleGentleByRow(FBS_GRAD);
     
         
         switch (this->p->solver_setting) {
@@ -2669,7 +2670,7 @@ NUMBER HMMProblem::doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs) {
             if(fbs[q]->B  != NULL) for(m=0; m<nO; m++) fbs[q]->dirBm1[i][m] = -fbs[q]->gradB[i][m] + beta_grad * fbs[q]->dirBm1[i][m];
         }
         // scale down direction
-        fbs[q]->doLog10ScaleGentle(FBS_DIRm1);
+        fbs[q]->doLog10ScaleGentleByRow(FBS_DIRm1);
         
         fbs[q]->init(FBS_PARcopy);
     }// all fbs
@@ -2742,12 +2743,12 @@ NUMBER HMMProblem::doBarzilaiBorweinStep(FitBit *fb) {
 	NPAR i,j,m;
     NPAR nS = this->p->nS, nO = this->p->nO;
 	// first scale down gradients
-    fb->doLog10ScaleGentle(FBS_GRAD);
+    fb->doLog10ScaleGentleByRow(FBS_GRAD);
     
     // compute s_k_m1
   	NUMBER *s_k_m1_PI = init1D<NUMBER>((NDAT)nS);
 	NUMBER **s_k_m1_A = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
-	NUMBER **s_k_m1_B = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
+	NUMBER **s_k_m1_B = init2D<NUMBER>((NDAT)nS, (NDAT)nO);
 	for(i=0; i<nS; i++)
 	{
 		s_k_m1_PI[i] = fb->PIm1[i] - fb->PIm2[i];

@@ -71,6 +71,8 @@ B	0.79000000	0.21000000	0.22000000	0.78000000
 
 In the model file example above, we see a specification of the solver algorithm (to be discussed below), one skill (nK=1), one student in the data (nG=1), two hidden states and 2 observations (nS and nO respectively). Skill numbering is zero-started. Skill name is "multiplication-skill". Rows prefixed with PI, A, and B correspond to priors, transition, and observation matrices written row by row. Thus, the first element of PI is p(Lo)=0.55, 3rd element of A is p(T)=0.4, 2nd and 3rd elements of B are p(S)=0.12 and p(G)=0.22 respectively.
 
+Prediction file, for a standard BKT model with nO=2 observations would contain 2 tab-separated columns. First column is correspond to the model-estimated prior probability of student being correct for that particular observation. The second column is the compliment of the probabilit of correct -- probability of being incorrect (see an example below).
+
 ```
 -- prediction file --
 0.73    0.27

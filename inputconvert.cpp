@@ -82,7 +82,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
             case 'z':
                 param.sliced = (NPAR)atoi(argv[i]);
                 if(param.sliced!=0 && param.sliced!=1) {
-                    fprintf(stderr,"ERROR! Time parameter should be either 0 (off) or 1(om)\n");
+                    fprintf(stderr,"ERROR! Multiplexing parameter should be either 0 (off) or 1(on)\n");
                     exit_with_help();
                 }
                 break;

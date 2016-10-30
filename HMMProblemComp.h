@@ -45,9 +45,9 @@ public:
 //    NUMBER** getPI(); // same
 //    NUMBER*** getA(); // same
 //    NUMBER*** getB(); // same
-//	virtual NUMBER* getPI(NCAT k); // same
-//	virtual NUMBER** getA(NCAT k); // same
-//	virtual NUMBER** getB(NCAT k); // same
+	virtual NUMBER* getPI(NCAT k); // same
+	virtual NUMBER** getA(NCAT k); // same
+	virtual NUMBER** getB(NCAT k); // same
     // getters for computing alpha, beta, gamma
     virtual NUMBER getPI(struct data* dt, NPAR i);         // stateful
     virtual NUMBER getA (struct data* dt, NPAR i, NPAR j); // stateful
@@ -59,6 +59,8 @@ public:
 	void toFile(const char *filename);
     // fitting (the only public method)
     virtual void fit(); // return -LL for the model
+	// predicting
+	virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NDAT t);
 protected:
 	//
 	// Givens
@@ -74,6 +76,7 @@ protected:
 //    virtual NUMBER GradientDescentX(); // fit alternating
 
 private:
+	void toFileSkill(const char *filename);
 };
 
 

@@ -50,6 +50,7 @@
 #include "HMMProblemSlicedAB.h"
 #include "HMMProblemSlicedA.h"
 #include "StripedArray.h"
+#include "HMMProblemComp.h"
 //#include "SparseArray2D.h"
 //#include <boost/numeric/ublas/matrix_sparse.hpp>//BOOST
 //#include <boost/numeric/ublas/io.hpp>//BOOST
@@ -287,6 +288,9 @@ int main (int argc, char ** argv) {
                 //            case BKT_GD_T: // Gradient Descent with Transfer
                 //                hmm = new HMMProblemKT(&param);
                 //                break;
+			case STRUCTURE_COMP: // Gradient Descent, pT=f(K,G), other by K
+				hmm = new HMMProblemComp(&param);
+				break;
         }
         tm_fit = clock(); //SEQ
 //        _tm_fit = omp_get_wtime(); //PAR
@@ -561,7 +565,7 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                    param.structure != STRUCTURE_PIAgk && param.structure != STRUCTURE_Agk &&
                    param.structure != STRUCTURE_PIABgk && param.structure != STRUCTURE_Agki &&
                    param.structure != STRUCTURE_PIgkww && param.structure != STRUCTURE_SKABslc &&
-                   param.structure != STRUCTURE_SKAslc ) {
+                   param.structure != STRUCTURE_SKAslc && param.structure != STRUCTURE_COMP ) {
                     fprintf(stderr, "Model Structure specified (%d) is out of range of allowed values\n",param.structure);
 					exit_with_help();
                 }
@@ -571,7 +575,11 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                     fprintf(stderr, "Method specified (%d) is out of range of allowed values\n",param.solver);
 					exit_with_help();
                 }
-                if( (param.structure == STRUCTURE_SKABslc || param.structure == STRUCTURE_SKAslc) && param.solver == METHOD_BW) {
+//                if( (param.structure == STRUCTURE_SKABslc || param.structure == STRUCTURE_SKAslc) && param.solver == METHOD_BW) {
+//                    fprintf(stderr, "Method specified (%d) is not defined for this structure (%d) \n",param.solver,param.structure);
+//                    exit_with_help();
+//                }
+                if( param.structure == STRUCTURE_COMP && param.solver == METHOD_BW) {
                     fprintf(stderr, "Method specified (%d) is not defined for this structure (%d) \n",param.solver,param.structure);
                     exit_with_help();
                 }

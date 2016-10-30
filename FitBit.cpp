@@ -495,37 +495,67 @@ bool FitBit::checkConvergenceSingle(FitResult *fr) {
 }
 
 void FitBit::doLog10ScaleGentle(enum FIT_BIT_SLOT fbs) {
-//    // fbs - gradient or direction
-    NUMBER *a_PI = NULL;
-    NUMBER **a_A = NULL;
-    NUMBER **a_B = NULL;
-    get(fbs, a_PI, a_A, a_B);
-    
-    
-    NPAR nS = this->nS, nO = this->nO;
-    NDAT n = (  (this->pi != NULL)*1 + (this->A != NULL)*nS + (this->B != NULL)*nO  ) * nS;
-    NUMBER* grad = Calloc(NUMBER, n);
-    NUMBER* par = Calloc(NUMBER, n);
-    NDAT cpar = 0, cgrad = 0;
-    for(NPAR i=0; i<nS; i++) {
-        if(this->pi != NULL) { par[cpar++] = this->pi[i]; grad[cgrad++] = a_PI[i]; }
-        if(this->A  != NULL) for(NPAR j=0; j<nS; j++) { par[cpar++] = this->A[i][j]; grad[cgrad++] = a_A[i][j]; }
-        if(this->B  != NULL) for(NPAR m=0; m<nO; m++) { par[cpar++] = this->B[i][m]; grad[cgrad++] = a_B[i][m]; }
-    }
-    
-    NUMBER scale = doLog10Scale1DGentle(grad, par, (NPAR)n);
-    
-    for(NPAR i=0; i<nS; i++) {
-        if(this->pi != NULL) { a_PI[i] *= scale; }
-        if(this->A  != NULL) for(NPAR j=0; j<nS; j++) { a_A[i][j] *= scale; }
-        if(this->B  != NULL) for(NPAR m=0; m<nO; m++) { a_B[i][m] *= scale; }
-    }
-    free(grad);
-    free(par);
-    
-//	if(this->pi != NULL) doLog10Scale1DGentle(a_PI, this->pi, this->nS);
-//	if(this->A  != NULL) doLog10Scale2DGentle(a_A,  this->A,  this->nS, this->nS);
-//	if(this->B  != NULL) doLog10Scale2DGentle(a_B,  this->B,  this->nS, this->nO);
+	//    // fbs - gradient or direction
+	NUMBER *a_PI = NULL;
+	NUMBER **a_A = NULL;
+	NUMBER **a_B = NULL;
+	get(fbs, a_PI, a_A, a_B);
+	
+	
+	NPAR nS = this->nS, nO = this->nO;
+	NDAT n = (  (this->pi != NULL)*1 + (this->A != NULL)*nS + (this->B != NULL)*nO  ) * nS;
+	NUMBER* grad = Calloc(NUMBER, n);
+	NUMBER* par = Calloc(NUMBER, n);
+	NDAT cpar = 0, cgrad = 0;
+	for(NPAR i=0; i<nS; i++) {
+		if(this->pi != NULL) { par[cpar++] = this->pi[i]; grad[cgrad++] = a_PI[i]; }
+		if(this->A  != NULL) for(NPAR j=0; j<nS; j++) { par[cpar++] = this->A[i][j]; grad[cgrad++] = a_A[i][j]; }
+		if(this->B  != NULL) for(NPAR m=0; m<nO; m++) { par[cpar++] = this->B[i][m]; grad[cgrad++] = a_B[i][m]; }
+	}
+	
+	NUMBER scale = doLog10Scale1DGentle(grad, par, (NPAR)n);
+	
+	for(NPAR i=0; i<nS; i++) {
+		if(this->pi != NULL) { a_PI[i] *= scale; }
+		if(this->A  != NULL) for(NPAR j=0; j<nS; j++) { a_A[i][j] *= scale; }
+		if(this->B  != NULL) for(NPAR m=0; m<nO; m++) { a_B[i][m] *= scale; }
+	}
+	free(grad);
+	free(par);
+	
+	//	if(this->pi != NULL) doLog10Scale1DGentle(a_PI, this->pi, this->nS);
+	//	if(this->A  != NULL) doLog10Scale2DGentle(a_A,  this->A,  this->nS, this->nS);
+	//	if(this->B  != NULL) doLog10Scale2DGentle(a_B,  this->B,  this->nS, this->nO);
+}
+
+void FitBit::doLog10ScaleGentleByRow(enum FIT_BIT_SLOT fbs) {
+	//    // fbs - gradient or direction
+	NUMBER *a_PI = NULL;
+	NUMBER **a_A = NULL;
+	NUMBER **a_B = NULL;
+	get(fbs, a_PI, a_A, a_B);
+	
+	
+	NPAR nS = this->nS, nO = this->nO;
+	NPAR n_scales = 2*nS + 1;
+	NUMBER* scales = Calloc(NUMBER, n_scales);
+	
+	
+	scales[0] = doLog10Scale1DGentle(a_PI, this->pi, nS);
+	for(NPAR i=0; i<nS; i++) {
+		scales[i+1] = doLog10Scale1DGentle(a_A[i], this->A[i], nS);
+	}
+	for(NPAR i=0; i<nS; i++) {
+		scales[i+1+nS] = doLog10Scale1DGentle(a_B[i], this->B[i], nO);
+	}
+	
+	for(NPAR i=0; i<nS; i++) {
+		if(this->pi != NULL) { a_PI[i] *= scales[0]; }
+		if(this->A  != NULL) for(NPAR j=0; j<nS; j++) { a_A[i][j] *= scales[i+1]; }
+		if(this->B  != NULL) for(NPAR m=0; m<nO; m++) { a_B[i][m] *= scales[i+1+nS]; }
+	}
+	
+	free(scales);
 }
 
 void FitBit::addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor) {

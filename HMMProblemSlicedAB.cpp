@@ -535,15 +535,15 @@ void HMMProblemSlicedAB::setGradB (FitBitSlicedAB *fb){
             dt->t = dt->ix[t]; // global state pointer
             if(o<0) // if no observation -- skip
                 continue;
-//            for(i=0; i<this->p->nS; i++)
-//                fb->gradB[i][o] -= dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o)); // old
-            for(j=0; j<this->p->nS; j++)
-                if(t==0) {
-                    fb->gradB[z][j][o] -= (o0==o) * getPI(dt,j) * dt->beta[0][j];
-                } else {
-                    for(i=0; i<this->p->nS; i++)
-                        fb->gradB[z][j][o] -= ( dt->alpha[t-1][i] * getA(dt,i,j) * dt->beta[t][j] /*+ (o0==o) * getPI(dt,j) * dt->beta[0][j]*/ ) / safe0num(dt->p_O_param); // Levinson MMFST
-                }
+            for(i=0; i<this->p->nS; i++)
+                fb->gradB[z][i][o] -= dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * fb->B[z][i][o]); // old
+//            for(j=0; j<this->p->nS; j++)
+//                if(t==0) {
+//                    fb->gradB[z][j][o] -= (o0==o) * getPI(dt,j) * dt->beta[0][j];
+//                } else {
+//                    for(i=0; i<this->p->nS; i++)
+//                        fb->gradB[z][j][o] -= ( dt->alpha[t-1][i] * getA(dt,i,j) * dt->beta[t][j] /*+ (o0==o) * getPI(dt,j) * dt->beta[0][j]*/ ) / safe0num(dt->p_O_param); // Levinson MMFST
+//                }
         }
     }
     // penalty

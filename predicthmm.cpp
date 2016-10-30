@@ -44,6 +44,7 @@
 #include "HMMProblemAGK.h"
 #include "HMMProblemPiAGK.h"
 #include "HMMProblemPiABGK.h"
+#include "HMMProblemComp.h"
 using namespace std;
 
 #define COLUMNS 4
@@ -133,9 +134,12 @@ int main (int argc, char ** argv) {
         case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
             hmm = new HMMProblemAGK(&param);
             break;
-        case STRUCTURE_PIABgk:
-            hmm = new HMMProblemPiABGK(&param);
-            break;
+		case STRUCTURE_PIABgk:
+			hmm = new HMMProblemPiABGK(&param);
+			break;
+		case STRUCTURE_COMP:
+			hmm = new HMMProblemComp(&param);
+			break;
     }
     // read model body
     hmm->readModelBody(fid, &param_model, &line_no, overwrite);

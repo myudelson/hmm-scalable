@@ -308,11 +308,11 @@ void HMMProblemPiABGK::setGradPI(FitBit *fb){
         dt = fb->x_data[x];
         if( dt->cnt!=0 ) continue;
         ndat += dt->n;
-        o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
+        o = this->p->dat_obs[ dt->ix[t] ];
         for(i=0; i<fb->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->pi[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );
-            fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
+            fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
         }
     }
     if( this->p->Cslices>0 ) // penalty
@@ -330,13 +330,12 @@ void HMMProblemPiABGK::setGradA (FitBit *fb){
         if( dt->cnt!=0 ) continue;
         ndat += dt->n;
         for(t=1; t<dt->n; t++) {
-            //            o = dt->obs[t];
-            o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
-            for(i=0; i<fb->nS /*&& fitparam[1]>0*/; i++)
+            o = this->p->dat_obs[ dt->ix[t] ];
+            for(i=0; i<fb->nS; i++)
                 for(j=0; j<fb->nS; j++) {
                     combined = getA(dt,i,j);
                     deriv_logit = 1 / safe0num( fb->A[i][j] * (1-fb->A[i][j]) );
-                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:getB(dt,j,o)) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) ;
+                    fb->gradA[i][j] -= combined * (1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:fb->B[j][o]) * dt->alpha[t-1][i] / safe0num(dt->p_O_param) ;
                 }
         }
     }
@@ -355,14 +354,13 @@ void HMMProblemPiABGK::setGradB (FitBit *fb){
         if( dt->cnt!=0 ) continue;
         ndat += dt->n;
         for(t=0; t<dt->n; t++) {
-            //            o = dt->obs[t];
-            o = this->p->dat_obs[ dt->ix[t] ];//->get( dt->ix[t] );
+            o = this->p->dat_obs[ dt->ix[t] ];
             if(o<0)
                 continue;
-            for(i=0; i<fb->nS /*&& fitparam[1]>0*/; i++) {
+            for(i=0; i<fb->nS; i++) {
                 combined = getB(dt,i,o);
                 deriv_logit = 1 / safe0num( fb->B[i][o] * (1-fb->B[i][o]) );
-                fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o));
+                fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * ((o<0)?1:fb->B[i][o]));
             }
         }
     }

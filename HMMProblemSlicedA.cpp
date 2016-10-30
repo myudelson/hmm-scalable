@@ -502,7 +502,7 @@ void HMMProblemSlicedA::setGradA (FitBitSlicedA *fb){
 void HMMProblemSlicedA::setGradB (FitBitSlicedA *fb){
     if(this->p->block_fitting[2]>0) return;
     NDAT t, ndat = 0;
-    NPAR o, o0, i, j;//, z;
+	NPAR o, o0, i;//, j;//, z;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];
@@ -517,15 +517,15 @@ void HMMProblemSlicedA::setGradB (FitBitSlicedA *fb){
                 o0 = this->p->dat_obs[ dt->ix[0] ];//->get( dt->ix[t] );
                 if(o<0) // if no observation -- skip
                     continue;
-    //            for(i=0; i<this->p->nS; i++)
-    //                fb->gradB[i][o] -= dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * getB(dt,i,o)); // old
-                for(j=0; j<this->p->nS; j++)
-                    if(t==0) {
-                        fb->gradB[j][o] -= (o0==o) * getPI(dt,j) * dt->beta[0][j];
-                    } else {
-                        for(i=0; i<this->p->nS; i++)
-                            fb->gradB[j][o] -= ( dt->alpha[t-1][i] * getA(dt,i,j) * dt->beta[t][j] /*+ (o0==o) * getPI(dt,j) * dt->beta[0][j]*/ ) / safe0num(dt->p_O_param); // Levinson MMFST
-                    }
+                for(i=0; i<this->p->nS; i++)
+                    fb->gradB[i][o] -= dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * fb->B[i][o]); // old
+//                for(j=0; j<this->p->nS; j++)
+//                    if(t==0) {
+//                        fb->gradB[j][o] -= (o0==o) * getPI(dt,j) * dt->beta[0][j];
+//                    } else {
+//                        for(i=0; i<this->p->nS; i++)
+//                            fb->gradB[j][o] -= ( dt->alpha[t-1][i] * getA(dt,i,j) * dt->beta[t][j] /*+ (o0==o) * getPI(dt,j) * dt->beta[0][j]*/ ) / safe0num(dt->p_O_param); // Levinson MMFST
+//                    }
 //            }
         }
     }
@@ -594,7 +594,7 @@ void HMMProblemSlicedA::toFileSkill(const char *filename) {
         fprintf(fid,"B\t");
         for(i=0; i<this->p->nS; i++)
             for(m=0; m<this->p->nO; m++)
-                fprintf(fid,"%12.10f%s",this->B[z][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
+                fprintf(fid,"%12.10f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");
 	}
 	fclose(fid);
 }
