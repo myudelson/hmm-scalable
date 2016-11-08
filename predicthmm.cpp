@@ -45,6 +45,10 @@
 #include "HMMProblemPiAGK.h"
 #include "HMMProblemPiABGK.h"
 #include "HMMProblemComp.h"
+#include "HMMProblemSlicedAB.h"
+#include "HMMProblemSlicedA.h"
+#include "HMMProblemPiGKww.h"
+
 using namespace std;
 
 #define COLUMNS 4
@@ -112,40 +116,57 @@ int main (int argc, char ** argv) {
     if( param.nO>2 || param.nS>2)
         param.do_not_check_constraints = 1;
     
+	// copy number of slices from the model
+	param.nZ = param_model.nZ;
     //
     // create hmm Object
     //
     HMMProblem *hmm = NULL;
-    switch(param.structure)
-    {
-        case STRUCTURE_SKILL: // Conjugate Gradient Descent
-//        case STRUCTURE_GROUP: // Conjugate Gradient Descent
-            hmm = new HMMProblem(&param);
-            break;
+	switch(param.structure)
+	{
+		case STRUCTURE_SKILL: // Conjugate Gradient Descent
+//            case STRUCTURE_GROUP: // Conjugate Gradient Descent
+			hmm = new HMMProblem(&param);
+			break;
 //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
 //                hmm = new HMMProblemPiG(&param);
 //                break;
-        case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-            hmm = new HMMProblemPiGK(&param);
-            break;
-        case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-            hmm = new HMMProblemPiAGK(&param);
-            break;
-        case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
-            hmm = new HMMProblemAGK(&param);
-            break;
-		case STRUCTURE_PIABgk:
+		case STRUCTURE_SKABslc: // Conjugate Gradient Descent
+			hmm = new HMMProblemSlicedAB(&param);
+			break;
+		case STRUCTURE_SKAslc: // Conjugate Gradient Descent
+			hmm = new HMMProblemSlicedA(&param);
+			break;
+		case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
+			hmm = new HMMProblemPiGK(&param);
+			break;
+		case STRUCTURE_PIgkww: // Gradient Descent, pLo=f(K,G), other by K
+			hmm = new HMMProblemPiGKww(&param);
+			break;
+		case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
+			hmm = new HMMProblemPiAGK(&param);
+			break;
+		case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
+			hmm = new HMMProblemAGK(&param);
+			break;
+//                case STRUCTURE_Agki: // Gradient Descent, pT=f(K,G), other by K
+//                    hmm = new HMMProblemAGKi(&param);
+//                    break;
+		case STRUCTURE_PIABgk: // Gradient Descent, pT=f(K,G), other by K
 			hmm = new HMMProblemPiABGK(&param);
 			break;
-		case STRUCTURE_COMP:
+//            case BKT_GD_T: // Gradient Descent with Transfer
+//                hmm = new HMMProblemKT(&param);
+//                break;
+		case STRUCTURE_COMP: // Gradient Descent, pT=f(K,G), other by K
 			hmm = new HMMProblemComp(&param);
 			break;
-    }
+	}
     // read model body
     hmm->readModelBody(fid, &param_model, &line_no, overwrite);
   	fclose(fid);
 	free(line);
-    
+	
 	if(param.quiet == 0)
         printf("input read, nO=%d, nG=%d, nK=%d, nI=%d, nZ=%d\n",param.nO, param.nG, param.nK, param.nI, param.nZ);
 	
@@ -235,6 +256,13 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 					exit_with_help();
 				}
                 break;
+			case 't':
+				param.sliced = (NPAR)atoi(argv[i]);
+				if(param.sliced!=0 && param.sliced!=1) {
+					fprintf(stderr,"ERROR! Time parameter should be either 0 (off) or 1(on)\n");
+					exit_with_help();
+				}
+				break;
             case  'U':
                 param.update_known = *strtok(argv[i],",\t\n\r");
                 ch = strtok(NULL, ",\t\n\r");

@@ -36,6 +36,11 @@
 		71BD6F9319F468F800978D44 /* FitBitSlicedAB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71BD6F9219F468F800978D44 /* FitBitSlicedAB.cpp */; };
 		71D4589017981E6600356EE4 /* InputUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D4587D17972C0400356EE4 /* InputUtil.cpp */; };
 		EB256607167FBF4000E9082A /* FitBit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB994B9216288D0C0098D5ED /* FitBit.cpp */; };
+		EB29DA2D1DD173CE00DB6828 /* HMMProblemSlicedA.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713EF9FE1AC58AA2000301B4 /* HMMProblemSlicedA.cpp */; };
+		EB29DA2E1DD173D100DB6828 /* HMMProblemSlicedAB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71BD6F8F19F4660800978D44 /* HMMProblemSlicedAB.cpp */; };
+		EB29DA2F1DD173D600DB6828 /* HMMProblemPiGKww.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 719E18D418CF8CA3004ED5C4 /* HMMProblemPiGKww.cpp */; };
+		EB29DA301DD173EB00DB6828 /* FitBitSlicedA.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713EFA021AC5C70B000301B4 /* FitBitSlicedA.cpp */; };
+		EB29DA311DD173EF00DB6828 /* FitBitSlicedAB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71BD6F9219F468F800978D44 /* FitBitSlicedAB.cpp */; };
 		EB5D902B158B7C8C007ECB58 /* StripedArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB5D902A158B7C8C007ECB58 /* StripedArray.cpp */; };
 		EB6936FC15EC398900A919B3 /* StripedArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB5D902A158B7C8C007ECB58 /* StripedArray.cpp */; };
 		EB994B9416288D0D0098D5ED /* FitBit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB994B9216288D0C0098D5ED /* FitBit.cpp */; };
@@ -336,15 +341,20 @@
 			buildActionMask = 2147483647;
 			files = (
 				EBB7980E1DA6EB9900EA9645 /* HMMProblemComp.cpp in Sources */,
+				EB29DA2F1DD173D600DB6828 /* HMMProblemPiGKww.cpp in Sources */,
 				EB6936FC15EC398900A919B3 /* StripedArray.cpp in Sources */,
 				EB256607167FBF4000E9082A /* FitBit.cpp in Sources */,
 				7186A257178A19A70031A73E /* predicthmm.cpp in Sources */,
+				EB29DA2E1DD173D100DB6828 /* HMMProblemSlicedAB.cpp in Sources */,
 				715BD81A17AD966B00C9B6D3 /* HMMProblem.cpp in Sources */,
 				715BD81B17AD967700C9B6D3 /* HMMProblemPiGK.cpp in Sources */,
+				EB29DA311DD173EF00DB6828 /* FitBitSlicedAB.cpp in Sources */,
 				715BD81C17AD967A00C9B6D3 /* HMMProblemAGK.cpp in Sources */,
 				715BD81E17AD968000C9B6D3 /* HMMProblemPiAGK.cpp in Sources */,
+				EB29DA2D1DD173CE00DB6828 /* HMMProblemSlicedA.cpp in Sources */,
 				715BD81F17AD968500C9B6D3 /* HMMProblemPiABGK.cpp in Sources */,
 				715BD82017AD969300C9B6D3 /* utils.cpp in Sources */,
+				EB29DA301DD173EB00DB6828 /* FitBitSlicedA.cpp in Sources */,
 				71602EF717BAC1630001BF2B /* InputUtil.cpp in Sources */,
 				EBECF59E1CA1B46200DF52C7 /* readme.md in Sources */,
 				715EE5B317F0BF290079E646 /* SparseArray2D.cpp in Sources */,
