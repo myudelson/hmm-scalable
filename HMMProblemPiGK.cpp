@@ -355,7 +355,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 
         int i = 0; // count runs
 //        int parallel_now = this->p->parallel==1; //PAR
-//        #pragma omp parallel if(parallel_now) shared(iter_qual_group,iter_qual_skill)//PAR
+//        #pragma omp parallel if(parallel_now) shared(iter_qual_group,iter_qual_skill,iter_fail_skill,iter_fail_group)//PAR
 //        {//PAR
         while(skip_k<nK || skip_g<nG) {
             //
@@ -383,7 +383,15 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                         fb->init(FBS_DIRm1);
                     }
                     FitResult fr = GradientDescentBit(fb);
-                    // decide on convergence
+
+					// count number of concecutive failures
+					if(fr.iter==this->p->maxiter) {
+						iter_fail_skill[k]++;
+					} else {
+						iter_fail_skill[k]=0;
+					}
+					
+					// decide on convergence
                     if(i>=first_iteration_qualify || fb->xndat==0) {
                         if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG || fb->xndat==0) { // converged quick, or don't care (others all converged
                             iter_qual_skill[k]++;
@@ -414,7 +422,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
             if(skip_g<nG){
 //                #pragma omp for schedule(dynamic)//PAR
                 for(g=0; g<nG; g++) { // for all PI-by-user
-                    if(iter_qual_group[g]==iterations_to_qualify)
+                    if(iter_qual_group[g]==iterations_to_qualify || iter_fail_group[g]==iterations_to_qualify)
                         continue;
                     FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
                     // link
@@ -432,6 +440,14 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                         fb->init(FBS_DIRm1);
                     }
                     FitResult fr = GradientDescentBit(fb);
+					
+					// count number of concecutive failures
+					if(fr.iter==this->p->maxiter) {
+						iter_fail_group[g]++;
+					} else {
+						iter_fail_group[g]=0;
+					}
+					
                     // decide on convergence
                     if(i>=first_iteration_qualify || fb->xndat==0) { //can qualify or  student had no skill labelled rows
                         if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==nK || fb->xndat==0) { // converged quick, or don't care (others all converged), or

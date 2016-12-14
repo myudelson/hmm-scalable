@@ -408,6 +408,14 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
 //                struct data** x_data = this->p->k_g_data[k];
 //                cpy1D<NUMBER>(this->pi[k],copyPI[k],nS); /*prep hide*/
                 fr = GradientDescentBit(fb);
+				
+				// count number of concecutive failures
+				if(fr.iter==this->p->maxiter) {
+					iter_fail_skill[k]++;
+				} else {
+					iter_fail_skill[k]=0;
+				}
+				
                 // decide on convergence
                 if(i>=first_iteration_qualify) {
                     if(fr.iter==1 /*e<=this->p->tol*/ || skip_g==nG) { // converged quick, or don't care (others all converged
@@ -431,7 +439,7 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
             // PIg second
             //
             for(g=0; g<nG && skip_g<nG; g++) { // for all PI-by-user
-                if(iter_qual_group[g]==iterations_to_qualify)
+                if(iter_qual_group[g]==iterations_to_qualify || iter_fail_group[g]==iterations_to_qualify)
                     continue;
                 FitBit *fb = new FitBit(nS, nO, nK, nG, this->p->tol, this->p->tol_mode);
 //                NCAT xndat = this->p->g_numk[g];
@@ -453,6 +461,14 @@ NUMBER HMMProblemPiGKww::GradientDescent() {
                 }
                 // decide on convergence
                 fr = GradientDescentBit(fb);
+				
+				// count number of concecutive failures
+				if(fr.iter==this->p->maxiter) {
+					iter_fail_group[g]++;
+				} else {
+					iter_fail_group[g]=0;
+				}
+				
                 if(i>=first_iteration_qualify) {
                     if(fr.iter==1 /*e<=this->p->tol*/ || skip_k==nK) { // converged quick, or don't care (others all converged
                         iter_qual_group[g]++;

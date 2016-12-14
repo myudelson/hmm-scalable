@@ -457,6 +457,7 @@ NUMBER HMMProblemComp::GradientDescent() {
 		NCAT* iter_qual_skill = Calloc(NCAT, (size_t)nK); //
 		NCAT* iter_fail_skill = Calloc(NCAT, (size_t)nK); // counting concecutive number of failures to converge for skills
 		int skip_k = 0;
+		NDAT sum_is_multi = 0;
 		//
 		// Main fit Stage 1. Single-skills, skills that only show up on single-skill rows.
 		//
@@ -465,11 +466,12 @@ NUMBER HMMProblemComp::GradientDescent() {
 //		#pragma omp parallel if(parallel_now) shared(iter_qual_skill)//PAR
 //		{//PAR
 //		#pragma omp for schedule(dynamic) //PAR
-		
-		NDAT sum_is_multi = 0;
 		for(x=0; x<nK; x++) {
+//			#pragma omp critical(update_skip_k)//PAR
+//			{//PAR
 			sum_is_multi += (this->is_multi[x] == 1);
-			if(this->is_multi[x] == 0) {
+//			}//PAR
+			if(this->is_multi[x] == 0) {  // READ WARNING BELOW IF YOU COMMENT
 				// vvvv Extract from HMMProblem.cpp
 				NCAT xndat;
 				struct data** x_data;
@@ -495,6 +497,14 @@ NUMBER HMMProblemComp::GradientDescent() {
 				fb->init(FBS_PARm2); // do this for all in order to capture oscillation, e.g. if new param at t is close to param at t-2 (tolerance)
 				
 				fr = GradientDescentBit(fb);
+				
+				// count number of concecutive failures
+				if(fr.iter==this->p->maxiter) {
+					iter_fail_skill[k]++;
+				} else {
+					iter_fail_skill[k]=0;
+				}
+
 				delete fb;
 				
 				if( ( (fr.conv || fr.iter==this->p->maxiter) )) {
@@ -502,8 +512,11 @@ NUMBER HMMProblemComp::GradientDescent() {
 						printf("skill %5d, seq %5d, dat %8d, iter#%3d p(O|param)= %15.7f >> %15.7f, conv=%d\n", x, xndat, fr.ndat, fr.iter,fr.pO0,fr.pO,fr.conv);
 				}
 				// ^^^^
+//				#pragma omp critical(update_skip_k)//PAR
+//				{//PAR
 				skip_k++;
-			} // if(this->is_multi[x] == 0)
+//				}//PAR
+			} // if(this->is_multi[x] == 0) // READ WARNING BELOW IF YOU COMMENT
 		}
 		/**/
 //        }//PAR
@@ -511,10 +524,10 @@ NUMBER HMMProblemComp::GradientDescent() {
 		//
 		// Main fit Stage 2. Multi-skills (skills that at least sometimes show up in multi-skil rows
 		//
-		skip_k -= sum_is_multi; // update skills showing up in multi-skill rows
+//		skip_k -= sum_is_multi; // update skills showing up in multi-skill rows
+		// WARNING!! if you comment out `if(this->is_multi[x] == 0)` above, uncomment the previous line, otherwise the previous line should stay commented
         int i = 0; // count runs
-//        int parallel_now = this->p->parallel==1; //PAR
-//        #pragma omp parallel if(parallel_now) shared(iter_qual_skill)//PAR
+//        #pragma omp parallel if(parallel_now) shared(iter_qual_skill,iter_fail_skill)//PAR
 //        {//PAR
         while(skip_k<nK) {
             //
@@ -548,6 +561,14 @@ NUMBER HMMProblemComp::GradientDescent() {
 					this->p->tag1 = 1;
 					FitResult fr = GradientDescentBit(fb);
 					this->p->tag1 = tag1;
+					
+					// count number of concecutive failures
+					if(fr.iter==this->p->maxiter) {
+						iter_fail_skill[k]++;
+					} else {
+						iter_fail_skill[k]=0;
+					}
+					
                     // decide on convergence
                     if(i>=first_iteration_qualify || fb->xndat==0) {
                         if(fr.iter==1 /*e<=this->p->tol*/ || fb->xndat==0) { // converged quick, or don't care (others all converged

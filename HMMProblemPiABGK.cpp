@@ -477,7 +477,7 @@ NUMBER HMMProblemPiABGK::GradientDescent() {
         
         int i = 0; // count runs
 //        int parallel_now = this->p->parallel==1; //PAR
-//        #pragma omp parallel if(parallel_now) shared(iter_qual_group,iter_qual_skill)//PAR
+//        #pragma omp parallel if(parallel_now) shared(iter_qual_group,iter_qual_skill,iter_fail_skill,iter_fail_group)//PAR
 //        {//PAR
             while(skip_k<nK || skip_g<nG) {
                 //
