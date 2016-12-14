@@ -227,6 +227,7 @@ NUMBER HMMProblemComp::getPI(struct data* dt, NPAR i) {
 				q[l] = this->pi[k][i];
 			}
 			r = squishing(q, n_skills);
+			free(q);
 		} // definitely multiskill
 	} // end sometimes multiskill
     return r;
@@ -252,6 +253,7 @@ NUMBER HMMProblemComp::getA(struct data* dt, NPAR i, NPAR j) {
 				q[l] = this->A[k][i][j];
 			}
 			r = squishing(q, n_skills);
+			free(q);
 		} // definitely multiskill
 	} // end sometimes multiskill
 	return r;
@@ -282,6 +284,7 @@ NUMBER HMMProblemComp::getB(struct data* dt, NPAR i, NPAR m) {
 				q[l] = this->B[k][i][m];
 			}
 			r = squishing(q, n_skills);
+			free(q);
 		} // definitely multiskill
 	} // end sometimes multiskill
 	return r;
@@ -294,8 +297,8 @@ void HMMProblemComp::setGradPI(FitBit *fb){
 	NPAR i, o;
 	NUMBER combined, deriv_logit;
 	struct data* dt;
-	NDAT tag1 = this->p->tag1;
-	this->p->tag1 = 1;
+//	NDAT tag1 = this->p->tag1; // use global tag1 setting
+//	this->p->tag1 = 1;
 //	this->p->tag1 = 0; // only get parameter values not united with "neighburs", the only difference
 	for(NCAT x=0; x<fb->xndat; x++) {
 		dt = fb->x_data[x];
@@ -316,7 +319,7 @@ void HMMProblemComp::setGradPI(FitBit *fb){
 	}
 	if( this->p->Cslices>0 ) // penalty
 		fb->addL2Penalty(FBV_PI, this->p, (NUMBER)ndat);
-	this->p->tag1 = tag1;
+//	this->p->tag1 = tag1;
 }
 
 
@@ -326,8 +329,8 @@ void HMMProblemComp::setGradA (FitBit *fb){
 	NPAR o, i, j;
 	NUMBER combined, deriv_logit;
 	struct data* dt;
-	NDAT tag1 = this->p->tag1;
-	this->p->tag1 = 1;
+//	NDAT tag1 = this->p->tag1;  // use global tag1 setting
+//	this->p->tag1 = 1;
 //	this->p->tag1 = 0; // only get parameter values not united with "neighburs", the only difference
 	for(NCAT x=0; x<fb->xndat; x++) {
 		dt = fb->x_data[x];
@@ -352,7 +355,7 @@ void HMMProblemComp::setGradA (FitBit *fb){
 	}
 	if( this->p->Cslices>0 ) // penalty
 		fb->addL2Penalty(FBV_A, this->p, (NUMBER)ndat);
-	this->p->tag1 = tag1;
+//	this->p->tag1 = tag1;
 }
 
 
@@ -362,8 +365,8 @@ void HMMProblemComp::setGradB (FitBit *fb){
 	NPAR o, o0, i;//, j;
 	struct data* dt;
 	NUMBER combined, deriv_logit;
-	NDAT tag1 = this->p->tag1;
-	this->p->tag1 = 1;
+//	NDAT tag1 = this->p->tag1; // use global tag1 setting
+//	this->p->tag1 = 1;
 //	this->p->tag1 = 0; // only get parameter values not united with "neighburs", the only difference
 	for(NCAT x=0; x<fb->xndat; x++) {
 		dt = fb->x_data[x];
@@ -397,7 +400,7 @@ void HMMProblemComp::setGradB (FitBit *fb){
 	}
 	if( this->p->Cslices>0 ) // penalty
 		fb->addL2Penalty(FBV_B, this->p, (NUMBER)ndat);
-	this->p->tag1 = tag1;
+//	this->p->tag1 = tag1;
 }
 
 
@@ -466,7 +469,7 @@ NUMBER HMMProblemComp::GradientDescent() {
 		NDAT sum_is_multi = 0;
 		for(x=0; x<nK; x++) {
 			sum_is_multi += (this->is_multi[x] == 1);
-//			if(this->is_multi[x] == 0) {
+			if(this->is_multi[x] == 0) {
 				// vvvv Extract from HMMProblem.cpp
 				NCAT xndat;
 				struct data** x_data;
@@ -500,7 +503,7 @@ NUMBER HMMProblemComp::GradientDescent() {
 				}
 				// ^^^^
 				skip_k++;
-//			}
+			} // if(this->is_multi[x] == 0)
 		}
 		/**/
 //        }//PAR
@@ -524,7 +527,7 @@ NUMBER HMMProblemComp::GradientDescent() {
                         continue;
                     FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
                     // link
-                    fb->link( HMMProblem::getPI(k), HMMProblem::getA(k), HMMProblem::getB(k), this->p->k_numg[k], this->p->k_g_data[k]);// link skill 0 (we'll copy fit parameters to others
+                    fb->link( this->getPI(k), this->getA(k), this->getB(k), this->p->k_numg[k], this->p->k_g_data[k]);
                     if(this->p->block_fitting[0]!=0) fb->pi = NULL;
                     if(this->p->block_fitting[1]!=0) fb->A  = NULL;
                     if(this->p->block_fitting[2]!=0) fb->B  = NULL;
@@ -534,9 +537,13 @@ NUMBER HMMProblemComp::GradientDescent() {
                     fb->init(FBS_PARm2);
                     fb->init(FBS_GRAD);
                     if(this->p->solver==METHOD_CGD) {
+						fb->init(FBS_DIR);
                         fb->init(FBS_GRADm1);
                         fb->init(FBS_DIRm1);
                     }
+					if(this->p->solver==METHOD_GBB) {
+						fb->init(FBS_GRADm1);
+					}
 					NDAT tag1 = this->p->tag1;
 					this->p->tag1 = 1;
 					FitResult fr = GradientDescentBit(fb);

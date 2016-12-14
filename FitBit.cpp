@@ -541,12 +541,17 @@ void FitBit::doLog10ScaleGentleByRow(enum FIT_BIT_SLOT fbs) {
 	NUMBER* scales = Calloc(NUMBER, n_scales);
 	
 	
-	scales[0] = doLog10Scale1DGentle(a_PI, this->pi, nS);
-	for(NPAR i=0; i<nS; i++) {
-		scales[i+1] = doLog10Scale1DGentle(a_A[i], this->A[i], nS);
+	if(this->pi != NULL)
+		scales[0] = doLog10Scale1DGentle(a_PI, this->pi, nS);
+	if(this->A  != NULL) {
+		for(NPAR i=0; i<nS; i++) {
+			scales[i+1] = doLog10Scale1DGentle(a_A[i], this->A[i], nS);
+		}
 	}
-	for(NPAR i=0; i<nS; i++) {
-		scales[i+1+nS] = doLog10Scale1DGentle(a_B[i], this->B[i], nO);
+	if(this->B  != NULL) {
+		for(NPAR i=0; i<nS; i++) {
+			scales[i+1+nS] = doLog10Scale1DGentle(a_B[i], this->B[i], nO);
+		}
 	}
 	
 	for(NPAR i=0; i<nS; i++) {

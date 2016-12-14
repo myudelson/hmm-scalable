@@ -179,7 +179,7 @@ To generate predictions using a previously fit model run the following command  
 To give this tool a proper test you might want to try it on a KDD Cup 2010 dataset donated to the Pittsburgh Science of Learning Center by Carnegie Learning Inc. The dataset can be downloaded (after a quick registration) from [here](http://pslcdatashop.web.cmu.edu/KDDCup/). This dataset consists of training and challenge sets. For the sake of testing the tool, download the challenge  Algebra I set that has about 9 million transactions of over 3300 students. The training file should be trimmed to the tool's format. See shell commands below that do that.
 
 ```sh
-gawk -F"\t" 'BEGIN{OFS=""} {if(NR==1)next; skill=$20; gsub("~~", "~", skill); skill=(skill=="")?".":($3"__"skill); print 2-$14,$2,$3"__"$4,skill;}' algebra_2008_2009_train.txt > a89_kts_train.txt
+gawk -F"\t" 'BEGIN{OFS="\t"} {if(NR==1)next; skill=$20; gsub("~~", "~", skill); if(skill=="") skill="."; else { skill=$3"__"skill; gsub(/~/, "~"$3"__",skill);} print 2-$14,$2,$3"__"$4,skill;}' algebra_2008_2009_train.txt > a89_kts_train.txt
 ```
 
 To fit a BKT model of this dataset using gradient descent method as well as to compute fit metrics and the prediction run the following command:
