@@ -494,7 +494,7 @@ NUMBER HMMProblemComp::GradientDescent() {
 				if(this->p->solver==METHOD_GBB) {
 					fb->init(FBS_GRADm1);
 				}
-				fb->init(FBS_PARm2); // do this for all in order to capture oscillation, e.g. if new param at t is close to param at t-2 (tolerance)
+				fb->init(FBS_PARm2); // do this for all in order to capture oscillation, e.g. if new param at time t is close to param at t-2 (tolerance)
 				
 				fr = GradientDescentBit(fb);
 				
