@@ -425,7 +425,7 @@ NUMBER deprecated_fsafelog(NUMBER val); // fast and safe log for params
 NUMBER safelog(NUMBER val); // safe log for prediction
 NUMBER sgn(NUMBER val);
 NUMBER pairing(NUMBER p, NUMBER q); // computes sigmoid( logit(p) + logit(q) )
-NUMBER squishing(NUMBER* p, NCAT n); // computes sigmoid( logit(p1) + logit(p2) + ... )
+//NUMBER squishing(NUMBER* p, NCAT n); // computes sigmoid( logit(p1) + logit(p2) + ... )
 
 NUMBER maxn(NUMBER *ar, NDAT n); // max value of n
 

@@ -45,8 +45,7 @@ NUMBER PUCorbettianAdditive::pair(NUMBER standard, NUMBER pooled) {
 	return sum_odds / (1+sum_odds);
 }
 
-NUMBER PUCorbettianAdditive::unite(NUMBER* standard, NCAT nstandard, NUMBER* pooled, NCAT npooled) {
-	// W_{ x_i ,g_j}^{ add }=O_{ x_i ,g_j}^{ add }/( 1+O_{ x_i ,g_j}^{ add })
+NUMBER PUCorbettianAdditive::sumOdds(NUMBER* standard, NCAT nstandard, NUMBER* pooled, NCAT npooled) {
 	NUMBER sum_odds = 0;
 	if(standard != NULL && nstandard > 0) {
 		for(NCAT i=0; i<=nstandard; i++) {
@@ -58,6 +57,12 @@ NUMBER PUCorbettianAdditive::unite(NUMBER* standard, NCAT nstandard, NUMBER* poo
 			sum_odds += pooled[i];
 		}
 	}
+	return sum_odds;
+}
+
+NUMBER PUCorbettianAdditive::unite(NUMBER* standard, NCAT nstandard, NUMBER* pooled, NCAT npooled) {
+	// W_{ x_i ,g_j}^{ add }=O_{ x_i ,g_j}^{ add }/( 1+O_{ x_i ,g_j}^{ add })
+	NUMBER sum_odds = sumOdds(standard, nstandard, pooled, npooled);
 	return sum_odds / (1+sum_odds);
 }
 
@@ -71,11 +76,17 @@ NUMBER PUCorbettianAdditive::derivativePair(NUMBER standard, NUMBER pooled, NPAR
 
 
 NUMBER PUCorbettianAdditive::derivativeUnite(NUMBER* standard, NCAT nstandard, NUMBER* pooled, NCAT npooled, NPAR which, NCAT index) {
-	NUMBER paired = unite(standard, nstandard, pooled, npooled);
+	NUMBER sum_odds = sumOdds(standard, nstandard, pooled, npooled);
 	// which 0-standard
 	// \frac{1}{ (1+O_{ x_{ i },g_{ j } }^{ add } )^2 } \frac { 1 }{ (1-x_{ i })^2 }
 	// which 1-pooled
 	// \frac{1}{ (1+O_{ x_{ i },g_{ j } }^{ add } )2 }
-	return 1 / ( pow(1+paired,2) ) * ((which==0) ? ( 1/(pow(1-standard[index],2)) ) : 1 );
+	return 1 / ( pow(1+sum_odds,2) ) * ((which==0) ? ( 1/(pow(1-standard[index],2)) ) : 1 );
+}
+
+NUMBER PUCorbettianAdditive::derivativeUnite(NUMBER united, NUMBER standard, NUMBER pooled, NPAR which) {
+	NUMBER sum_odds = safe01num(united / (1 - united));
+	// which 0-standard, 1-pooled
+	return 1 / ( pow(1+sum_odds,2) ) * ((which==0) ? ( 1/(pow(1-standard,2)) ) : 1 );
 }
 

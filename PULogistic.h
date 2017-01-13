@@ -49,6 +49,7 @@ public:
 	// derivatives of unions
 	virtual NUMBER derivativePair(NUMBER standard, NUMBER pooled, NPAR which); // a shortcut for uniting one pooled one standatd parameter
 	virtual NUMBER derivativeUnite(NUMBER* standard, NCAT nstandard, NUMBER* pooled, NCAT npooled, NPAR which, NCAT index);
+	virtual NUMBER derivativeUnite(NUMBER united, NUMBER standard, NUMBER pooled, NPAR which);
 };
 
 #endif

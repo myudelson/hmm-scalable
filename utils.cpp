@@ -430,17 +430,17 @@ NUMBER pairing(NUMBER p, NUMBER q) {
 }
 
 // computes sigmoid( logit(p1) + logit(p2) + ... )
-NUMBER squishing(NUMBER* p, NCAT n) {
-	NUMBER* P = Calloc(NUMBER, (size_t)n);
-	for(NCAT i=0; i<n; i++) P[i] = safe01num(p[i]);
-	NUMBER num = 1, den = 1;
-	for(NCAT i=0; i<n; i++) {
-		num *= (1-P[i]);
-		den *= P[i];
-	}
-	free(P);
-	return 1/( 1 + num/safe0num(den) );
-}
+//NUMBER squishing(NUMBER* p, NCAT n) {
+//	NUMBER* P = Calloc(NUMBER, (size_t)n);
+//	for(NCAT i=0; i<n; i++) P[i] = safe01num(p[i]);
+//	NUMBER num = 1, den = 1;
+//	for(NCAT i=0; i<n; i++) {
+//		num *= (1-P[i]);
+//		den *= P[i];
+//	}
+//	free(P);
+//	return 1/( 1 + num/safe0num(den) );
+//}
 
 // max value of n
 NUMBER maxn(NUMBER *ar, NDAT n) {

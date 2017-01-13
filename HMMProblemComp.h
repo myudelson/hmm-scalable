@@ -29,6 +29,9 @@
 
 #include "HMMProblem.h"
 #include "StripedArray.h"
+#include "ParameterUnion.h"
+#include "PULogistic.h"
+#include "PUCorbettianAdditive.h"
 #include "utils.h"
 #include <stdio.h>
 #include <map>
@@ -76,6 +79,7 @@ protected:
 //    virtual NUMBER GradientDescentX(); // fit alternating
 
 private:
+	ParameterUnion* pu; // parameter union function
 	void toFileSkill(const char *filename);
 };
 

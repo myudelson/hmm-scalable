@@ -64,23 +64,33 @@ NUMBER PULogistic::unite(NUMBER* standard, NCAT nstandard, NUMBER* pooled, NCAT 
 
 // a shortcut for uniting one pooled one standatd parameter
 NUMBER PULogistic::derivativePair(NUMBER standard, NUMBER pooled, NPAR which) {
-	NUMBER paired = pair(standard, pooled);
+	NUMBER united = pair(standard, pooled);
 	// which 0-standard, 1-pooled
 	NUMBER deriv_param = ((which==0)?
 						  1 / safe0num( standard * (1-standard) ) :
 						  1 / safe0num(   pooled * (1-  pooled) )
 						  );
-	return paired * (1-paired) * deriv_param;
+	return united * (1-united) * deriv_param;
 }
 
 
 NUMBER PULogistic::derivativeUnite(NUMBER* standard, NCAT nstandard, NUMBER* pooled, NCAT npooled, NPAR which, NCAT index) {
-	NUMBER paired = unite(standard, nstandard, pooled, npooled);
+	NUMBER united = unite(standard, nstandard, pooled, npooled);
 	// which 0-standard, 1-pooled
 	NUMBER deriv_param = ((which==0)?
 						  1 / safe0num( standard[index] * (1-standard[index]) ) :
 						  1 / safe0num(   pooled[index] * (1-  pooled[index]) )
 						  );
-	return paired * (1-paired) * deriv_param;
+	return united * (1-united) * deriv_param;
+}
+
+
+NUMBER PULogistic::derivativeUnite(NUMBER united, NUMBER standard, NUMBER pooled, NPAR which) {
+	// which 0-standard, 1-pooled
+	NUMBER deriv_param = ((which==0)?
+						  1 / safe0num( standard * (1-standard) ) :
+						  1 / safe0num(   pooled * (1-  pooled) )
+						  );
+	return united * (1-united) * deriv_param;
 }
 

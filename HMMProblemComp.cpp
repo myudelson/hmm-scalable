@@ -168,6 +168,8 @@ void HMMProblemComp::init(struct param *param) {
 			lbB[i][j] = this->p->param_lo[idx];
 			ubB[i][j] = this->p->param_hi[idx];
 		}
+	// set up parameter union
+	this->pu = new PULogistic();
 }
 
 HMMProblemComp::~HMMProblemComp() {
@@ -177,6 +179,8 @@ HMMProblemComp::~HMMProblemComp() {
 void HMMProblemComp::destroy() {
 	// destroy additional model data
 	free(this->is_multi);
+	// delete parameter union
+	delete this->pu;
 }// ~HMMProblemComp
 
 //NUMBER** HMMProblemComp::getPI() {
@@ -226,7 +230,7 @@ NUMBER HMMProblemComp::getPI(struct data* dt, NPAR i) {
 				k = this->p->dat_skill_stacked[ this->p->dat_skill_rix[ dt->t ]+l ];
 				q[l] = this->pi[k][i];
 			}
-			r = squishing(q, n_skills);
+			r = this->pu->unite(q, n_skills, NULL, 0); //squishing(q, n_skills);
 			free(q);
 		} // definitely multiskill
 	} // end sometimes multiskill
@@ -252,7 +256,7 @@ NUMBER HMMProblemComp::getA(struct data* dt, NPAR i, NPAR j) {
 				k = this->p->dat_skill_stacked[ this->p->dat_skill_rix[ dt->t ]+l ];
 				q[l] = this->A[k][i][j];
 			}
-			r = squishing(q, n_skills);
+			r = this->pu->unite(q, n_skills, NULL, 0); //r = squishing(q, n_skills);
 			free(q);
 		} // definitely multiskill
 	} // end sometimes multiskill
@@ -283,7 +287,7 @@ NUMBER HMMProblemComp::getB(struct data* dt, NPAR i, NPAR m) {
 				k = this->p->dat_skill_stacked[ this->p->dat_skill_rix[ dt->t ]+l ];
 				q[l] = this->B[k][i][m];
 			}
-			r = squishing(q, n_skills);
+			r = this->pu->unite(q, n_skills, NULL, 0); //r = squishing(q, n_skills);
 			free(q);
 		} // definitely multiskill
 	} // end sometimes multiskill
@@ -295,7 +299,7 @@ void HMMProblemComp::setGradPI(FitBit *fb){
 	if(this->p->block_fitting[0]>0) return;
 	NDAT t = 0, ndat = 0;
 	NPAR i, o;
-	NUMBER combined, deriv_logit;
+//	NUMBER combined, deriv_logit;
 	struct data* dt;
 //	NDAT tag1 = this->p->tag1; // use global tag1 setting
 //	this->p->tag1 = 1;
@@ -311,9 +315,11 @@ void HMMProblemComp::setGradPI(FitBit *fb){
 			if( this->is_multi[dt->k] == 0 || n_skills == 1) {
 				fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
 			} else {
-				combined = getPI(dt,i);
-				deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );
-				fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
+//				combined = getPI(dt,i);
+//				deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );
+//				fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
+				// compute with parameter unite
+				fb->gradPI[i] -= this->pu->derivativeUnite(getPI(dt,i), fb->pi[i], 0.0/*NULL*/, 0) * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
 			}
 		}
 	}
@@ -327,7 +333,7 @@ void HMMProblemComp::setGradA (FitBit *fb){
 	if(this->p->block_fitting[1]>0) return;
 	NDAT t, ndat = 0;
 	NPAR o, i, j;
-	NUMBER combined, deriv_logit;
+//	NUMBER combined, deriv_logit;
 	struct data* dt;
 //	NDAT tag1 = this->p->tag1;  // use global tag1 setting
 //	this->p->tag1 = 1;
@@ -345,9 +351,11 @@ void HMMProblemComp::setGradA (FitBit *fb){
 					if( this->is_multi[dt->k] == 0 || n_skills == 1) {
 						fb->gradA[i][j] -= dt->beta[t][j] * ((o<0)?1:fb->B[j][o]) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
 					} else {
-						combined = getA(dt,i,j);
-						deriv_logit = 1 / safe0num( fb->A[i][j] * (1-fb->A[i][j]) );
-						fb->gradA[i][j] -= combined * safe0num(1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:fb->B[j][o]) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
+//						combined = getA(dt,i,j);
+//						deriv_logit = 1 / safe0num( fb->A[i][j] * (1-fb->A[i][j]) );
+//						fb->gradA[i][j] -= combined * safe0num(1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:fb->B[j][o]) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
+						// compute with parameter unite
+						fb->gradPI[i] -= this->pu->derivativeUnite(getA(dt,i,j), fb->A[i][j], 0.0/*NULL*/, 0) * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
 					}
 				}
 			}
@@ -364,7 +372,7 @@ void HMMProblemComp::setGradB (FitBit *fb){
 	NDAT t, ndat = 0;
 	NPAR o, o0, i;//, j;
 	struct data* dt;
-	NUMBER combined, deriv_logit;
+//	NUMBER combined, deriv_logit;
 //	NDAT tag1 = this->p->tag1; // use global tag1 setting
 //	this->p->tag1 = 1;
 //	this->p->tag1 = 0; // only get parameter values not united with "neighburs", the only difference
@@ -383,9 +391,11 @@ void HMMProblemComp::setGradB (FitBit *fb){
 				if( this->is_multi[dt->k] == 0 || n_skills == 1) {
 					fb->gradB[i][o] -= dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * fb->B[i][o]);
 				} else {
-					combined = getB(dt,i,o);
-					deriv_logit = 1 / safe0num( fb->B[i][o] * (1-fb->B[i][o]) );
-					fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * ((o<0)?1:fb->B[i][o]));
+//					combined = getB(dt,i,o);
+//					deriv_logit = 1 / safe0num( fb->B[i][o] * (1-fb->B[i][o]) );
+//					fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * ((o<0)?1:fb->B[i][o]));
+					// compute with parameter unite
+					fb->gradPI[i] -= this->pu->derivativeUnite(getB(dt,i,o), fb->B[i][o], 0.0/*NULL*/, 0) * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
 				}
 			}
 			
@@ -690,14 +700,14 @@ void HMMProblemComp::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pr
 		for(i=0; i<nS; i++) {
 			q = Calloc(NUMBER, (size_t)nks);
 			for(l=0;l<nks;l++) q[l] = group_skill_map[g][ ks[l] ][i];
-			a_L[i] = squishing(q, nks);
+			a_L[i] = this->pu->unite(q, nks, NULL, 0); //a_L[i] = squishing(q, nks);
 			free(q);
 
 			for(m=0; m<nO; m++) {
 				q = Calloc(NUMBER, (size_t)nks);
 				for(l=0;l<nks;l++) q[l] = this->B[ ks[l] ][i][m];
 				free(q);
-				a_B[i][m] = squishing(q, nks);
+				a_B[i][m] = this->pu->unite(q, nks, NULL, 0); //a_B[i][m] = squishing(q, nks);
 			}
 		}
 	}
