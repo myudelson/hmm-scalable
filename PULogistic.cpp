@@ -38,27 +38,30 @@
 
 // a shortcut for uniting one pooled one standatd parameter
 NUMBER PULogistic::pair(NUMBER standard, NUMBER pooled) {
-	NUMBER S = safe01num(standard);
-	NUMBER P = safe01num(pooled);
-	return 1/( 1 + (1-S)*(1-P)/(S*P) );
+	NUMBER s = safe01num(standard);
+	NUMBER p = safe01num(pooled);
+	return 1/( 1 + (1-s)*(1-p)/safe0num(s*p) );
 }
 
 NUMBER PULogistic::unite(NUMBER* standard, NCAT nstandard, NUMBER* pooled, NCAT npooled) {
-	NUMBER NUM = 1;
-	NUMBER DEN = 1;
+	NUMBER num = 1;
+	NUMBER den = 1;
+	NUMBER safe = 0;
 	if(standard != NULL && nstandard > 0) {
 		for(NCAT i=0; i<=nstandard; i++) {
-			NUM *= safe01num(1-standard[i]);
-			DEN *= safe01num(  standard[i]);
+			safe = safe01num(standard[i]);
+			num *= 1 - safe;
+			den *=     safe;
 		}
 	}
 	if(pooled != NULL && npooled > 0) {
 		for(NCAT i=0; i<=nstandard; i++) {
-			NUM *= safe01num(1-pooled[i]);
-			DEN *= safe01num(  pooled[i]);
+			safe = safe01num(pooled[i]);
+			num *= 1 - safe;
+			den *=     safe;
 		}
 	}
-	return 1/( 1 + NUM/DEN );
+	return 1/( 1 + num/safe0num(den) );
 }
 
 
@@ -66,10 +69,14 @@ NUMBER PULogistic::unite(NUMBER* standard, NCAT nstandard, NUMBER* pooled, NCAT 
 NUMBER PULogistic::derivativePair(NUMBER standard, NUMBER pooled, NPAR which) {
 	NUMBER united = pair(standard, pooled);
 	// which 0-standard, 1-pooled
-	NUMBER deriv_param = ((which==0)?
-						  1 / safe0num( standard * (1-standard) ) :
-						  1 / safe0num(   pooled * (1-  pooled) )
-						  );
+	NUMBER deriv_param = 0;
+	if(which==0) {
+		NUMBER safe_standard = safe01num(standard);
+		deriv_param = 1 / ( safe_standard * (1 - safe_standard) );
+	} else if(which==1) {
+		NUMBER safe_pooled   = safe01num(pooled);
+		deriv_param = 1 / (   safe_pooled * (1 -   safe_pooled) );
+	}
 	return united * (1-united) * deriv_param;
 }
 
@@ -77,20 +84,28 @@ NUMBER PULogistic::derivativePair(NUMBER standard, NUMBER pooled, NPAR which) {
 NUMBER PULogistic::derivativeUnite(NUMBER* standard, NCAT nstandard, NUMBER* pooled, NCAT npooled, NPAR which, NCAT index) {
 	NUMBER united = unite(standard, nstandard, pooled, npooled);
 	// which 0-standard, 1-pooled
-	NUMBER deriv_param = ((which==0)?
-						  1 / safe0num( standard[index] * (1-standard[index]) ) :
-						  1 / safe0num(   pooled[index] * (1-  pooled[index]) )
-						  );
+	NUMBER deriv_param = 0;
+	if(which==0) {
+		NUMBER safe_standard = safe01num(standard[index]);
+		deriv_param = 1 / ( safe_standard * (1 - safe_standard) );
+	} else if(which==1) {
+		NUMBER safe_pooled   = safe01num(pooled[index]);
+		deriv_param = 1 / (   safe_pooled * (1 -   safe_pooled) );
+	}
 	return united * (1-united) * deriv_param;
 }
 
 
 NUMBER PULogistic::derivativeUnite(NUMBER united, NUMBER standard, NUMBER pooled, NPAR which) {
 	// which 0-standard, 1-pooled
-	NUMBER deriv_param = ((which==0)?
-						  1 / safe0num( standard * (1-standard) ) :
-						  1 / safe0num(   pooled * (1-  pooled) )
-						  );
+	NUMBER deriv_param = 0;
+	if(which==0) {
+		NUMBER safe_standard = safe01num(standard);
+		deriv_param = 1 / ( safe_standard * (1 - safe_standard) );
+	} else if(which==1) {
+		NUMBER safe_pooled   = safe01num(pooled);
+		deriv_param = 1 / (   safe_pooled * (1 -   safe_pooled) );
+	}
 	return united * (1-united) * deriv_param;
 }
 

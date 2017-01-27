@@ -390,14 +390,16 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 NUMBER safe01num(NUMBER val) {
     //    val = (val<0)?0:((val>1)?1:val); // squeeze into [0,1]
     //	return val + SAFETY*(val==0) - SAFETY*(val==1); // then futher in
-    return (val<=0)? SAFETY : ( (val>=1)? (1-SAFETY) : val );
+//	return (val<=0)? SAFETY : ( (val>=1)? (1-SAFETY) : val );
+	return (val<=SAFETY)? SAFETY : ( (val>=(1-SAFETY))? (1-SAFETY) : val );
 }
 
 // protect against hard 0
 NUMBER safe0num(NUMBER val) {
     //    return (fabs(val)<SAFETY)?(SAFETY*(val>=0) + SAFETY*(val<0)*(-1)):val;
-    NUMBER a_sign = (val<0)?-1:1;
-    return (fabs(val)<SAFETY)?a_sign*SAFETY:val;
+//    NUMBER a_sign = (val<0)?-1:1;
+//    return (fabs(val)<SAFETY)?a_sign*SAFETY:val;
+	return (val<=SAFETY)? SAFETY : val;
 }
 
 NUMBER itself(NUMBER val) {

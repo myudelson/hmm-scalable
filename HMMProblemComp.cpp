@@ -169,6 +169,7 @@ void HMMProblemComp::init(struct param *param) {
 			ubB[i][j] = this->p->param_hi[idx];
 		}
 	// set up parameter union
+//	this->pu = new PUCorbettianAdditive();
 	this->pu = new PULogistic();
 }
 
@@ -319,7 +320,7 @@ void HMMProblemComp::setGradPI(FitBit *fb){
 //				deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );
 //				fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
 				// compute with parameter unite
-				fb->gradPI[i] -= this->pu->derivativeUnite(getPI(dt,i), fb->pi[i], 0.0/*NULL*/, 0) * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
+				fb->gradPI[i] -= this->pu->derivativeUnite(getPI(dt,i), fb->pi[i], 0.0/*NULL*/, 0 /*standard params*/) * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
 			}
 		}
 	}
@@ -355,7 +356,7 @@ void HMMProblemComp::setGradA (FitBit *fb){
 //						deriv_logit = 1 / safe0num( fb->A[i][j] * (1-fb->A[i][j]) );
 //						fb->gradA[i][j] -= combined * safe0num(1-combined) * deriv_logit * dt->beta[t][j] * ((o<0)?1:fb->B[j][o]) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
 						// compute with parameter unite
-						fb->gradPI[i] -= this->pu->derivativeUnite(getA(dt,i,j), fb->A[i][j], 0.0/*NULL*/, 0) * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
+						fb->gradA[i][j] -= this->pu->derivativeUnite(getA(dt,i,j), fb->A[i][j], 0.0/*NULL*/, 0) * dt->beta[t][j] * ((o<0)?1:fb->B[j][o]) * dt->alpha[t-1][i] / safe0num(dt->p_O_param);
 					}
 				}
 			}
@@ -395,7 +396,7 @@ void HMMProblemComp::setGradB (FitBit *fb){
 //					deriv_logit = 1 / safe0num( fb->B[i][o] * (1-fb->B[i][o]) );
 //					fb->gradB[i][o] -= combined * (1-combined) * deriv_logit * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * ((o<0)?1:fb->B[i][o]));
 					// compute with parameter unite
-					fb->gradPI[i] -= this->pu->derivativeUnite(getB(dt,i,o), fb->B[i][o], 0.0/*NULL*/, 0) * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
+					fb->gradB[i][o] -= this->pu->derivativeUnite(getB(dt,i,o), fb->B[i][o], 0.0/*NULL*/, 0) * dt->alpha[t][i] * dt->beta[t][i] / safe0num(dt->p_O_param * ((o<0)?1:fb->B[i][o]));
 				}
 			}
 			
@@ -465,7 +466,7 @@ NUMBER HMMProblemComp::GradientDescent() {
 		NCAT first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
 		NCAT iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
 		NCAT* iter_qual_skill = Calloc(NCAT, (size_t)nK); //
-		NCAT* iter_fail_skill = Calloc(NCAT, (size_t)nK); // counting concecutive number of failures to converge for skills
+		NCAT* iter_fail_skill = Calloc(NCAT, (size_t)nK); // counting consecutive number of failures to converge for skills
 		int skip_k = 0;
 		NDAT sum_is_multi = 0;
 		//
@@ -473,11 +474,11 @@ NUMBER HMMProblemComp::GradientDescent() {
 		//
 
 //		int parallel_now = this->p->parallel==1; //PAR
-//		#pragma omp parallel if(parallel_now) shared(iter_qual_skill)//PAR
+//		#pragma omp parallel if(parallel_now) shared(iter_qual_skill, iter_fail_skill)//PAR
 //		{//PAR
 //		#pragma omp for schedule(dynamic) //PAR
 		for(x=0; x<nK; x++) {
-//			#pragma omp critical(update_skip_k)//PAR
+//			#pragma omp critical(update_sum_is_multi)//PAR
 //			{//PAR
 			sum_is_multi += (this->is_multi[x] == 1);
 //			}//PAR
@@ -506,8 +507,12 @@ NUMBER HMMProblemComp::GradientDescent() {
 				}
 				fb->init(FBS_PARm2); // do this for all in order to capture oscillation, e.g. if new param at time t is close to param at t-2 (tolerance)
 				
-				fr = GradientDescentBit(fb);
-				
+//				fr = GradientDescentBit(fb);
+				NDAT tag1 = this->p->tag1;   // FORCE
+				this->p->tag1 = 1;           // FORCE
+				fr = GradientDescentBit(fb); // FORCE
+				this->p->tag1 = tag1;        // FORCE
+			
 				// count number of concecutive failures
 				if(fr.iter==this->p->maxiter) {
 					iter_fail_skill[k]++;
@@ -534,12 +539,14 @@ NUMBER HMMProblemComp::GradientDescent() {
 		//
 		// Main fit Stage 2. Multi-skills (skills that at least sometimes show up in multi-skil rows
 		//
-//		skip_k -= sum_is_multi; // update skills showing up in multi-skill rows
+//		skip_k -= sum_is_multi; // update skills showing up in multi-skill rows // WATCHOUT
 		// WARNING!! if you comment out `if(this->is_multi[x] == 0)` above, uncomment the previous line, otherwise the previous line should stay commented
         int i = 0; // count runs
+		NDAT tag1 = this->p->tag1;
+		this->p->tag1 = 1;
 //        #pragma omp parallel if(parallel_now) shared(iter_qual_skill,iter_fail_skill)//PAR
 //        {//PAR
-        while(skip_k<nK) {
+        while(skip_k<nK || i < this->p->maxiter) { // add maxiter as cap
             //
             // Multi-skills, a version of what iBKT was doing
             //
@@ -567,10 +574,7 @@ NUMBER HMMProblemComp::GradientDescent() {
 					if(this->p->solver==METHOD_GBB) {
 						fb->init(FBS_GRADm1);
 					}
-					NDAT tag1 = this->p->tag1;
-					this->p->tag1 = 1;
 					FitResult fr = GradientDescentBit(fb);
-					this->p->tag1 = tag1;
 					
 					// count number of concecutive failures
 					if(fr.iter==this->p->maxiter) {
@@ -609,6 +613,7 @@ NUMBER HMMProblemComp::GradientDescent() {
 //            }//PAR
         }
 //        }//PAR
+		this->p->tag1 = tag1;
         // recycle qualifications
         if( iter_qual_skill != NULL ) free(iter_qual_skill);
         if( iter_fail_skill != NULL ) free(iter_fail_skill);
