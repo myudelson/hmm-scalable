@@ -76,7 +76,6 @@
 		713EFA021AC5C70B000301B4 /* FitBitSlicedA.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FitBitSlicedA.cpp; sourceTree = "<group>"; };
 		715EE5B017F0BF290079E646 /* SparseArray2D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SparseArray2D.cpp; sourceTree = "<group>"; };
 		715EE5B117F0BF290079E646 /* SparseArray2D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SparseArray2D.h; sourceTree = "<group>"; };
-		71602EF817BBA3270001BF2B /* readme.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = readme.txt; sourceTree = "<group>"; };
 		719E18D318CF8C99004ED5C4 /* HMMProblemPiGKww.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMMProblemPiGKww.h; sourceTree = "<group>"; };
 		719E18D418CF8CA3004ED5C4 /* HMMProblemPiGKww.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = HMMProblemPiGKww.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		71A39C9F179DAAC6000F9610 /* inputconvert.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = inputconvert.cpp; sourceTree = "<group>"; };
@@ -155,7 +154,6 @@
 			isa = PBXGroup;
 			children = (
 				EBECF59C1CA1B46200DF52C7 /* readme.md */,
-				71602EF817BBA3270001BF2B /* readme.txt */,
 				EB02599C162C61B600442454 /* makefile */,
 				EB9D16B3162C60A7006E5A98 /* todo.txt */,
 				711CD38A1B3879E800F10BD3 /* par2seq.sh */,
