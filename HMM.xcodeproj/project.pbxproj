@@ -99,6 +99,7 @@
 		EB02599C162C61B600442454 /* makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = makefile; sourceTree = "<group>"; };
 		EB32E9C7157F9D2E002F3FFB /* predicthmm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = predicthmm.cpp; sourceTree = "<group>"; };
 		EB32E9F4157FA159002F3FFB /* predicthmm */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = predicthmm; sourceTree = BUILT_PRODUCTS_DIR; };
+		EB353C721E635635004E7144 /* COPYRIGHT */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = COPYRIGHT; sourceTree = "<group>"; };
 		EB496A491E27D19100293060 /* ParameterUnion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParameterUnion.h; sourceTree = "<group>"; };
 		EB496A4A1E27D19F00293060 /* PULogistic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PULogistic.cpp; sourceTree = "<group>"; };
 		EB496A4D1E27D44000293060 /* PULogistic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PULogistic.h; sourceTree = "<group>"; };
@@ -154,6 +155,7 @@
 			isa = PBXGroup;
 			children = (
 				EBECF59C1CA1B46200DF52C7 /* readme.md */,
+				EB353C721E635635004E7144 /* COPYRIGHT */,
 				EB02599C162C61B600442454 /* makefile */,
 				EB9D16B3162C60A7006E5A98 /* todo.txt */,
 				711CD38A1B3879E800F10BD3 /* par2seq.sh */,
