@@ -1,6 +1,6 @@
 /*
  
- Copyright (c) 2012-2015, Michael (Mikhail) Yudelson
+ Copyright (c) 2012-2017, Michael (Mikhail) Yudelson
  All rights reserved.
  
  Redistribution and use in source and binary forms, with or without
@@ -916,7 +916,7 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
                     exit_with_help();
                 }
 				break;
-                case 'c': {
+			case 'c': {
                     // this version with per-parameter center of gravity in Pi, A, and B
                     NPAR nS = param.nS;
                     NPAR nO = param.nO;
