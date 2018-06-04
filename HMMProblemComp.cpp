@@ -82,6 +82,8 @@ void HMMProblemComp::init(struct param *param) {
 		sumA[i] = 0;
 		sumB[i] = 0;
 	}
+    
+    // write default parameters first
 	// populate PI
 	for(i=0; i<((nS)-1); i++) {
 		a_PI[i] = this->p->init_params[i];
@@ -488,6 +490,7 @@ NUMBER HMMProblemComp::GradientDescent() {
 				struct data** x_data;
 				xndat = this->p->k_numg[x];
 				x_data = this->p->k_g_data[x];
+                k = x_data[0]->k; // grab the first one, since all of them are the same k
 				FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
 				fb->link( this->getPI(x), this->getA(x), this->getB(x), xndat, x_data);
 				if(this->p->block_fitting[0]!=0) fb->pi = NULL;

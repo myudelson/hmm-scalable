@@ -79,66 +79,66 @@ void HMMProblemSlicedAB::init(struct param *param) {
     this->A =  init4D<NUMBER>((NDAT)this->sizes[1], (NDAT)nZ, (NDAT)nS, (NDAT)nS);
     this->B =  init4D<NUMBER>((NDAT)this->sizes[2], (NDAT)nZ, (NDAT)nS, (NDAT)nO);
     
-    if(param->initfile[0]==0) { // no setup file
-        NUMBER sumPI = 0;
-        NUMBER sumA[nZ][nS];
-        NUMBER sumB[nZ][nS];
-        for(z=0; z<nZ; z++) {
-            for(i=0; i<nS; i++) {
-                sumA[z][i] = 0;
-                sumB[z][i] = 0;
+    // write default parameters first
+    NUMBER sumPI = 0;
+    NUMBER sumA[nZ][nS];
+    NUMBER sumB[nZ][nS];
+    for(z=0; z<nZ; z++) {
+        for(i=0; i<nS; i++) {
+            sumA[z][i] = 0;
+            sumB[z][i] = 0;
+        }
+    }
+    // populate PI
+    for(i=0; i<((nS)-1); i++) {
+        a_PI[i] = this->p->init_params[i];
+        sumPI  += this->p->init_params[i];
+    }
+    a_PI[nS-1] = 1 - sumPI;
+    // populate A
+    offset = (NPAR)(nS-1);
+    for(z=0; z<nZ; z++) {
+        for(i=0; i<nS; i++) {
+            for(j=0; j<((nS)-1); j++) {
+                idx = (NPAR)(offset + z * nS * ((nS)-1) + i*((nS)-1) + j);
+                a_A[z][i][j] = this->p->init_params[idx];
+                sumA[z][i]  += this->p->init_params[idx];
             }
+            a_A[z][i][((nS)-1)]  = 1 - sumA[z][i];
         }
-        // populate PI
-        for(i=0; i<((nS)-1); i++) {
-            a_PI[i] = this->p->init_params[i];
-            sumPI  += this->p->init_params[i];
-        }
-        a_PI[nS-1] = 1 - sumPI;
-        // populate A
-        offset = (NPAR)(nS-1);
-        for(z=0; z<nZ; z++) {
-            for(i=0; i<nS; i++) {
-                for(j=0; j<((nS)-1); j++) {
-                    idx = (NPAR)(offset + z * nS * ((nS)-1) + i*((nS)-1) + j);
-                    a_A[z][i][j] = this->p->init_params[idx];
-                    sumA[z][i]  += this->p->init_params[idx];
-                }
-                a_A[z][i][((nS)-1)]  = 1 - sumA[z][i];
+    }
+    // populate B
+    offset = (NPAR)((nS-1) + nZ*nS*(nS-1));
+    for(z=0; z<nZ; z++) {
+        for(i=0; i<nS; i++) {
+            for(m=0; m<((nO)-1); m++) {
+                idx = (NPAR)(offset + z * nS * ((nO)-1) + i*((nO)-1) + m);
+                a_B[z][i][m] = this->p->init_params[idx];
+                sumB[z][i] += this->p->init_params[idx];
             }
+            a_B[z][i][((nO)-1)]  = 1 - sumB[z][i];
         }
-        // populate B
-        offset = (NPAR)((nS-1) + nZ*nS*(nS-1));
-        for(z=0; z<nZ; z++) {
-            for(i=0; i<nS; i++) {
-                for(m=0; m<((nO)-1); m++) {
-                    idx = (NPAR)(offset + z * nS * ((nO)-1) + i*((nO)-1) + m);
-                    a_B[z][i][m] = this->p->init_params[idx];
-                    sumB[z][i] += this->p->init_params[idx];
-                }
-                a_B[z][i][((nO)-1)]  = 1 - sumB[z][i];
-            }
-        }
-        
-        // mass produce PI's, A's, B's
-        if( this->p->do_not_check_constraints==0 && !checkPIABConstraints(a_PI, a_A, a_B)) {
-            fprintf(stderr,"params do not meet constraints.\n");
-            exit(1);
-        }
-        NCAT x;
-        for(x=0; x<this->sizes[0]; x++)
-            cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
-        for(x=0; x<this->sizes[1]; x++)
-            for(z=0; z<nZ; z++)
-                cpy3D<NUMBER>(a_A, this->A[x], (NDAT)nZ, (NDAT)nS, (NDAT)nS);
-        for(x=0; x<this->sizes[2]; x++)
-            for(z=0; z<nZ; z++)
-                cpy3D<NUMBER>(a_B, this->B[x], (NDAT)nZ, (NDAT)nS, (NDAT)nO);
-        // destroy setup params
-        free(a_PI);
-        free3D<NUMBER>(a_A, (NDAT)nZ, (NDAT)nS);
-        free3D<NUMBER>(a_B, (NDAT)nZ, (NDAT)nS);
-    } else {
+    }
+    
+    // mass produce PI's, A's, B's
+    if( this->p->do_not_check_constraints==0 && !checkPIABConstraints(a_PI, a_A, a_B)) {
+        fprintf(stderr,"params do not meet constraints.\n");
+        exit(1);
+    }
+    NCAT x;
+    for(x=0; x<this->sizes[0]; x++)
+        cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
+    for(x=0; x<this->sizes[1]; x++)
+        for(z=0; z<nZ; z++)
+            cpy3D<NUMBER>(a_A, this->A[x], (NDAT)nZ, (NDAT)nS, (NDAT)nS);
+    for(x=0; x<this->sizes[2]; x++)
+        for(z=0; z<nZ; z++)
+            cpy3D<NUMBER>(a_B, this->B[x], (NDAT)nZ, (NDAT)nS, (NDAT)nO);
+    // destroy setup params
+    free(a_PI);
+    free3D<NUMBER>(a_A, (NDAT)nZ, (NDAT)nS);
+    free3D<NUMBER>(a_B, (NDAT)nZ, (NDAT)nS);
+    if(param->initfile[0]!=0) { // from setup file
         // if needs be -- read in init params from a file
         this->readModel(param->initfile, false /* read and upload but not overwrite*/);
     }

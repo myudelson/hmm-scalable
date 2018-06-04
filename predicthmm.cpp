@@ -274,6 +274,28 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
                     exit_with_help();
                 }
                 break;
+            case '0': // what was init_params for 'trainhmm' is now default_params for 'predicthmm'
+                predict
+                int len;
+                len = (int)strlen( argv[i] );
+                // count delimiters
+                n = 1; // start with 1
+                for(int j=0;j<len;j++) {
+                    n += (argv[i][j]==',')?1:0;
+                    if( (argv[i][j] >= 'a' && argv[i][j] <= 'z') || (argv[i][j] >= 'A' && argv[i][j] <= 'Z') ) {
+                        strcpy(param.initfile, argv[i]);
+                        break;
+                    }
+                }
+                // init parameters
+                if(param.init_params!=NULL) free(param.init_params);
+                param.init_params = Calloc(NUMBER, (size_t)n);
+                // read params and write to params
+                param.init_params[0] = atof( strtok(argv[i],",\t\n\r") );
+                for(int j=1; j<n; j++) {
+                    param.init_params[j] = atof( strtok(NULL,",\t\n\r") );
+                }
+                break;
 			default:
 				fprintf(stderr,"unknown option: -%c\n", argv[i-1][1]);
 				exit_with_help();

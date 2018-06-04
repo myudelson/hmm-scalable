@@ -95,60 +95,60 @@ void HMMProblem::init(struct param *param) {
     NPAR i, j;
     int offset, idx;
 
-    if(param->initfile[0]==0) { // no setup file
-        NUMBER sumPI = 0;
-        NUMBER sumA[this->p->nS];
-        NUMBER sumB[this->p->nS];
-        for(i=0; i<this->p->nS; i++) {
-            sumA[i] = 0;
-            sumB[i] = 0;
+    // write default parameters first
+    NUMBER sumPI = 0;
+    NUMBER sumA[this->p->nS];
+    NUMBER sumB[this->p->nS];
+    for(i=0; i<this->p->nS; i++) {
+        sumA[i] = 0;
+        sumB[i] = 0;
+    }
+    // populate PI
+    for(i=0; i<((nS)-1); i++) {
+        a_PI[i] = this->p->init_params[i];
+        sumPI  += this->p->init_params[i];
+    }
+    a_PI[nS-1] = 1 - sumPI;
+    // populate A
+    offset = (int)(nS-1);
+    for(i=0; i<nS; i++) {
+        for(j=0; j<((nS)-1); j++) {
+            idx = (int)(offset + i*((nS)-1) + j);
+            a_A[i][j] = this->p->init_params[idx];
+            sumA[i]  += this->p->init_params[idx];
         }
-        // populate PI
-        for(i=0; i<((nS)-1); i++) {
-            a_PI[i] = this->p->init_params[i];
-            sumPI  += this->p->init_params[i];
+        a_A[i][((nS)-1)]  = 1 - sumA[i];
+    }
+    // populate B
+    offset = (int)((nS-1) + nS*(nS-1));
+    for(i=0; i<nS; i++) {
+        for(j=0; j<((nO)-1); j++) {
+            idx = (int)(offset + i*((nO)-1) + j);
+            a_B[i][j] = this->p->init_params[idx];
+            sumB[i] += this->p->init_params[idx];
         }
-        a_PI[nS-1] = 1 - sumPI;
-        // populate A
-        offset = (int)(nS-1);
-        for(i=0; i<nS; i++) {
-            for(j=0; j<((nS)-1); j++) {
-                idx = (int)(offset + i*((nS)-1) + j);
-                a_A[i][j] = this->p->init_params[idx];
-                sumA[i]  += this->p->init_params[idx];
-            }
-            a_A[i][((nS)-1)]  = 1 - sumA[i];
-        }
-        // populate B
-        offset = (int)((nS-1) + nS*(nS-1));
-        for(i=0; i<nS; i++) {
-            for(j=0; j<((nO)-1); j++) {
-                idx = (int)(offset + i*((nO)-1) + j);
-                a_B[i][j] = this->p->init_params[idx];
-                sumB[i] += this->p->init_params[idx];
-            }
-            a_B[i][((nO)-1)]  = 1 - sumB[i];
-        }
-        
-        // mass produce PI's, A's, B's
-        if( this->p->do_not_check_constraints==0 && !checkPIABConstraints(a_PI, a_A, a_B)) {
-            fprintf(stderr,"params do not meet constraints.\n");
-            exit(1);
-        }
+        a_B[i][((nO)-1)]  = 1 - sumB[i];
+    }
+    
+    // mass produce PI's, A's, B's
+    if( this->p->do_not_check_constraints==0 && !checkPIABConstraints(a_PI, a_A, a_B)) {
+        fprintf(stderr,"params do not meet constraints.\n");
+        exit(1);
+    }
 
-        NCAT x;
-        for(x=0; x<this->sizes[0]; x++)
-            cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
-        for(x=0; x<this->sizes[1]; x++)
-            cpy2D<NUMBER>(a_A, this->A[x], (NDAT)nS, (NDAT)nS);
-        for(x=0; x<this->sizes[2]; x++)
-            cpy2D<NUMBER>(a_B, this->B[x], (NDAT)nS, (NDAT)nO);
+    NCAT x;
+    for(x=0; x<this->sizes[0]; x++)
+        cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
+    for(x=0; x<this->sizes[1]; x++)
+        cpy2D<NUMBER>(a_A, this->A[x], (NDAT)nS, (NDAT)nS);
+    for(x=0; x<this->sizes[2]; x++)
+        cpy2D<NUMBER>(a_B, this->B[x], (NDAT)nS, (NDAT)nO);
 
-        // destroy setup params
-        free(a_PI);
-        free2D<NUMBER>(a_A, (NDAT)nS);
-        free2D<NUMBER>(a_B, (NDAT)nS);
-    } else {
+    // destroy setup params
+    free(a_PI);
+    free2D<NUMBER>(a_A, (NDAT)nS);
+    free2D<NUMBER>(a_B, (NDAT)nS);
+    if(param->initfile[0]!=0) { // from setup file
         // if needs be -- read in init params from a file
         this->readModel(param->initfile, false /* read and upload but not overwrite*/);
     }

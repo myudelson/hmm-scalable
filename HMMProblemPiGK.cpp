@@ -67,6 +67,9 @@ void HMMProblemPiGK::init(struct param *param) {
 		sumA[i] = 0;
 		sumB[i] = 0;
 	}
+    
+    // write default parameters first
+    
 	// populate PI
 	for(i=0; i<((nS)-1); i++) {
 		a_PI[i] = this->p->init_params[i];

@@ -78,62 +78,62 @@ void HMMProblemSlicedA::init(struct param *param) {
     this->A =  init4D<NUMBER>((NDAT)this->sizes[1], (NDAT)nZ, (NDAT)nS, (NDAT)nS);
     this->B =  init3D<NUMBER>((NDAT)this->sizes[2], (NDAT)nS, (NDAT)nO);
     
-    if(param->initfile[0]==0) { // no setup file
-        NUMBER sumPI = 0;
-        NUMBER sumA[nZ][nS];
-        NUMBER sumB[nS];
-        for(i=0; i<nS; i++) {
-            for(z=0; z<nZ; z++) {
-                sumA[z][i] = 0;
-            }
-            sumB[i] = 0;
-        }
-        // populate PI
-        for(i=0; i<((nS)-1); i++) {
-            a_PI[i] = this->p->init_params[i];
-            sumPI  += this->p->init_params[i];
-        }
-        a_PI[nS-1] = 1 - sumPI;
-        // populate A
-        offset = (NPAR)(nS-1);
+    // write default parameters first
+    NUMBER sumPI = 0;
+    NUMBER sumA[nZ][nS];
+    NUMBER sumB[nS];
+    for(i=0; i<nS; i++) {
         for(z=0; z<nZ; z++) {
-            for(i=0; i<nS; i++) {
-                for(j=0; j<((nS)-1); j++) {
-                    idx = (NPAR)(offset + z * nS * ((nS)-1) + i*((nS)-1) + j);
-                    a_A[z][i][j] = this->p->init_params[idx];
-                    sumA[z][i]  += this->p->init_params[idx];
-                }
-                a_A[z][i][((nS)-1)]  = 1 - sumA[z][i];
-            }
+            sumA[z][i] = 0;
         }
-        // populate B
-        offset = (NPAR)((nS-1) + nZ*nS*(nS-1));
+        sumB[i] = 0;
+    }
+    // populate PI
+    for(i=0; i<((nS)-1); i++) {
+        a_PI[i] = this->p->init_params[i];
+        sumPI  += this->p->init_params[i];
+    }
+    a_PI[nS-1] = 1 - sumPI;
+    // populate A
+    offset = (NPAR)(nS-1);
+    for(z=0; z<nZ; z++) {
         for(i=0; i<nS; i++) {
-            for(m=0; m<((nO)-1); m++) {
-                idx = (NPAR)(offset + i*((nO)-1) + m);
-                a_B[i][m] = this->p->init_params[idx];
-                sumB[i] += this->p->init_params[idx];
+            for(j=0; j<((nS)-1); j++) {
+                idx = (NPAR)(offset + z * nS * ((nS)-1) + i*((nS)-1) + j);
+                a_A[z][i][j] = this->p->init_params[idx];
+                sumA[z][i]  += this->p->init_params[idx];
             }
-            a_B[i][((nO)-1)]  = 1 - sumB[i];
+            a_A[z][i][((nS)-1)]  = 1 - sumA[z][i];
         }
-        
-        // mass produce PI's, A's, B's
-        if( this->p->do_not_check_constraints==0 && !checkPIABConstraints(a_PI, a_A, a_B)) {
-            fprintf(stderr,"params do not meet constraints.\n");
-            exit(1);
+    }
+    // populate B
+    offset = (NPAR)((nS-1) + nZ*nS*(nS-1));
+    for(i=0; i<nS; i++) {
+        for(m=0; m<((nO)-1); m++) {
+            idx = (NPAR)(offset + i*((nO)-1) + m);
+            a_B[i][m] = this->p->init_params[idx];
+            sumB[i] += this->p->init_params[idx];
         }
-        NCAT x;
-        for(x=0; x<this->sizes[0]; x++)
-            cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
-        for(x=0; x<this->sizes[1]; x++)
-            cpy3D<NUMBER>(a_A, this->A[x], (NDAT)nZ, (NDAT)nS, (NDAT)nS);
-        for(x=0; x<this->sizes[2]; x++)
-            cpy2D<NUMBER>(a_B, this->B[x], (NDAT)nS, (NDAT)nO);
-        // destroy setup params
-        free(a_PI);
-        free3D<NUMBER>(a_A, (NDAT)nZ, (NDAT)nS);
-        free2D<NUMBER>(a_B, (NDAT)nS);
-    } else {
+        a_B[i][((nO)-1)]  = 1 - sumB[i];
+    }
+    
+    // mass produce PI's, A's, B's
+    if( this->p->do_not_check_constraints==0 && !checkPIABConstraints(a_PI, a_A, a_B)) {
+        fprintf(stderr,"params do not meet constraints.\n");
+        exit(1);
+    }
+    NCAT x;
+    for(x=0; x<this->sizes[0]; x++)
+        cpy1D<NUMBER>(a_PI, this->pi[x], (NDAT)nS);
+    for(x=0; x<this->sizes[1]; x++)
+        cpy3D<NUMBER>(a_A, this->A[x], (NDAT)nZ, (NDAT)nS, (NDAT)nS);
+    for(x=0; x<this->sizes[2]; x++)
+        cpy2D<NUMBER>(a_B, this->B[x], (NDAT)nS, (NDAT)nO);
+    // destroy setup params
+    free(a_PI);
+    free3D<NUMBER>(a_A, (NDAT)nZ, (NDAT)nS);
+    free2D<NUMBER>(a_B, (NDAT)nS);
+    if(param->initfile[0]!=0) { // from setup file
         // if needs be -- read in init params from a file
         this->readModel(param->initfile, false /* read and upload but not overwrite*/);
     }

@@ -811,15 +811,13 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
                         break;
                     }
                 }
-                if(param.initfile[0]==0) { // init parameters parameters
-                    // init params
-                    if(param.init_params!=NULL) free(param.init_params);
-                    param.init_params = Calloc(NUMBER, (size_t)n);
-                    // read params and write to params
-                    param.init_params[0] = atof( strtok(argv[i],",\t\n\r") );
-                    for(int j=1; j<n; j++) {
-                        param.init_params[j] = atof( strtok(NULL,",\t\n\r") );
-                    }
+                // init parameters
+                if(param.init_params!=NULL) free(param.init_params);
+                param.init_params = Calloc(NUMBER, (size_t)n);
+                // read params and write to params
+                param.init_params[0] = atof( strtok(argv[i],",\t\n\r") );
+                for(int j=1; j<n; j++) {
+                    param.init_params[j] = atof( strtok(NULL,",\t\n\r") );
                 }
 				break;
 			case 'l': // lower boundaries
