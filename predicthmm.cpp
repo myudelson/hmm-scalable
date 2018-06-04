@@ -227,7 +227,7 @@ void exit_with_help() {
 void parse_arguments(int argc, char **argv, char *input_file_name, char *model_file_name, char *predict_file_name) {
 	// parse command line options, starting from 1 (0 is path to executable)
 	// go in pairs, looking at whether first in pair starts with '-', if not, stop parsing arguments
-	int i;
+	int i, n;
     char * ch;
 	for(i=1;i<argc;i++)
 	{
@@ -275,7 +275,6 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
                 }
                 break;
             case '0': // what was init_params for 'trainhmm' is now default_params for 'predicthmm'
-                predict
                 int len;
                 len = (int)strlen( argv[i] );
                 // count delimiters
