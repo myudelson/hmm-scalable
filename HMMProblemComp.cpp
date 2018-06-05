@@ -47,7 +47,7 @@ HMMProblemComp::HMMProblemComp(struct param *param) {
 
 void HMMProblemComp::init(struct param *param) {
 	this->p = param;
-    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK, nG = this->p->nG;
+    NPAR nS = this->p->nS, nO = this->p->nO; NCAT nK = this->p->nK;//, nG = this->p->nG;
 	this->non01constraints = true;
     this->null_obs_ratio = Calloc(NUMBER, (size_t)this->p->nO);
     this->neg_log_lik = 0;
@@ -74,7 +74,7 @@ void HMMProblemComp::init(struct param *param) {
 	//
     // setup params
     //
-	NPAR i, j, m, idx, offset;
+	NPAR i, j, idx, offset;
 	NUMBER sumPI = 0;
 	NUMBER sumA[nS];
 	NUMBER sumB[nS];

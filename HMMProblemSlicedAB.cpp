@@ -521,7 +521,7 @@ void HMMProblemSlicedAB::setGradA (FitBitSlicedAB *fb){
 void HMMProblemSlicedAB::setGradB (FitBitSlicedAB *fb){
     if(this->p->block_fitting[2]>0) return;
     NDAT t, ndat = 0;
-    NPAR o, o0, i, j, z;
+    NPAR o, o0, i, z;
     struct data* dt;
     for(NCAT x=0; x<fb->xndat; x++) {
         dt = fb->x_data[x];

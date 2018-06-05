@@ -497,7 +497,8 @@ NUMBER HMMProblemPiGK::GradientDescent() {
         
 //    for(x=0;x<nX;x++) delete fbs[x];
 //    if(fbs!=NULL) free(fbs);
-        
+    
+    /*
     if(false){
         NCAT q, x;
         NCAT nQ = this->p->nK + this->p->nG;
@@ -525,12 +526,14 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                 fbs[q]->init(FBS_DIRm1);
             }
         }
-        /*FitResult fr=*/GradientDescentBitBig(fbs, nQ);
+        // FitResult fr=
+        GradientDescentBitBig(fbs, nQ);
         
         for(q=0;q<nQ;q++) delete fbs[q];
         if(fbs!=NULL) free(fbs);
     }
-    
+    */
+
     // compute loglik
     return getSumLogPOPara(this->p->nSeq, this->p->k_data);
 }

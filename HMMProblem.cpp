@@ -2121,7 +2121,7 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
         
         // compute Wolfe 2
         NUMBER p_k_by_neg_p_kp1 = 0;
-        NDAT ndat = computeGradients(fb);
+        // NDAT ndat = computeGradients(fb);
         fb->doLog10ScaleGentleByRow(FBS_GRAD);
         for(i=0; i<nS; i++)
         {
