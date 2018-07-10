@@ -289,6 +289,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
                 // init parameters
                 if(param.init_params!=NULL) free(param.init_params);
                 param.init_params = Calloc(NUMBER, (size_t)n);
+                param.init_params_n = n;
                 // read params and write to params
                 param.init_params[0] = atof( strtok(argv[i],",\t\n\r") );
                 for(int j=1; j<n; j++) {

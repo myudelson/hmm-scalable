@@ -252,7 +252,7 @@ void HMMProblemPiGK::setGradPI(FitBit *fb){
         for(i=0; i<fb->nS; i++) {
             combined = getPI(dt,i);//sigmoid( logit(this->PI[k][i]) + logit(this->PIg[g][i]) );
             deriv_logit = 1 / safe0num( fb->pi[i] * (1-fb->pi[i]) );
-            fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
+            fb->gradPI[i] -= combined * (1-combined) * deriv_logit * dt->beta[t][i] * ((o<0)?1:getB(dt,i,o)) / safe0num(dt->p_O_param);
         }
     }
     if( this->p->Cslices>0 ) // penalty
@@ -348,8 +348,9 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 	// Main fit
 	//
     if( this->p->single_skill!=2 ) { // if not "force single skill"
-        NCAT first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
-        NCAT iterations_to_qualify = this->p->iterations_to_qualify; // how many concecutive iterations necessary for skill/group to qualify as converged
+        NPAR first_iteration_qualify = this->p->first_iteration_qualify; // at what iteration, qualification for skill/group convergence should start
+        NPAR iterations_to_qualify = this->p->iterations_to_qualify; // how many consecutive iterations necessary for skill/group to qualify as converged
+        NCAT iterations_limit = this->p->iterations_limit; // how many consecutive iterations to do, negat3s prior two parameters
         NCAT* iter_qual_skill = Calloc(NCAT, (size_t)nK);
         NCAT* iter_qual_group = Calloc(NCAT, (size_t)nG);
         NCAT* iter_fail_skill = Calloc(NCAT, (size_t)nK); // counting concecutive number of failures to converge for skills
@@ -360,7 +361,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
 //        int parallel_now = this->p->parallel==1; //PAR
 //        #pragma omp parallel if(parallel_now) shared(iter_qual_group,iter_qual_skill,iter_fail_skill,iter_fail_group)//PAR
 //        {//PAR
-        while(skip_k<nK || skip_g<nG) {
+        while( (skip_k<nK || skip_g<nG) && i<iterations_limit) {
             //
             // Skills first
             //
@@ -422,7 +423,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
             //
             // PIg second
             //
-            if(skip_g<nG){
+            if(skip_g<nG && i<iterations_limit){
 //                #pragma omp for schedule(dynamic)//PAR
                 for(g=0; g<nG; g++) { // for all PI-by-user
                     if(iter_qual_group[g]==iterations_to_qualify || iter_fail_group[g]==iterations_to_qualify)

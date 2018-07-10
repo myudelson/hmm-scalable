@@ -154,7 +154,8 @@ struct param {
     //
     NUMBER *item_complexity;
 	// configurable
-	NUMBER *init_params;
+    NUMBER *init_params;
+    NPAR init_params_n; // the l of init_params
 	NUMBER *param_lo;
 	NUMBER *param_hi;
 	NUMBER tol;  // tolerance of termination criterion (0.0001 by default)
@@ -240,6 +241,7 @@ struct param {
     // coord descend
     NPAR first_iteration_qualify; // at what iteration to start considering parameter for "graduating" (converging) >=0
     NPAR iterations_to_qualify;   // how many interations of stable parameter values qualify it for "graduating" (converging)
+    NCAT iterations_limit;        // total nterations of fitting skills/groups/other to do; used instead of the previous two
     // experimental and temporary
     NPAR block_fitting_type; // 0 - none, 1 - by PI, A, B - three flags, 2 - individual parameter, nS*(nS+1+nO)
     NPAR block_fitting[3]; // array of flags to block PI, A, B in this order - TODO, enable diff block types

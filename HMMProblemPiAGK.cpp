@@ -55,8 +55,13 @@ void HMMProblemPiAGK::init(struct param *param) {
     this->null_skill_obs = 0;
     this->null_skill_obs_prob = 0;
     
+    // skill
     NUMBER *a_PI, ** a_A, ** a_B;
     init3Params(a_PI, a_A, a_B, nS, nO);
+    // student
+    NUMBER *a_PIg, ** a_Ag;
+    a_PIg = init1D<NUMBER>((NDAT)nS);
+    a_Ag  = init2D<NUMBER>((NDAT)nS, (NDAT)nS);
     
     //
     // setup params
@@ -98,6 +103,40 @@ void HMMProblemPiAGK::init(struct param *param) {
 		a_B[i][((nO)-1)]  = 1 - sumB[i];
 	}
     
+    if(this->p->init_params_n==( nS - 1 + (nS-1) * nS + (nO-1) * nS ) ) {
+        for(i=0; i<((nS)-1); i++) {
+            a_PIg[i] = 1/nS;
+            for(j=0; j<((nS)-1); j++) a_Ag[i][j] = 1/nS;
+        }
+    } else if(this->p->init_params_n==( (nS - 1 + (nS-1) * nS)*2 + (nO-1) * nS )) { // ... if they were specified, read them from the init_params
+        sumPI = 0;
+        for(i=0; i<nS; i++) {
+            sumA[i] = 0;
+        }
+        // populate PI
+        offset = (NPAR)( (nS-1) + nS*(nS-1) + nS*(nO-1) );
+        for(i=0; i<((nS)-1); i++) {
+            idx = (NPAR)(offset + i);
+            a_PIg[i] = this->p->init_params[idx];
+            sumPI  += this->p->init_params[idx];
+        }
+        a_PI[nS-1] = 1 - sumPI;
+        // populate A
+        offset = (NPAR)( (nS-1) + nS*(nS-1) + nS*(nO-1) + (nS-1) );
+        for(i=0; i<nS; i++) {
+            for(j=0; j<((nS)-1); j++) {
+                idx = (NPAR)(offset + i*((nS)-1) + j);
+                a_Ag[i][j] = this->p->init_params[idx];
+                sumA[i]  += this->p->init_params[idx];
+            }
+            a_A[i][((nS)-1)]  = 1 - sumA[i];
+        }
+    } else { // ... the n is wrong
+        fprintf(stderr,"The number of initial parameters is expected to be %i or %i, but it is %i.\n",
+                ( nS - 1 + (nS-1) * nS + (nO-1) * nS ), ( (nS - 1 + (nS-1) * nS)*2 + (nO-1) * nS ), this->p->init_params_n);
+        exit(1);
+    }
+    
     // mass produce PI's/PIg's, A's, B's
     if( this->p->do_not_check_constraints==0 && !checkPIABConstraints(a_PI, a_A, a_B)) {
         fprintf(stderr,"params do not meet constraints.\n");
@@ -114,19 +153,18 @@ void HMMProblemPiAGK::init(struct param *param) {
         cpy2D<NUMBER>(a_A,  this->A[x],  nS, nS);
         cpy2D<NUMBER>(a_B,  this->B[x],  nS, nO);
     }
-    // PIg start with "no-effect" params,PI[i] = 1/nS
+    // PIg start with "no-effect" params,PI[i] = 1/nS, A[i][j] = 1/nS __IF__ they were not specified
     for(x=0; x<nG; x++) {
-        for(i=0; i<nS; i++) {
-            this->PIg[x][i] = (NUMBER)1/nS;
-            for(j=0; j<nS; j++)
-                this->Ag[x][i][j] = (NUMBER)1/nS;
-        }
+        cpy1D<NUMBER>(a_PIg, this->PIg[x], nS);
+        cpy2D<NUMBER>(a_Ag,  this->Ag[x],  nS, nS);
     }
     // destroy setup params
 	free(a_PI);
 	free2D<NUMBER>(a_A, nS);
 	free2D<NUMBER>(a_B, nS);
-	
+    free(a_PIg);
+    free2D<NUMBER>(a_Ag, nS);
+
     // if needs be -- read in init params from a file
     if(param->initfile[0]!=0)
         this->readModel(param->initfile, false /* read and upload but not overwrite*/);

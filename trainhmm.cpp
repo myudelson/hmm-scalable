@@ -683,10 +683,10 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                 }
                 param.parallel = (NPAR)n;
                 break;
-			case 'r': // coordinate descend parameters
+            case 'r': // coordinate descend parameters
                 // if two first_iteration_qualify,iterations_to_qualify
                 // if one iterations_to_qualify (first_iteration_qualify==0)
-				n = atoi( strtok(argv[i],",\t\n\r") );
+                n = atoi( strtok(argv[i],",\t\n\r") );
                 ch = strtok(NULL,",\t\n\r"); // could be NULL (default GD solver)
                 if(ch==NULL) {// one parameter
                     param.first_iteration_qualify = 0;
@@ -695,7 +695,19 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                     param.first_iteration_qualify = (NPAR)n;
                     param.iterations_to_qualify   = (NPAR)atoi(ch);
                 }
-				break;
+                break;
+            case 'R': // coordinate descend parameter for hard iterations limit of skill/group/other fitting
+                n = atoi(argv[i]);
+                if(n<=0) {
+                    fprintf(stderr,"skill/group gradient descent iteration limit (-R) should be an integer >0\n");
+                    exit_with_help();
+                }
+                if(n<=0) {
+                    fprintf(stderr,"skill/group gradient descent iteration limit (-R) should be an integer >0\n");
+                    exit_with_help();
+                }
+                param.iterations_limit = (NPAR)n;
+                break;
             /*
             case 'c': {
                     // this version is with single center of gravity per Pi, A, and B
@@ -814,6 +826,7 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
                 // init parameters
                 if(param.init_params!=NULL) free(param.init_params);
                 param.init_params = Calloc(NUMBER, (size_t)n);
+                param.init_params_n = n;
                 // read params and write to params
                 param.init_params[0] = atof( strtok(argv[i],",\t\n\r") );
                 for(int j=1; j<n; j++) {

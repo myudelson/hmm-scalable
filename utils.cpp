@@ -691,7 +691,8 @@ void set_param_defaults(struct param *param) {
     param->Cw[0]                  = 0;
     param->Ccenters              = NULL;
     param->initfile[0]           = 0; // 1st bit is 0 - no file
-	param->init_params			 = Calloc(NUMBER, (size_t)5);
+    param->init_params           = Calloc(NUMBER, (size_t)5);
+    param->init_params_n         = 5;
 	param->init_params[0] = 0.5; // PI[0]
 	param->init_params[1] = 1.0; // p(not forget)
 	param->init_params[2] = 0.4; // p(learn)
@@ -752,6 +753,7 @@ void set_param_defaults(struct param *param) {
     // coord descend
     param->first_iteration_qualify = 0;
     param->iterations_to_qualify   = 2;
+    param->iterations_limit        = 200;
     // block fitting of some parameters
     param->block_fitting_type = 0; // no bocking of fitting - TODO, enable diff block types
     param->block_fitting[0] = 0; // no bocking fitting for PI
