@@ -28,13 +28,13 @@ For more details on BKT refer to [1]. [2], among other things, discusses how a g
 
 # Getting and Compiling the Code
 
-A public version of the standard BKT code is available via International Educational Data Mining Society GitHub [repository](http://goo.gl/5DqpkW). If you have `git` utility installed, use the following command to get the source code.
+A public version of the standard BKT code is available via as a GitHub [repository](https://github.com/myudelson/hmm-scalable). If you have `git` utility installed, use the following command to get the source code.
 
 ```sh
-git clone https://github.com/IEDMS/standard-bkt
+git clone https://github.com/myudelson/hmm-scalable
 ```
 
-To compile issue `make all` command. If you are on Linux, the `g++/gcc` compiler and Open MP library should already be installed. On Mac OX, you would need Xcode command line tools to be installed. `g++/gcc` compiler with Open MP (no longer bundled with Mac OS X by default) could be downloaded from [hpc.sourceforge.net](http://hpc.sourceforge.net). If you are on Windows, you might need to install `cygwin` and have `g++/gcc` compiler available and be sure to install `make` utility as well.
+To compile issue `make all` command. If you are on Linux, the `g++/gcc` compiler and Open MP library should already be installed. On Mac OX, you would need Xcode command line tools to be installed via `xcode-select --install` command. `g++/gcc` compiler with Open MP (no longer bundled with Mac OS X by default) could be downloaded from [hpc.sourceforge.net](http://hpc.sourceforge.net). If you are on Windows, you might need to install `cygwin` and have `g++/gcc` compiler available and be sure to install `make` utility as well.
 
 # Data 
 
@@ -168,7 +168,7 @@ To fit a BKT model of this data using an EM algorithm run the following command:
 
 The model will have 90% accuracy and root mean squared error (RMSE) = 0.302691 and the recovered BKT parameters would be: pLo=0.00000000, pT=0.16676161, pS=0.00044059, pG=0.00038573. Overall loglikelihood, actually, goes up from 9.3763477 to 10.4379501 in 3 iterations.
 
-If we fit BKT model using Gradient Descent method using `-s 1.2` argument, the recovered parameters would be: pLo=0.00041944, pT=0.17478539, pS=0.07938036, 0.03804388, the accuracy would remain at 90% while RMSE = 0.299250. Loglikelihood changes from  9.3763477 to 6.4099682 after 11 iterations.
+If we fit BKT model using Gradient Descent method using `-s 1.2` argument, the recovered parameters would be: pLo=0.00000000, pT=0.3095828498, pS=0.18955371, pG=0.16195590, the accuracy would remain at 90% while RMSE = 0.344145. Loglikelihood changes from  9.3763477 to 8.0992564 after 19 iterations.
 
 To generate predictions using a previously fit model run the following command: 
 
@@ -192,9 +192,9 @@ Depending on your hardware, the model should be fit in about 1-2 minutes.
 
 # References
 
-1. Corbett, A. T., and Anderson, J. R.: Knowledge tracing: Modeling the acquisition of procedural knowledge. User Modeling and User-Adapted Interaction, 4(4), 253-278. (1995)
+1. Corbett, A. T., and Anderson, J. R.: [Knowledge tracing: Modeling the acquisition of procedural knowledge](https://link.springer.com/article/10.1007/BF01099821). User Modeling and User-Adapted Interaction, 4(4), 253-278. (1995)
 
-2. Levinson, S. E., Rabiner, L. R., and Sondhi, M. M.: An Introduction to the Application of the Theory of Probabilistic Functions of a Markov Process to Automatic Speech Recognition. Bell System Technical Journal, 62(4): 1035-1074. (1983)
+2. Levinson, S. E., Rabiner, L. R., and Sondhi, M. M.: [An Introduction to the Application of the Theory of Probabilistic Functions of a Markov Process to Automatic Speech Recognition](https://onlinelibrary.wiley.com/doi/abs/10.1002/j.1538-7305.1983.tb03114.x). Bell System Technical Journal, 62(4): 1035-1074. (1983)
 
 3. Wolfe conditions. (2016, January 20). In _Wikipedia, The Free Encyclopedia_. [http://en.wikipedia.org/wiki/Wolfe_conditions](http://en.wikipedia.org/wiki/Wolfe_conditions)
 

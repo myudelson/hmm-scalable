@@ -27,7 +27,7 @@
  
  */
 
-#include <string.h>
+#include <string>
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
