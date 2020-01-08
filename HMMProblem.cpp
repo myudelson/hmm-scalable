@@ -1072,7 +1072,18 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 			projectsimplex(group_skill_map[g][k], nS); // addition to make sure there's not side effects //UNBOOST
 //            projectsimplex(pLbit, nS); // addition to make sure there's not side effects //BOOST
 		}
-		
+
+        // write prediction out (AFTER pKnown update)
+        if(f_predictions>0 /*&& output_this*/) { // write predictions file if it was opened
+            if(f_predictions==3) { // if we print out states of KC's as welll
+                for(int l=0; l<n; l++) { // all KC here
+                    fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+                    //                    fprintf(fid,"%12.10f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
+                }
+            }
+        }
+        
+        
 		rmse += pow(isTarget-local_pred[f_metrics_target_obs],2);
 		rmse_no_null += pow(isTarget-local_pred[f_metrics_target_obs],2);
 		accuracy += isTarget == (local_pred[f_metrics_target_obs]==maxn(local_pred,nO) && local_pred[f_metrics_target_obs]>1/nO);

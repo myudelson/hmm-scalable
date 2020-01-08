@@ -656,8 +656,8 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
 				break;
             case  'p':
                 param.predictions = atoi(argv[i]);
-                if(param.predictions<0 || param.predictions>2) {
-                    fprintf(stderr,"a flag of whether to report predictions for training data (-p) should be 0, 1 or 2\n");
+                if(param.predictions<0 || param.predictions>3) {
+                    fprintf(stderr,"a flag of whether to report predictions for training data (-p) should be 0, 1, 2, or 3\n");
                     exit_with_help();
                 }
                 break;
