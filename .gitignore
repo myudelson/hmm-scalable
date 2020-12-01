@@ -7,3 +7,5 @@ boost.zip
 papers/*
 *.o
 d/**/*
+build/**/*
+
