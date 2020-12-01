@@ -16,12 +16,7 @@ p(R1…Rk|~R) = = p(~R|R1..Rk)*p(R1…Rk) / p~R - whom to blame
 
 do these up to n==5 skills
 
-table of all of the R1…Rk values - 2^k entries - k dimentional with 2^k entries 
-fill them acc to each formula
-
-p(R1…Rk)  = prod{ p(corr i) }
-
-marginalize and get p(Ri|R), p(Ri|~R)
+table of all of the R1…Rk marginalize and get p(Ri|R), p(Ri|~R)
 
 use these as proportions (continuous), or do a version of Veterbi to come up with most likely 
 

@@ -55,7 +55,10 @@ void HMMProblemPiGK::init(struct param *param) {
     
     NUMBER *a_PI, ** a_A, ** a_B;
     init3Params(a_PI, a_A, a_B, nS, nO);
-    
+    // student
+//    NUMBER *a_PIg;
+//    a_PIg = init1D<NUMBER>((NDAT)nS);
+
     //
     // setup params
     //
@@ -112,9 +115,18 @@ void HMMProblemPiGK::init(struct param *param) {
         cpy2D<NUMBER>(a_A,  this->A[x],  nS, nS);
         cpy2D<NUMBER>(a_B,  this->B[x],  nS, nO);
     }
-    // PIg start with same params
-    for(x=0; x<nG; x++)
-        cpy1D<NUMBER>(a_PI, this->PIg[x], nS);
+//    // PIg start with same params
+//    for(x=0; x<nG; x++)
+//        cpy1D<NUMBER>(a_PI, this->PIg[x], nS);
+    // PIg start with "no-effect" params,PI[i] = 1/nS
+    for(x=0; x<nG; x++) {
+        for(i=0; i<nS; i++) {
+            this->PIg[x][i] = (NUMBER)1/nS;
+        }
+    }
+
+    
+    
     // destroy setup params
 	free(a_PI);
 	free2D<NUMBER>(a_A, nS);

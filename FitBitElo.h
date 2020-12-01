@@ -31,8 +31,8 @@
 // encapsulator of results of a fitting [sub-]job
 //
 
-#ifndef __HMM__FitBit__
-#define __HMM__FitBit__
+#ifndef __HMM__FitBitElo__
+#define __HMM__FitBitElo__
 
 #include "utils.h"
 
@@ -49,79 +49,64 @@ enum FIT_BIT_SLOT {
     FBS_DIR       = 8, // e.g. gradPIdir
     FBS_DIRm1     = 6  // e.g. gradPIdirm1
 };
-
-enum FIT_BIT_VAR {
-    FBV_PI = 1, // PI
-    FBV_A  = 2, // A
-    FBV_B  = 3  // B
-};
+//
+//enum FIT_BIT_VAR {
+//    FBV_PI = 1, // PI
+//    FBV_A  = 2, // A
+//    FBV_B  = 3  // B
+//};
 #endif /* fit bit enums*/
 
-class FitBit {
+class FitBitElo {
 public:
-    NPAR nO, nS; // copies
-    NCAT nG, nK; // copies
-    NUMBER* pi; // usually pointer
-    NUMBER **A; // usually pointer
-    NUMBER **B; // usually pointer
-    NUMBER *PIm1; // previous value
-    NUMBER **Am1; // previous value
-    NUMBER **Bm1; // previous value
-    NUMBER *PIm2; // previous previous value
-    NUMBER **Am2; // previous previous value
-    NUMBER **Bm2; // previous previous value
-    NUMBER *gradPI; // gradient
-    NUMBER **gradA; // gradient
-    NUMBER **gradB; // gradient
-    NUMBER *gradPIm1; // previous gradient
-    NUMBER **gradAm1; // previous gradient
-    NUMBER **gradBm1; // previous gradient
-    NUMBER *gradPIcopy; // gradient copy
-    NUMBER **gradAcopy; // gradient copy
-    NUMBER **gradBcopy; // gradient copy
-    NUMBER *PIcopy; // copy
-    NUMBER **Acopy; // copy
-    NUMBER **Bcopy; // copy
-    NUMBER *dirPI; // step direction
-    NUMBER **dirA; // step direction
-    NUMBER **dirB; // step direction
-    NUMBER *dirPIm1; // previous step direction
-    NUMBER **dirAm1; // previous step direction
-    NUMBER **dirBm1; // previous step direction
-    NCAT xndat; // number of sequences of data
-    struct data** x_data; // sequences of data
-    NPAR projecttosimplex; // whether projection to simplex should be done
-    NPAR Cslice; // current slice during L2 norm penalty fitting
+//    NPAR nO, nS; // copies
+    NCAT nG;//, nK; // copies
+    NPAR   nELO; // copy
+    NUMBER *ELO; // usually pointer
+    NUMBER *ELOm1; // previous value
+    NUMBER *ELOm2; // previous previous value
+    NUMBER *gradELO; // gradient
+    NUMBER *gradELOm1; // previous gradient
+    NUMBER *gradELOcopy; // gradient copy
+    NUMBER *ELOcopy; // copy
+    NUMBER *dirELO; // step direction
+    NUMBER *dirELOm1; // previous step direction
+    struct param *param; // problem parameters
     NPAR tag; // multippurpose
     
-    FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_tol_mode);
-    FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_tol_mode, NPAR a_projecttosimplex);
-    ~FitBit();
+    NUMBER *elo_track_g; // elo g (student) rating
+    NCAT *elo_count_g;   // per g (student) count
+    NUMBER *elo_track_g_t; // elo g (student) rating for row, not student
+    NUMBER *elo_grad_error_g; // per g (student) error
+    NUMBER ll; // loglik
+
+    FitBitElo(/*NPAR a_nS, NPAR a_nO, NCAT a_nK,*/ NCAT a_nG, NPAR a_nELO, NUMBER a_tol, NPAR a_tol_mode);
+    ~FitBitElo();
     void init(enum FIT_BIT_SLOT fbs);
     void negate(enum FIT_BIT_SLOT fbs);
-    void link(NUMBER *a_PI, NUMBER **a_A, NUMBER **a_B, NCAT a_xndat, struct data** a_x_data);
-    void toZero(enum FIT_BIT_SLOT fbs);
+    void link(NUMBER *a_ELO, NUMBER *a_elo_track_g, NCAT *a_elo_count_g, NUMBER *a_elo_track_g_t, struct param *a_param);
+    void toZero(enum FIT_BIT_SLOT fbs); // since we reset to 0 logits == 0.5 probability, rather use to05 to avoid confusion
     void destroy(enum FIT_BIT_SLOT fbs);
     void copy(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs);
     void add(enum FIT_BIT_SLOT sourse_fbs, enum FIT_BIT_SLOT target_fbs);
     bool checkConvergence(FitResult *fr);
     bool checkConvergenceSingle(FitResult *fr); // without checking for oscillation, actually, afer copying t-1 to t-2 and t to t-1, it is used to check for oscillation
     void doLog10ScaleGentle(enum FIT_BIT_SLOT fbs);
-	void doLog10ScaleGentleByRow(enum FIT_BIT_SLOT fbs);
+//	void doLog10ScaleGentleByRow(enum FIT_BIT_SLOT fbs);
 
     // adding penalties
-    void addL2Penalty(enum FIT_BIT_VAR fbv, struct param* param, NUMBER factor);
+//    void addL2Penalty(enum FIT_BIT_VAR fbv, param* param, NUMBER factor);
 private:
     NUMBER tol;
     NPAR tol_mode;
 
-    void init(NUMBER* &pi, NUMBER** &A, NUMBER** &B);
-    void negate(NUMBER* &pi, NUMBER** &A, NUMBER** &B);
-    void toZero(NUMBER *pi, NUMBER **A, NUMBER **B);
-    void destroy(NUMBER* &pi, NUMBER** &A, NUMBER** &B);
-    void get(enum FIT_BIT_SLOT fbs, NUMBER* &a_PI, NUMBER** &a_A, NUMBER** &a_B);
-    void add(NUMBER *soursePI, NUMBER **sourseA, NUMBER **sourseB, NUMBER *targetPI, NUMBER **targetA, NUMBER **targetB);
-    void copy(NUMBER* &soursePI, NUMBER** &sourseA, NUMBER** &sourseB, NUMBER* &targetPI, NUMBER** &targetA, NUMBER** &targetB);
+    void init(NUMBER* &a_ELO);
+    void negate(NUMBER* &a_ELO);
+    void toZero(NUMBER *a_ELO);
+    void destroy(NUMBER* &a_ELO);
+    void get(enum FIT_BIT_SLOT fbs, NUMBER* &a_ELO);
+    void add(NUMBER *sourseELO, NUMBER *targetELO);
+    void copy(NUMBER* &sourseELO, NUMBER* &targetELO);
 };
 
-#endif /* defined(__HMM__FitBit__) */
+#endif /* defined(__HMM__FitBitElo__) */

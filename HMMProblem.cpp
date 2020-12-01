@@ -457,6 +457,9 @@ void HMMProblem::initBeta(NCAT xndat, struct data** x_data) {
 NDAT HMMProblem::computeAlphaAndPOParam(NCAT xndat, struct data** x_data) {
     //    NUMBER mult_c, old_pOparam, neg_sum_log_c;
 	initAlpha(xndat, x_data);
+
+    preprocessglobal(); // nothing for BKT, computes Elo values for Elo-based
+
     NPAR nS = this->p->nS;
     NDAT  ndat = 0;
 //    int parallel_now = this->p->parallel==2; //PAR
@@ -819,6 +822,24 @@ void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, 
     free(local_pred_inner);
 }
 
+// reserved for any per-row post-processing after producePCorrect, Elo uses it to update its tracked values
+void HMMProblem::postprocesslocal(NUMBER target, NUMBER estimate, NDAT t) {
+    // not defined in BKT, Elo-infused will
+    return;
+}
+
+// reserved for any pre-processing before prediction, Elo uses it to update its tracked values
+void HMMProblem::preprocessglobal() {
+    // not defined in BKT, Elo-infused will
+    return;
+}
+
+//// nothing for BKT, computes Elo values for Elo-based
+//void HMMProblem::preprocess_computeAlphaAndPOParam() {
+//    // not defined in BKT, Elo-infused will
+//    return;
+//}
+
 //void HMMProblem::producePDObs(NUMBER*** group_skill_map, NUMBER* local_pred, struct data* dt) {
 //	NPAR m, i;
 //	for(m=0; m<this->p->nO; m++) {
@@ -918,6 +939,9 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 	NDAT count = 0;
 //	NDAT d = 0;
 	HMMProblem *hmm;
+    
+    // call to global pre-process
+    hmms[0]->preprocessglobal(); // nothing for BKT, computes Elo values for Elo-based
 	
 	for(t=0; t<N; t++) {
 //		output_this = true;
@@ -1031,6 +1055,8 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 			o = ix_local_pred;
 		}
 		
+        hmm->postprocesslocal(isTarget,local_pred[f_metrics_target_obs], t);
+        
 		// update pL
 		for(int l=0; l<n; l++) {
 			k = ar[l];
@@ -1051,11 +1077,10 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 				for(i=0; i<nS; i++)
 					group_skill_map[g][k][i]= 0.0; //UNBOOST
 //                  pLbit[i]= 0.0; //BOOST
-				for(j=0; j<nS; j++)
-					for(j=0; j<nS; j++)
-						for(i=0; i<nS; i++)
-							group_skill_map[g][k][j] += pLe[i] * hmm->getA(dt,i,j);//A[i][j]; //UNBOOST
-//                          pLbit[j] += pLe[i] * hmm->getA(dt,i,j);//A[i][j]; //BOOST
+                for(j=0; j<nS; j++)
+                    for(i=0; i<nS; i++)
+                        group_skill_map[g][k][j] += pLe[i] * hmm->getA(dt,i,j);//A[i][j]; //UNBOOST
+//                    pLbit[j] += pLe[i] * hmm->getA(dt,i,j);//A[i][j]; //BOOST
 			} else { // unknown observation
 				// 2. L = (pL'*A)';
 				for(i=0; i<nS; i++)

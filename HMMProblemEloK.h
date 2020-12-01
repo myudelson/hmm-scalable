@@ -27,37 +27,27 @@
  
  */
 
-#ifndef __HMM__HMMProblemPiABGK__
-#define __HMM__HMMProblemPiABGK__
+#ifndef __HMM__HMMProblemEloK__
+#define __HMM__HMMProblemEloK__
 
 #include "HMMProblem.h"
+#include "FitBitElo.h"
 #include "StripedArray.h"
 #include "utils.h"
 #include <stdio.h>
 #include <map>
 #include <string>
 
-class HMMProblemPiABGK : public HMMProblem {
+class HMMProblemEloK : public HMMProblem {
 public:
-	HMMProblemPiABGK(struct param *param); // sizes=={nK, nK, nK} by default
-    ~HMMProblemPiABGK();
+	HMMProblemEloK(struct param *param); // sizes=={nK, nK, nK} by default
+    ~HMMProblemEloK();
 	NUMBER** getPI();
-	NUMBER** getPIk();
-	NUMBER** getPIg();
 	NUMBER*** getA();
-	NUMBER*** getAk();
-	NUMBER*** getAg();
-	NUMBER*** getBk();
-	NUMBER*** getBg();
+	NUMBER*** getB();
 	NUMBER* getPI(NCAT k);
-	NUMBER* getPIk(NCAT k);
-	NUMBER* getPIg(NCAT g);
 	NUMBER** getA(NCAT k);
-	NUMBER** getAk(NCAT k);
-	NUMBER** getAg(NCAT g);
 	NUMBER** getB(NCAT k);
-	NUMBER** getBk(NCAT k);
-	NUMBER** getBg(NCAT g);
     // getters for computing alpha, beta, gamma
     NUMBER getPI(struct data* dt, NPAR i);         // to be redefined
     NUMBER getA (struct data* dt, NPAR i, NPAR j); // same
@@ -69,22 +59,31 @@ public:
     void setGradB (FitBit *fb);
     void fit(); // return -LL for the model
     void readModelBody(FILE *fid, struct param* param, NDAT *line_no, bool overwrite);
+    FitResult GradientDescentBitElo(FitBitElo *fb);
+    virtual void postprocesslocal(NUMBER target, NUMBER estimate, NDAT t); // reserved for any per-row post-processing after producePCorrect, Elo uses it to update its tracked values
+    virtual void preprocessglobal(); // reserved for any pre-processing before prediction, Elo uses it to update its tracked values
+//    virtual void preprocess_computeAlphaAndPOParam(); // nothing for BKT, computes Elo values for Elo-based
 protected:
 	//
 	// Givens
 	//
-	NUMBER** PIg; // PI by group
-	NUMBER*** Ag; // A by group
-	NUMBER*** Bg; // B by group
+	NUMBER K; // Elo sensitivity K
+    NUMBER *elo_track_g; // elo g (student) rating
+    NCAT *elo_count_g;   // per g (student) count
+    NUMBER *elo_track_g_t; // elo g (student) rating for row, not student
+    
 	//
 	// Derived
 	//
 	void init(struct param *param); // non-fit specific initialization
     void destroy();
     //	void initGrad();
+    virtual NUMBER doLinearStepElo(FitBitElo *fbe);
+    virtual NUMBER doConjugateLinearStepElo(FitBitElo *fbe);
+    virtual NDAT computeGradientsElo(FitBitElo *fbe);
     NUMBER GradientDescent(); // fit alternating
 private:
 };
 
 
-#endif /* defined(__HMM__HMMProblemPiABGK__) */
+#endif /* defined(__HMM__HMMProblemEloK__) */

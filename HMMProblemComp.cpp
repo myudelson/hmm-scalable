@@ -183,7 +183,7 @@ void HMMProblemComp::destroy() {
 	// destroy additional model data
 	free(this->is_multi);
 	// delete parameter union
-	delete this->pu;
+	free(this->pu);
 }// ~HMMProblemComp
 
 //NUMBER** HMMProblemComp::getPI() {

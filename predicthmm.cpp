@@ -161,6 +161,9 @@ int main (int argc, char ** argv) {
 		case STRUCTURE_COMP: // Gradient Descent, pT=f(K,G), other by K
 			hmm = new HMMProblemComp(&param);
 			break;
+        case STRUCTURE_ELOK: // Gradient Descent, pT=f(K,G), other by K
+            hmm = new HMMProblemEloK(&param);
+            break;
 	}
     // read model body
     hmm->readModelBody(fid, &param_model, &line_no, overwrite);

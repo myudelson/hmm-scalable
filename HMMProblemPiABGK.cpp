@@ -412,7 +412,7 @@ void HMMProblemPiABGK::toFile(const char *filename) {
 		for(i=0; i<this->p->nS; i++)
 			for(j=0; j<this->p->nS; j++)
 				fprintf(fid,"%12.10f%s",this->A[k][i][j],(i==(this->p->nS-1) && j==(this->p->nS-1))?"\n":"\t");
-		fprintf(fid,"B\t");
+		fprintf(fid,"Bk\t");
 		for(i=0; i<this->p->nS; i++)
 			for(m=0; m<this->p->nO; m++)
 				fprintf(fid,"%12.10f%s",this->B[k][i][m],(i==(this->p->nS-1) && m==(this->p->nO-1))?"\n":"\t");

@@ -40,7 +40,7 @@ class SparseArray2D {
 public:
 	SparseArray2D();
 	~SparseArray2D();
-    static NDAT binsearch(register const T *key, const void *base0, NDAT nmemb, NDAT *lim);
+    static NDAT binsearch(const T *key, const void *base0, NDAT nmemb, NDAT *lim);
     void set(NDAT r, NDAT c, T value);
     
 private:
@@ -75,7 +75,7 @@ SparseArray2D<T>::~SparseArray2D() {
 
 template<typename T>
 NDAT SparseArray2D<T>::binsearch(
-               register const T *key,
+               const T *key,
                const void *base0,
                NDAT nmemb, NDAT *lim) {
     

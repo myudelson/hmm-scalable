@@ -73,6 +73,9 @@ public:
     // predicting
 //    virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);
     virtual void producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, NDAT t);
+    virtual void postprocesslocal(NUMBER target, NUMBER estimate, NDAT t); // reserved for any per-row post-processing after producePCorrect, Elo uses it to update its tracked values
+    virtual void preprocessglobal(); // reserved for any pre-processing before prediction, Elo uses it to reset its tracked values to 0
+//    virtual void preprocess_computeAlphaAndPOParam(); // nothing for BKT, computes Elo values for Elo-based
 //    virtual void producePCorrectBoost(boost::numeric::ublas::mapped_matrix<NUMBER*> *group_skill_map, NUMBER* local_pred, NCAT* ks, NCAT nks, struct data* dt);//BOOST
 //	virtual void producePDObs(NUMBER*** group_skill_map, NUMBER* local_pred, struct data* dt); // probability distribution of observations, single skill label
 //	virtual void producePDObsBoost(boost::numeric::ublas::mapped_matrix<NUMBER*> *group_skill_map, NUMBER* local_pred, struct data* dt);//BOOST

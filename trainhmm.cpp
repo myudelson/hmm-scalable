@@ -51,6 +51,7 @@
 #include "HMMProblemSlicedA.h"
 #include "StripedArray.h"
 #include "HMMProblemComp.h"
+// #include "HMMProblemEloK.h"
 //#include "SparseArray2D.h"
 //#include <boost/numeric/ublas/matrix_sparse.hpp>//BOOST
 //#include <boost/numeric/ublas/io.hpp>//BOOST
@@ -90,51 +91,51 @@ static char* readline(FILE *fid) {
 }
 
 // temporary experimental: IRT-like for fitting pLo in liblinear
-void write_pLo_irt() {
-    FILE *fid0 = fopen("uopx12_irt.txt","w");
-    NPAR **group_skill_mask = init2D<NPAR>(param.nG, param.nK);
-    NCAT g_k, g, k;
-    NDAT t;
-    data *dat;
-    NPAR obs;
-    for(g=0; g<param.nG; g++) {
-        g_k = param.g_numk[g];
-        for(k=0; k<g_k; k++) {
-            dat = param.g_k_data[g][ k ];
-            t = dat->ix[0];
-            NCAT *ar;
-            int n = 0;
-            if(param.multiskill==0) {
-                k = param.dat_skill[t];
-                ar = &k;
-                n = 1;
-            } else {
-//                ar = &param.dat_multiskill->get(t)[1];
-//                n = param.dat_multiskill->get(t)[0];
-                k = param.dat_skill_stacked[ param.dat_skill_rix[t] ];
-                ar = &param.dat_skill_stacked[ param.dat_skill_rix[t] ];
-                n = param.dat_skill_rcount[t];
-                qsortNcat(ar, (NPAR)n);
-            }
-            obs = param.dat_obs[ dat->ix[0] ]; //->get( dat->ix[0] );
-            NPAR count = 0; // 557687 >> 499117
-            for(int l=0; l<n; l++) {
-                count = (NPAR)(count + (group_skill_mask[g][ ar[l] ] == 1));
-                if(count<n) {
-                    fprintf(fid0,"%s %u:1", ((1-obs)==0)?"-1":"+1",dat->g+1);
-                    
-                    for(int l=0; l<n; l++) {
-                        fprintf(fid0, " %u:1",ar[l]+param.nG+1);
-                        group_skill_mask[g][ ar[l] ] = 1;
-                    }
-                    fprintf(fid0,"\n");
-                }
-            }
-        }
-    }
-    fclose(fid0);
-    free2D(group_skill_mask, param.nG);
-}
+//void write_pLo_irt() {
+//    FILE *fid0 = fopen("uopx12_irt.txt","w");
+//    NPAR **group_skill_mask = init2D<NPAR>(param.nG, param.nK);
+//    NCAT g_k, g, k;
+//    NDAT t;
+//    data *dat;
+//    NPAR obs;
+//    for(g=0; g<param.nG; g++) {
+//        g_k = param.g_numk[g];
+//        for(k=0; k<g_k; k++) {
+//            dat = param.g_k_data[g][ k ];
+//            t = dat->ix[0];
+//            NCAT *ar;
+//            int n = 0;
+//            if(param.multiskill==0) {
+//                k = param.dat_skill[t];
+//                ar = &k;
+//                n = 1;
+//            } else {
+////                ar = &param.dat_multiskill->get(t)[1];
+////                n = param.dat_multiskill->get(t)[0];
+//                k = param.dat_skill_stacked[ param.dat_skill_rix[t] ];
+//                ar = &param.dat_skill_stacked[ param.dat_skill_rix[t] ];
+//                n = param.dat_skill_rcount[t];
+//                qsortNcat(ar, (NPAR)n);
+//            }
+//            obs = param.dat_obs[ dat->ix[0] ]; //->get( dat->ix[0] );
+//            NPAR count = 0; // 557687 >> 499117
+//            for(int l=0; l<n; l++) {
+//                count = (NPAR)(count + (group_skill_mask[g][ ar[l] ] == 1));
+//                if(count<n) {
+//                    fprintf(fid0,"%s %u:1", ((1-obs)==0)?"-1":"+1",dat->g+1);
+//
+//                    for(int l=0; l<n; l++) {
+//                        fprintf(fid0, " %u:1",ar[l]+param.nG+1);
+//                        group_skill_mask[g][ ar[l] ] = 1;
+//                    }
+//                    fprintf(fid0,"\n");
+//                }
+//            }
+//        }
+//    }
+//    fclose(fid0);
+//    free2D(group_skill_mask, param.nG);
+//}
 
 int main (int argc, char ** argv) {
 //    int array[] = {1, 2, 3, 4, 5, 6, 7};
@@ -288,9 +289,13 @@ int main (int argc, char ** argv) {
                 //            case BKT_GD_T: // Gradient Descent with Transfer
                 //                hmm = new HMMProblemKT(&param);
                 //                break;
-			case STRUCTURE_COMP: // Gradient Descent, pT=f(K,G), other by K
-				hmm = new HMMProblemComp(&param);
-				break;
+            case STRUCTURE_COMP: // Gradient Descent, pT=f(K,G), other by K
+                hmm = new HMMProblemComp(&param);
+                break;
+//             case STRUCTURE_ELOK: // Gradient Descent, pT=f(K,G), other by K
+//                 hmm = new HMMProblemEloK(&param);
+//                 break;
+
         }
         tm_fit = clock(); //SEQ
 //        _tm_fit = omp_get_wtime(); //PAR
@@ -330,12 +335,14 @@ int main (int argc, char ** argv) {
             if( param.metrics>0 /*&& !param.quiet*/) {
                 printf("trained model LL=%15.7f (%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",
                        metrics[0], metrics[1], // ll's
-                       2*hmm->getNparams() + 2*metrics[0], hmm->getNparams()*safelog(param.N) + 2*metrics[0],
+                       2*hmm->getNparams() + 2*metrics[0], // AIC
+                       hmm->getNparams()*safelog(param.N) + 2*metrics[0], //BIC
                        metrics[2], metrics[3], // rmse's
                        metrics[4], metrics[5]); // acc's
                 if(param.duplicate_console==1) fprintf(fid_console, "trained model LL=%15.7f (%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",
                        metrics[0], metrics[1], // ll's
-                       2*hmm->getNparams() + 2*metrics[0], hmm->getNparams()*safelog(param.N) + 2*metrics[0],
+                       2*hmm->getNparams() + 2*metrics[0], // AIC
+                       hmm->getNparams()*safelog(param.N) + 2*metrics[0],
                        metrics[2], metrics[3], // rmse's
                        metrics[4], metrics[5]); // acc's
 
@@ -565,7 +572,8 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                    param.structure != STRUCTURE_PIAgk && param.structure != STRUCTURE_Agk &&
                    param.structure != STRUCTURE_PIABgk && param.structure != STRUCTURE_Agki &&
                    param.structure != STRUCTURE_PIgkww && param.structure != STRUCTURE_SKABslc &&
-                   param.structure != STRUCTURE_SKAslc && param.structure != STRUCTURE_COMP ) {
+                   param.structure != STRUCTURE_SKAslc && param.structure != STRUCTURE_COMP &&
+                   param.structure != STRUCTURE_ELOK ) {
                     fprintf(stderr, "Model Structure specified (%d) is out of range of allowed values\n",param.structure);
 					exit_with_help();
                 }
@@ -580,6 +588,10 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
 //                    exit_with_help();
 //                }
                 if( param.structure == STRUCTURE_COMP && param.solver == METHOD_BW) {
+                    fprintf(stderr, "Method specified (%d) is not defined for this structure (%d) \n",param.solver,param.structure);
+                    exit_with_help();
+                }
+                if( param.structure == STRUCTURE_ELOK && !(param.solver == METHOD_GD || param.solver == METHOD_CGD) ) {
                     fprintf(stderr, "Method specified (%d) is not defined for this structure (%d) \n",param.solver,param.structure);
                     exit_with_help();
                 }
