@@ -574,10 +574,10 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                     fprintf(stderr, "Method specified (%d) is not defined for this structure (%d) \n",task.solver,task.structure);
                     exit_with_help();
                 }
-                if( task.structure == STRUCTURE_ELO && !(task.solver == METHOD_GD || task.solver == METHOD_CGD) ) {
-                    fprintf(stderr, "Method specified (%d) is not defined for this structure (%d) \n",task.solver,task.structure);
-                    exit_with_help();
-                }
+//                if( task.structure == STRUCTURE_ELO && !(task.solver == METHOD_GD || task.solver == METHOD_CGD) ) {
+//                    fprintf(stderr, "Method specified (%d) is not defined for this structure (%d) \n",task.solver,task.structure);
+//                    exit_with_help();
+//                }
                 if( task.solver == METHOD_BW && ( task.solver != STRUCTURE_SKILL /*&& task.solver != STRUCTURE_GROUP*/ ) ) {
                     fprintf(stderr, "Baum-Welch solver does not support model structure specified (%d)\n",task.solver);
 					exit_with_help();
@@ -744,6 +744,8 @@ void parse_arguments_step1(int argc, char **argv, char *input_file_name, char *o
                 break;
             case 'B': // just to keep it a valid option
                 break;
+            case 'k': // just to keep it a valid option
+                break;
 			default:
 				fprintf(stderr,"unknown option: -%c\n", argv[i-1][1]);
 				exit_with_help();
@@ -821,7 +823,7 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
                 // init parameters
                 if(task.init_param_values!=NULL) free(task.init_param_values);
                 task.init_param_values = Calloc(NUMBER, (size_t)n);
-                task.init_param_values_n = n;
+                task.init_param_values_n = (NPAR)n;
                 // read params and write to params
                 task.init_param_values[0] = atof( strtok(argv[i],",\t\n\r") );
                 for(int j=1; j<n; j++) {
@@ -950,22 +952,32 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
                     delete tmp_array;
                 }
                 break;
+            case 'k':
+                // ELO parameters specified as a comma-delimited list of values, first is an integer, the rest are real
+                len = (int)strlen( argv[i] );
+                // count delimiters
+                n = 1; // start with 1
+                for(int j=0;j<len;j++)
+                    n += (NPAR)((argv[i][j]==',')?1:0);
+                if( n < 2 ) {
+                    fprintf(stderr,"To use Elo, one needs two parameters at least, while %d were specified\n",n);
+                    exit_with_help();
+                }
+                // init params
+                task.elo_param_values_n = (NPAR)(n-1); // first parameter is Elo type
+                if(task.elo_param_values!=NULL) free(task.elo_param_values);
+                task.elo_param_values = Calloc(NUMBER, (size_t)(n-1));
+                // read params and write to params
+                task.elo_type = (NPAR)atoi( strtok(argv[i],",\t\n\r") );
+                for(int j=1; j<n; j++) {
+                    task.elo_param_values[j-1] = atof( strtok(NULL,",\t\n\r") );
+                }
+                break;
                 
         } // end switch
     }// end for
-    // post parse actions
     
-    if(!task.lb_specd && (task.nS!=2 || task.nO!=2) ) { // if not specified, and it's not 2-state 2-obs case, set to 0
-        if(task.param_values_lb!=NULL) free(task.param_values_lb);
-        task.param_values_lb = Calloc(NUMBER, (size_t)( task.nS*(1+task.nS+task.nO) ) );
-    }
- 
-    if(!task.ub_specd && (task.nS!=2 || task.nO!=2) ) {  // if not specified, and it's not 2-state 2-obs case, set to 1
-        if(task.param_values_ub!=NULL) free(task.param_values_ub);  // if not specified, set to 1
-        task.param_values_ub = Calloc(NUMBER, (size_t)( task.nS*(1+task.nS+task.nO) ) );
-        for(int j=0; j<( task.nS*(1+task.nS+task.nO) ); j++)
-            task.param_values_ub[j] = (NUMBER)1.0;
-    }
+    // post parse actions
     
     // post-argument checks
     if( task.cv_target_obs>(task.nO-1)) {
@@ -979,11 +991,29 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
         exit_with_help();
     }
     
+    if( !( (task.elo_param_values_n==0 && task.elo_type==0 && task.structure != STRUCTURE_ELO) || // not an Elo
+           (task.elo_param_values_n==1 && task.elo_type==1 && task.structure == STRUCTURE_ELO) // Simple Elo
+          ) ) {
+        fprintf(stderr,"Elo type specified (%d) does not match the number of Elo parameters (%d)\n",task.elo_type,task.elo_param_values_n);
+        exit_with_help();
+    }
+    
     // upper and lower bounds
     if( (task.sliced==1) && (task.structure == STRUCTURE_SKABslc || task.structure == STRUCTURE_SKAslc) &&
        !(task.lb_specd && task.ub_specd)) {
         fprintf(stderr,"Error! when parameter slicing is enabled, lower and upper boundaries for all parameters have to be set explicitly.\n");
         exit_with_help();
+    }
+    if(!task.lb_specd && (task.nS!=2 || task.nO!=2) ) { // if not specified, and it's not 2-state 2-obs case, set to 0
+        if(task.param_values_lb!=NULL) free(task.param_values_lb);
+        task.param_values_lb = Calloc(NUMBER, (size_t)( task.nS*(1+task.nS+task.nO) ) );
+    }
+ 
+    if(!task.ub_specd && (task.nS!=2 || task.nO!=2) ) {  // if not specified, and it's not 2-state 2-obs case, set to 1
+        if(task.param_values_ub!=NULL) free(task.param_values_ub);  // if not specified, set to 1
+        task.param_values_ub = Calloc(NUMBER, (size_t)( task.nS*(1+task.nS+task.nO) ) );
+        for(int j=0; j<( task.nS*(1+task.nS+task.nO) ); j++)
+            task.param_values_ub[j] = (NUMBER)1.0;
     }
 
     

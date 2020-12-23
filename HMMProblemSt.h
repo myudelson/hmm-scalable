@@ -39,7 +39,8 @@
 
 class HMMProblemSt {
 public:
-	HMMProblemSt(struct task* task); // sizes=={nK, nK, nK} by default
+    HMMProblemSt();
+    HMMProblemSt(struct task* task); // sizes=={nK, nK, nK} by default
     virtual ~HMMProblemSt();
     // produce indexes of parameters in vector
     NDAT PI(NCAT k, NPAR i);
@@ -108,11 +109,7 @@ protected:
     NDAT* forward_ix; // Nst sized array of pointing to next student-skill repetition, -1 means no more further
     bool is_fwd_bwd_built; // flag for noting whether backward_ix & forward_ix are already built
     
-//	virtual void init(struct task* task); // non-fit specific initialization
-//    virtual void destroy(); // non-fit specific descruction
-//	void initAlpha(NCAT xndat, struct data** x_data); // generic
-	//void initXiGamma(NCAT xndat, struct data** x_data); // generic
-	//void initBeta(NCAT xndat, struct data** x_data); // generic
+    virtual void init(struct task* task); // non-fit specific initialization
 	NUMBER computeAlphaAndPOParam(NUMBER *metrics_res); // return loglikelihood, alternatively predictions, and metrics too
 	void computeBeta();
 	void computeXiGamma();

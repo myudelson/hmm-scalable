@@ -10,13 +10,13 @@ OS = $(shell uname)
 
 all: trainst train predict input
 
-train: utils.o StripedArray.o FitBit.o FitBitSlicedA.o FitBitSlicedAB.o PULogistic.o PUCorbettianAdditive.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemSlicedAB.o HMMProblemSlicedA.o HMMProblemComp.o HMMProblemSt.o InputUtil.o trainhmm.cpp
+train: utils.o StripedArray.o FitBit.o FitBitSlicedA.o FitBitSlicedAB.o PULogistic.o PUCorbettianAdditive.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemSlicedAB.o HMMProblemSlicedA.o HMMProblemComp.o InputUtil.o trainhmm.cpp
 	$(CXX) $(CFLAGS) -o trainhmm trainhmm.cpp utils.o FitBit.o FitBitSlicedA.o FitBitSlicedAB.o InputUtil.o PULogistic.o PUCorbettianAdditive.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemSlicedAB.o HMMProblemSlicedA.o StripedArray.o HMMProblemComp.o
 
-trainst: utilsSt.o StripedArray.o FitBitSt.o HMMProblemSt.o InputUtilSt.o trainhmmst.cpp
-	$(CXX) $(CFLAGS) -o trainhmmst trainhmmst.cpp utilsSt.o FitBitSt.o InputUtilSt.o HMMProblemSt.o 
+trainst: utilsSt.o StripedArray.o FitBitSt.o HMMProblemSt.o HMMProblemEloSt.o InputUtilSt.o trainhmmst.cpp
+	$(CXX) $(CFLAGS) -o trainhmmst trainhmmst.cpp utilsSt.o FitBitSt.o InputUtilSt.o HMMProblemSt.o HMMProblemEloSt.o
 
-predict: utils.o StripedArray.o FitBit.o FitBitSlicedA.o FitBitSlicedAB.o  PULogistic.o PUCorbettianAdditive.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemSlicedAB.o HMMProblemSlicedA.o HMMProblemComp.o HMMProblemSt.o InputUtil.o predicthmm.cpp
+predict: utils.o StripedArray.o FitBit.o FitBitSlicedA.o FitBitSlicedAB.o  PULogistic.o PUCorbettianAdditive.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemSlicedAB.o HMMProblemSlicedA.o HMMProblemComp.o InputUtil.o predicthmm.cpp
 	$(CXX) $(CFLAGS) -o predicthmm predicthmm.cpp utils.o FitBit.o FitBitSlicedA.o FitBitSlicedAB.o InputUtil.o PULogistic.o PUCorbettianAdditive.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemSlicedAB.o HMMProblemSlicedA.o StripedArray.o HMMProblemComp.o
 
 input: utils.o StripedArray.o InputUtil.o inputconvert.cpp
@@ -73,10 +73,12 @@ HMMProblemSlicedA.o: HMMProblemSlicedA.cpp HMMProblemSlicedA.h
 	$(CXX) $(CFLAGS) -c -o HMMProblemSlicedA.o HMMProblemSlicedA.cpp
 HMMProblemComp.o: HMMProblemComp.cpp HMMProblemComp.h
 	$(CXX) $(CFLAGS) -c -o HMMProblemComp.o HMMProblemComp.cpp
-#HMMProblemEloK.o: HMMProblemEloK.cpp HMMProblemEloK.h
-#	$(CXX) $(CFLAGS) -c -o HMMProblemEloK.o HMMProblemEloK.cpp
-#HMMProblemSt.o: HMMProblemSt.cpp HMMProblemSt.h
-#	$(CXX) $(CFLAGS) -c -o HMMProblemSt.o HMMProblemSt.cpp
+##HMMProblemEloK.o: HMMProblemEloK.cpp HMMProblemEloK.h         # DEPRECATED
+##	$(CXX) $(CFLAGS) -c -o HMMProblemEloK.o HMMProblemEloK.cpp  # DEPRECATED
+HMMProblemSt.o: HMMProblemSt.cpp HMMProblemSt.h
+	$(CXX) $(CFLAGS) -c -o HMMProblemSt.o HMMProblemSt.cpp
+HMMProblemEloSt.o: HMMProblemEloSt.cpp HMMProblemEloSt.h
+	$(CXX) $(CFLAGS) -c -o HMMProblemEloSt.o HMMProblemEloSt.cpp
 
 
 clean:

@@ -39,20 +39,20 @@
 #include "HMMProblemSt.h"
 #include <map>
 
+HMMProblemSt::HMMProblemSt() {
+}
+
 HMMProblemSt::HMMProblemSt(struct task *task) {
-    switch (task->structure) {
-        case STRUCTURE_SKILL: // Expectation Maximization (Baum-Welch)
-            this->model_param_n = task->nK * 4;
-            break;
-//        case STRUCTURE_GROUP: // Gradient Descent by group
-//            for(i=0; i<3; i++) this->sizes[i] = task->nG;
-//            this->n_params = task->nG * 4;
-//            break;
-        default:
-            fprintf(stderr,"Structure specified is not supported and should have been caught earlier\n");
-            break;
+    if(task->structure != STRUCTURE_SKILL) {
+        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+        exit(1);
     }
-    // init
+    this->model_param_n = task->nK * 4;
+    init(task);
+}// HMMProblemSt
+
+void HMMProblemSt::init(struct task *task) {
+   // init
     this->task = task;
     this->non01constraints = true;
     this->null_obs_ratios = Calloc(NUMBER, (size_t)this->task->nO);
@@ -147,7 +147,7 @@ HMMProblemSt::HMMProblemSt(struct task *task) {
     this->forward_ix = init1D<NDAT>(Nst); // Nst sized array of pointing to next student-skill repetition, -1 means no more
     this->is_fwd_bwd_built=false; // flag for noting whether backward_ix & forward_ix are already built
     
-}// HMMProblemSt
+}// HMMProblemSt::init
 
 HMMProblemSt::~HMMProblemSt() {
     NDAT Nst = this->task->Nst;
@@ -215,42 +215,39 @@ NUMBER* HMMProblemSt::getB(NCAT x) {
 }
 
 NUMBER HMMProblemSt::getPI(NCAT x, NPAR i) {
+    if(task->structure != STRUCTURE_SKILL) {
+        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+        exit(1);
+    }
     NCAT nK = this->task->nK;
     if( x > (this->task->nK-1) ) {
         fprintf(stderr,"While accessing PI, skill index %d exceeded the last skill index %d.\n", x, nK-1);
         exit(1);
     }
-    switch(this->task->structure)
-    {
-        case STRUCTURE_SKILL:
-            return this->param_skill[this->skill1_n*x + i];
-            break;
-        default:
-            fprintf(stderr,"Solver specified is not supported.\n");
-            exit(1);
-            break;
-    }
+    // checks done
+    return this->param_skill[this->skill1_n*x + i];
 }
 
 NUMBER HMMProblemSt::getA(NCAT x, NPAR i, NPAR j) {
+    if(task->structure != STRUCTURE_SKILL) {
+        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+        exit(1);
+    }
     NPAR nS = this->task->nS;
     NCAT nK = this->task->nK;
     if( x > (nK-1) ) {
         fprintf(stderr,"While accessing PI, skill index %d exceeded the last skill index %d.\n", x, nK-1);
         exit(1);
     }
-    switch(this->task->structure)
-    {
-        case STRUCTURE_SKILL:
-            return this->param_skill[this->skill1_n*x + nS + i*nS + j];
-            break;
-        default:
-            fprintf(stderr,"Solver specified is not supported.\n");
-            exit(1);
-            break;
-    }}
+    // checks done
+    return this->param_skill[this->skill1_n*x + nS + i*nS + j];
+}
 
 NUMBER HMMProblemSt::getB(NCAT x, NPAR i, NPAR m) {
+    if(task->structure != STRUCTURE_SKILL) {
+        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+        exit(1);
+    }
     NPAR nS = this->task->nS;
     NPAR nO = this->task->nO;
     NCAT nK = this->task->nK;
@@ -260,65 +257,45 @@ NUMBER HMMProblemSt::getB(NCAT x, NPAR i, NPAR m) {
     }
     if(m<0)
         return 1;
-    switch(this->task->structure)
-    {
-        case STRUCTURE_SKILL:
-            return this->param_skill[this->skill1_n*x + nS * (1 + nS )+ i*nO + m];
-            break;
-        default:
-            fprintf(stderr,"Solver specified is not supported.\n");
-            exit(1);
-            break;
-    }
+    // checks done
+    return this->param_skill[this->skill1_n*x + nS * (1 + nS )+ i*nO + m];
 }
 
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemSt::getPI(struct context* ctx, NPAR i) {
-    switch(this->task->structure)
-    {
-        case STRUCTURE_SKILL:
-            return this->param_skill[this->skill1_n*ctx->k + i];
-            break;
-        default:
-            fprintf(stderr,"Solver specified is not supported.\n");
-            exit(1);
-            break;
+    if(task->structure != STRUCTURE_SKILL) {
+        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+        exit(1);
     }
+    // checks done
+    return this->param_skill[this->skill1_n*ctx->k + i];
 }
 
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemSt::getA (struct context* ctx, NPAR i, NPAR j) {
-    NPAR nS = this->task->nS;
-    switch(this->task->structure)
-    {
-        case STRUCTURE_SKILL:
-            return this->param_skill[this->skill1_n*ctx->k + nS + i*nS + j];
-            break;
-        default:
-            fprintf(stderr,"Solver specified is not supported.\n");
-            exit(1);
-            break;
+    if(task->structure != STRUCTURE_SKILL) {
+        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+        exit(1);
     }
+    // checks done
+    NPAR nS = this->task->nS;
+    return this->param_skill[this->skill1_n*ctx->k + nS + i*nS + j];
 }
 
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemSt::getB (struct context* ctx, NPAR i, NPAR m) {
+    if(task->structure != STRUCTURE_SKILL) {
+        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+        exit(1);
+    }
+    // checks done
     NPAR nS = this->task->nS;
     NPAR nO = this->task->nO;
     // special attention for "unknonw" observations, i.e. the observation was there but we do not know what it is
     // in this case we simply return 1, effectively resulting in no change in \alpha or \beta vatiables
     if(m<0)
         return 1;
-    switch(this->task->structure)
-    {
-        case STRUCTURE_SKILL:
-            return this->param_skill[this->skill1_n*ctx->k + nS * (1 + nS )+ i*nO + m];
-            break;
-        default:
-            fprintf(stderr,"Solver specified is not supported.\n");
-            exit(1);
-            break;
-    }
+    return this->param_skill[this->skill1_n*ctx->k + nS * (1 + nS )+ i*nO + m];
 }
 
 bool HMMProblemSt::checkSkillConstraints(NUMBER* param_skill) {
@@ -1040,10 +1017,6 @@ void HMMProblemSt::createGradientScaleSimplexAffordances(FitBitSt *fb) {
 void /*NUMBER*/ HMMProblemSt::Cycle() {
 	NCAT k, nK = this->task->nK, skill1_n = this->skill1_n;
     NDAT N = this->task->N;
-    if(this->task->structure!=STRUCTURE_SKILL)
-        exit(1);
-    //NUMBER loglik = 0.0;
-
 	//
 	// fit all as 1 skill first
 	//
@@ -1471,7 +1444,6 @@ void HMMProblemSt::doLinearStep(FitBitSt *fb, bool direction) {
             k = fb->param_blocks[l];
             if(this->active_set_block[k]>0) {
                 fb->PARAM[l] = fb->PARAMcopy[l] - e_s[k] * fb->GRADcopy[l]; // in case we are using DIR, GRADcopy is the DIR
-                int a = 0;
             }
         }
         

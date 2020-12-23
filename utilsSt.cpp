@@ -712,6 +712,9 @@ void set_task_defaults(struct task *task) {
 	task->init_param_values[2]  = 0.4; // p(learn)
 	task->init_param_values[3]  = 0.8; // p(not slip)
 	task->init_param_values[4]  = 0.2; // p(guess)
+    task->elo_type              = 0;
+    task->elo_param_values      = NULL;
+    task->elo_param_values_n    = 0;
 	task->param_values_lb    	= Calloc(NUMBER, (size_t)10);
 	task->param_values_lb[0]    = 0; task->param_values_lb[1] = 0; task->param_values_lb[2] = 1; task->param_values_lb[3] = 0; task->param_values_lb[4] = 0;
 	task->param_values_lb[5]    = 0; task->param_values_lb[6] = 0; task->param_values_lb[7] = 0; task->param_values_lb[8] = 0; task->param_values_lb[9] = 0;
@@ -802,7 +805,9 @@ void destroy_input_data(struct task *task) {
 	if(task->init_param_values != NULL) free(task->init_param_values);
 	if(task->param_values_lb != NULL) free(task->param_values_lb);
 	if(task->param_values_ub != NULL) free(task->param_values_ub);
-	
+    
+    if(task->elo_param_values != NULL) free(task->elo_param_values);
+
     // data - checks if pointers to data are null anyway (whether we delete linear columns of data or not)
     if(task->dat_obs != NULL) free( task->dat_obs );
     if(task->dat_obs_stacked != NULL) free( task->dat_obs_stacked );

@@ -31,7 +31,8 @@
 		715BD81E17AD968000C9B6D3 /* HMMProblemPiAGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBD201DE15F8DD3F003E97BF /* HMMProblemPiAGK.cpp */; };
 		715BD81F17AD968500C9B6D3 /* HMMProblemPiABGK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71F5217C173D4583008EE451 /* HMMProblemPiABGK.cpp */; };
 		715BD82017AD969300C9B6D3 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D234AA17540AE7006985EB /* utils.cpp */; };
-		715DB2AB2576A17F0024E8EE /* HMMProblemEloSt.cp in Sources */ = {isa = PBXBuildFile; fileRef = 715DB2AA2576A17F0024E8EE /* HMMProblemEloSt.cp */; };
+		715DB2B82576AA510024E8EE /* HMMProblemEloSt.h in Sources */ = {isa = PBXBuildFile; fileRef = 715DB2A92576A16C0024E8EE /* HMMProblemEloSt.h */; };
+		715DB2B92576AA510024E8EE /* HMMProblemEloSt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 715DB2AA2576A17F0024E8EE /* HMMProblemEloSt.cpp */; };
 		715EE5B217F0BF290079E646 /* SparseArray2D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 715EE5B017F0BF290079E646 /* SparseArray2D.cpp */; };
 		715EE5B317F0BF290079E646 /* SparseArray2D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 715EE5B017F0BF290079E646 /* SparseArray2D.cpp */; };
 		715EE5B417F0BF290079E646 /* SparseArray2D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 715EE5B017F0BF290079E646 /* SparseArray2D.cpp */; };
@@ -97,7 +98,7 @@
 		713EFA011AC5C6FE000301B4 /* FitBitSlicedA.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FitBitSlicedA.h; sourceTree = "<group>"; };
 		713EFA021AC5C70B000301B4 /* FitBitSlicedA.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FitBitSlicedA.cpp; sourceTree = "<group>"; };
 		715DB2A92576A16C0024E8EE /* HMMProblemEloSt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMMProblemEloSt.h; sourceTree = "<group>"; };
-		715DB2AA2576A17F0024E8EE /* HMMProblemEloSt.cp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HMMProblemEloSt.cp; sourceTree = "<group>"; };
+		715DB2AA2576A17F0024E8EE /* HMMProblemEloSt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HMMProblemEloSt.cpp; sourceTree = "<group>"; };
 		715EE5B017F0BF290079E646 /* SparseArray2D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SparseArray2D.cpp; sourceTree = "<group>"; };
 		715EE5B117F0BF290079E646 /* SparseArray2D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SparseArray2D.h; sourceTree = "<group>"; };
 		71713A8A23CFB75B00F53F78 /* InputUtilSt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputUtilSt.cpp; sourceTree = "<group>"; };
@@ -284,9 +285,7 @@
 				71C4F30323CE5C04006A8DDD /* HMMProblemSt.h */,
 				71C4F30223CE5C04006A8DDD /* HMMProblemSt.cpp */,
 				715DB2A92576A16C0024E8EE /* HMMProblemEloSt.h */,
-				715DB2AA2576A17F0024E8EE /* HMMProblemEloSt.cp */,
-				71C4F2F823C63DAB006A8DDD /* HMMProblemEloK.h */,
-				71C4F2F923C63DAC006A8DDD /* HMMProblemEloK.cpp */,
+				715DB2AA2576A17F0024E8EE /* HMMProblemEloSt.cpp */,
 				71C4F33723CFB68F006A8DDD /* trainhmmst.cpp */,
 				71C4F30823CE90B9006A8DDD /* utilsSt.h */,
 				71C4F30723CE90B9006A8DDD /* utilsSt.cpp */,
@@ -294,6 +293,8 @@
 				7178315C23E4786B003B4647 /* FitBitSt.cpp */,
 				71C4F2FD23C64BBA006A8DDD /* FitBitElo.h */,
 				71C4F2FE23C64BBA006A8DDD /* FitBitElo.cpp */,
+				71C4F2F823C63DAB006A8DDD /* HMMProblemEloK.h */,
+				71C4F2F923C63DAC006A8DDD /* HMMProblemEloK.cpp */,
 			);
 			name = SourceSt;
 			sourceTree = "<group>";
@@ -397,7 +398,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1130;
+				LastUpgradeCheck = 1220;
 			};
 			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "HMM" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -445,6 +446,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				715DB2B82576AA510024E8EE /* HMMProblemEloSt.h in Sources */,
+				715DB2B92576AA510024E8EE /* HMMProblemEloSt.cpp in Sources */,
 				7136D51523EA1F0C00ACD862 /* InputUtilSt.h in Sources */,
 				7136D51623EA1F0C00ACD862 /* InputUtilSt.cpp in Sources */,
 				7136D51723EA1F0C00ACD862 /* HMMProblemSt.h in Sources */,
@@ -452,7 +455,6 @@
 				7136D51B23EA1F0C00ACD862 /* trainhmmst.cpp in Sources */,
 				7136D51C23EA1F0C00ACD862 /* utilsSt.h in Sources */,
 				7136D51D23EA1F0C00ACD862 /* utilsSt.cpp in Sources */,
-				715DB2AB2576A17F0024E8EE /* HMMProblemEloSt.cp in Sources */,
 				7136D51E23EA1F0C00ACD862 /* FitBitSt.h in Sources */,
 				7136D51F23EA1F0C00ACD862 /* FitBitSt.cpp in Sources */,
 			);
@@ -539,6 +541,7 @@
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -579,6 +582,7 @@
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;

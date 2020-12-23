@@ -73,22 +73,7 @@ typedef signed int NDAT;  // number of data rows, now 2 bill max
 typedef double NUMBER;    // numeric float format
 const NUMBER pi = 3.141592653589793;
 
-//enum SOLVER { // deprecating
-//    BKT_NULL     =  0, // 0 unassigned
-//    BKT_CGD      =  1, // 1 - Conjugate Gradient Descent by skill
-//    BKT_GD       =  2, // 2 - Gradient Descent by skill
-//    BKT_BW       =  3, // 3 - Baum Welch  by skill
-//    BKT_GD_BW    =  4, // 4 - Gradient Descent then Expectation Maximization (Baum-Welch) by skill
-//    BKT_BW_GD    =  5, // 5 - Expectation Maximization (Baum-Welch) then Gradient Descent by skill
-//    BKT_GD_G     =  6, // 6 - Gradient Descent by group
-//    BKT_GD_PIg   =  7, // 7 - Gradient Descent: PI by group, A,B by skill
-//    BKT_GD_PIgk  =  8, // 8 - Gradient Descent, PI=logit(skill,group), other by skill
-//    BKT_GD_APIgk =  9, // 9 - Gradient Descent, PI=logit(skill,group), A=logit(skill,group), B by skill
-//    BKT_GD_Agk   = 10, //10 - Gradient Descent, A=logit(skill,group), PI,B by skill
-//    BKT_GD_T     = 11  //11 - Gradient Descent by skill with transfer matrix
-//};
-
-// Fitting method
+// Fitting method for BKT part, ELO is fit differently GD or CGD
 enum METHOD {
     METHOD_BW   = 1,  // 1 - Baum Welch (expectation maximization)
     METHOD_GD   = 2,  // 2 - Gradient Descent
@@ -121,34 +106,9 @@ enum STRUCTURE {
     STRUCTURE_ELO     = 14  // EloK-infused BKT
 };
 
-//// return type cummrizing a result of a fir of the [subset of the] data
-//struct FitResult {
-//    int iter;   // interations
-//    NUMBER pO0_prefit; // starting log-likelihood before all iterations
-//    NUMBER pO0; // starting log-likelihood on current iteration
-//    NUMBER pO;  // final log-likelihood
-//    int conv;   // converged? (maybe just went to max-iter)
-//    NDAT ndat;
-//};
-
-// a sequence of observations (usually belonging to a student practicing a skill)
-//struct data {
-//    NDAT n; // number of data points (observations)
-//    NDAT cnt;  // help counter, used for building the data and "banning" data from being fit when cross-valudating based on group
-//    NDAT t; // to be used to as an absolute 1..N pointer to a current transaction, or simply a "state" of an otherwise stateless data structure
-//    //    NPAR *obs; // onservations array - will become the pointer array to the big data
-//    NDAT *ix; // these are 'ndat' indices to the through arrays (e.g. task.dat_obs and task.dat_item)
-//    NDAT *ix_stacked; // these are 'ndat' indices to the stacked version through arrays (for example the case of multi-skills per row)
-//    NUMBER *c; // nS  - scaling factor vector
-////    int *time;
-//    NUMBER **alpha; // ndat x nS
-//    NUMBER **beta;  // ndat x nS
-//    NUMBER **gamma; // ndat x nS
-//    NUMBER ***xi; // ndat x nS x nS
-//    NUMBER p_O_param; // likelihood of the observations under parameters
-//    NUMBER loglik; // loglikelihood
-//    NCAT k,g; // pointers to skill (k) and group (g)
-//};
+enum ELO_TYPE {
+    ELO_1SENSITIVITY  = 1 // Elo with single sensitivity parameter
+};
 
 // this structure is for operating on local context of what skill, student, item, row in the data we are in
 struct context {
@@ -166,6 +126,9 @@ struct task {
     NPAR init_param_values_n; // the length of init_param_values
     NUMBER *param_values_lb;
     NUMBER *param_values_ub;
+    NPAR elo_type; // type of Elo structure
+    NUMBER *elo_param_values;
+    NPAR elo_param_values_n; // the length of init_param_values
     NUMBER tol;  // tolerance of termination criterion (0.0001 by default)
     NPAR tol_mode; // tolerance mode: by prameter change, or by loglikelihood change
     NPAR is_scaled;
