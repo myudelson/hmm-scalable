@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1220"
+   LastUpgradeVersion = "1230"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "71A3432925B4CEE900945E2E"
-               BuildableName = "predicthmm"
-               BlueprintName = "predicthmm"
+               BlueprintIdentifier = "71A39CA8179DB04F000F9610"
+               BuildableName = "inputconvert"
+               BlueprintName = "inputconvert"
                ReferencedContainer = "container:HMM.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -44,19 +44,27 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "71A3432925B4CEE900945E2E"
-            BuildableName = "predicthmm"
-            BlueprintName = "predicthmm"
+            BlueprintIdentifier = "71A39CA8179DB04F000F9610"
+            BuildableName = "inputconvert"
+            BlueprintName = "inputconvert"
             ReferencedContainer = "container:HMM.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-p"
+            argument = "-s"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "0"
+            argument = "t"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-t"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "b"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -68,19 +76,11 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "-b"
+            argument = "d/a89__datahmm__all__H500K.txt"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "0"
-            isEnabled = "YES">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "/Users/myudelson/Documents/conferences/2021-Elo-infusion/data/produced/a89__datahmm__run1fold1.txt"
-            isEnabled = "YES">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "/Users/myudelson/Documents/hcii/HMM/model.txt"
+            argument = "d/a89__datahmm__all__H500K.bin"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
@@ -91,6 +91,16 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "71A39CA8179DB04F000F9610"
+            BuildableName = "inputconvert"
+            BlueprintName = "inputconvert"
+            ReferencedContainer = "container:HMM.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

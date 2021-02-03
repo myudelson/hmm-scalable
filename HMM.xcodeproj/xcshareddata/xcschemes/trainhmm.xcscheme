@@ -65,7 +65,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "1.1"
+            argument = "5.4"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -89,7 +89,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "1"
+            argument = "0"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -126,6 +126,10 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/myudelson/Documents/hcii/HMM/d/a89__datahmm__all__H500K.txt"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "/Users/myudelson/Documents/conferences/2021-Elo-infusion/data/produced/a89__datahmm__run1fold0.txt"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -134,7 +138,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/myudelson/Documents/hcii/HMM/predict.txt"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
    </LaunchAction>

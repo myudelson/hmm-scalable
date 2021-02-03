@@ -443,6 +443,7 @@ NUMBER HMMProblemPiGK::GradientDescent() {
                     FitBit *fb = new FitBit(this->p->nS, this->p->nO, this->p->nK, this->p->nG, this->p->tol, this->p->tol_mode);
                     // link
                     fb->link(this->getPIg(g), NULL, NULL, this->p->g_numk[g], this->p->g_k_data[g]);
+                    fb->observe_non01_boundaries=0;
                     if(this->p->block_fitting[0]!=0) fb->pi = NULL;
                     if(this->p->block_fitting[1]!=0) fb->A  = NULL;
                     if(this->p->block_fitting[2]!=0) fb->B  = NULL;
@@ -791,7 +792,7 @@ void HMMProblemPiGK::readModelBody(FILE *fid, struct param* param, NDAT *line_no
 	//
 	// read grouped PIg
 	//
-    for(g=0; g<this->p->nG; g++) {
+    for(g=0; g<param->nG; g++) {
 		// read group label
         fscanf(fid,"%*s\t%[^\n]\n",col);
         s = string( col );
@@ -803,9 +804,8 @@ void HMMProblemPiGK::readModelBody(FILE *fid, struct param* param, NDAT *line_no
         } else {
             it = this->p->map_group_fwd->find(s);
             if( it==this->p->map_group_fwd->end() ) { // not found, skip 3 lines and continue
-                fscanf(fid,"%*s\n");
-                fscanf(fid,"%*s\n");
-                fscanf(fid,"%*s\n");
+                fscanf(fid,"%[^\n]\n",col);
+                (*line_no)++;
                 continue; // skip this iteration
             }
             else
@@ -825,7 +825,7 @@ void HMMProblemPiGK::readModelBody(FILE *fid, struct param* param, NDAT *line_no
     //
     // read skills
     //
-	for(k=0; k<this->p->nK; k++) {
+	for(k=0; k<param->nK; k++) {
 		// read skill label
         fscanf(fid,"%*s\t%[^\n]\n",col);
         s = string( col );

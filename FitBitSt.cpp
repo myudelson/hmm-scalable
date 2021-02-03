@@ -166,7 +166,8 @@ NPAR FitBitSt::checkConvergenceBitSingle(NDAT offset, NDAT size, FitResult *fr) 
                 for(i=offset; i<(offset+size); i++) {
                     criterion += pow( this->PARAM[i]-this->PARAMm1[i], 2 );
                 }
-                 res = 1*(criterion < this->tol);
+                res = 1*(criterion < this->tol);
+                break;
             case 'l':
                 criterion = (fr->pO0-fr->pO)/fr->ndat;
                 res = 1*(criterion < this->tol);

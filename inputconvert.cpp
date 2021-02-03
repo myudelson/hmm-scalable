@@ -31,13 +31,13 @@
 //  The main executable of hte input conversion utility
 //
 
-#include "utils.h"
-#include "InputUtil.h"
+#include "utilsSt.h"
+#include "InputUtilSt.h"
 using namespace std;
 
 char source_format = 't';
 char target_format = 'b';
-struct param param;
+struct task task;
 
 void exit_with_help() {
 	printf(
@@ -77,11 +77,11 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *output_
 				}
 				break;
             case  'd':
-				param.multiskill = argv[i][0]; // just grab first character (later, maybe several)
+				task.multiskill = argv[i][0]; // just grab first character (later, maybe several)
                 break;
             case 'z':
-                param.sliced = (NPAR)atoi(argv[i]);
-                if(param.sliced!=0 && param.sliced!=1) {
+                task.sliced = (NPAR)atoi(argv[i]);
+                if(task.sliced!=0 && task.sliced!=1) {
                     fprintf(stderr,"ERROR! Multiplexing parameter should be either 0 (off) or 1(on)\n");
                     exit_with_help();
                 }
@@ -121,27 +121,27 @@ int main (int argc, char ** argv) {
 	char input_file[1024];
 	char output_file[1024];
     
-	set_param_defaults(&param);
+	set_task_defaults(&task);
 	parse_arguments(argc, argv, input_file, output_file);
     
     if( source_format=='t') {
-        InputUtil::readTxt(input_file, &param);
+        InputUtilSt::readTxt(input_file, &task);
 //        // vvv temporary
 //        FILE *fid = fopen(output_file,"w");
-//        for(NCAT i=0; i<param.map_group_bwd->size(); i++) {
-//            fprintf(fid,"%s\n",param.map_group_bwd->find((NCAT)i)->second.c_str());
+//        for(NCAT i=0; i<task.map_group_bwd->size(); i++) {
+//            fprintf(fid,"%s\n",task.map_group_bwd->find((NCAT)i)->second.c_str());
 //        }
 //        fclose(fid);
 //        // ^^^ temporary
-        InputUtil::toBin(&param, output_file);
+        InputUtilSt::toBin(&task, output_file);
     }
     else {
-        InputUtil::readBin(input_file, &param);
+        InputUtilSt::readBin(input_file, &task);
     }
 	// free data
-	destroy_input_data(&param);
+	destroy_input_data(&task);
 	
-	if(param.quiet == 0)
+	if(task.quiet == 0)
 		printf("overall time running is %8.6f seconds\n",(NUMBER)(clock()-tm0)/CLOCKS_PER_SEC);
     return 0;
 }

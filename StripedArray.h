@@ -33,12 +33,12 @@
  */
 
 //#include "utils.h"
+//#include <iostream>
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
 #include <math.h>
-
 
 #ifndef STRIPEDARRAY_H
 #define STRIPEDARRAY_H
@@ -63,6 +63,7 @@ public:
     NDAT toBinFile(FILE* f);
     static NDAT arrayToBinFile(T* ar, NDAT size, FILE* f);
     T* toArray();
+    static T* fromFileToArray(FILE *f, NDAT N);
 private:
 	NDAT size; // linear
 	NDAT stripe_size;
@@ -120,6 +121,17 @@ StripedArray<T>::StripedArray(FILE *f, NDAT N) {
             return;
         }
     }
+}
+
+template <typename T>
+T* StripedArray<T>::fromFileToArray(FILE *f, NDAT N){
+    T *result = (T*)malloc( (size_t)N*sizeof(T));
+    NDAT nread = (NDAT)fread (result, sizeof(T), (size_t)N, f);
+    if(nread != N) {
+        fprintf(stderr,"Error reading data from file\n");
+        return NULL;
+    }
+    return result;
 }
 
 //template <typename T>
@@ -273,7 +285,7 @@ T* StripedArray<T>::toArray() {
     for(NDAT i=0; i<this->nstripes; i++) {
         T* dest = &result[ i*this->stripe_size ];
         size_t sz = sizeof(T)*( (i<(this->nstripes-1))?this->stripe_size:this->size_last_stripe );
-        memcpy( dest, this->stripes[i], sz );
+        memcpy( dest, this->stripes[i], sz );  
     }
     return result;
 }

@@ -91,6 +91,7 @@ public:
     NCAT xndat; // number of sequences of data
     struct data** x_data; // sequences of data
     NPAR projecttosimplex; // whether projection to simplex should be done
+    NPAR observe_non01_boundaries; // whether boundaries other than lower of 0 and upper of 1 should be observed -- reserved for skipping bounding student-level parameters
     NPAR Cslice; // current slice during L2 norm penalty fitting
     NPAR tag; // multippurpose
     

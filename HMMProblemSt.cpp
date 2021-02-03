@@ -43,15 +43,17 @@ HMMProblemSt::HMMProblemSt() {
 }
 
 HMMProblemSt::HMMProblemSt(struct task *task) {
-    if(task->structure != STRUCTURE_SKILL) {
-        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
-        exit(1);
-    }
+//    printf("HMMProblemSt::HMMProblemSt\n");
+//    if(task->structure != STRUCTURE_SKILL) {
+//        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+//        exit(1);
+//    }
     this->model_param_n = task->nK * 4;
     init(task);
 }// HMMProblemSt
 
 void HMMProblemSt::init(struct task *task) {
+//    printf("HMMProblemSt::init\n");
    // init
     this->task = task;
     this->non01constraints = true;
@@ -147,29 +149,49 @@ void HMMProblemSt::init(struct task *task) {
     this->forward_ix = init1D<NDAT>(Nst); // Nst sized array of pointing to next student-skill repetition, -1 means no more
     this->is_fwd_bwd_built=false; // flag for noting whether backward_ix & forward_ix are already built
     
+    this->group_skill_map = init3D<NUMBER>(nG, nK, nS);//UNBOOST
+
 }// HMMProblemSt::init
 
 HMMProblemSt::~HMMProblemSt() {
+//    printf("HMMProblemSt::~HMMProblemSt\n");
     NDAT Nst = this->task->Nst;
+//    printf("before null_obs_ratios\n");
     if(this->null_obs_ratios != NULL) free(this->null_obs_ratios);
+//    printf("before param_skill\n");
     if(this->param_skill != NULL) free(this->param_skill);
+//    printf("before gradient_skill\n");
     if(this->gradient_skill != NULL) free(this->gradient_skill);
+//    printf("before lb_param_skill\n");
     if(this->lb_param_skill != NULL) free(this->lb_param_skill);
+//    printf("before ub_param_skill\n");
     if(this->ub_param_skill != NULL) free(this->ub_param_skill);
-    //
+//    printf("before alpha %d\n",this->alpha != NULL);
     if(this->alpha != NULL) free2D(this->alpha, Nst);
+//    printf("before po_param_gk\n");
     if(this->po_param_gk != NULL) free2D(this->po_param_gk, this->task->nG);
+//    printf("before loglik_k\n");
     if(this->loglik_k != NULL) free(this->loglik_k);
+//    printf("before ndat_k\n");
     if(this->ndat_k != NULL) free(this->ndat_k);
-    
+//    printf("before beta\n");
     if(this->beta != NULL) free2D(this->beta, Nst);
+//    printf("before scale\n");
     if(this->scale != NULL) free(this->scale);
+//    printf("before gamma\n");
     if(this->gamma != NULL) free2D(this->gamma, Nst);
+//    printf("before xi\n");
     if(this->xi != NULL) free3D(this->xi, Nst, this->task->nS);
+//    printf("before backward_ix\n");
     if(this->backward_ix != NULL) free(this->backward_ix);
+//    printf("before forward_ix\n");
     if(this->forward_ix != NULL) free(this->forward_ix);
     
+    free3D(this->group_skill_map, this->task->nG, this->task->nK); //UNBOOST
+    
+//    printf("before active_set_block\n");
     free(this->active_set_block);
+//    printf("before unblocked_simplex\n");
     free(this->unblocked_simplex);
     
 }// ~HMMProblemSt
@@ -215,10 +237,10 @@ NUMBER* HMMProblemSt::getB(NCAT x) {
 }
 
 NUMBER HMMProblemSt::getPI(NCAT x, NPAR i) {
-    if(task->structure != STRUCTURE_SKILL) {
-        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
-        exit(1);
-    }
+//    if(task->structure != STRUCTURE_SKILL) {
+//        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+//        exit(1);
+//    }
     NCAT nK = this->task->nK;
     if( x > (this->task->nK-1) ) {
         fprintf(stderr,"While accessing PI, skill index %d exceeded the last skill index %d.\n", x, nK-1);
@@ -229,10 +251,10 @@ NUMBER HMMProblemSt::getPI(NCAT x, NPAR i) {
 }
 
 NUMBER HMMProblemSt::getA(NCAT x, NPAR i, NPAR j) {
-    if(task->structure != STRUCTURE_SKILL) {
-        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
-        exit(1);
-    }
+//    if(task->structure != STRUCTURE_SKILL) {
+//        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+//        exit(1);
+//    }
     NPAR nS = this->task->nS;
     NCAT nK = this->task->nK;
     if( x > (nK-1) ) {
@@ -244,10 +266,10 @@ NUMBER HMMProblemSt::getA(NCAT x, NPAR i, NPAR j) {
 }
 
 NUMBER HMMProblemSt::getB(NCAT x, NPAR i, NPAR m) {
-    if(task->structure != STRUCTURE_SKILL) {
-        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
-        exit(1);
-    }
+//    if(task->structure != STRUCTURE_SKILL) {
+//        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+//        exit(1);
+//    }
     NPAR nS = this->task->nS;
     NPAR nO = this->task->nO;
     NCAT nK = this->task->nK;
@@ -263,20 +285,20 @@ NUMBER HMMProblemSt::getB(NCAT x, NPAR i, NPAR m) {
 
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemSt::getPI(struct context* ctx, NPAR i) {
-    if(task->structure != STRUCTURE_SKILL) {
-        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
-        exit(1);
-    }
+//    if(task->structure != STRUCTURE_SKILL) {
+//        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+//        exit(1);
+//    }
     // checks done
     return this->param_skill[this->skill1_n*ctx->k + i];
 }
 
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemSt::getA (struct context* ctx, NPAR i, NPAR j) {
-    if(task->structure != STRUCTURE_SKILL) {
-        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
-        exit(1);
-    }
+//    if(task->structure != STRUCTURE_SKILL) {
+//        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+//        exit(1);
+//    }
     // checks done
     NPAR nS = this->task->nS;
     return this->param_skill[this->skill1_n*ctx->k + nS + i*nS + j];
@@ -284,10 +306,10 @@ NUMBER HMMProblemSt::getA (struct context* ctx, NPAR i, NPAR j) {
 
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemSt::getB (struct context* ctx, NPAR i, NPAR m) {
-    if(task->structure != STRUCTURE_SKILL) {
-        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
-        exit(1);
-    }
+//    if(task->structure != STRUCTURE_SKILL) {
+//        fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
+//        exit(1);
+//    }
     // checks done
     NPAR nS = this->task->nS;
     NPAR nO = this->task->nO;
@@ -313,6 +335,22 @@ bool HMMProblemSt::checkSkillConstraints(NUMBER* param_skill) {
     return true;
 }
 
+void HMMProblemSt::initAlphaEtAl() {
+    NPAR nS = this->task->nS;
+    NCAT nK = this->task->nK, nG = this->task->nG;
+    NDAT Nst = this->task->Nst;
+    NPAR f_is_scaled = this->task->is_scaled==1;
+    toZero2D(this->alpha, Nst, nS);
+    // if scaled, new parameter values are multiplied, if not scaled – added
+    if(f_is_scaled)
+        toValue2D(this->po_param_gk, nG, nK, 1.0);
+    else
+        toZero2D(this->po_param_gk, nG, nK);
+    toZero1D(this->loglik_k, nK);
+    
+    toValue3D(this->group_skill_map, (NDAT)nG, (NDAT)nK, (NDAT)nS, -1.0); // -1 means not set (use pLo)
+}
+
 NUMBER HMMProblemSt::computeAlphaAndPOParam(NUMBER *metrics_res) {
     NPAR nS = this->task->nS, nO = this->task->nO, o = -1, isTarget;
     NDAT Nst = this->task->Nst, N = this->task->N;
@@ -322,27 +360,21 @@ NUMBER HMMProblemSt::computeAlphaAndPOParam(NUMBER *metrics_res) {
     // prepare values
     NUMBER loglik = 0.0, loglik_nonull = 0.0, sse = 0.0, sse_nonull = 0.0, ncorr = 0.0, ncorr_nonull = 0.0;
     NUMBER p = 0.0;///, corr = 0.0;
-    toZero2D(this->alpha, Nst, nS);
     
-    // if scaled, new parameter values are multiplied, if not scaled – added
-    if(f_is_scaled)
-        toValue2D(this->po_param_gk, nG, nK, 1.0);
-    else
-        toZero2D(this->po_param_gk, nG, nK);
-    toZero1D(this->loglik_k, nK);
+    // initialize reused parameters before run
+//    NUMBER ***group_skill_map; // traced state values for student (group) * skill //UNBOOST
+//    group_skill_map = init3D<NUMBER>(nG, nK, nS);//UNBOOST
+//    toValue3D(group_skill_map, (NDAT)nG, (NDAT)nK, (NDAT)nS, -1.0); // -1 means not set (use pLo)
+    initAlphaEtAl();
+
     NDAT **alpha_gk_ix = NULL;
     
     NUMBER **predict = this->task->dat_predict; // running value of prediction, do we save it?
-//    if(predict_res==NULL)
-//        predict = init2D<NUMBER>(Nst, nO);
-//    else
-//        predict = predict_res;
+    // toZero2D(predict,N,nO); // don't blast everything, the predictions are inited to 0 line by line as the overall data is updated according to the active set
 
-    NUMBER ***group_skill_map = init3D<NUMBER>(nG, nK, nS);//UNBOOST
-    toValue3D(group_skill_map, (NDAT)nG, (NDAT)nK, (NDAT)nS, -1.0); // -1 means not set (use pLo)
     struct context* ctx = new context;
 
-    if(this->is_fwd_bwd_built==false) { // if helper structures were not built
+    if(!this->is_fwd_bwd_built) { // if helper structures were not built
         toValue1D(this->forward_ix, Nst, -1);
         toValue1D(this->backward_ix, Nst, -1);
         toValue1D(this->ndat_k, nK, 0);
@@ -362,13 +394,19 @@ NUMBER HMMProblemSt::computeAlphaAndPOParam(NUMBER *metrics_res) {
         NPAR n, i;
         getSkillsAtRow(this->task, t, &ar, &n);
         // deal with null skill
-        if(ar[0]<0 & metrics_res!=NULL) { // account for no skill label only if we need metrics (likely called from predict)
+        if(ar[0]<0 && metrics_res!=NULL) { // account for no skill label only if we need metrics (likely called from predict)
             isTarget = this->null_skill_obs==o;
             // old: rmse += pow(isTarget - hmm->null_skill_obs_prob,2);
             sse += pow(isTarget - this->null_obs_ratios[f_metrics_target_obs],2);
             // old: accuracy += isTarget == (hmm->null_skill_obs_prob>=0.5);
             ncorr += isTarget == (this->null_obs_ratios[f_metrics_target_obs]==maxn(this->null_obs_ratios,nO) && this->null_obs_ratios[f_metrics_target_obs] > 1/nO);
             loglik -= isTarget*safelog(this->null_skill_obs_prob) + (1-isTarget)*safelog(1 - this->null_skill_obs_prob);
+            
+            for(NPAR m=0; m<nO; m++) {
+                predict[t][m] = this->null_obs_ratios[m];
+            }
+        }
+        if(ar[0]<0) {
             continue;
         }
         
@@ -396,8 +434,8 @@ NUMBER HMMProblemSt::computeAlphaAndPOParam(NUMBER *metrics_res) {
                 }
             } else { // it's alpha(t,i)
                 // compute \alpha_{t}(i) = b_j(o_{t})\sum_{j=1}^N{\alpha_{t-1}(j) a_{ji}}
-                for(int i=0; i<nS; i++) {
-                    for(int j=0; j<nS; j++) {
+                for(NPAR i=0; i<nS; i++) {
+                    for(NPAR j=0; j<nS; j++) {
                         alpha[tt][i] += alpha[pre_tt][j] * getA(ctx,j,i);
                     }
                     this->alpha[tt][i] *= ((o<0)?1:getB(ctx,i,o)); // if observatiob unknown use 1
@@ -433,7 +471,8 @@ NUMBER HMMProblemSt::computeAlphaAndPOParam(NUMBER *metrics_res) {
             ncorr_nonull += isTarget == (predict[t][f_metrics_target_obs]==maxn(predict[t],nO) && predict[t][f_metrics_target_obs]>1/nO);
         }
 
-        // tt_off += fd->skill_n[t]; // tt offset
+
+
     } // all rows in the data
     
     // compute this->po_param_gk and this->loglik_k
@@ -473,8 +512,9 @@ NUMBER HMMProblemSt::computeAlphaAndPOParam(NUMBER *metrics_res) {
         metrics_res[4] = ncorr;
         metrics_res[5] = ncorr_nonull;
     }
-    free3D(group_skill_map,nG, nK);
-    free(ctx);
+    
+//    free3D(group_skill_map, this->task->nG, this->task->nK); //UNBOOST
+    delete ctx;
     return loglik; //TODO, figure out a diff way to sum it, and not multiple times
 }
 
@@ -488,6 +528,9 @@ void HMMProblemSt::computeBeta() {
 
     // Backwards pass
     for(int t=(N-1); t>=0; t--) {
+        if(t==96) {
+            int a =0;
+        }
         o = this->task->dat_obs[t]; // observation y in the data is 1-right, 0-wrong; math assumes HMM-Scalable 1-right, 2-wrong, with -1 taken out, so 0-right, 1-wrong
         // isTarget = this->task->metrics_target_obs == o;
         g = this->task->dat_group[t]; // -1, because in data they were 1-starting
@@ -500,7 +543,8 @@ void HMMProblemSt::computeBeta() {
         getSkillsAtRow(this->task, t, &ar, &n);
         // deal with null skill
         if(ar[0]<0) { // if no skill label
-            fprintf(stderr, "WARNING! We are not dealing with skill-less observation\n");
+            // fprintf(stderr, "WARNING! We are not dealing with skill-less observation\n");
+            continue;
         }
         
         NCAT n_active = 0;
@@ -550,7 +594,8 @@ void HMMProblemSt::computeXiGamma(){
         getSkillsAtRow(this->task, t, &ar, &n);
         // deal with null skill
         if(ar[0]<0) { // if no skill label
-            fprintf(stderr, "WARNING! We are not dealing with skill-less observation\n");
+            // fprintf(stderr, "WARNING! We are not dealing with skill-less observation\n");
+            continue;
         }
         
         NCAT n_active = 0;
@@ -583,7 +628,7 @@ void HMMProblemSt::computeXiGamma(){
 
 NUMBER HMMProblemSt::computeGradients() {
     NPAR nS = this->task->nS, o = -1;//, isTarget;
-    NDAT Nst = this->task->Nst, N = this->task->N;
+    NDAT Nst = this->task->Nst, N = this->task->N, c = 0;
     NCAT g,k, nK = this->task->nK;
     // prepare values
     toZero2D(this->alpha, Nst, nS);
@@ -593,6 +638,8 @@ NUMBER HMMProblemSt::computeGradients() {
     
     NUMBER loglik = computeAlphaAndPOParam(NULL); // just alpha and p(O|param)
     computeBeta();
+    // this->toFileAlphaBetaObs("trainhmmst_alphabetaobs0.txt", 0); // printing out alpha and beta arrays
+    
     // main gradient computation
     for(int t=0; t<N; t++) {
         o = this->task->dat_obs[t]; // observation y in the data is 1-right, 0-wrong; math assumes HMM-Scalable 1-right, 2-wrong, with -1 taken out, so 0-right, 1-wrong
@@ -607,7 +654,8 @@ NUMBER HMMProblemSt::computeGradients() {
         getSkillsAtRow(this->task, t, &ar, &n);
         // deal with null skill
         if(ar[0]<0) { // if no skill label
-            fprintf(stderr, "WARNING! We are not dealing with skill-less observation\n");
+//            fprintf(stderr, "WARNING! We are not dealing with skill-less observation\n");
+            continue;
         }
         
         NCAT n_active = 0;
@@ -621,8 +669,10 @@ NUMBER HMMProblemSt::computeGradients() {
 
             // grad PI
             if (tt_m1==-1) {
+                c += (k==0);
                 for(i=0; i<nS; i++) {
                     this->gradient_skill[PI(k,i)] -= this->beta[tt][i] * ((o<0)?1:this->param_skill[B(k,i,o)]) / safe0num(this->po_param_gk[g][k]);
+                    //fb->gradPI[i] -= dt->beta[t][i] * ((o<0)?1:fb->B[i][o]) / safe0num(dt->p_O_param);
                 }
             } else {
             // grad A
@@ -643,28 +693,29 @@ NUMBER HMMProblemSt::computeGradients() {
     
 //    NUMBER sum = 0;
 //    for(int l=0;l<(this->skill1_n*nK);l++) sum += this->gradient_skill[l];
-
-
+    delete ctx;
+    
     return loglik;
 } // computeGradients()
 
 void HMMProblemSt::toFile(const char *filename) {
-    switch(this->task->structure)
-    {
-        case STRUCTURE_SKILL:
+//    switch(this->task->structure)
+//    {
+//        case STRUCTURE_SKILL:
             toFileSkill(filename);
-            break;
+//            break;
 //        case STRUCTURE_GROUP:
 //            toFileGroup(filename);
 //            break;
-        default:
-            fprintf(stderr,"Solver specified is not supported.\n");
-            break;
-    }
+//        default:
+//            fprintf(stderr,"Solver specified is not supported.\n");
+//            break;
+//    }
 }
 
 void HMMProblemSt::toFileSkill(const char *filename) {
-    NPAR nS = this->task->nS, nO = this->task->nO, nK = this->task->nK;
+    NPAR nS = this->task->nS, nO = this->task->nO;
+    NCAT nK = this->task->nK;
 	FILE *fid = fopen(filename,"w");
 	if(fid == NULL) {
 		fprintf(stderr,"Can't write output model file %s\n",filename);
@@ -684,22 +735,23 @@ void HMMProblemSt::toFileSkill(const char *filename) {
 		fprintf(fid,"%d\t%s\n",k,it->second.c_str());
 		NPAR i,j,m;
 		fprintf(fid,"PI\t");
-		for(i=0; i<=nS; i++)
+		for(i=0; i<nS; i++)
 			fprintf(fid,"%12.10f%s",this->param_skill[PI(k,i)],(i==(nS-1))?"\n":"\t");
 		fprintf(fid,"A\t");
-		for(i=0; i<=nS; i++)
-			for(j=0; j<=nS; j++)
+		for(i=0; i<nS; i++)
+			for(j=0; j<nS; j++)
 				fprintf(fid,"%12.10f%s",this->param_skill[A(k,i,j)],(i==(nS-1) && j==(nS-1))?"\n":"\t");
 		fprintf(fid,"B\t");
-		for(i=0; i<=nS; i++)
-			for(m=0; m<=nO; m++)
+		for(i=0; i<nS; i++)
+			for(m=0; m<nO; m++)
 				fprintf(fid,"%12.10f%s",this->param_skill[B(k,i,m)],(i==(nS-1) && m==(nO-1))?"\n":"\t");
 	}
 	fclose(fid);
 }
 
 void HMMProblemSt::toFileGroup(const char *filename) {
-    NPAR nS = this->task->nS, nO = this->task->nO, nG = this->task->nG;
+    NPAR nS = this->task->nS, nO = this->task->nO;
+    NCAT nG = this->task->nG;
 	FILE *fid = fopen(filename,"w");
 	if(fid == NULL) {
 		fprintf(stderr,"Can't write output model file %s\n",filename);
@@ -739,6 +791,7 @@ void HMMProblemSt::producePCorrect(NUMBER*** group_skill_map, NCAT* skills, NPAR
     NCAT k;
     NUMBER *local_pred_inner = init1D<NUMBER>(nO);
     for(m=0; m<nO; m++) local_pred[m] = 0.0;
+    
     for(int l=0; l<n_skills; l++) {
         for(m=0; m<nO; m++) local_pred_inner[m] = 0.0;
         k = skills[l];
@@ -842,7 +895,7 @@ void HMMProblemSt::predict(NUMBER* metrics, const char *filename,
 	}
 	
 	// initialize and run
-    NUMBER ***predict_hmm = init1D<NUMBER**>(nhmms);
+//    NUMBER ***predict_hmm = init1D<NUMBER**>(nhmms);
     NUMBER **metrics_hmm = init2D<NUMBER>(nhmms,6);
     NDAT N_all = 0;
     NDAT N_nnul_all = 0;
@@ -853,7 +906,7 @@ void HMMProblemSt::predict(NUMBER* metrics, const char *filename,
     NDAT ncorr_all = 0;
     NDAT ncorr_nnul_all = 0;
     for(NPAR h=0;h<nhmms;h++) {
-        predict_hmm[h] = init2D<NUMBER>(hmms[h]->task->N,nO);
+//        predict_hmm[h] = init2D<NUMBER>(hmms[h]->task->N,nO);
         hmms[h]->computeAlphaAndPOParam(metrics_hmm[h]);
         N_all           += hmms[h]->task->N;
         N_nnul_all      += hmms[h]->task->N_null;
@@ -861,8 +914,8 @@ void HMMProblemSt::predict(NUMBER* metrics, const char *filename,
         loglik_nnul_all += metrics_hmm[h][1];
         sse_all         += metrics_hmm[h][2];
         sse_nnul_all    += metrics_hmm[h][3];
-        ncorr_all       += metrics_hmm[h][4];
-        ncorr_nnul_all  += metrics_hmm[h][5];
+        ncorr_all       += (NDAT)metrics_hmm[h][4];
+        ncorr_nnul_all  += (NDAT)metrics_hmm[h][5];
     }
     
     // print predictions
@@ -884,7 +937,7 @@ void HMMProblemSt::predict(NUMBER* metrics, const char *filename,
                 for(m=0; m<nO; m++) fprintf(fid,"%12.10f%s",hmm->null_obs_ratios[m],(m<(nO-1))?"\t":"\n");
             } else { // skills present
                 for(m=0; m<nO; m++) {
-                    fprintf(fid,"%12.10f%s",predict_hmm[h][t][m],(m<(nO-1))?"\t": ((f_predictions==1)?"\n":"\t") );// if we print states of KCs, continut
+                    fprintf(fid,"%12.10f%s",hmm->task->dat_predict[t][m],(m<(nO-1))?"\t": ((f_predictions==1)?"\n":"\t") );// if we print states of KCs, continut
                 }
                 if(f_predictions==2) { // if we print out states of KC's as welll
                     fprintf(stderr,"WARNING! Support for printing pL is not re-implemented \n");
@@ -910,7 +963,7 @@ void HMMProblemSt::predict(NUMBER* metrics, const char *filename,
 //        o = ix_local_pred;
     }
     if(f_predictions==3) { // if we print out states of KC's as welll
-        fprintf(stderr,"WARNING! Writing prediction after thelocal update is not re-implemented \n");
+        fprintf(stderr,"WARNING! Writing prediction after the local update is not re-implemented \n");
 //        for(int l=0; l<n; l++) { // all KC here
 //            fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
 //            //                    fprintf(fid,"%12.10f%s",gsm(g, ar[l] )[0], (l==(n-1) && l==(n-1))?"\n":"\t"); // if end of all states: end line //BOOST
@@ -928,10 +981,10 @@ void HMMProblemSt::predict(NUMBER* metrics, const char *filename,
 	}
 	
     // recycle
-    for(int h=0;h<nhmms;h++) {
-        free2D(predict_hmm[h],hmms[h]->task->N);
-    }
-    free(predict_hmm);
+//    for(int h=0;h<nhmms;h++) {
+//        free2D(predict_hmm[h],hmms[h]->task->N);
+//    }
+//    free(predict_hmm);
     free2D(metrics_hmm, nhmms);
 
 }
@@ -997,7 +1050,7 @@ void HMMProblemSt::createGradientScaleSimplexAffordances(FitBitSt *fb) {
         for(i=0; i<(1+nS); i++) {
             fb->sclsmplx_offsets[c] = offset;
             fb->sclsmplx_bound_offsets[c] = i*nS;
-            fb->sclsmplx_sizes[c] = nS;
+            fb->sclsmplx_sizes[c] = (NPAR)nS;
             fb->sclsmplx_blocks[c] = k; // which [skill] block this simplex is part of
             offset+=nS;
             c++;
@@ -1005,7 +1058,7 @@ void HMMProblemSt::createGradientScaleSimplexAffordances(FitBitSt *fb) {
         for(i=0; i<nS; i++) {
             fb->sclsmplx_offsets[c] = offset;
             fb->sclsmplx_bound_offsets[c] = (1+nS)*nS + i*nO;
-            fb->sclsmplx_sizes[c] = nO;
+            fb->sclsmplx_sizes[c] = (NPAR)nO;
             fb->sclsmplx_blocks[c] = k; // which [skill] block this simplex is part of
             offset+=nO;
             c++;
@@ -1250,8 +1303,8 @@ void HMMProblemSt::doLagrangeStep(FitBitSt *fb) {
 void HMMProblemSt::doBarzilaiBorweinStep(FitBitSt *fb) {
     // Barzilai Borwein value: s' * s / ( s' * (g-g_m1) )
     
-    NPAR i, nK = this->task->nK;
-    NCAT l,k;
+    NPAR i;
+    NCAT l,k, nK = this->task->nK;
 
     // first scale down gradients -- MOVED TO Cycle Bit
     // fb->scaleGradients(false, this->active_set_block);
@@ -1359,7 +1412,7 @@ void HMMProblemSt::doBaumWelchStep(FitBitSt *fb) {
 void HMMProblemSt::doLinearStep(FitBitSt *fb, bool direction) {
     NPAR i;
     NCAT l,k, nK = this->task->nK, skill1_n = this->skill1_n;
-    NDAT c = 0;
+   // NDAT c = 0;
     
     // MOVED TO Cycle Bit
     // fb->scaleGradients(direction, this->active_set_block); // it knows whether to scale gradient or direction
@@ -1367,7 +1420,6 @@ void HMMProblemSt::doLinearStep(FitBitSt *fb, bool direction) {
     fb->PARAMcopy = init1D<NUMBER>(fb->nPARAM);
     fb->GRADcopy = init1D<NUMBER>(fb->nPARAM); // copy of gradient or direction, we will need just the grad's copy saved
     NUMBER * save_GRAD = init1D<NUMBER>((NDAT)fb->nPARAM); // save GRAD since while stepping it would be recomputed
-    
     
     // all of the variables were single value, now we ad `_s` suffix and make them arrays
     NUMBER* e_s = initToValue1D<NUMBER>(nK,this->task->ArmijoSeed); // step seed
@@ -1428,7 +1480,7 @@ void HMMProblemSt::doLinearStep(FitBitSt *fb, bool direction) {
         // n_e_lt_ArmijoMinStep = 0;
         //n_compliesArmijo_or_compliesWolfe2_or_n_e_lt_ArmijoMinStep = 0;
         // step
-        c = 0;
+//        c = 0;
 //        for(k=0; k<nK; k++) {
 //            if(this->active_set_block[k]>0) {
 //                for(i=0; i<skill1_n; i++) {
@@ -1515,7 +1567,7 @@ void HMMProblemSt::doLinearStep(FitBitSt *fb, bool direction) {
     // reinstate original gradients
     cpy1D(save_GRAD, fb->GRAD, nK);
 
-    c = 0;
+//    c = 0;
     for(k=0; k<nK; k++) {
         if(this->active_set_block[k]>0) {
             if(!compliesArmijo_s[k]) { // we couldn't step away from current, copy the inital point back
@@ -1552,6 +1604,17 @@ void HMMProblemSt::doLinearStep(FitBitSt *fb, bool direction) {
 //    nK_active = 0;                                                // DEBUG check for reinstatement
 //    for(k=0; k<nK; k++) nK_active += this->active_set_block[k]>0; // DEBUG check for reinstatement
     
+    // free memory (1)
+    free(e_s);
+    free(compliesArmijo_s);
+    free(compliesWolfe2_s);
+    free(e_Armijo_s);
+    free(f_xkplus1_Armijo_s);
+    free(f_xk_s);
+    free(f_xkplus1_s);
+    free(p_k_by_neg_p_k_s);
+    free(p_k_by_neg_p_kp1_s);
+    // free memory (2)
     free(active_set_block_local);
     free(fb->PARAMcopy);
     free(fb->GRADcopy);
@@ -1672,8 +1735,9 @@ void HMMProblemSt::readModel(const char *filename, bool overwrite) {
 }
 
 void HMMProblemSt::readModelBody(FILE *fid, struct task* task, NDAT *line_no,  bool overwrite) {
-	NPAR i,j,m, nS=this->task->nS, nO=this->task->nO, nK=task->nK;
-	NCAT k = 0, /*idxk = 0,*/ offset;
+    NPAR i,j,m, nS=this->task->nS, nO=this->task->nO;
+    NCAT nK=task->nK;
+	NCAT k = 0, idxk = 0, offset;
     std::map<std::string,NCAT>::iterator it;
 	string s;
     char col[2048];
@@ -1699,7 +1763,7 @@ void HMMProblemSt::readModelBody(FILE *fid, struct task* task, NDAT *line_no,  b
         if(overwrite) {
             this->task->map_skill_fwd->insert(pair<string,NCAT>(s, (NCAT)this->task->map_skill_fwd->size()));
             this->task->map_skill_bwd->insert(pair<NCAT,string>((NCAT)this->task->map_skill_bwd->size(), s));
-            //idxk = k;
+            idxk = k;
         } else {
             it = this->task->map_skill_fwd->find(s);
             if( it==this->task->map_skill_fwd->end() ) { // not found, skip 3 lines and continue
@@ -1709,12 +1773,12 @@ void HMMProblemSt::readModelBody(FILE *fid, struct task* task, NDAT *line_no,  b
                 (*line_no)+=3;
                 continue; // skip this iteration
             }
-            //else
-            //    idxk = it->second;
+            else
+                idxk = it->second;
         }
         // read PI
         fscanf(fid,"PI\t");
-        offset = k*this->skill1_n;
+        offset = idxk*this->skill1_n;
         for(i=0; i<(nS-1); i++) { // read 1 less then necessary
             fscanf(fid,"%[^\t]\t",col);
             // this->pi[idxk][i] = atof(col);
@@ -1726,7 +1790,7 @@ void HMMProblemSt::readModelBody(FILE *fid, struct task* task, NDAT *line_no,  b
         (*line_no)++;
 		// read A
         fscanf(fid,"A\t");
-        offset = k*this->skill1_n + nS;
+        offset = idxk*this->skill1_n + nS;
 		for(i=0; i<nS; i++)
 			for(j=0; j<nS; j++) {
                 if(i==(nS-1) && j==(nS-1)) {
@@ -1743,7 +1807,7 @@ void HMMProblemSt::readModelBody(FILE *fid, struct task* task, NDAT *line_no,  b
         (*line_no)++;
 		// read B
         fscanf(fid,"B\t");
-        offset = k*this->skill1_n + (1+nS)*nS;
+        offset = idxk*this->skill1_n + (1+nS)*nS;
 		for(i=0; i<nS; i++)
 			for(m=0; m<nO; m++) {
                 if(i==(nS-1) && m==(nO-1)) {
@@ -1761,3 +1825,29 @@ void HMMProblemSt::readModelBody(FILE *fid, struct task* task, NDAT *line_no,  b
 	} // for all k
 }
 
+// helper function
+void HMMProblemSt::toFileAlphaBetaObs(const char *filename, NCAT k) {
+    NDAT Nst = this->task->Nst, t, tt=0;
+    NPAR nS = this->task->nS;
+    FILE *fid = fopen(filename,"w");
+    
+    if(fid == NULL) {
+        fprintf(stderr,"Can't write output model file %s\n",filename);
+        exit(1);
+    }
+    
+    // first time skill k starts
+    while(this->task->dat_skill_stacked[tt]!=k) {
+        tt++;
+    }
+    
+    do {
+        t = tt;
+        for(NPAR i=0; i<nS; i++) fprintf(fid,"%20.17f\t",this->alpha[tt][i]);
+        for(NPAR i=0; i<nS; i++) fprintf(fid,"%20.17f\t",this->beta[tt][i]);
+        fprintf(fid,"%i\n",this->task->dat_obs_stacked[tt]);
+        tt = this->forward_ix[tt];
+    }
+    while(this->forward_ix[t]!=-1);
+    fclose(fid);
+}

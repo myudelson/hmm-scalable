@@ -54,6 +54,7 @@ HMMProblemEloSt::HMMProblemEloSt() {
 }
 
 HMMProblemEloSt::HMMProblemEloSt(struct task *task) {
+//    printf("HMMProblemEloSt::HMMProblemEloSt\n");
     if(task->structure != STRUCTURE_ELO) {
         fprintf(stderr,"Model structure specified is not supported and should have been caught earlier\n");
         exit(1);
@@ -65,26 +66,39 @@ HMMProblemEloSt::HMMProblemEloSt(struct task *task) {
 }// HMMProblemEloSt
 
 void HMMProblemEloSt::init(struct task *task) {
+//    printf("HMMProblemEloSt::init\n");
     // parent init
     HMMProblemSt::init(task);
     // local init
     // init elo parameters, trackers (values and counts)
     NCAT nG = task->nG;
-    this->param_elo = init1D<NUMBER>(task->elo_param_values_n);
-    for(NPAR i=0; i<task->elo_param_values_n; i++) {
+    this->param_elo_n = task->elo_param_values_n;
+    this->param_elo = init1D<NUMBER>(this->param_elo_n);
+    for(NPAR i=0; i<this->param_elo_n; i++) {
         this->param_elo[i] = task->elo_param_values[i];
     }
-    this->gradient_elo = initToValue1D<NUMBER>(task->elo_param_values_n, 0);
+    this->gradient_elo = initToValue1D<NUMBER>(this->param_elo_n, 0);
     this->elo_count_g = initToValue1D<NCAT>((NDAT)nG, 0);
-    this->elo_track_g = initToValue1D<NUMBER>((NDAT)nG, 0.5); // init on probabilistic scale
-    this->elo_track_t = init1D<NUMBER>((NDAT)task->N);
+    this->elo_track_g = initToValue1D<NUMBER>((NDAT)nG, 0); // init on logit scale
+    this->elo_track_t = initToValue1D<NUMBER>((NDAT)task->N, 0); // init on logit scale
     // init elo sensitivity function
 //    NUMBER (HMMProblemEloSt::*sensitivity)(NDAT) = &HMMProblemEloSt::sensitivity_K;
-    this->sensitivity = &HMMProblemEloSt::sensitivity_K;
     switch(this->task->elo_type)
     {
-        case ELO_1SENSITIVITY: {
-            
+        case ELO_DIRECT_K: {
+            this->sensitivity = &HMMProblemEloSt::sensitivity_K;
+            break;
+        }
+        case ELO_UNS_REL_1_B: {
+            this->sensitivity = &HMMProblemEloSt::sensitivity_U1b;
+            break;
+        }
+        case ELO_UNS_REL_1_EXPB_0_01: {
+            this->sensitivity = &HMMProblemEloSt::sensitivity_U1bexp0_01;
+            break;
+        }
+        case ELO_O2Z_IN_B: {
+            this->sensitivity = &HMMProblemEloSt::sensitivity_O2Z_IN_B;
             break;
         }
         default:
@@ -97,7 +111,8 @@ void HMMProblemEloSt::init(struct task *task) {
 }// HMMProblemEloSt::init
 
 HMMProblemEloSt::~HMMProblemEloSt() {
-    // all of these are done by HMMProblemSt
+//    printf("HMMProblemEloSt::~HMMProblemEloSt\n");
+    // all of these are not done by HMMProblemSt
     if(this->param_elo == NULL) free(this->param_elo);
     if(this->gradient_elo == NULL) free(this->gradient_elo);
     
@@ -110,52 +125,166 @@ HMMProblemEloSt::~HMMProblemEloSt() {
 
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemEloSt::getPI(struct context* ctx, NPAR i) {
-    switch(this->task->structure)
-    {
-        case STRUCTURE_ELO:
-            return this->param_skill[this->skill1_n*ctx->k + i];
-            break;
-        default:
-            fprintf(stderr,"Solver specified is not supported.\n");
-            exit(1);
-            break;
+//    if(this->task->structure != STRUCTURE_ELO)
+//    {
+//        fprintf(stderr,"Solver specified is not supported.\n");
+//        exit(1);
+//    }
+    // BKT part
+    NUMBER ret = this->param_skill[this->skill1_n*ctx->k + i];
+    // Elo part
+    if( (this->task->elo_scope & BKT_PARAMETER_SCOPE_PI)>0 ) {
+//        if( ctx->g > -1) {
+        NUMBER sig = ((i==0)?1.0:(-1.0));
+        ret = sigmoid( sig * this->elo_track_g[ctx->g] + logit(ret));
+//        }
     }
+    return(ret);
 }
 
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemEloSt::getA (struct context* ctx, NPAR i, NPAR j) {
+//    if(this->task->structure != STRUCTURE_ELO)
+//    {
+//        fprintf(stderr,"Solver specified is not supported.\n");
+//        exit(1);
+//    }
     NPAR nS = this->task->nS;
-    switch(this->task->structure)
-    {
-        case STRUCTURE_ELO:
-            return this->param_skill[this->skill1_n*ctx->k + nS + i*nS + j];
-            break;
-        default:
-            fprintf(stderr,"Solver specified is not supported.\n");
-            exit(1);
-            break;
+    // BKT part
+    NUMBER ret = this->param_skill[this->skill1_n*ctx->k + nS + i*nS + j];
+    // Elo part
+    if( (this->task->elo_scope & BKT_PARAMETER_SCOPE_A)>0 ) {
+//        if( ctx->g > -1) {
+        NUMBER sig = ((j==0)?1.0:(-1.0));
+        ret = sigmoid( sig * this->elo_track_g[ctx->g] + logit(ret));
+//        }
     }
+    return(ret);
 }
 
 // getters for computing alpha, beta, gamma
 NUMBER HMMProblemEloSt::getB (struct context* ctx, NPAR i, NPAR m) {
+//    if(this->task->structure != STRUCTURE_ELO)
+//    {
+//        fprintf(stderr,"Solver specified is not supported.\n");
+//        exit(1);
+//    }
     NPAR nS = this->task->nS;
     NPAR nO = this->task->nO;
     // special attention for "unknonw" observations, i.e. the observation was there but we do not know what it is
     // in this case we simply return 1, effectively resulting in no change in \alpha or \beta vatiables
     if(m<0)
         return 1;
-    switch(this->task->structure)
-    {
-        case STRUCTURE_ELO:
-            return this->param_skill[this->skill1_n*ctx->k + nS * (1 + nS )+ i*nO + m];
-            break;
-        default:
-            fprintf(stderr,"Solver specified is not supported.\n");
-            exit(1);
-            break;
+    NUMBER ret = this->param_skill[this->skill1_n*ctx->k + nS * (1 + nS )+ i*nO + m];
+    if( (this->task->elo_scope & BKT_PARAMETER_SCOPE_B)>0 ) {
+//        if( ctx->g > -1) {
+        NUMBER sig = ((m==0)?1.0:(-1.0));
+        ret = sigmoid( sig * this->elo_track_g[ctx->g] + logit(ret));
+//        }
     }
+    return(ret);
 }
+
+void HMMProblemEloSt::initAlphaEtAl() {
+    // call the parent initAlphaEtAl
+    HMMProblemSt::initAlphaEtAl();
+    // init Elo-related stuff
+    toZero1D<NCAT>(this->elo_count_g, (NDAT)this->task->nG);
+    toZero1D<NUMBER>(this->elo_track_g, (NDAT)this->task->nG); // init on logit scale
+    toZero1D<NUMBER>(this->elo_track_t, (NDAT)this->task->N); // init on logit scale
+}
+
+
+void HMMProblemEloSt::updateValuesLocal(NUMBER*** group_skill_map, NCAT* skills, NPAR n_skills, NUMBER* local_pred, struct context *ctx) {
+    // parent (BKT's) updateValuesLocal
+    HMMProblemSt::updateValuesLocal(group_skill_map, skills, n_skills, local_pred, ctx);
+    
+    // local Elo updateValuesLocal
+    NPAR corr = (NPAR)(1-ctx->o);
+    this->elo_track_g[ctx->g] += (this->*sensitivity)(ctx) * (corr - local_pred[0]);
+    // update counts
+    this->elo_count_g[ctx->g]++;
+}
+
+//
+// Elo sensitivity multiplier functions
+//
+
+// straight/direct formulation of sensitivity
+NUMBER HMMProblemEloSt::sensitivity_K(struct context *ctx) {
+    return this->param_elo[0];
+}
+
+// Uncertainty \frac{1}{1+b*n} U1b, as a variant of Uab \frac{a}{1+b*n}
+NUMBER HMMProblemEloSt::sensitivity_U1b(struct context *ctx) {
+    // handle negative b by transferring it to the whole resulting K
+    NUMBER sig = (this->param_elo[0]>=0)?1.0:-1.0;
+    NDAT n = this->elo_count_g[ctx->g];
+    return sig*1/(1+sig*this->param_elo[0]*n);
+}
+
+// Uncertainty \frac{1}{1+b*e^{0.01*n}} U1bexp0_01 as a variant of \frac{a}{1+b*e^{c*n}}
+NUMBER HMMProblemEloSt::sensitivity_U1bexp0_01(struct context *ctx) {
+    // handle negative b by transferring it to the whole resulting K
+    NUMBER sig = (this->param_elo[0]>=0)?1.0:-1.0;
+    NDAT n = this->elo_count_g[ctx->g];
+    return sig*1/(1+sig*this->param_elo[0]*exp(0.01*n));
+}
+
+// sensitivity 1 to 0 in B steps in lenear fashion
+NUMBER HMMProblemEloSt::sensitivity_O2Z_IN_B(struct context *ctx) {
+    // handle negative b by transferring it to the whole resulting K
+    NUMBER sig = (this->param_elo[0]>=0)?1.0:-1.0;
+    NDAT n = this->elo_count_g[ctx->g];
+    return sig*MAX(1-n/this->param_elo[0],0);
+}
+
+//void HMMProblemEloSt::toFile(const char *filename) {
+//    switch(this->task->structure)
+//    {
+//        case STRUCTURE_ELO:
+//            toFileSkill(filename);
+//            break;
+//        default:
+//            fprintf(stderr,"Solver specified is not supported.\n");
+//            break;
+//    }
+//}
+
+//void HMMProblemEloSt::toFileSkill(const char *filename) {
+//    NPAR nS = this->task->nS, nO = this->task->nO, nK = this->task->nK;
+//    FILE *fid = fopen(filename,"w");
+//    if(fid == NULL) {
+//        fprintf(stderr,"Can't write output model file %s\n",filename);
+//        exit(1);
+//    }
+//    // write solved id
+//    writeSolverInfo(fid, this->task);
+//
+//    fprintf(fid,"Null skill ratios\t");
+//    for(NPAR m=0; m<nO; m++)
+//        fprintf(fid," %10.7f%s",this->null_obs_ratios[m],(m==(this->task->nO-1))?"\n":"\t");
+//
+//    NCAT k;
+//    std::map<NCAT,std::string>::iterator it;
+//    for(k=0;k<nK;k++) {
+//        it = this->task->map_skill_bwd->find(k);
+//        fprintf(fid,"%d\t%s\n",k,it->second.c_str());
+//        NPAR i,j,m;
+//        fprintf(fid,"PI\t");
+//        for(i=0; i<=nS; i++)
+//            fprintf(fid,"%12.10f%s",this->param_skill[PI(k,i)],(i==(nS-1))?"\n":"\t");
+//        fprintf(fid,"A\t");
+//        for(i=0; i<=nS; i++)
+//            for(j=0; j<=nS; j++)
+//                fprintf(fid,"%12.10f%s",this->param_skill[A(k,i,j)],(i==(nS-1) && j==(nS-1))?"\n":"\t");
+//        fprintf(fid,"B\t");
+//        for(i=0; i<=nS; i++)
+//            for(m=0; m<=nO; m++)
+//                fprintf(fid,"%12.10f%s",this->param_skill[B(k,i,m)],(i==(nS-1) && m==(nO-1))?"\n":"\t");
+//    }
+//    fclose(fid);
+//}
 
 //bool HMMProblemEloSt::checkSkillConstraints(NUMBER* param_skill) {
 //    NPAR nS = this->task->nS, nO = this->task->nO;
@@ -507,53 +636,6 @@ NUMBER HMMProblemEloSt::getB (struct context* ctx, NPAR i, NPAR m) {
 //    return loglik;
 //} // computeGradients()
 //
-void HMMProblemEloSt::toFile(const char *filename) {
-    switch(this->task->structure)
-    {
-        case STRUCTURE_ELO:
-            toFileSkill(filename);
-            break;
-        default:
-            fprintf(stderr,"Solver specified is not supported.\n");
-            break;
-    }
-}
-
-void HMMProblemEloSt::toFileSkill(const char *filename) {
-    NPAR nS = this->task->nS, nO = this->task->nO, nK = this->task->nK;
-	FILE *fid = fopen(filename,"w");
-	if(fid == NULL) {
-		fprintf(stderr,"Can't write output model file %s\n",filename);
-		exit(1);
-	}
-    // write solved id
-    writeSolverInfo(fid, this->task);
-    
-	fprintf(fid,"Null skill ratios\t");
-	for(NPAR m=0; m<nO; m++)
-		fprintf(fid," %10.7f%s",this->null_obs_ratios[m],(m==(this->task->nO-1))?"\n":"\t");
-    
-	NCAT k;
-	std::map<NCAT,std::string>::iterator it;
-	for(k=0;k<nK;k++) {
-		it = this->task->map_skill_bwd->find(k);
-		fprintf(fid,"%d\t%s\n",k,it->second.c_str());
-		NPAR i,j,m;
-		fprintf(fid,"PI\t");
-		for(i=0; i<=nS; i++)
-			fprintf(fid,"%12.10f%s",this->param_skill[PI(k,i)],(i==(nS-1))?"\n":"\t");
-		fprintf(fid,"A\t");
-		for(i=0; i<=nS; i++)
-			for(j=0; j<=nS; j++)
-				fprintf(fid,"%12.10f%s",this->param_skill[A(k,i,j)],(i==(nS-1) && j==(nS-1))?"\n":"\t");
-		fprintf(fid,"B\t");
-		for(i=0; i<=nS; i++)
-			for(m=0; m<=nO; m++)
-				fprintf(fid,"%12.10f%s",this->param_skill[B(k,i,m)],(i==(nS-1) && m==(nO-1))?"\n":"\t");
-	}
-	fclose(fid);
-}
-
 //void HMMProblemEloSt::toFileGroup(const char *filename) {
 //    NPAR nS = this->task->nS, nO = this->task->nO, nG = this->task->nG;
 //	FILE *fid = fopen(filename,"w");
@@ -617,58 +699,6 @@ void HMMProblemEloSt::toFileSkill(const char *filename) {
 //    projectsimplex(local_pred, nO);
 //    free(local_pred_inner);
 //}
-//
-//void HMMProblemEloSt::updateValuesLocal(NUMBER*** group_skill_map, NCAT* skills, NPAR n_skills, NUMBER* local_pred, struct context *ctx) {
-//    NPAR i, j, nS = this->task->nS;//, o = this->task->dat_obs[ctx->t];
-//    NCAT k, g = ctx->g;
-//    NUMBER pLe_denom = 0.0;
-//    NUMBER *pLe = init1D<NUMBER>(nS);
-//    NUMBER* group_skill_map_gk; // TODO, try to see time change
-//    
-//    // update pL
-//    for(NPAR l=0; l<n_skills; l++) {
-//        k = skills[l];
-//        ctx->k = k;
-//        group_skill_map_gk = group_skill_map[g][k]; // TODO, try to see time change
-////        NUMBER* pLbit = gsm(g,k); //BOOST
-//        
-//        if(ctx->o>-1) { // known observations //
-//            // update p(L)
-//            pLe_denom = 0.0;
-//            // 1. pLe =  (L .* B(:,o)) ./ ( L'*B(:,o)+1e-8 );
-//            for(i=0; i<nS; i++)
-//                pLe_denom += /*group_skill_map[g][k]*/group_skill_map_gk[i] * getB(ctx,i,ctx->o);  // TODO: this is local_pred[o]!!!//UNBOOST
-////                  pLe_denom += pLbit[i] * getB(ctx,i,o); //BOOST
-//            for(i=0; i<nS; i++)
-//                pLe[i] = /*group_skill_map[g][k]*/group_skill_map_gk[i] * getB(ctx,i,ctx->o) / safe0num(pLe_denom); //UNBOOST
-////                  pLe[i] = pLbit[i] * getB(ctx,i,o) / safe0num(pLe_denom); //BOOST
-//            // 2. L = (pLe'*A)';
-//            for(i=0; i<nS; i++)
-//            /*group_skill_map[g][k]*/group_skill_map_gk[i]= 0.0; //UNBOOST
-////                  pLbit[i]= 0.0; //BOOST
-//            for(j=0; j<nS; j++)
-//                for(i=0; i<nS; i++)
-//            /*group_skill_map[g][k]*/group_skill_map_gk[j] += pLe[i] * getA(ctx,i,j);//A[i][j]; //UNBOOST
-////                    pLbit[j] += pLe[i] * getA(ctx,i,j);//A[i][j]; //BOOST
-//        } else { // unknown observation
-//            // 2. L = (pL'*A)';
-//            for(i=0; i<nS; i++)
-//                pLe[i] = /*group_skill_map[g][k]*/group_skill_map_gk[i]; // copy first; //UNBOOST
-////                  pLe[i] = pLbit[i]; // copy first; //BOOST
-//            for(i=0; i<nS; i++)
-//            /*group_skill_map[g][k]*/group_skill_map_gk[i] = 0.0; // erase old value //UNBOOST
-////                  pLbit[i] = 0.0; // erase old value //BOOST
-//            for(j=0; j<nS; j++)
-//                for(i=0; i<nS; i++)
-//                    /*group_skill_map[g][k]*/group_skill_map_gk[j] += pLe[i] * getA(ctx,i,j);//UNBOOST
-////               pLbit[j] += pLe[i] * getA(ctx,i,j);//BOOST
-//        }// observations
-//        projectsimplex(/*group_skill_map[g][k]*/group_skill_map_gk, nS); // addition to make sure there's no side effects //UNBOOST
-////            projectsimplex(pLbit, nS); // addition to make sure there's no side effects //BOOST
-//    }
-//    free(pLe);
-//}
-//
 //
 ////void HMMProblemEloSt::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, StripedArray<NCAT*> *dat_multiskill) {
 //void HMMProblemEloSt::predict(NUMBER* metrics, const char *filename,
@@ -1618,9 +1648,3 @@ void HMMProblemEloSt::toFileSkill(const char *filename) {
 //}
 //
 
-//
-// Elo sensitivity multiplier functions
-//
-NUMBER HMMProblemEloSt::sensitivity_K(NDAT t) {
-    return this->param_elo[0];
-}

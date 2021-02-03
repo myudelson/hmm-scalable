@@ -150,6 +150,7 @@ private:
     // write model
 	void toFileSkill(const char *filename);
 	void toFileGroup(const char *filename);
+    void toFileAlphaBetaObs(const char *filename, NCAT k); // helper
 };
 
 #endif

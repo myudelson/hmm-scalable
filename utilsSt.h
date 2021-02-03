@@ -88,6 +88,12 @@ enum CROSS_VALIDATION {
     CV_NSTR  = 'n'   // 3 - non-stratified
 };
 
+enum BKT_PARAMETER_SCOPE {
+    BKT_PARAMETER_SCOPE_PI = 0b001,  // 1 -- Pi -- priors
+    BKT_PARAMETER_SCOPE_A  = 0b010,  // 2 --  A -- transitions
+    BKT_PARAMETER_SCOPE_B  = 0b100   // 4 --  B -- emissions
+};
+
 // "Structure" of the model we are fitting with a method
 enum STRUCTURE {
     STRUCTURE_SKILL   = 1,  // 1 - all by skill
@@ -107,7 +113,10 @@ enum STRUCTURE {
 };
 
 enum ELO_TYPE {
-    ELO_1SENSITIVITY  = 1 // Elo with single sensitivity parameter
+    ELO_DIRECT_K            = 1, // Elo with single direct sensitivity parameter
+    ELO_UNS_REL_1_B         = 2, // Elo with relational uncertainty \frac{1}{1+b*n}, where n is count of prior student data points
+    ELO_UNS_REL_1_EXPB_0_01 = 3, // Elo with relational uncertainty \frac{1}{1+b*e^{0.01*n}}, where n is count of prior student data points
+    ELO_O2Z_IN_B            = 4  // Elo with sensitivity 1 to 0 in B steps in lenear fashion
 };
 
 // this structure is for operating on local context of what skill, student, item, row in the data we are in
@@ -127,6 +136,7 @@ struct task {
     NUMBER *param_values_lb;
     NUMBER *param_values_ub;
     NPAR elo_type; // type of Elo structure
+    NCAT elo_scope; // what parameters are targeted by Elo-infusion by matrix Pi,A,B: 1,1,1 -> 7 (maybe, later by simplex vector: 1,1,1,1,1->31)
     NUMBER *elo_param_values;
     NPAR elo_param_values_n; // the length of init_param_values
     NUMBER tol;  // tolerance of termination criterion (0.0001 by default)
@@ -185,7 +195,6 @@ struct task {
     NCAT  nK;    // number of skills (subproblems)
     NCAT  nI;    // number of items (problems)
     NPAR  nZ;    // number of slices
-    NPAR  nELO;  // number of ELO parameters
     // fit-specific
     // null-skill data by student
     NDAT N_null; // total number of null skill instances

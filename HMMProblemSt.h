@@ -108,8 +108,11 @@ protected:
     NDAT* backward_ix; // Nst sized array of pointing to previous student-skill repetition, -1 means none before
     NDAT* forward_ix; // Nst sized array of pointing to next student-skill repetition, -1 means no more further
     bool is_fwd_bwd_built; // flag for noting whether backward_ix & forward_ix are already built
+    NUMBER ***group_skill_map; // traced state values for student (group) * skill //UNBOOST
     
-    virtual void init(struct task* task); // non-fit specific initialization
+    virtual void init(struct task* task); // non-fit specific initialization for the instance
+    
+    virtual void initAlphaEtAl(); // reset variables before making a computeAlphaAndPOParam run
 	NUMBER computeAlphaAndPOParam(NUMBER *metrics_res); // return loglikelihood, alternatively predictions, and metrics too
 	void computeBeta();
 	void computeXiGamma();
@@ -133,6 +136,7 @@ private:
     // write model
 	void toFileSkill(const char *filename);
 	void toFileGroup(const char *filename);
+    void toFileAlphaBetaObs(const char *filename, NCAT k);
 };
 
 #endif

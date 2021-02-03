@@ -36,24 +36,16 @@
 #include <time.h>
 #include <map>
 #include <list>
-#include "utils.h"
-#include "HMMProblem.h"
-#include "InputUtil.h"
-//#include "HMMProblemPiG.h"
-#include "HMMProblemPiGK.h"
-#include "HMMProblemAGK.h"
-#include "HMMProblemPiAGK.h"
-#include "HMMProblemPiABGK.h"
-#include "HMMProblemComp.h"
-#include "HMMProblemSlicedAB.h"
-#include "HMMProblemSlicedA.h"
-#include "HMMProblemPiGKww.h"
+#include "utilsSt.h"
+#include "HMMProblemSt.h"
+#include "InputUtilSt.h"
+#include "HMMProblemEloSt.h"
 
 using namespace std;
 
 #define COLUMNS 4
 
-struct param param;
+struct task task;
 //static char *line = NULL;
 NUMBER* metrics;
 map<string,NCAT> data_map_group_fwd;
@@ -64,25 +56,25 @@ map<NCAT,string> model_map_skill_bwd;
 void exit_with_help();
 void parse_arguments(int argc, char **argv, char *input_file_name, char *model_file_name, char *predict_file_name);
 void read_predict_data(const char *filename);
-void predict(const char *predict_file, HMMProblem *hmm);
+void predict(const char *predict_file, HMMProblemSt *hmm);
 
 int main (int argc, char ** argv) {
 	clock_t tm0 = clock();
 	printf("predicthmm starting...\n");
-	set_param_defaults(&param);
+	set_task_defaults(&task);
 	
 	char input_file[1024];
 	char model_file[1024];
 	char predict_file[1024];
 	
 	parse_arguments(argc, argv, input_file, model_file, predict_file);
-    // param.predictions = 2; // do not force it on
+    // task.predictions = 2; // do not force it on
 
     // read data
-    if(param.binaryinput==0) {
-        InputUtil::readTxt(input_file, &param);
+    if(task.binaryinput==0) {
+        InputUtilSt::readTxt(input_file, &task);
     } else {
-        InputUtil::readBin(input_file, &param);
+        InputUtilSt::readBin(input_file, &task);
     }
     
     // read model header
@@ -95,106 +87,79 @@ int main (int argc, char ** argv) {
 	int max_line_length = 1024;
 	char *line = Malloc(char,(size_t)max_line_length);
 	NDAT line_no = 0;
-    struct param param_model;
-    set_param_defaults(&param_model);
+    struct task task_model;
+    set_task_defaults(&task_model);
     bool overwrite = false;
 //    if(overwrite)
-        readSolverInfo(fid, &param_model, &line_no);
+        readSolverInfo(fid, &task_model, &line_no);
 //    else
-//        readSolverInfo(fid, &initparam, &line_no);
+//        readSolverInfo(fid, &inittask, &line_no);
     
-    // copy partial info from param_model to param
-    if(param.nO==0) param.nO = param_model.nO;
-    param.structure = param_model.structure;
-    param.solver = param_model.solver;
-    param.solver_setting = param_model.solver_setting;
+    // copy partial info from task_model to task
+    if(task.nO==0) task.nO = task_model.nO;
+    task.structure = task_model.structure;
+    task.solver = task_model.solver;
+    task.solver_setting = task_model.solver_setting;
     
     // copy number of states from the model
-    param.nS = param_model.nS;
+    task.nS = task_model.nS;
     
     // if number of states or observations >2, then no check
-    if( param.nO>2 || param.nS>2) {
-        param.do_not_check_constraints = 1;
+    if( task.nO>2 || task.nS>2) {
+        task.do_not_check_constraints = 1;
     }
     
 	// copy number of slices from the model
-	param.nZ = param_model.nZ;
+	task.nZ = task_model.nZ;
     //
     // create hmm Object
     //
-    HMMProblem *hmm = NULL;
-	switch(param.structure)
+    HMMProblemSt *hmm = NULL;
+	switch(task.structure)
 	{
 		case STRUCTURE_SKILL: // Conjugate Gradient Descent
 //            case STRUCTURE_GROUP: // Conjugate Gradient Descent
-			hmm = new HMMProblem(&param);
+			hmm = new HMMProblemSt(&task);
 			break;
-//            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
-//                hmm = new HMMProblemPiG(&param);
-//                break;
-		case STRUCTURE_SKABslc: // Conjugate Gradient Descent
-			hmm = new HMMProblemSlicedAB(&param);
-			break;
-		case STRUCTURE_SKAslc: // Conjugate Gradient Descent
-			hmm = new HMMProblemSlicedA(&param);
-			break;
-		case STRUCTURE_PIgk: // Gradient Descent, pLo=f(K,G), other by K
-			hmm = new HMMProblemPiGK(&param);
-			break;
-		case STRUCTURE_PIgkww: // Gradient Descent, pLo=f(K,G), other by K
-			hmm = new HMMProblemPiGKww(&param);
-			break;
-		case STRUCTURE_PIAgk: // Gradient Descent, pLo=f(K,G), pT=f(K,G), other by K
-			hmm = new HMMProblemPiAGK(&param);
-			break;
-		case STRUCTURE_Agk: // Gradient Descent, pT=f(K,G), other by K
-			hmm = new HMMProblemAGK(&param);
-			break;
-//                case STRUCTURE_Agki: // Gradient Descent, pT=f(K,G), other by K
-//                    hmm = new HMMProblemAGKi(&param);
-//                    break;
-		case STRUCTURE_PIABgk: // Gradient Descent, pT=f(K,G), other by K
-			hmm = new HMMProblemPiABGK(&param);
-			break;
-//            case BKT_GD_T: // Gradient Descent with Transfer
-//                hmm = new HMMProblemKT(&param);
-//                break;
-		case STRUCTURE_COMP: // Gradient Descent, pT=f(K,G), other by K
-			hmm = new HMMProblemComp(&param);
-			break;
-//        case STRUCTURE_ELOK: // Gradient Descent, pT=f(K,G), other by K
-//            hmm = new HMMProblemEloK(&param);
-//            break;
+        case STRUCTURE_ELO: // Gradient Descent, pT=f(K,G), other by K
+            hmm = new HMMProblemEloSt(&task);
+            break;
+        default:
+            fprintf(stderr,"Solver specified (%d) is not supported!\n",task.structure);
+            exit(1);
+            break;
 	}
     // read model body
-    hmm->readModelBody(fid, &param_model, &line_no, overwrite);
+    hmm->readModelBody(fid, &task_model, &line_no, overwrite);
   	fclose(fid);
 	free(line);
 	
-	if(param.quiet == 0)
-        printf("input read, nO=%d, nG=%d, nK=%d, nI=%d, nZ=%d\n",param.nO, param.nG, param.nK, param.nI, param.nZ);
+	if(task.quiet == 0)
+        printf("input read, nO=%d, nG=%d, nK=%d, nI=%d, nZ=%d\n",task.nO, task.nG, task.nK, task.nI, task.nZ);
 	
 	clock_t tm = clock();
-//    if(param.metrics>0 || param.predictions>0) {
+//    if(task.metrics>0 || task.predictions>0) {
         metrics = Calloc(NUMBER, (size_t)7);// LL, AIC, BIC, RMSE, RMSEnonull, Acc, Acc_nonull;
 //    }
-	HMMProblem::predict(metrics, predict_file, param.dat_obs, param.dat_group, param.dat_skill, param.dat_skill_stacked, param.dat_skill_rcount, param.dat_skill_rix, &hmm, 1, NULL);
+    HMMProblemSt::predict(metrics, predict_file, &task, &hmm, 1, NULL);
+
 //    predict(predict_file, hmm);
-	if(param.quiet == 0)
+	if(task.quiet == 0)
 		printf("predicting is done in %8.6f seconds\n",(NUMBER)(clock()-tm)/CLOCKS_PER_SEC);
-    //if( param.predictions>0 ) {
+    //if( task.predictions>0 ) {
         printf("trained model LL=%15.7f (%15.7f), AIC=%8.6f, BIC=%8.6f, RMSE=%8.6f (%8.6f), Acc=%8.6f (%8.6f)\n",
                metrics[0], metrics[1], // ll's
-               2*hmm->getNparams() + 2*metrics[0], hmm->getNparams()*safelog(param.N) + 2*metrics[0],
+               2*hmm->getModelParamN() + 2*metrics[0], // AIC
+               hmm->getModelParamN()*safelog(task.N) + 2*metrics[0], //BIC
                metrics[2], metrics[3], // rmse's
                metrics[4], metrics[5]); // acc's
     //}
     free(metrics);
     
-	destroy_input_data(&param);
+	destroy_input_data(&task);
 	
     delete hmm;
-	if(param.quiet == 0)
+	if(task.quiet == 0)
 		printf("overall time running is %8.6f seconds\n",(NUMBER)(clock()-tm0)/CLOCKS_PER_SEC);
     return 0;
 }
@@ -241,39 +206,39 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 		switch(argv[i-1][1])
 		{
 			case 'q':
-				param.quiet = (NPAR)atoi(argv[i]);
-				if(param.quiet!=0 && param.quiet!=1) {
+				task.quiet = (NPAR)atoi(argv[i]);
+				if(task.quiet!=0 && task.quiet!=1) {
 					fprintf(stderr,"ERROR! Quiet param should be 0 or 1\n");
 					exit_with_help();
 				}
 				break;
             case  'd':
-				param.multiskill = argv[i][0]; // just grab first character (later, maybe several)
+				task.multiskill = argv[i][0]; // just grab first character (later, maybe several)
                 break;
 			case 'b':
-                param.binaryinput = atoi( strtok(argv[i],"\t\n\r"));
+                task.binaryinput = atoi( strtok(argv[i],"\t\n\r"));
                 break;
             case  'p':
-				param.predictions = atoi(argv[i]);
-				if(param.predictions<0 || param.predictions>3) {
+				task.predictions = atoi(argv[i]);
+				if(task.predictions<0 || task.predictions>3) {
 					fprintf(stderr,"a flag of whether to report predictions for training data (-p) should be 0, 1, 2, or 3\n");
 					exit_with_help();
 				}
                 break;
 			case 't':
-				param.sliced = (NPAR)atoi(argv[i]);
-				if(param.sliced!=0 && param.sliced!=1) {
+				task.sliced = (NPAR)atoi(argv[i]);
+				if(task.sliced!=0 && task.sliced!=1) {
 					fprintf(stderr,"ERROR! Time parameter should be either 0 (off) or 1(on)\n");
 					exit_with_help();
 				}
 				break;
             case  'U':
-                param.update_known = *strtok(argv[i],",\t\n\r");
+                task.update_known = *strtok(argv[i],",\t\n\r");
                 ch = strtok(NULL, ",\t\n\r");
-                param.update_unknown = ch[0];
+                task.update_unknown = ch[0];
                 
-                if( (param.update_known!='r' && param.update_known!='g') ||
-                   (param.update_unknown!='t' && param.update_unknown!='g') ) {
+                if( (task.update_known!='r' && task.update_known!='g') ||
+                   (task.update_unknown!='t' && task.update_unknown!='g') ) {
                     fprintf(stderr,"specification of how probabilities of states should be updated (-U) is incorrect, it sould be r|g[,t|g] \n");
                     exit_with_help();
                 }
@@ -286,18 +251,40 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
                 for(int j=0;j<len;j++) {
                     n += (argv[i][j]==',')?1:0;
                     if( (argv[i][j] >= 'a' && argv[i][j] <= 'z') || (argv[i][j] >= 'A' && argv[i][j] <= 'Z') ) {
-                        strcpy(param.initfile, argv[i]);
+                        strcpy(task.initfile, argv[i]);
                         break;
                     }
                 }
                 // init parameters
-                if(param.init_params!=NULL) free(param.init_params);
-                param.init_params = Calloc(NUMBER, (size_t)n);
-                param.init_params_n = (NPAR)n;
+                if(task.init_param_values!=NULL) free(task.init_param_values);
+                task.init_param_values = Calloc(NUMBER, (size_t)n);
+                task.init_param_values_n = (NPAR)n;
                 // read params and write to params
-                param.init_params[0] = atof( strtok(argv[i],",\t\n\r") );
+                task.init_param_values[0] = atof( strtok(argv[i],",\t\n\r") );
                 for(int j=1; j<n; j++) {
-                    param.init_params[j] = atof( strtok(NULL,",\t\n\r") );
+                    task.init_param_values[j] = atof( strtok(NULL,",\t\n\r") );
+                }
+                break;
+            case 'k':
+                // ELO parameters specified as a comma-delimited list of values, first is an integer, the rest are real
+                len = (int)strlen( argv[i] );
+                // count delimiters
+                n = 1; // start with 1
+                for(int j=0;j<len;j++)
+                    n += (NPAR)((argv[i][j]==',')?1:0);
+                if( n < 3 ) {
+                    fprintf(stderr,"To use Elo, one needs at lest three parameters; %d were specified\n",n);
+                    exit_with_help();
+                }
+                // init params
+                task.elo_param_values_n = (NPAR)(n-2); // first parameter is Elo type
+                if(task.elo_param_values!=NULL) free(task.elo_param_values);
+                task.elo_param_values = Calloc(NUMBER, (size_t)(n-2));
+                // read params and write to params
+                task.elo_type = (NPAR)atoi( strtok(argv[i],",\t\n\r") );
+                task.elo_scope = (NCAT)atof( strtok(NULL,",\t\n\r") );
+                for(int j=2; j<n; j++) {
+                    task.elo_param_values[j-2] = atof( strtok(NULL,",\t\n\r") );
                 }
                 break;
 			default:
@@ -306,7 +293,7 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 				break;
 		}
 	}   
-    if(param.cv_target_obs>0 && param.metrics>0) { // correct for 0-start coding
+    if(task.cv_target_obs>0 && task.metrics>0) { // correct for 0-start coding
         fprintf(stderr,"values for -v and -m cannot be both non-zeros\n");
         exit_with_help();
     }
@@ -325,10 +312,10 @@ void parse_arguments(int argc, char **argv, char *input_file_name, char *model_f
 		strcpy(model_file_name,argv[i++]); // copy and advance
 		if(i>=argc) {// no prediction file name specified
 			//strcpy(predict_file_name,"predict_hmm.txt"); // the predict file too
-            param.predictions = 0;
+            task.predictions = 0;
         }
 		else {
-            // param.predictions = 1;
+            // task.predictions = 1;
 			strcpy(predict_file_name,argv[i]);
         }
 	}

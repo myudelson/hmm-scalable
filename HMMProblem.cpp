@@ -523,7 +523,7 @@ void HMMProblem::computeBeta(NCAT xndat, struct data** x_data) {
         int t;
         NPAR i, j, o;
 		if( x_data[x]->cnt!=0 ) continue; // ... and the thing has not been computed yet (e.g. from group to skill)
-		for(t=(NDAT)(x_data[x]->n)-1; t>=0; t--) {
+		for(t=(NDAT)((x_data[x]->n)-1); t>=0; t--) {
 			x_data[x]->t = x_data[x]->ix[t]; // statefullness
 			if( t==(x_data[x]->n-1) ) { // last \beta
 				// \beta_T(i) = 1
@@ -1696,6 +1696,7 @@ FitResult HMMProblem::GradientDescentBit(FitBit *fb) {
     fb->copy(FBS_PAR, FBS_PARm1);
     while( !fr->conv && fr->iter<=this->p->maxiter ) {
         fr->ndat = computeGradients(fb);//a_gradPI, a_gradA, a_gradB);
+//        this->toFileAlphaBetaObs("trainhmm_alphabetaobs0.txt", 0); // printing out alpha and beta arrays
         
         if(fr->iter==1) {
             fr->pO0 = HMMProblem::getSumLogPOPara(xndat, x_data);
@@ -2133,7 +2134,7 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
         // project parameters to simplex if needs be
         if(fb->projecttosimplex==1) {
             // scale
-            if( !this->hasNon01Constraints() ) {
+            if( !this->hasNon01Constraints() || fb->observe_non01_boundaries==0 ) {
                 if(fb->pi != NULL) projectsimplex(fb->pi, nS);
                 for(i=0; i<nS; i++) {
                     if(fb->A  != NULL) projectsimplex(fb->A[i], nS);
@@ -2213,7 +2214,7 @@ NUMBER HMMProblem::doLinearStep(FitBit *fb) {
         // project parameters to simplex if needs be
         if(fb->projecttosimplex==1) {
             // scale
-            if( !this->hasNon01Constraints() ) {
+            if( !this->hasNon01Constraints() || fb->observe_non01_boundaries==0 ) {
                 if(fb->pi != NULL) projectsimplex(fb->pi, nS);
                 for(i=0; i<nS; i++) {
                     if(fb->A  != NULL) projectsimplex(fb->A[i], nS);
@@ -2279,7 +2280,7 @@ NUMBER HMMProblem::doLagrangeStep(FitBit *fb) {
                 fb->B[i][m] = (b_B_den[i]>0) ? (b_B[i][m] / b_B_den[i]) : fb->B[i][m];
     }
     // scale
-    if( !this->hasNon01Constraints() ) {
+    if( !this->hasNon01Constraints() || fb->observe_non01_boundaries==0 ) {
         if(fb->pi != NULL) projectsimplex(fb->pi, nS);
         for(i=0; i<nS; i++) {
             if(fb->A != NULL) projectsimplex(fb->A[i], nS);
@@ -2346,7 +2347,7 @@ NUMBER HMMProblem::doLinearStepBig(FitBit **fbs, NCAT nfbs) {
             // project parameters to simplex if needs be
             if(fbs[q]->projecttosimplex==1) {
                 // scale
-                if( !this->hasNon01Constraints() ) {
+                if( !this->hasNon01Constraints() || fbs[q]->observe_non01_boundaries==0 ) {
                     if(fbs[q]->pi != NULL) projectsimplex(fbs[q]->pi, fbs[q]->nS);
                     for(i=0; i<fbs[q]->nS; i++) {
                         if(fbs[q]->A  != NULL) projectsimplex(fbs[q]->A[i], fbs[q]->nS);
@@ -2523,7 +2524,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
                     fb->B[i][m] = fb->Bcopy[i][m] + e * fb->dirB[i][m];
 		}
 		// scale
-		if( !this->hasNon01Constraints() ) {
+		if( !this->hasNon01Constraints() || fb->observe_non01_boundaries==0 ) {
 			if(fb->pi != NULL) projectsimplex(fb->pi, nS);
 			for(i=0; i<nS; i++) {
 				if(fb->A != NULL) projectsimplex(fb->A[i], nS);
@@ -2599,7 +2600,7 @@ NUMBER HMMProblem::doConjugateLinearStep(FitBit *fb) {
         // project parameters to simplex if needs be
         if(fb->projecttosimplex==1) {
             // scale
-            if( !this->hasNon01Constraints() ) {
+            if( !this->hasNon01Constraints() || fb->observe_non01_boundaries==0 ) {
                 if(fb->pi != NULL) projectsimplex(fb->pi, nS);
                 for(i=0; i<nS; i++) {
                     if(fb->A  != NULL) projectsimplex(fb->A[i], nS);
@@ -2742,7 +2743,7 @@ NUMBER HMMProblem::doConjugateLinearStepBig(FitBit **fbs, NCAT nfbs) {
                         fbs[q]->B[i][m] = fbs[q]->Bcopy[i][m] + e * fbs[q]->dirBm1[i][m];
             }
             // scale
-            if( !this->hasNon01Constraints() ) {
+            if( !this->hasNon01Constraints() || fbs[q]->observe_non01_boundaries==0 ) {
                 if(fbs[q]->pi != NULL) projectsimplex(fbs[q]->pi, nS);
                 for(i=0; i<nS; i++) {
                     if(fbs[q]->A != NULL) projectsimplex(fbs[q]->A[i], nS);
@@ -2818,7 +2819,7 @@ NUMBER HMMProblem::doBarzilaiBorweinStep(FitBit *fb) {
             fb->B[i][m] = fb->B[i][m] - alpha_step * fb->gradB[i][m];
     }
     // scale
-    if( !this->hasNon01Constraints() ) {
+    if( !this->hasNon01Constraints() || fb->observe_non01_boundaries==0 ) {
         projectsimplex(fb->pi, nS);
         for(i=0; i<nS; i++) {
             projectsimplex(fb->A[i], nS);
@@ -2933,7 +2934,7 @@ NUMBER HMMProblem::doBaumWelchStep(FitBit *fb) {
         }
 	}
     // scale
-    if( !this->hasNon01Constraints() ) {
+    if( !this->hasNon01Constraints()) {
         if(fb->pi != NULL) {
             projectsimplex(fb->pi, nS);
         }
@@ -3167,3 +3168,22 @@ bool HMMProblem::checkConvergenceBig(FitBit** fbs, NCAT nfbs, NUMBER tol, NUMBER
 	return (*criterion) < tol; // double the truth or false
 }
 
+// helper function
+void HMMProblem::toFileAlphaBetaObs(const char *filename, NCAT k) {
+    NPAR nS = this->p->nS;
+    FILE *fid = fopen(filename,"w");
+    
+    if(fid == NULL) {
+        fprintf(stderr,"Can't write output model file %s\n",filename);
+        exit(1);
+    }
+    
+    data *dt = this->p->k_data[k];
+    
+    for(NDAT tt=0; tt<dt->n; tt++) {
+        for(NPAR i=0; i<nS; i++) fprintf(fid,"%20.17f\t", dt->alpha[tt][i]);
+        for(NPAR i=0; i<nS; i++) fprintf(fid,"%20.17f\t", dt->beta[tt][i]);
+        fprintf(fid,"%i\n", this->p->dat_obs[ dt->ix[tt] ]);
+    }
+   fclose(fid);
+}

@@ -50,6 +50,7 @@ public:
 private:
     static void writeString(FILE *f, string str);
     static string readString(FILE *f);
+    static void createConnectivities(struct task *task); // setup connectivities and reachabilities
 //    static NDAT writeMultiSkill(FILE *f, struct param * param);
 //    static NDAT  readMultiSkill(FILE *f, struct param * param, char version);
 };

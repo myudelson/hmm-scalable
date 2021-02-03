@@ -274,7 +274,10 @@ int main (int argc, char ** argv) {
             case STRUCTURE_ELO: // Gradient Descent, pT=f(K,G), other by K
                 hmm = new HMMProblemEloSt(&task);
                 break;
-
+            default:
+                fprintf(stderr,"Solver specified (%d) is not supported!\n",task.structure);
+                exit(1);
+                break;
         }
         tm_fit = clock(); //SEQ
 //        _tm_fit = omp_get_wtime(); //PAR
@@ -959,18 +962,19 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
                 n = 1; // start with 1
                 for(int j=0;j<len;j++)
                     n += (NPAR)((argv[i][j]==',')?1:0);
-                if( n < 2 ) {
-                    fprintf(stderr,"To use Elo, one needs two parameters at least, while %d were specified\n",n);
+                if( n < 3 ) {
+                    fprintf(stderr,"To use Elo, one needs at lest three parameters; %d were specified\n",n);
                     exit_with_help();
                 }
                 // init params
-                task.elo_param_values_n = (NPAR)(n-1); // first parameter is Elo type
+                task.elo_param_values_n = (NPAR)(n-2); // first parameter is Elo type
                 if(task.elo_param_values!=NULL) free(task.elo_param_values);
-                task.elo_param_values = Calloc(NUMBER, (size_t)(n-1));
+                task.elo_param_values = Calloc(NUMBER, (size_t)(n-2));
                 // read params and write to params
                 task.elo_type = (NPAR)atoi( strtok(argv[i],",\t\n\r") );
-                for(int j=1; j<n; j++) {
-                    task.elo_param_values[j-1] = atof( strtok(NULL,",\t\n\r") );
+                task.elo_scope = (NCAT)atof( strtok(NULL,",\t\n\r") );
+                for(int j=2; j<n; j++) {
+                    task.elo_param_values[j-2] = atof( strtok(NULL,",\t\n\r") );
                 }
                 break;
                 
@@ -992,9 +996,17 @@ void parse_arguments_step2(int argc, char **argv, FILE *fid_console) {
     }
     
     if( !( (task.elo_param_values_n==0 && task.elo_type==0 && task.structure != STRUCTURE_ELO) || // not an Elo
-           (task.elo_param_values_n==1 && task.elo_type==1 && task.structure == STRUCTURE_ELO) // Simple Elo
+           (task.elo_param_values_n==1 && task.elo_type==1 && task.structure == STRUCTURE_ELO) || // Simple Elo
+           (task.elo_param_values_n==1 && task.elo_type==2 && task.structure == STRUCTURE_ELO) || // relation Uncertainty \frac{1}{1+b*n} Elo
+           (task.elo_param_values_n==1 && task.elo_type==3 && task.structure == STRUCTURE_ELO) || // relation Uncertainty \frac{1}{1+b*e^{0.01*n}} Elo
+           (task.elo_param_values_n==1 && task.elo_type==4 && task.structure == STRUCTURE_ELO)    // linear trend from 1 to 0 in b steps
           ) ) {
         fprintf(stderr,"Elo type specified (%d) does not match the number of Elo parameters (%d)\n",task.elo_type,task.elo_param_values_n);
+        exit_with_help();
+    }
+    
+    if( task.structure == STRUCTURE_ELO && task.nS != 2) {
+        fprintf(stderr,"Elo solvers only work with number of states equal to 2, while %d were specified!",task.nS);
         exit_with_help();
     }
     
@@ -1136,6 +1148,10 @@ NUMBER cross_validate(NUMBER* metrics, const char *filename, const char *model_f
 //            case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblemSt(&task);
                 break;
+            case STRUCTURE_ELO: // Conjugate Gradient Descent
+//            case STRUCTURE_GROUP: // Conjugate Gradient Descent
+                hmms[f] = new HMMProblemEloSt(&task);
+                break;
 //            case STRUCTURE_SKABslc: // Conjugate Gradient Descent
 //                hmms[f] = new HMMProblemSlicedAB(&param);
 //                break;
@@ -1163,6 +1179,10 @@ NUMBER cross_validate(NUMBER* metrics, const char *filename, const char *model_f
 //            case BKT_GD_T: // Gradient Descent with Transfer
 //                hmm = new HMMProblemKT(&param);
 //                break;
+            default:
+                fprintf(stderr,"Solver specified (%d) is not supported!\n",task.structure);
+                exit(1);
+                break;
         }
         // block respective data - do not fit the data belonging to the fold
         NPAR *saved_obs = Calloc(NPAR, (size_t)fold_counts[f]);
@@ -1322,6 +1342,9 @@ NUMBER cross_validate_item(NUMBER* metrics, const char *filename, const char *mo
 //            case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblemSt(&task);
                 break;
+            case STRUCTURE_ELO: // Conjugate Gradient Descent
+                hmms[f] = new HMMProblemEloSt(&task);
+                break;
 //            case STRUCTURE_PIg: // Gradient Descent: PI by group, A,B by skill
 //                hmm = new HMMProblemPiG(&param);
 //                break;
@@ -1346,6 +1369,10 @@ NUMBER cross_validate_item(NUMBER* metrics, const char *filename, const char *mo
 //            case BKT_GD_T: // Gradient Descent with Transfer
 //                hmm = new HMMProblemKT(&param);
 //                break;
+            default:
+                fprintf(stderr,"Solver specified (%d) is not supported!\n",task.structure);
+                exit(1);
+                break;
         }
         
         // block respective data - do not fit the data belonging to the fold
@@ -1408,7 +1435,7 @@ NUMBER cross_validate_item(NUMBER* metrics, const char *filename, const char *mo
         n_par += hmms[f]->getModelParamN();
         delete hmms[f];
     }
-    n_par /= f;
+    n_par /= task.cv_folds;
     free(folds);
 
 	return n_par;
@@ -1497,6 +1524,9 @@ NUMBER cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *
 //            case STRUCTURE_GROUP: // Conjugate Gradient Descent
                 hmms[f] = new HMMProblemSt(&task);
                 break;
+            case STRUCTURE_ELO: // Conjugate Gradient Descent
+                hmms[f] = new HMMProblemEloSt(&task);
+                break;
 //            case STRUCTURE_SKABslc: // Conjugate Gradient Descent
 //                hmms[f] = new HMMProblemSlicedAB(&param);
 //                break;
@@ -1521,6 +1551,10 @@ NUMBER cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *
 //            case BKT_GD_T: // Gradient Descent with Transfer
 //                hmm = new HMMProblemKT(&param);
 //                break;
+            default:
+                fprintf(stderr,"Solver specified (%d) is not supported!\n",task.structure);
+                exit(1);
+                break;
         }
         // block respective data - do not fit the data belonging to the fold
         NPAR *saved_obs = Calloc(NPAR, (size_t)fold_counts[f]);
@@ -1578,7 +1612,7 @@ NUMBER cross_validate_nstrat(NUMBER* metrics, const char *filename, const char *
         n_par += hmms[f]->getModelParamN();
         delete hmms[f];
     }
-    n_par /= f;
+    n_par /= task.cv_folds;
     free(folds);
 	
 	return n_par;

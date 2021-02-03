@@ -1,3 +1,4 @@
+
 /*
  
  Copyright (c) 2012-2017, Michael (Mikhail) Yudelson
@@ -174,7 +175,8 @@ void projectsimplex(NUMBER* ar, NPAR size) {
     NPAR *at_lo = Calloc(NPAR, (size_t)size);
     NUMBER err, lambda;
     NUMBER* ar_copy = Calloc(NUMBER, (size_t)size);
-    memcpy(ar_copy, ar, (size_t)size);
+    memcpy(ar_copy, ar, sizeof(NUMBER)*(size_t)size);
+    
     int iter = 0;
     while( !issimplex(ar, size) ) {
         lambda = 0;
@@ -226,8 +228,12 @@ void projectsimplex(NUMBER* ar, NPAR size) {
         }
         iter++;
         if(iter==100) {
-            fprintf(stderr,"WARNING! Stuck in projectsimplex().\n");
-            exit(1);
+            string ar_was = "";
+            for(int i=0; i<size; i++) ar_was = ar_was + std::to_string(ar_copy[i]).substr(0,5) + ((i<(size-1))?",":" ");
+            string ar_is = "";
+            for(int i=0; i<size; i++) ar_is = ar_is + std::to_string(ar[i]).substr(0,5) + ((i<(size-1))?",":" ");
+            fprintf(stderr,"WARNING! Stuck in projectsimplex()! ar was %s and now is %s.\n",ar_was.c_str(),ar_is.c_str());
+            break;//exit(1);
         }
     } // until satisfied
     // force last to be 1 - sum of all but last -- this code, actually breaks things
@@ -249,8 +255,13 @@ void projectsimplex(NUMBER* ar, NPAR size) {
     NUMBER sum = 0.0;
     for(i=0; i<size; i++) {
         sum += ar[i];
-        if(ar[i]<0 || ar[i] >1)
-            fprintf(stderr, "ERROR! projected value is not within [0, 1] range!\n");
+        if(ar[i]<0 || ar[i] >1) {
+            string ar_was = "";
+            for(int i=0; i<size; i++) ar_was = ar_was + std::to_string(ar_copy[i]).substr(0,5) + std::to_string((i<(size-1))?',':' ');
+            string ar_is = "";
+            for(int i=0; i<size; i++) ar_is = ar_is + std::to_string(ar[i]).substr(0,5) + std::to_string((i<(size-1))?',':' ');
+            fprintf(stderr, "ERROR! projected value is not within [0, 1] range! ar was %s and now is %s.\n",ar_was.c_str(),ar_is.c_str());
+        }
     }
 //    if( fabs(sum-1)>SAFETY)
 //        fprintf(stderr, "ERROR! projected simplex does not sum to 1!\n");
@@ -265,7 +276,7 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
 	NPAR *at_lo = Calloc(NPAR, (size_t)size);
 	NUMBER err, lambda, v;
     NUMBER* ar_copy = Calloc(NUMBER, (size_t)size);
-    memcpy(ar_copy, ar, (size_t)size);
+    memcpy(ar_copy, ar, sizeof(NUMBER)*(size_t)size);
     int iter = 0;
     for(i=0; i<size; i++)
         if(ar[i]!=ar[i]) {
@@ -350,9 +361,13 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
         }
         iter++;
         if(iter==100) {
-            fprintf(stderr,"WARNING! Stuck in projectsimplexbounded().\n");
+            string ar_was = "";
+            for(int i=0; i<size; i++) ar_was = ar_was + std::to_string(ar_copy[i]).substr(0,5) + std::to_string((i<(size-1))?',':' ');
+            string ar_is = "";
+            for(int i=0; i<size; i++) ar_is = ar_is + std::to_string(ar[i]).substr(0,5) + std::to_string((i<(size-1))?',':' ');
+            fprintf(stderr,"WARNING! Stuck in projectsimplexbounded()! ar was %s and now is %s.\n",ar_was.c_str(),ar_is.c_str());
 //            doexit = true;
-            exit(1);
+            break;//exit(1);
         }
 	} // until satisfied
     // force last to be 1 - sum of all but last -- this code, actually breaks things
@@ -374,8 +389,13 @@ void projectsimplexbounded(NUMBER* ar, NUMBER *lb, NUMBER *ub, NPAR size) {
     NUMBER sum = 0.0;
     for(i=0; i<size; i++) {
         sum += ar[i];
-        if(ar[i]<0 || ar[i] >1)
-            fprintf(stderr, "ERROR! projected value is not within [0, 1] range!\n");
+        if(ar[i]<0 || ar[i] >1) {
+            string ar_was = "";
+            for(int i=0; i<size; i++) ar_was = ar_was + std::to_string(ar_copy[i]).substr(0,5) + std::to_string((i<(size-1))?',':' ');
+            string ar_is = "";
+            for(int i=0; i<size; i++) ar_is = ar_is + std::to_string(ar[i]).substr(0,5) + std::to_string((i<(size-1))?',':' ');
+            fprintf(stderr, "ERROR! projected value is not within [0, 1] range! ar was %s and now is %s.\n",ar_was.c_str(),ar_is.c_str());
+        }
     }
 //    if( fabs(sum-1)>SAFETY) {
 //        fprintf(stderr, "ERROR! projected simplex does not sum to 1!\n");
@@ -712,9 +732,11 @@ void set_task_defaults(struct task *task) {
 	task->init_param_values[2]  = 0.4; // p(learn)
 	task->init_param_values[3]  = 0.8; // p(not slip)
 	task->init_param_values[4]  = 0.2; // p(guess)
-    task->elo_type              = 0;
-    task->elo_param_values      = NULL;
-    task->elo_param_values_n    = 0;
+    task->elo_type              = 0; // default is type 0 – not an Elo
+    task->elo_scope             = 0b111; // default is full scope over Pi, A, B = 0b111
+    task->elo_param_values      = NULL; // Calloc(NUMBER, (size_t)1); // single K
+    // task->elo_param_values[0]   = 0; // no-effect 0 sensitivity K
+    task->elo_param_values_n    = 0; // one Elo param Ks
 	task->param_values_lb    	= Calloc(NUMBER, (size_t)10);
 	task->param_values_lb[0]    = 0; task->param_values_lb[1] = 0; task->param_values_lb[2] = 1; task->param_values_lb[3] = 0; task->param_values_lb[4] = 0;
 	task->param_values_lb[5]    = 0; task->param_values_lb[6] = 0; task->param_values_lb[7] = 0; task->param_values_lb[8] = 0; task->param_values_lb[9] = 0;
@@ -749,8 +771,6 @@ void set_task_defaults(struct task *task) {
 	task->nK = 0;
 	task->nI = 0;
     task->nZ = 1;
-    task->nELO = 1;
-	// data
 //    task->all_data = NULL;
 //    task->nSeq = 0;
 //	task->k_numg = NULL;
@@ -1087,6 +1107,6 @@ void getSkillsAtRow(struct task *task, NDAT t, NCAT **ar, NPAR *n){
     } else {
         k = task->dat_skill_stacked[ task->dat_skill_rix[t] ];
         *ar = &task->dat_skill_stacked[ task->dat_skill_rix[t] ];
-        *n = task->dat_skill_rcount[t];
+        *n = (NPAR)task->dat_skill_rcount[t];
     }
 }

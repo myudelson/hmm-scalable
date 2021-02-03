@@ -100,6 +100,7 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
     int number_columns = 0;
     max_line_length = 1024;
     char *col;
+    NDAT co = 0;
     
     // count lines and check for number of columns
     line = (char *)malloc((size_t)max_line_length);// Malloc(char,max_line_length);
@@ -122,8 +123,9 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
     }
     StripedArray<NCAT> * striped_dat_item = new StripedArray<NCAT>();
     StripedArray<NPAR> *striped_dat_slice = NULL;
-    if(task->sliced)
+    if(task->sliced) {
         striped_dat_slice = new StripedArray<NPAR>();
+    }
     task->map_group_fwd = new map<string,NCAT>();
     task->map_group_bwd = new map<NCAT,string>();
     task->map_skill_fwd = new map<string,NCAT>();
@@ -139,6 +141,7 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
     task->Nst = 0;
     NDAT Nst_alt = 0;
     task->N_null = 0;
+    bool res = true;
     while( readline(fid)!=NULL && !wrong_no_columns) {
         //    while( NULL!=fgets(line,max_line_length,fid) && !wrong_no_columns) {
         number_columns = 0;
@@ -152,7 +155,8 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
         NPAR obs = (NPAR)(atoi( col )-1);
         if(obs==NPAR_MAX) {
             fprintf(stderr,"Number of observtions exceeds allowed maximum of %d.\n",NPAR_MAX);
-            return false;
+            res=false;
+            goto recycle;
         }
         striped_dat_obs->add(obs); // dat_obs[t] = (NPAR)obs;
         if( (obs >= 0) && ((task->nO-1) < obs) )
@@ -170,7 +174,8 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
         if( it==task->map_group_fwd->end() ) { // not found
             if(task->map_group_fwd->size()==NCAT_MAX) {
                 fprintf(stderr,"Number of unique groups exceeds allowed maximum of %d.\n",NCAT_MAX);
-                return false;
+                res = false;
+                goto recycle;
             }
             NCAT newg = (NCAT)task->map_group_fwd->size();
             striped_dat_group->add(newg); //[t] = task->map_group_fwd.size();
@@ -193,7 +198,8 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
         if( it2==task->map_step_fwd->end() ) { // not found
             if(task->map_step_fwd->size()==NCAT_MAX) {
                 fprintf(stderr,"Number of unique steps exceeds allowed maximum of %d.\n",NCAT_MAX);
-                return false;
+                res=false;
+                goto recycle;
             }
             NCAT news = (NCAT)task->map_step_fwd->size();
             striped_dat_item->add(news); //[t] = task->map_group_fwd.size();
@@ -225,7 +231,8 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
             slice = (NPAR) atoi( col );
             if( slice<0 ) {
                 fprintf(stderr,"Slice cannot be negative (line %d).\n",task->N+1);
-                return false;
+                res=false;
+                goto recycle;
             }
             if( (slice >= 0) && ((task->nZ-1) < slice) ) // update slice count
                 task->nZ = (NPAR)(slice + 1);
@@ -272,7 +279,8 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
                     if( it==task->map_skill_fwd->end() ) { // not found
                         if(task->map_skill_fwd->size()==NCAT_MAX) {
                             fprintf(stderr,"Number of unique skills exceeds allowed maximum of %d.\n",NCAT_MAX);
-                            return false;
+                            res = false;
+                            goto recycle;
                         }
                         a_skills.insert(a_skills.end(), (NCAT)task->map_skill_fwd->size()); //dat_skill->add(task->map_skill_fwd->size());
                         task->map_skill_fwd->insert(pair<string,NCAT>(s_kc, (NCAT)task->map_skill_fwd->size()));
@@ -304,7 +312,8 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
                 if( it==task->map_skill_fwd->end() ) { // not found
                     if(task->map_skill_fwd->size()==NCAT_MAX) {
                         fprintf(stderr,"Number of unique skills exceeds allowed maximum of %d.\n",NCAT_MAX);
-                        return false;
+                        res = false;
+                        goto recycle;
                     }
                     striped_dat_skill->add((NCAT)task->map_skill_fwd->size()); //[t] = task->map_skill_fwd.size();
                     task->map_skill_fwd->insert(pair<string,NCAT>(s_skill, (NCAT)task->map_skill_fwd->size()));
@@ -320,9 +329,8 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
     }// reading loop
     if(wrong_no_columns) {
         fprintf(stderr,"Wrong number of columns in line %u. Expected %d, found %d\n",task->N+1,COLUMNS+task->sliced, number_columns);
-        free(line);
-        fclose(fid);
-        return false;
+        res = false;
+        goto recycle;
     }
     task->nG = (NCAT)task->map_group_fwd->size();
     task->nK = (NCAT)task->map_skill_fwd->size();
@@ -332,80 +340,91 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
     task->dat_obs = striped_dat_obs->toArray();
     task->dat_obs_stacked = init1D<NPAR>(task->Nst);
     task->dat_predict = initToValue2D<NUMBER>(task->Nst, task->nO, 0);
-  
-    delete striped_dat_obs;
+
     task->dat_group = striped_dat_group->toArray();
-    delete striped_dat_group;
     if(task->multiskill==0) {
         task->dat_skill = striped_dat_skill->toArray();
-        delete striped_dat_skill;
     } else {
         task->dat_skill_stacked = striped_dat_skill_stacked->toArray();
         task->dat_skill_rcount  = striped_dat_skill_rcount->toArray();
         task->dat_skill_rix     = striped_dat_skill_rix->toArray();
-        delete striped_dat_skill_stacked;
-        delete striped_dat_skill_rcount;
-        delete striped_dat_skill_rix;
     }
     task->dat_item = striped_dat_item->toArray();
-    delete striped_dat_item;
     if(task->sliced) {
         task->dat_slice = striped_dat_slice->toArray();
-        delete striped_dat_slice;
     }
-    
     // build dat_obs_stacked
-    NDAT c = 0;
-    for(NDAT t=0;t<task->N;t++) {
-        for(NDAT tt=0; tt<task->dat_skill_rcount[t]; tt++) {
-            task->dat_obs_stacked[c] = task->dat_obs[t];
-            c++;
+    co = 0;
+    if(task->multiskill!=0) {
+        for(NDAT t=0;t<task->N;t++) {
+            for(NDAT tt=0; tt<task->dat_skill_rcount[t]; tt++) {
+                task->dat_obs_stacked[co] = task->dat_obs[t];
+                co++;
+            }
         }
+    } else {
+        memcpy( task->dat_obs_stacked, task->dat_obs , sizeof(NPAR)*(size_t)task->N );
     }
 
     //
     // create connectivities: skill-skill, student-skill
     //
+    createConnectivities(task);
+
+    recycle: delete striped_dat_obs;
+    delete striped_dat_group;
+    if(striped_dat_skill!=NULL) delete striped_dat_skill;
+    if(striped_dat_skill_stacked!=NULL) delete striped_dat_skill_stacked;
+    if(striped_dat_skill_rcount!=NULL) delete striped_dat_skill_rcount;
+    if(striped_dat_skill_rix!=NULL) delete striped_dat_skill_rix;
+    if(striped_dat_item!=NULL) delete striped_dat_item;
+    if(striped_dat_slice!=NULL) delete striped_dat_slice;
     
+    if(fid!=NULL) fclose(fid);
+    free(line);
+    return res;
+}
+
+void InputUtilSt::createConnectivities(struct task *a_task) {
     // init
-    task->n_connectivities=2;
-    task->n_connectivity_X = Calloc(NDAT, (size_t)task->n_connectivities);
-    task->n_connectivity_X[0] = task->nK;
-    task->n_connectivity_X[1] = task->nG;
-    task->n_connectivity_Y = Calloc(NDAT, (size_t)task->n_connectivities);
-    task->n_connectivity_Y[0] = task->nK;
-    task->n_connectivity_Y[1] = task->nK;
-    task->connectivities = Calloc(NPAR**, (size_t)task->n_connectivities);
-    task->connectivities[0] = initToValue2D<NPAR>(task->n_connectivity_X[0], task->n_connectivity_Y[0], 0);
-    task->connectivities[1] = initToValue2D<NPAR>(task->n_connectivity_X[1], task->n_connectivity_Y[1], 0);
+    a_task->n_connectivities=2;
+    a_task->n_connectivity_X = Calloc(NDAT, (size_t)a_task->n_connectivities);
+    a_task->n_connectivity_X[0] = a_task->nK;
+    a_task->n_connectivity_X[1] = a_task->nG;
+    a_task->n_connectivity_Y = Calloc(NDAT, (size_t)a_task->n_connectivities);
+    a_task->n_connectivity_Y[0] = a_task->nK;
+    a_task->n_connectivity_Y[1] = a_task->nK;
+    a_task->connectivities = Calloc(NPAR**, (size_t)a_task->n_connectivities);
+    a_task->connectivities[0] = initToValue2D<NPAR>(a_task->n_connectivity_X[0], a_task->n_connectivity_Y[0], 0);
+    a_task->connectivities[1] = initToValue2D<NPAR>(a_task->n_connectivity_X[1], a_task->n_connectivity_Y[1], 0);
 
     // create
-    for(NDAT t=0; t<task->N; t++) { // vv for all non-stacked rows
+    for(NDAT t=0; t<a_task->N; t++) { // vv for all non-stacked rows
         // skill-skill connectivity
-        NCAT g = task->dat_group[t]; // -1, because in data they were 1-starting
+        NCAT g = a_task->dat_group[t]; // -1, because in data they were 1-starting
         // grab skill array (if exists)
         NCAT *ar;
         NPAR n;
-        getSkillsAtRow(task, t, &ar, &n);
+        getSkillsAtRow(a_task, t, &ar, &n);
         if(n>1) {
             for(NPAR i1=0;i1<(n-1);i1++) {
-                for(NPAR i2=(i1+1);i2<n;i2++) {
-                    task->connectivities[0][ ar[i1] ][ ar[i2] ] = 1;
-                    task->connectivities[0][ ar[i2] ][ ar[i1] ] = 1;
+                for(NPAR i2=(NPAR)(i1+1);i2<n;i2++) {
+                    a_task->connectivities[0][ ar[i1] ][ ar[i2] ] = 1;
+                    a_task->connectivities[0][ ar[i2] ][ ar[i1] ] = 1;
                 }
             }
         }
         // student-skill connectivity
         for(NPAR l=0; l<n; l++) {
-            task->connectivities[1][g][l] = 1;
+            a_task->connectivities[1][g][l] = 1;
         }
     } // ^^ for all non-stacked rows
 //    std::ofstream file; // DEBUG
 //    file.open("connectivity.txt");  // DEBUG
-//    for(NCAT i=0; i<task->n_connectivity_X[0]; i++) {  // DEBUG
+//    for(NCAT i=0; i<a_task->n_connectivity_X[0]; i++) {  // DEBUG
 //        std::stringstream ss;  // DEBUG
-//        for(NDAT j=0; j<task->n_connectivity_Y[0]; j++) {  // DEBUG
-//            ss << ((j>0)?" ":"") << std::to_string(task->connectivities[0][i][j]);  // DEBUG
+//        for(NDAT j=0; j<a_task->n_connectivity_Y[0]; j++) {  // DEBUG
+//            ss << ((j>0)?" ":"") << std::to_string(a_task->connectivities[0][i][j]);  // DEBUG
 //        }  // DEBUG
 //        ss << "\n";  // DEBUG
 //        file << ss.str();  // DEBUG
@@ -416,30 +435,26 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
     // vvv Warshall’s Algorithm $O(n^3)$ https://en.wikipedia.org/wiki/Reachability
     // https://cs.winona.edu/lin/cs440/ch08-2.pdf
     NDAT x1 = 0; // count 1's
-    for(NCAT k=0; k<task->nK; k++) {
+    for(NCAT k=0; k<a_task->nK; k++) {
         x1 = 0;
-        for(NCAT i=0; i<task->nK; i++) {
-            for(NCAT j=0; j<task->nK; j++) {
-                task->connectivities[0][i][j] = task->connectivities[0][i][j] || (task->connectivities[0][i][k] && task->connectivities[0][k][j]);
-                x1+=task->connectivities[0][i][j];
+        for(NCAT i=0; i<a_task->nK; i++) {
+            for(NCAT j=0; j<a_task->nK; j++) {
+                a_task->connectivities[0][i][j] = a_task->connectivities[0][i][j] || (a_task->connectivities[0][i][k] && a_task->connectivities[0][k][j]);
+                x1+=a_task->connectivities[0][i][j];
             }
         }
     }// ^^^ Warshall’s Algorithm
 //    std::ofstream file; // DEBUG
 //    file.open("reachability.txt");  // DEBUG
-//    for(NCAT i=0; i<task->n_connectivity_X[0]; i++) {  // DEBUG
+//    for(NCAT i=0; i<a_task->n_connectivity_X[0]; i++) {  // DEBUG
 //        std::stringstream ss;  // DEBUG
-//        for(NDAT j=0; j<task->n_connectivity_Y[0]; j++) {  // DEBUG
-//            ss << ((j>0)?" ":"") << std::to_string(task->connectivities[0][i][j]);  // DEBUG
+//        for(NDAT j=0; j<a_task->n_connectivity_Y[0]; j++) {  // DEBUG
+//            ss << ((j>0)?" ":"") << std::to_string(a_task->connectivities[0][i][j]);  // DEBUG
 //        }  // DEBUG
 //        ss << "\n";  // DEBUG
 //        file << ss.str();  // DEBUG
 //    }  // DEBUG
 //    file.close(); // DEBUG
-
-    fclose(fid);
-    free(line);
-    return true;
 }
 
 bool InputUtilSt::readBin(const char *fn, struct task *task) {
@@ -537,10 +552,14 @@ bool InputUtilSt::readBin(const char *fn, struct task *task) {
     
     
     // dat_obs
-    StripedArray<NPAR> *striped_dat_obs = new StripedArray<NPAR>(fid, task->N);
-    task->dat_obs = striped_dat_obs->toArray();
-    delete striped_dat_obs;
+//    StripedArray<NPAR> *striped_dat_obs = new StripedArray<NPAR>(fid, task->N);
+//    task->dat_obs = striped_dat_obs->toArray();
+    task->dat_obs = StripedArray<NPAR>::fromFileToArray(fid, task->N);
+    task->dat_obs_stacked = init1D<NPAR>(task->Nst);
+    task->dat_predict = initToValue2D<NUMBER>(task->Nst, task->nO, 0);
+//    delete striped_dat_obs;
 
+    
 //    if(v==1) { // older NCAT of unsigned short
 //        StripedArray<short> *dat_group_legacy = NULL;
 //        StripedArray<short> *dat_skill_legacy = NULL;
@@ -561,40 +580,47 @@ bool InputUtilSt::readBin(const char *fn, struct task *task) {
 //        delete dat_group_legacy;
 //    } else {
         // dat_group
-        StripedArray<NCAT> *striped_dat_group = new StripedArray<NCAT>(fid, task->N);
-        task->dat_group = striped_dat_group->toArray();
-        delete striped_dat_group;
+//        StripedArray<NCAT> *striped_dat_group = new StripedArray<NCAT>(fid, task->N);
+//        task->dat_group = striped_dat_group->toArray();
+//        delete striped_dat_group;
+        task->dat_group = StripedArray<NCAT>::fromFileToArray(fid, task->N);
 //    }
     
     // dat_item
-    StripedArray<NCAT> *striped_dat_item = new StripedArray<NCAT>(fid, task->N);
-    task->dat_item = striped_dat_item->toArray();
-    delete striped_dat_item;
+//    StripedArray<NCAT> *striped_dat_item = new StripedArray<NCAT>(fid, task->N);
+//    task->dat_item = striped_dat_item->toArray();
+//    delete striped_dat_item;
+    task->dat_item = StripedArray<NCAT>::fromFileToArray(fid, task->N);
     
     // dat_skill
     if(task->multiskill == 0) {
-        StripedArray<NCAT> *striped_dat_skill = new StripedArray<NCAT>(fid, task->N);
-        task->dat_skill = striped_dat_skill->toArray();
-        delete striped_dat_skill;
+//        StripedArray<NCAT> *striped_dat_skill = new StripedArray<NCAT>(fid, task->N);
+//        task->dat_skill = striped_dat_skill->toArray();
+//        delete striped_dat_skill;
+        task->dat_skill = StripedArray<NCAT>::fromFileToArray(fid, task->N);
     } else {
 //            task->dat_multiskill = new StripedArray< NCAT* >(task->N,true);
 //            nread = readMultiSkill(fid, param, v);
-        StripedArray<NCAT> *striped_dat_skill_stacked = new StripedArray<NCAT>(fid, task->Nst);
-        task->dat_skill_stacked = striped_dat_skill_stacked->toArray();
-        StripedArray<NCAT> *striped_dat_skill_rcount = new StripedArray<NCAT>(fid, task->N);
-        task->dat_skill_rcount = striped_dat_skill_rcount->toArray();
-        StripedArray<NCAT> *striped_dat_skill_rix = new StripedArray<NCAT>(fid, task->N);
-        task->dat_skill_rix = striped_dat_skill_rix->toArray();
-        delete striped_dat_skill_stacked;
-        delete striped_dat_skill_rcount;
-        delete striped_dat_skill_rix;
+//        StripedArray<NCAT> *striped_dat_skill_stacked = new StripedArray<NCAT>(fid, task->Nst);
+//        task->dat_skill_stacked = striped_dat_skill_stacked->toArray();
+//        StripedArray<NCAT> *striped_dat_skill_rcount = new StripedArray<NCAT>(fid, task->N);
+//        task->dat_skill_rcount = striped_dat_skill_rcount->toArray();
+//        StripedArray<NCAT> *striped_dat_skill_rix = new StripedArray<NCAT>(fid, task->N);
+//        task->dat_skill_rix = striped_dat_skill_rix->toArray();
+//        delete striped_dat_skill_stacked;
+//        delete striped_dat_skill_rcount;
+//        delete striped_dat_skill_rix;
+        task->dat_skill_stacked = StripedArray<NCAT>::fromFileToArray(fid, task->Nst);
+        task->dat_skill_rcount = StripedArray<NCAT>::fromFileToArray(fid, task->N);
+        task->dat_skill_rix = StripedArray<NCAT>::fromFileToArray(fid, task->N);
     }
     // dat_slices, only of nZ > 1
     if(task->nZ > 1) {
         NDAT szZ = (task->multiskill == 0)?task->N:task->Nst;
-        StripedArray<NPAR> *striped_dat_slice = new StripedArray<NPAR>(fid, szZ);
-        task->dat_slice = striped_dat_slice->toArray();
-        delete striped_dat_slice;
+//        StripedArray<NPAR> *striped_dat_slice = new StripedArray<NPAR>(fid, szZ);
+//        task->dat_slice = striped_dat_slice->toArray();
+//        delete striped_dat_slice;
+        task->dat_slice = StripedArray<NPAR>::fromFileToArray(fid, szZ);
     }
         
     string str;
@@ -625,6 +651,24 @@ bool InputUtilSt::readBin(const char *fn, struct task *task) {
         task->map_step_bwd->insert(pair<NCAT,string>(i, str));
     }
     
+    // build dat_obs_stacked
+    NDAT co = 0;
+    if(task->multiskill!=0) {
+        for(NDAT t=0;t<task->N;t++) {
+            for(NDAT tt=0; tt<task->dat_skill_rcount[t]; tt++) {
+                task->dat_obs_stacked[c] = task->dat_obs[t];
+                co++;
+            }
+        }
+    } else {
+        memcpy( task->dat_obs_stacked, task->dat_obs , sizeof(NPAR)*(size_t)task->N );
+    }
+
+    //
+    // create connectivities: skill-skill, student-skill
+    //
+    createConnectivities(task);
+
     fclose(fid);
     return true;
 }

@@ -43,24 +43,12 @@ public:
     HMMProblemEloSt();
     HMMProblemEloSt(struct task* task); // sizes=={nK, nK, nK} by default
     virtual ~HMMProblemEloSt();
-//    // produce indexes of parameters in vector
-//    NDAT PI(NCAT k, NPAR i);
-//    NDAT A(NCAT k, NPAR i, NPAR j);
-//    NDAT B(NCAT k, NPAR i, NPAR o);
-//    // get whole vectors of  PI, A, B
-//	NUMBER* getPI(NCAT k);
-//	NUMBER* getA(NCAT k);
-//	NUMBER* getB(NCAT k);
-//    // getters for parameters in the raw
-//    virtual NUMBER getPI(NCAT k, NPAR i);
-//    virtual NUMBER getA (NCAT k, NPAR i, NPAR j);
-//    virtual NUMBER getB (NCAT k, NPAR i, NPAR m);
     // getters for parameters in context
     virtual NUMBER getPI(struct context* ctx, NPAR i);
     virtual NUMBER getA (struct context* ctx, NPAR i, NPAR j);
     virtual NUMBER getB (struct context* ctx, NPAR i, NPAR m);
     // getters for computing gradients of alpha, beta, gamma
-	virtual void toFile(const char *filename);
+//	virtual void toFile(const char *filename);
 ////	NUMBER getSumLogPOPara(NCAT xndat, struct data **x_data); // generic per k/g-slice
 ////    NUMBER getLogLik(); // get log likelihood of the fitted model
 //    NCAT getModelParamN(); // get log likelihood of the fitted model
@@ -69,7 +57,7 @@ public:
 //    virtual void fit(); // return -LL for the model
 //    // predicting
 //    virtual void producePCorrect(NUMBER*** group_skill_map, NCAT* skills, NPAR n_skills, NUMBER* local_pred, struct context *ctx);
-//    virtual void updateValuesLocal(NUMBER*** group_skill_map, NCAT* skills, NPAR n_skills, NUMBER* local_pred, struct context *ctx);
+    virtual void updateValuesLocal(NUMBER*** group_skill_map, NCAT* skills, NPAR n_skills, NUMBER* local_pred, struct context *ctx);
 //    static void predict(NUMBER* metrics, const char *filename,
 //                        //NDAT N, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, NCAT *dat_skill_stacked, NCAT *dat_skill_rcount, NDAT *dat_skill_rix,
 //                        struct task* task,
@@ -77,8 +65,11 @@ public:
 //	
 //    void readModel(const char *filename, bool overwrite);
 //    virtual void readModelBody(FILE *fid, struct task* task, NDAT *line_no, bool overwrite);
-    NUMBER (HMMProblemEloSt::*sensitivity)(NDAT) = NULL; // pointer to the function that constructs sensitiviy Elo multiplier for a data row
-    NUMBER sensitivity_K(NDAT t);
+    NUMBER (HMMProblemEloSt::*sensitivity)(struct context*) = NULL; // pointer to the function that constructs sensitiviy Elo multiplier for a data row
+    NUMBER sensitivity_K(struct context *ctx); // straight/direct formulation of sensitivity
+    NUMBER sensitivity_U1b(struct context *ctx); // Uncertainty \frac{1}{1+b*n} U1b, as a variant of Uab \frac{a}{1+b*n}
+    NUMBER sensitivity_U1bexp0_01(struct context *ctx); // Uncertainty \frac{1}{1+b*e^{0.01*n}} U1bexp0_01 as a variant of \frac{a}{1+b*e^{c*n}}
+    NUMBER sensitivity_O2Z_IN_B(struct context *ctx); // sensitivity 1 to 0 in B steps in lenear fashion
 protected:
 //	//
 //	// Givens
@@ -119,6 +110,8 @@ protected:
 //    bool is_fwd_bwd_built; // flag for noting whether backward_ix & forward_ix are already built
 //
     virtual void init(struct task* task); // non-fit specific initialization
+    virtual void initAlphaEtAl(); // reset variables before making a computeAlphaAndPOParam run
+
 //	NUMBER computeAlphaAndPOParam(NUMBER *metrics_res); // return loglikelihood, alternatively predictions, and metrics too
 //	void computeBeta();
 //	void computeXiGamma();

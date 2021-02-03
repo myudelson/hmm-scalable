@@ -66,6 +66,7 @@ FitBit::FitBit(NPAR a_nS, NPAR a_nO, NCAT a_nK, NCAT a_nG, NUMBER a_tol, NPAR a_
     this->xndat = 0;
     this->x_data = 0;
     this->projecttosimplex = 1;
+    this->observe_non01_boundaries = 1;
     this->Cslice = 0;
     this->tag = 0;
 }
@@ -537,7 +538,7 @@ void FitBit::doLog10ScaleGentleByRow(enum FIT_BIT_SLOT fbs) {
 	
 	
 	NPAR nS = this->nS, nO = this->nO;
-	NPAR n_scales = 2*nS + 1;
+	NPAR n_scales = (NPAR)2*nS + 1;
 	NUMBER* scales = Calloc(NUMBER, n_scales);
 	
 	

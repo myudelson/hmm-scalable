@@ -8,7 +8,7 @@ OS = $(shell uname)
 #LIBS = blas/blas.a
 #LIBS = -lblas
 
-all: trainst train predict input
+all: trainst train predict predictst input
 
 train: utils.o StripedArray.o FitBit.o FitBitSlicedA.o FitBitSlicedAB.o PULogistic.o PUCorbettianAdditive.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemSlicedAB.o HMMProblemSlicedA.o HMMProblemComp.o InputUtil.o trainhmm.cpp
 	$(CXX) $(CFLAGS) -o trainhmm trainhmm.cpp utils.o FitBit.o FitBitSlicedA.o FitBitSlicedAB.o InputUtil.o PULogistic.o PUCorbettianAdditive.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemSlicedAB.o HMMProblemSlicedA.o StripedArray.o HMMProblemComp.o
@@ -19,8 +19,11 @@ trainst: utilsSt.o StripedArray.o FitBitSt.o HMMProblemSt.o HMMProblemEloSt.o In
 predict: utils.o StripedArray.o FitBit.o FitBitSlicedA.o FitBitSlicedAB.o  PULogistic.o PUCorbettianAdditive.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemSlicedAB.o HMMProblemSlicedA.o HMMProblemComp.o InputUtil.o predicthmm.cpp
 	$(CXX) $(CFLAGS) -o predicthmm predicthmm.cpp utils.o FitBit.o FitBitSlicedA.o FitBitSlicedAB.o InputUtil.o PULogistic.o PUCorbettianAdditive.o HMMProblem.o HMMProblemPiGK.o HMMProblemPiGKww.o HMMProblemAGK.o HMMProblemPiAGK.o HMMProblemPiABGK.o HMMProblemSlicedAB.o HMMProblemSlicedA.o StripedArray.o HMMProblemComp.o
 
-input: utils.o StripedArray.o InputUtil.o inputconvert.cpp
-	$(CXX) $(CFLAGS) -o inputconvert inputconvert.cpp utils.o StripedArray.o InputUtil.o
+predictst: utilsSt.o StripedArray.o FitBitSt.o HMMProblemSt.o HMMProblemEloSt.o InputUtilSt.o predicthmmst.cpp
+	$(CXX) $(CFLAGS) -o predicthmmst predicthmmst.cpp utilsSt.o FitBitSt.o InputUtilSt.o HMMProblemSt.o HMMProblemEloSt.o
+
+input: utilsSt.o StripedArray.o InputUtilSt.o inputconvert.cpp
+	$(CXX) $(CFLAGS) -o inputconvert inputconvert.cpp utilsSt.o StripedArray.o InputUtilSt.o
 
 utils.o: utils.cpp utils.h
 	$(CXX) $(CFLAGS) -c -o utils.o utils.cpp
@@ -83,7 +86,7 @@ HMMProblemEloSt.o: HMMProblemEloSt.cpp HMMProblemEloSt.h
 
 clean:
 #make -C blas clean
-	rm -f *.o trainhmm trainhmmst predicthmm inputconvert
+	rm -f *.o trainhmm trainhmmst predicthmm predicthmmst inputconvert
 
 tidy:
 	rm -f *.o
