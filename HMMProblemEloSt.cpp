@@ -202,8 +202,33 @@ void HMMProblemEloSt::updateValuesLocal(NUMBER*** group_skill_map, NCAT* skills,
     // local Elo updateValuesLocal
     NPAR corr = (NPAR)(1-ctx->o);
     this->elo_track_g[ctx->g] += (this->*sensitivity)(ctx) * (corr - local_pred[0]);
+    this->elo_track_t[ctx->t] = this->elo_track_g[ctx->g];
     // update counts
     this->elo_count_g[ctx->g]++;
+}
+
+void HMMProblemEloSt::postPredictionSave(const char *filename) {
+    // reuse prediction file name to generat new file
+    if(this->task->predictions==2) { // if we are saving the skill p-known
+        // set file name
+        char *fn_suffix = "__ratings.txt";
+        char *fn_new = (char *) malloc(1 + strlen(filename)+ strlen(fn_suffix) );
+        strcpy(fn_new, filename);
+        strcat(fn_new, fn_suffix);
+        // open file
+        FILE *fid = fopen(fn_new,"w");
+        if(fid == NULL)
+        {
+            fprintf(stderr,"Can't write post-prediction file %s\n",fn_new);
+            exit(1);
+        }
+        for(NDAT t=0; t<this->task->N; t++) {
+            fprintf(fid,"%12.10f\n", sigmoid(this->elo_track_t[t]) ); // write probability value, not logit
+        }
+        // close file
+        fclose(fid);
+    }
+    return;
 }
 
 //

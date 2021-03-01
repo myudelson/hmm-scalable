@@ -58,6 +58,7 @@ public:
 //    // predicting
 //    virtual void producePCorrect(NUMBER*** group_skill_map, NCAT* skills, NPAR n_skills, NUMBER* local_pred, struct context *ctx);
     virtual void updateValuesLocal(NUMBER*** group_skill_map, NCAT* skills, NPAR n_skills, NUMBER* local_pred, struct context *ctx);
+    virtual void postPredictionSave(const char *filename);
 //    static void predict(NUMBER* metrics, const char *filename,
 //                        //NDAT N, NPAR* dat_obs, NCAT *dat_group, NCAT *dat_skill, NCAT *dat_skill_stacked, NCAT *dat_skill_rcount, NDAT *dat_skill_rix,
 //                        struct task* task,

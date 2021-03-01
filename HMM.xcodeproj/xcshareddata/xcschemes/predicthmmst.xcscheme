@@ -72,7 +72,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "0"
+            argument = "2"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -80,7 +80,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "1,7,0"
+            argument = "1,7,0.3"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -93,27 +93,27 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/myudelson/Documents/hcii/HMM/d/a89__datahmm__all.txt"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/myudelson/Documents/conferences/2021-Elo-infusion/data/produced/a89__datahmm__run1fold0.txt"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/myudelson/Documents/hcii/HMM/model.txt"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "/Users/myudelson/Documents/conferences/2021-Elo-infusion/model/a89__modelhmm__all__shipped.txt"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "/Users/myudelson/Documents/conferences/2021-Elo-infusion/model/a89__modelhmm__run1fold0__DIRECT_K__scope7__step0__solver14.4.txt"
+            argument = "/Users/myudelson/Documents/conferences/2021-Elo-infusion/model/a89__modelhmm__all__shipped.infusion.txt"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "/Users/myudelson/Documents/hcii/HMM/predict.txt"
+            argument = "/Users/myudelson/Documents/conferences/2021-Elo-infusion/model/a89__modelhmm__run1fold0__DIRECT_K__scope7__step0__solver14.4.txt"
             isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "/Users/myudelson/Documents/hcii/HMM/predict.txt"
+            isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
    </LaunchAction>

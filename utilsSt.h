@@ -180,7 +180,8 @@ struct task {
     NPAR *dat_slice;         // slices - alternative slots of A, B matrices
     
     NUMBER **dat_predict; // 2-dim prediction, N * nO;
-    
+    NUMBER *dat_predict_k; // 1-dim stached prediction of first element of pKnown for every skill, Nst * 1;
+
     // connectivity between skills, skills-students, etc.
     NPAR n_connectivities; // number of connectivity nX*nY matrices
     NDAT* n_connectivity_X; // 1st size of connectivities

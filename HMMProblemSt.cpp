@@ -370,6 +370,11 @@ NUMBER HMMProblemSt::computeAlphaAndPOParam(NUMBER *metrics_res) {
     NDAT **alpha_gk_ix = NULL;
     
     NUMBER **predict = this->task->dat_predict; // running value of prediction, do we save it?
+    NUMBER *predict_k = this->task->dat_predict_k; // running value of prediction, do we save it?
+    if(metrics_res!=NULL & this->task->predictions==2) {
+        if(predict_k==NULL) predict_k = initToValue1D<NUMBER>(this->task->Nst,0.0);
+        else toZero1D<NUMBER>(predict_k, this->task->Nst);
+    }
     // toZero2D(predict,N,nO); // don't blast everything, the predictions are inited to 0 line by line as the overall data is updated according to the active set
 
     struct context* ctx = new context;
@@ -381,7 +386,7 @@ NUMBER HMMProblemSt::computeAlphaAndPOParam(NUMBER *metrics_res) {
         alpha_gk_ix = initToValue2D<NDAT>(nG, nK, -1);
     }
     
-    for(int t=0; t<N; t++) {
+    for(NDAT t=0; t<N; t++) {
         o = this->task->dat_obs[t]; // observation y in the data is 1-right, 0-wrong; math assumes HMM-Scalable 1-right, 2-wrong, with -1 taken out, so 0-right, 1-wrong
         isTarget = this->task->metrics_target_obs == o;
         //corr = 1-o; // corr 1 - right, 0 - wrong
@@ -463,12 +468,19 @@ NUMBER HMMProblemSt::computeAlphaAndPOParam(NUMBER *metrics_res) {
         // update obj val
         p = safe01num( predict[t][f_metrics_target_obs]);
         loglik -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
-        if(metrics_res!=NULL) {
+        if(metrics_res!=NULL) { // we are predicting
             loglik_nonull -= safelog(  p)*   isTarget  +  safelog(1-p)*(1-isTarget);
             sse += pow(isTarget-predict[t][f_metrics_target_obs],2);
             sse_nonull += pow(isTarget-predict[t][f_metrics_target_obs],2);
             ncorr += isTarget == (predict[t][f_metrics_target_obs]==maxn(predict[t],nO) && predict[t][f_metrics_target_obs]>1/nO);
             ncorr_nonull += isTarget == (predict[t][f_metrics_target_obs]==maxn(predict[t],nO) && predict[t][f_metrics_target_obs]>1/nO);
+            if(this->task->predictions==2) {
+                for(int l=0; l<n; l++) {
+                    k = ar[l];
+                    NDAT tt = l + this->task->dat_skill_rix[t];
+                    predict_k[tt] = group_skill_map[g][k][0];
+                }
+            }
         }
 
 
@@ -511,6 +523,9 @@ NUMBER HMMProblemSt::computeAlphaAndPOParam(NUMBER *metrics_res) {
         metrics_res[3] = sse_nonull;
         metrics_res[4] = ncorr;
         metrics_res[5] = ncorr_nonull;
+        if(this->task->predictions==2) {
+            this->task->dat_predict_k = predict_k;
+        }
     }
     
 //    free3D(group_skill_map, this->task->nG, this->task->nK); //UNBOOST
@@ -940,9 +955,11 @@ void HMMProblemSt::predict(NUMBER* metrics, const char *filename,
                     fprintf(fid,"%12.10f%s",hmm->task->dat_predict[t][m],(m<(nO-1))?"\t": ((f_predictions==1)?"\n":"\t") );// if we print states of KCs, continut
                 }
                 if(f_predictions==2) { // if we print out states of KC's as welll
-                    fprintf(stderr,"WARNING! Support for printing pL is not re-implemented \n");
-//                    for(int l=0; l<n; l++) // all KC here
-//                        fprintf(fid,"%12.10f%s",group_skill_map[g][ ar[l] ][0], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+//                    fprintf(stderr,"WARNING! Support for printing pL is not re-implemented \n");
+                    for(int l=0; l<n; l++) { // all KC here
+                        NDAT tt = l + hmm->task->dat_skill_rix[t];
+                        fprintf(fid,"%12.10f%s",hmm->task->dat_predict_k[tt], (l==(n-1) && l==(n-1))?"\n":"\t"); // nnon boost // if end of all states: end line//UNBOOST
+                    }
                 }
             } // skills presen
         }
@@ -987,6 +1004,10 @@ void HMMProblemSt::predict(NUMBER* metrics, const char *filename,
 //    free(predict_hmm);
     free2D(metrics_hmm, nhmms);
 
+}
+
+void HMMProblemSt::postPredictionSave(const char *filename) {
+    return;
 }
 
 NCAT HMMProblemSt::getModelParamN() {
@@ -1827,7 +1848,7 @@ void HMMProblemSt::readModelBody(FILE *fid, struct task* task, NDAT *line_no,  b
 
 // helper function
 void HMMProblemSt::toFileAlphaBetaObs(const char *filename, NCAT k) {
-    NDAT Nst = this->task->Nst, t, tt=0;
+    NDAT t, tt=0;
     NPAR nS = this->task->nS;
     FILE *fid = fopen(filename,"w");
     

@@ -812,7 +812,8 @@ void set_task_defaults(struct task *task) {
 //    task->dat_multiskill = NULL;
     task->dat_slice = NULL;
     task->dat_predict = NULL;
-    
+    task->dat_predict_k = NULL;
+
 //	task->tag1 = 0;
     // connectivities
     task->n_connectivities = 0;
@@ -839,7 +840,8 @@ void destroy_input_data(struct task *task) {
     if(task->dat_skill_rcount != NULL) free( task->dat_skill_rcount );
     if(task->dat_skill_rix != NULL) free( task->dat_skill_rix );
 	if(task->dat_slice != NULL) free( task->dat_slice );
-    if(task->dat_predict != NULL) free(task->dat_predict  );
+    if(task->dat_predict != NULL) free2D(task->dat_predict, task->N);
+    if(task->dat_predict_k != NULL) free(task->dat_predict_k  );
     if( task->Cslices>0 ) {
         free( task->Cw );
         free( task->Ccenters );

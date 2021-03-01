@@ -154,12 +154,16 @@ int main (int argc, char ** argv) {
                metrics[2], metrics[3], // rmse's
                metrics[4], metrics[5]); // acc's
     //}
-    free(metrics);
     
+    // post-prediction runs
+    hmm->postPredictionSave(predict_file);
+    
+    // recycle memory
+    free(metrics);
 	destroy_input_data(&task);
-	
     delete hmm;
-	if(task.quiet == 0)
+
+    if(task.quiet == 0)
 		printf("overall time running is %8.6f seconds\n",(NUMBER)(clock()-tm0)/CLOCKS_PER_SEC);
     return 0;
 }

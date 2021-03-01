@@ -76,6 +76,7 @@ public:
 	
     void readModel(const char *filename, bool overwrite);
     virtual void readModelBody(FILE *fid, struct task* task, NDAT *line_no, bool overwrite);
+    virtual void postPredictionSave(const char *filename);
 //    virtual void reorderSequences(NDAT *newnK, NDAT *newnG, bool sort); /*place larger skill and group sequences closer to the beginning*/
 protected:
 	//

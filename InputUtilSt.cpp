@@ -339,7 +339,7 @@ bool InputUtilSt::readTxt(const char *fn, struct task *task) {
     // copy striped to lined
     task->dat_obs = striped_dat_obs->toArray();
     task->dat_obs_stacked = init1D<NPAR>(task->Nst);
-    task->dat_predict = initToValue2D<NUMBER>(task->Nst, task->nO, 0);
+    task->dat_predict = initToValue2D<NUMBER>(task->N, task->nO, 0);
 
     task->dat_group = striped_dat_group->toArray();
     if(task->multiskill==0) {
@@ -556,7 +556,7 @@ bool InputUtilSt::readBin(const char *fn, struct task *task) {
 //    task->dat_obs = striped_dat_obs->toArray();
     task->dat_obs = StripedArray<NPAR>::fromFileToArray(fid, task->N);
     task->dat_obs_stacked = init1D<NPAR>(task->Nst);
-    task->dat_predict = initToValue2D<NUMBER>(task->Nst, task->nO, 0);
+    task->dat_predict = initToValue2D<NUMBER>(task->N, task->nO, 0);
 //    delete striped_dat_obs;
 
     
