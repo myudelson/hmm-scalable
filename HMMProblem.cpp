@@ -779,7 +779,7 @@ void HMMProblem::producePCorrect(NUMBER*** group_skill_map, NUMBER* local_pred, 
     NUMBER *local_pred_inner = init1D<NUMBER>(this->p->nO);
     char f_multiskill = this->p->multiskill;
     
-    struct data* dt = new data;
+    struct data* dt = new struct data;
     NCAT *ks;
     int nks;
     if(f_multiskill==0) {
@@ -935,7 +935,7 @@ void HMMProblem::predict(NUMBER* metrics, const char *filename, NPAR* dat_obs, N
 	}
 	
 	// initialize
-	struct data* dt = new data;
+	struct data* dt = new struct data;
 	NDAT count = 0;
 //	NDAT d = 0;
 	HMMProblem *hmm;
@@ -3178,7 +3178,7 @@ void HMMProblem::toFileAlphaBetaObs(const char *filename, NCAT k) {
         exit(1);
     }
     
-    data *dt = this->p->k_data[k];
+    struct data *dt = this->p->k_data[k];
     
     for(NDAT tt=0; tt<dt->n; tt++) {
         for(NPAR i=0; i<nS; i++) fprintf(fid,"%20.17f\t", dt->alpha[tt][i]);

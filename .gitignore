@@ -1,11 +1,13 @@
 DerivedData/**/*
 inputconvert
 trainhmm
+trainhmmst
 predicthmm
+predicthmmst
 boost/**/*
 boost.zip
 papers/*
 *.o
 d/**/*
 build/**/*
-
+.vscode/*
