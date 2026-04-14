@@ -1,6 +1,6 @@
 # A Tool for fitting Hidden Markov Models models at scale
 
-This command-line tool is developed to fit Hidden Markov Models (HMM) from the large datasets. In particular, it is targeting a specific kind of HMM used in education called Bayesian Knowledge Tracing (BKT) model. The utility is written in C/C++. The project started while the author was a post-doc at Human-Computer Interaction Institute, Carnegie Mellon University. These sources are published under BSD-new (3-clause BSD) license [https://en.wikipedia.org/wiki/BSD_licenses#3-clause_license_.28.22Revised_BSD_License.22.2C_.22New_BSD_License.22.2C_or_.22Modified_BSD_License.22.29].
+This command-line tool is developed to fit Hidden Markov Models (HMM) from the large datasets. In particular, it is targeting a specific kind of HMM used in education called Bayesian Knowledge Tracing (BKT) model. The utility is written in C/C++. The project started while the author was a post-doc at Human-Computer Interaction Institute, Carnegie Mellon University. These sources are published under [BSD-new (3-clause BSD) license](https://en.wikipedia.org/wiki/BSD_licenses#3-clause_license_.28.22Revised_BSD_License.22.2C_.22New_BSD_License.22.2C_or_.22Modified_BSD_License.22.29).
 
 # Bayesian Knowledge Tracing
 
